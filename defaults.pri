@@ -3,7 +3,9 @@ CONFIG -= qt
 CONFIG += RNG_ZIG
 CONFIG += NO_OMP
 
-!noccache {
+QMAKE_CXX = gcc
+
+ccache {
     QMAKE_CXX = ccache $$QMAKE_CXX
 }
 

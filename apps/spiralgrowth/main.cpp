@@ -1,30 +1,26 @@
-#include <iostream>
+#include "spiralgrowthsolver.h"
 
-#include <armadillo>
 #include <utils.h>
 
-using namespace arma;
-using namespace std;
+#include <iostream>
 
-class test : public ignis::LatticeEvent
-{
-public:
+#include <time.h>
 
-    test() : ignis::LatticeEvent("test", "!", true) {}
-
-    void execute()
-    {
-        setValue(cycle());
-    }
-};
+using namespace ignis;
 
 int main()
 {
-    ignis::Lattice lattice;
 
-    lattice.addEvent(new test);
+    rng.initialize(time(NULL));
 
-    lattice.eventLoop(1000);
+    SpiralGrowthSolver solver(100);
+
+    Lattice lattice;
+
+    lattice.addEvent(solver);
+
+    lattice.enableProgressReport();
+    lattice.eventLoop(100000);
 
     return 0;
 }

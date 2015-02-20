@@ -4,13 +4,24 @@ TEMPLATE = lib
 
 TARGET = ../lib/kMC
 
-HEADERS = RNG/kMCRNG.h
+HEADERS = RNG/kmcrng.h \
+    RNG/rng.h \
+    kmcsolver.h \
+    kmcassets.h \
+    reaction.h \
 
-SOURCES +=
+SOURCES += \
+    RNG/rng.cpp \
+    kmcsolver.cpp \
+    reaction.cpp \
 
-RNG_ZIG {
+RNG_ZIG
+{
 
-HEADERS += RNG/zigrandom.h \
+DEFINES += KMC_RNG_ZIG
+
+HEADERS += RNG/kmcrngzig.h \
+           RNG/zigrandom.h \
            RNG/zignor.h
 
 SOURCES += RNG/zigrandom.cpp \
