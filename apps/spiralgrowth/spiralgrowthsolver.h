@@ -8,7 +8,7 @@ using namespace arma;
 
 class TestReaction;
 
-class SpiralGrowthSolver : public KMCSolver
+class SpiralGrowthSolver : public KMCSolver<uint>
 {
 public:
     SpiralGrowthSolver(const uint length);
