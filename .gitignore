@@ -1,0 +1,8 @@
+*.pro.user*
+*.o
+*.pyc
+*.npy
+*.arma
+*.png
+Makefile
+lib/

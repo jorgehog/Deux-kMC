@@ -1,0 +1,15 @@
+[submodule "utils/ignis"]
+	path = utils/ignis
+	url = https://github.com/jorgehog/ignis
+[submodule "utils/BADAss"]
+	path = utils/BADAss
+	url = https://github.com/jorgehog/BADAss
+[submodule "utils/libconfig_utils"]
+	path = utils/libconfig_utils
+	url = https://github.com/jorgehog/libconfig_utils
+[submodule "utils/lammpswriter"]
+	path = utils/lammpswriter
+	url = https://github.com/jorgehog/lammpswriter
+[submodule "utils/HDF5Wrapper"]
+	path = utils/HDF5Wrapper
+	url = https://github.com/jorgehog/HDF5Wrapper

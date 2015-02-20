@@ -1,0 +1,29 @@
+#pragma once
+
+#include "../src/RNG/kMCRNG.h"
+
+#include "../src/site.h"
+
+#include "../src/soluteparticle.h"
+
+#include "../src/reactions/reaction.h"
+#include "../src/reactions/diffusion/tstdiffusion.h"
+
+#include "../src/kmcsolver.h"
+
+#include "../src/debugger/debugger.h"
+
+#include "../src/boundary/boundary.h"
+#include "../src/boundary/periodic/periodic.h"
+#include "../src/boundary/edge/edge.h"
+#include "../src/boundary/concentrationwall/concentrationwall.h"
+#include "../src/boundary/periodicshifted/periodicshifted.h"
+
+
+#include <ignis/include/ignis.h>
+
+#include "../src/ignisinterface/solverevent.h"
+
+#include "../src/potential/potential.h"
+#include "../src/potential/stressedsurface/stressedsurface.h"
+#include "../src/potential/inertwall/inertwall.h"
