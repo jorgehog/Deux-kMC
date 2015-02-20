@@ -1,7 +1,7 @@
 #include "spiralgrowthsolver.h"
 
 SpiralGrowthSolver::SpiralGrowthSolver(const uint length) :
-    KMCSolver(),
+    KMCSolver<uint>(),
     m_length(length),
     m_heights(length),
     m_reactions(length)

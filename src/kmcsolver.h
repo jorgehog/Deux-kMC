@@ -11,11 +11,12 @@ namespace kMC
 
 class Reaction;
 
-class KMCSolver : public LatticeEvent
+template<typename pT>
+class KMCSolver : public ignis::Event<pT>
 {
 public:
     KMCSolver();
-    ~KMCSolver();
+    virtual ~KMCSolver();
 
     double currentTimeStep() const;
 
@@ -53,7 +54,8 @@ public:
 
 };
 
-void KMCSolver::setSelectedReaction(Reaction *reaction)
+template<typename pT>
+void KMCSolver<pT>::setSelectedReaction(Reaction *reaction)
 {
     m_selectedReaction = reaction;
 }
