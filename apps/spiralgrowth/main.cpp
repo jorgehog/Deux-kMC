@@ -13,14 +13,15 @@ int main()
 
     rng.initialize(time(NULL));
 
-    SpiralGrowthSolver solver(100);
+    SpiralGrowthSolver solver(1000);
 
     Lattice lattice;
 
     lattice.addEvent(solver);
 
+    lattice.enableOutput(true, 10000);
     lattice.enableProgressReport();
-    lattice.eventLoop(100000);
+    lattice.eventLoop(1000000);
 
     return 0;
 }

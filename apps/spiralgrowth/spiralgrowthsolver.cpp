@@ -3,30 +3,21 @@
 SpiralGrowthSolver::SpiralGrowthSolver(const uint length) :
     KMCSolver<uint>(),
     m_length(length),
-    m_heights(length),
-    m_reactions(length)
+    m_heights(length)
 {
 
 }
 
 SpiralGrowthSolver::~SpiralGrowthSolver()
 {
-    for (uint x = 0; x < m_length; ++x)
-    {
-        delete m_reactions.at(x);
-    }
 
-    m_reactions.clear();
 }
 
 
 
 void SpiralGrowthSolver::initializeReactions()
 {
-    for (uint x = 0; x < m_length; ++x)
-    {
-        m_reactions.at(x) = new TestReaction(x, this);
-    }
+
 }
 
 void SpiralGrowthSolver::updateReactions()
@@ -38,11 +29,19 @@ void SpiralGrowthSolver::selectReaction()
 {
     vec ratesumvec = cumsum(cumsum(ones(m_length)));
 
+    ratesumvec = ratesumvec%ratesumvec;
+
     double R = rng.uniform()*ratesumvec(m_length-1);
 
-    uint choice = binarySearchForInterval(R, ratesumvec);
+    m_reaction = binarySearchForInterval(R, ratesumvec);
 
-    setSelectedReaction(m_reactions.at(choice));
+    setSelectedReaction(m_reaction);
+}
+
+void SpiralGrowthSolver::executeReaction(uint &reaction)
+{
+    m_heights(reaction)++;
+    m_heights.save("/tmp/heights.arma");
 }
 
 double SpiralGrowthSolver::getTotalRate()

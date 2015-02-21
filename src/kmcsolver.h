@@ -6,12 +6,10 @@
 
 #include "RNG/rng.h"
 
-#include "reaction.h"
-
 namespace kMC
 {
 
-template<typename pT>
+template<class rT, typename pT=uint>
 class KMCSolver : public ignis::Event<pT>
 {
 public:
@@ -22,7 +20,7 @@ public:
 
 private:
 
-    Reaction *m_selectedReaction;
+    rT *m_selectedReaction;
 
     double m_currentTimeStep;
     double m_currentTime;
@@ -33,6 +31,8 @@ private:
 
     virtual void selectReaction() = 0;
 
+    virtual void executeReaction(rT &reaction) = 0;
+
     virtual double getTotalRate() = 0;
 
 
@@ -42,7 +42,7 @@ private:
 
 protected:
 
-    inline void setSelectedReaction(Reaction *reaction);
+    inline void setSelectedReaction(rT &reaction);
 
     // Event interface
 public:
@@ -54,39 +54,39 @@ public:
 
 };
 
-template<typename pT>
-void KMCSolver<pT>::setSelectedReaction(Reaction *reaction)
+template<class rT, typename pT>
+void KMCSolver<rT, pT>::setSelectedReaction(rT &reaction)
 {
-    m_selectedReaction = reaction;
+    m_selectedReaction = &reaction;
 }
 
 
-template<typename pT>
-KMCSolver<pT>::KMCSolver()
-{
-
-}
-
-template<typename pT>
-KMCSolver<pT>::~KMCSolver()
+template<class rT, typename pT>
+KMCSolver<rT, pT>::KMCSolver()
 {
 
 }
 
-template<typename pT>
-double KMCSolver<pT>::currentTimeStep() const
+template<class rT, typename pT>
+KMCSolver<rT, pT>::~KMCSolver()
+{
+
+}
+
+template<class rT, typename pT>
+double KMCSolver<rT, pT>::currentTimeStep() const
 {
     return m_currentTimeStep;
 }
 
-template<typename pT>
-void KMCSolver<pT>::setCurrentTimeStep(double currentTimeStep)
+template<class rT, typename pT>
+void KMCSolver<rT, pT>::setCurrentTimeStep(double currentTimeStep)
 {
     m_currentTimeStep = currentTimeStep;
 }
 
-template<typename pT>
-void KMCSolver<pT>::updateTime()
+template<class rT, typename pT>
+void KMCSolver<rT, pT>::updateTime()
 {
     setCurrentTimeStep(-std::log(rng.uniform())/getTotalRate());
 
@@ -95,8 +95,8 @@ void KMCSolver<pT>::updateTime()
     m_currentTime += currentTimeStep();
 }
 
-template<typename pT>
-void KMCSolver<pT>::initialize()
+template<class rT, typename pT>
+void KMCSolver<rT, pT>::initialize()
 {
     initializeReactions();
 
@@ -105,16 +105,16 @@ void KMCSolver<pT>::initialize()
     updateTime();
 }
 
-template<typename pT>
-void KMCSolver<pT>::execute()
+template<class rT, typename pT>
+void KMCSolver<rT, pT>::execute()
 {
     selectReaction();
 }
 
-template<typename pT>
-void KMCSolver<pT>::reset()
+template<class rT, typename pT>
+void KMCSolver<rT, pT>::reset()
 {
-    m_selectedReaction->execute();
+    executeReaction(*m_selectedReaction);
 
     updateReactions();
 
