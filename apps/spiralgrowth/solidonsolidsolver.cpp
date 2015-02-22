@@ -3,13 +3,13 @@
 
 SolidOnSolidSolver::SolidOnSolidSolver(const uint length, const uint width, const double alpha) :
     KMCSolver(),
+    m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_length(length),
     m_width(width),
     m_alpha(alpha),
     m_heights(length, width),
     m_siteReactions(length, width)
 {
-
     for (uint x = 0; x < length; ++x)
     {
         for (uint y = 0; y < width; ++y)

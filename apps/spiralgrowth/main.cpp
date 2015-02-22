@@ -15,7 +15,7 @@ int main()
     rng.initialize(time(NULL));
 
     const uint L = 100;
-    const uint W = 1;
+    const uint W = 100;
     const double alpha = 1.0;
 
     SolidOnSolidSolver solver(L, W, alpha);

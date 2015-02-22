@@ -32,6 +32,11 @@ public:
         return m_length*m_width;
     }
 
+    const uint &dim() const
+    {
+        return m_dim;
+    }
+
     const double &alpha() const
     {
         return m_alpha;
@@ -63,6 +68,8 @@ public:
     }
 
 private:
+
+    const uint m_dim;
 
     const uint m_length;
     const uint m_width;

@@ -18,7 +18,7 @@ public:
 
     }
 
-    SolidOnSolidSolver &system() const
+    SolidOnSolidSolver &solver() const
     {
         return m_solver;
     }

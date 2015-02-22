@@ -20,23 +20,23 @@ void DiffusionDeposition::executeAndUpdate()
 
     if (r < 1)
     {
-        system().registerHeightChange(x(), y(), +1);
+        solver().registerHeightChange(x(), y(), +1);
     }
     else
     {
-        system().registerHeightChange(x(), y(), -1);
+        solver().registerHeightChange(x(), y(), -1);
     }
 
     calculateRate();
-    system().reaction(system().leftSite(x()), y()).calculateRate();
-    system().reaction(system().rightSite(x()), y()).calculateRate();
-    system().reaction(x(), system().bottomSite(y())).calculateRate();
-    system().reaction(x(), system().topSite(y())).calculateRate();
+    solver().reaction(solver().leftSite(x()), y()).calculateRate();
+    solver().reaction(solver().rightSite(x()), y()).calculateRate();
+    solver().reaction(x(), solver().bottomSite(y())).calculateRate();
+    solver().reaction(x(), solver().topSite(y())).calculateRate();
 
 }
 
 double DiffusionDeposition::rateExpression()
 {
-    return 1 + exp(-system().alpha()*((int)nNeighbors() - 4));
+    return 1 + exp(-solver().alpha()*((int)nNeighbors() - 5 + (int)solver().dim()));
 }
 
