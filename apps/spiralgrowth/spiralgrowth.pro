@@ -14,3 +14,12 @@ QMAKE_LIBS += -larmadillo
 
 HEADERS += \
     spiralgrowthsolver.h
+
+
+OTHER_FILES += \
+    quasidiffusion.cpp \
+    quasidiffusionsystem.cpp \
+    movingwall.cpp \
+    quasidiffusion.h \
+    quasidiffusionsystem.h \
+    movingwall.h

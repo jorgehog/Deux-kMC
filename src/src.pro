@@ -13,6 +13,7 @@ HEADERS = RNG/kmcrng.h \
 SOURCES += \
     RNG/rng.cpp \
     reaction.cpp \
+    kmcsolver.cpp
 
 RNG_ZIG
 {

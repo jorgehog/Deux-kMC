@@ -1,13 +1,6 @@
 #pragma once
 
 #include <sys/types.h>
-#include <limits>
-#include <sstream>
-#include <set>
-#include <functional>
-
-#include <libconfig_utils/libconfig_utils.h>
-
 
 namespace kMC
 {
@@ -22,35 +15,23 @@ public:
 
     virtual bool isAllowed() const = 0;
 
-    virtual void execute() = 0;
+    virtual void executeAndUpdate() = 0;
 
-    template<typename T>
-    void registerUpdateFlag(T flag);
+    virtual double rateExpression() = 0;
 
-    const int & updateFlag() const
+    void calculateRate()
     {
-        return m_updateFlag;
+        m_rate = rateExpression();
     }
 
-    void resetUpdateFlag()
+    const double &rate() const
     {
-        m_updateFlag = UNSET_UPDATE_FLAG;
+        return m_rate;
     }
-
-    template<typename T>
-    void forceUpdateFlag(const T flag);
-
-    //! Update flags are given in the order such that the minimum of the flag set is the
-    //! triumphant flag.
-    enum AllUpdateFlags
-    {
-        UNSET_UPDATE_FLAG = std::numeric_limits<int>::max(),
-        defaultUpdateFlag = 0
-    };
 
 private:
 
-    int m_updateFlag;
+    double m_rate;
 
 };
 

@@ -10,13 +10,15 @@ using namespace ignis;
 
 int main()
 {
-
     rng.initialize(time(NULL));
 
-    SpiralGrowthSolver solver(1000);
+    const uint L = 100;
+    const double alpha = 1.0;
+
+    SolidOnSolidSolver solver(L, alpha);
+
 
     Lattice lattice;
-
     lattice.addEvent(solver);
 
     lattice.enableOutput(true, 10000);

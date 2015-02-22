@@ -9,8 +9,9 @@
 namespace kMC
 {
 
-template<class rT, typename pT=uint>
-class KMCSolver : public ignis::Event<pT>
+class Reaction;
+
+class KMCSolver : public ignis::Event<uint>
 {
 public:
     KMCSolver();
@@ -18,31 +19,32 @@ public:
 
     double currentTimeStep() const;
 
+    const Reaction *selectedReaction() const
+    {
+        return m_selectedReaction;
+    }
+
+    virtual uint numberOfReactions() const = 0;
+
 private:
 
-    rT *m_selectedReaction;
+    Reaction *m_selectedReaction;
 
     double m_currentTimeStep;
     double m_currentTime;
 
-    virtual void initializeReactions() = 0;
+    double m_totalRate;
 
-    virtual void updateReactions() = 0;
-
-    virtual void selectReaction() = 0;
-
-    virtual void executeReaction(rT &reaction) = 0;
-
-    virtual double getTotalRate() = 0;
-
+    vector<double> m_cumsumRates;
 
     void updateTime();
 
     void setCurrentTimeStep(double currentTimeStep);
 
-protected:
+    void initializeReactions();
 
-    inline void setSelectedReaction(rT &reaction);
+    virtual Reaction *getReaction(const uint n) const = 0;
+
 
     // Event interface
 public:
@@ -53,72 +55,5 @@ public:
     virtual void reset() override final;
 
 };
-
-template<class rT, typename pT>
-void KMCSolver<rT, pT>::setSelectedReaction(rT &reaction)
-{
-    m_selectedReaction = &reaction;
-}
-
-
-template<class rT, typename pT>
-KMCSolver<rT, pT>::KMCSolver()
-{
-
-}
-
-template<class rT, typename pT>
-KMCSolver<rT, pT>::~KMCSolver()
-{
-
-}
-
-template<class rT, typename pT>
-double KMCSolver<rT, pT>::currentTimeStep() const
-{
-    return m_currentTimeStep;
-}
-
-template<class rT, typename pT>
-void KMCSolver<rT, pT>::setCurrentTimeStep(double currentTimeStep)
-{
-    m_currentTimeStep = currentTimeStep;
-}
-
-template<class rT, typename pT>
-void KMCSolver<rT, pT>::updateTime()
-{
-    setCurrentTimeStep(-std::log(rng.uniform())/getTotalRate());
-
-    BADAss(currentTimeStep(), >, 0, "timestep should be posiive.");
-
-    m_currentTime += currentTimeStep();
-}
-
-template<class rT, typename pT>
-void KMCSolver<rT, pT>::initialize()
-{
-    initializeReactions();
-
-    m_currentTime = 0;
-
-    updateTime();
-}
-
-template<class rT, typename pT>
-void KMCSolver<rT, pT>::execute()
-{
-    selectReaction();
-}
-
-template<class rT, typename pT>
-void KMCSolver<rT, pT>::reset()
-{
-    executeReaction(*m_selectedReaction);
-
-    updateReactions();
-
-    updateTime();
-}
 
 } //End of namespace kMC
