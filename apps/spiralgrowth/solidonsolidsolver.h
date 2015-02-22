@@ -9,7 +9,7 @@ using namespace arma;
 class SolidOnSolidSolver : public KMCSolver
 {
 public:
-    SolidOnSolidSolver(const uint length, const uint width, const double alpha);
+    SolidOnSolidSolver(const uint length, const uint width, const double alpha, const double mu);
     ~SolidOnSolidSolver();
 
     void registerHeightChange(const uint x, const uint y, const int value)
@@ -40,6 +40,11 @@ public:
     const double &alpha() const
     {
         return m_alpha;
+    }
+
+    const double &mu() const
+    {
+        return m_mu;
     }
 
     const imat &heights() const
@@ -75,6 +80,7 @@ private:
     const uint m_width;
 
     const double m_alpha;
+    double m_mu;
 
     imat m_heights;
 

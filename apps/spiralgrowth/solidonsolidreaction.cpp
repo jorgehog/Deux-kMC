@@ -18,7 +18,7 @@ void DiffusionDeposition::executeAndUpdate()
 {
     double r = rate()*rng.uniform();
 
-    if (r < 1)
+    if (r < m_depositionRate)
     {
         solver().registerHeightChange(x(), y(), +1);
     }
@@ -37,6 +37,9 @@ void DiffusionDeposition::executeAndUpdate()
 
 double DiffusionDeposition::rateExpression()
 {
-    return 1 + exp(-solver().alpha()*((int)nNeighbors() - 5 + (int)solver().dim()));
+    m_depositionRate = 1;
+    double diffusionRate = exp(-solver().alpha()*((int)nNeighbors() + (int)solver().dim() - 5) - solver().mu());
+
+    return m_depositionRate + diffusionRate;
 }
 

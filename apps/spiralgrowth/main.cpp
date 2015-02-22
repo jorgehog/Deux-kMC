@@ -17,8 +17,9 @@ int main()
     const uint L = 100;
     const uint W = 100;
     const double alpha = 1.0;
+    const double mu = 0.0;
 
-    SolidOnSolidSolver solver(L, W, alpha);
+    SolidOnSolidSolver solver(L, W, alpha, mu);
     SurfaceSize size;
     DumpHeights3D dumpHeights3D;
     AverageHeight averageHeight;

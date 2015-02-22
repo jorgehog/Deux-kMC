@@ -53,4 +53,9 @@ public:
     bool isAllowed() const;
     void executeAndUpdate();
     double rateExpression();
+
+private:
+    double m_depositionRate;
+
 };
+
