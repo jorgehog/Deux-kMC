@@ -1,21 +1,28 @@
-#include "spiralgrowthsolver.h"
+#include "solidonsolidsolver.h"
 
 SolidOnSolidSolver::SolidOnSolidSolver(const uint length, const double alpha) :
     KMCSolver(),
     m_length(length),
     m_alpha(alpha),
-    m_heights(length, fill::zeros),
+    m_heights(length),
     m_siteReactions(length)
 {
     for (uint x = 0; x < length; ++x)
     {
+        m_heights(x) = m_heights(leftSite(x)) + round(-1 + 2*rng.uniform());
         m_siteReactions(x) = new DiffusionDeposition(x, *this);
     }
+
 }
 
 SolidOnSolidSolver::~SolidOnSolidSolver()
 {
+    for (uint x = 0; x < length(); ++x)
+    {
+        delete m_siteReactions(x);
+    }
 
+    m_siteReactions.clear();
 }
 
 uint SolidOnSolidSolver::nNeighbors(const uint site) const
@@ -57,7 +64,7 @@ bool DiffusionDeposition::isAllowed() const
 
 void DiffusionDeposition::executeAndUpdate()
 {
-    double r = (1 + rate())*rng.uniform();
+    double r = rate()*rng.uniform();
 
     if (r < 1)
     {
@@ -75,7 +82,7 @@ void DiffusionDeposition::executeAndUpdate()
 
 double DiffusionDeposition::rateExpression()
 {
-    return 1 + exp(-system().alpha()*(nNeighbors() - 2));
+    return 1 + exp(-system().alpha()*((int)nNeighbors() - 2));
 }
 
 

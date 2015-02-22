@@ -15,7 +15,6 @@ public:
     void registerHeightChange(const uint x, const int value)
     {
         m_heights(x) += value;
-        m_heights.save("/tmp/heighmap.arma");
     }
 
     const uint &length() const
@@ -28,21 +27,21 @@ public:
         return m_alpha;
     }
 
+    const ivec &heights() const
+    {
+        return m_heights;
+    }
+
+    const int &height(const uint site) const
+    {
+        return m_heights(site);
+    }
+
     uint nNeighbors(const uint site) const;
 
     uint leftSite(const uint site, const uint n = 1) const;
 
     uint rightSite(const uint site, const uint n = 1) const;
-
-    bool connectedLeft(const uint leftSite, const int myHeight) const
-    {
-        return m_heights(leftSite) >= myHeight;
-    }
-
-    bool connectedRight(const uint rightSite, const int myHeight) const
-    {
-        return m_heights(rightSite) >= myHeight;
-    }
 
     Reaction &reaction(const uint site) const
     {
@@ -55,7 +54,7 @@ private:
 
     const double m_alpha;
 
-    vec m_heights;
+    ivec m_heights;
 
     field<Reaction*> m_siteReactions;
 
@@ -110,52 +109,4 @@ public:
     bool isAllowed() const;
     void executeAndUpdate();
     double rateExpression();
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class TestReaction : public Reaction
-{
-public:
-
-    TestReaction(const uint x, SolidOnSolidSolver &system) :
-        Reaction(),
-        m_x(x),
-        m_system(system)
-    {
-
-    }
-
-    bool isAllowed() const
-    {
-        return true;
-    }
-
-    void executeAndUpdate()
-    {
-        m_system.registerHeightChange(m_x, +1);
-    }
-
-    double rateExpression()
-    {
-        return 1 + sin(m_x/double(m_system.length())*2*datum::pi);
-    }
-
-private:
-
-    const uint m_x;
-
-    SolidOnSolidSolver &m_system;
-
 };

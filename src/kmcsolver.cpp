@@ -6,7 +6,7 @@ using namespace kMC;
 
 
 KMCSolver::KMCSolver() :
-    ignis::Event<uint>("KMCSolver")
+    ignis::LatticeEvent("KMCSolver")
 {
 
 }
@@ -15,12 +15,6 @@ KMCSolver::KMCSolver() :
 KMCSolver::~KMCSolver()
 {
 
-}
-
-
-double KMCSolver::currentTimeStep() const
-{
-    return m_currentTimeStep;
 }
 
 
@@ -53,7 +47,34 @@ void KMCSolver::initializeReactions()
             rate = 0;
         }
 
-        m_cumsumRates[i] = m_totalRate;
+        m_cumsumRates.at(i) = m_totalRate;
+    }
+}
+
+void KMCSolver::getCumsumAndTotalRate()
+{
+    m_totalRate = 0;
+
+    double rate;
+    Reaction *reaction;
+
+    for (uint i = 0; i < numberOfReactions(); ++i)
+    {
+        reaction = getReaction(i);
+
+        if (reaction->isAllowed())
+        {
+            rate = reaction->rate();
+            BADAssClose(rate, reaction->rateExpression(), 1E-5);
+
+            m_totalRate += rate;
+        }
+        else
+        {
+            rate = 0;
+        }
+
+        m_cumsumRates.at(i) = m_totalRate;
     }
 }
 
@@ -86,6 +107,7 @@ void KMCSolver::execute()
 
     m_selectedReaction = getReaction(choice);
 
+    BADAssBool(selectedReaction()->isAllowed());
 }
 
 
@@ -93,7 +115,7 @@ void KMCSolver::reset()
 {
     m_selectedReaction->executeAndUpdate();
 
-//    getCumsumAndTotalRate();
+    getCumsumAndTotalRate();
 
     updateTime();
 }

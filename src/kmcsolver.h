@@ -11,13 +11,21 @@ namespace kMC
 
 class Reaction;
 
-class KMCSolver : public ignis::Event<uint>
+class KMCSolver : public ignis::LatticeEvent
 {
 public:
     KMCSolver();
     virtual ~KMCSolver();
 
-    double currentTimeStep() const;
+    const double &currentTimeStep() const
+    {
+        return m_currentTimeStep;
+    }
+
+    const double &currentTime() const
+    {
+        return m_currentTime;
+    }
 
     const Reaction *selectedReaction() const
     {
@@ -37,14 +45,15 @@ private:
 
     vector<double> m_cumsumRates;
 
+    virtual Reaction *getReaction(const uint n) const = 0;
+
     void updateTime();
 
     void setCurrentTimeStep(double currentTimeStep);
 
     void initializeReactions();
 
-    virtual Reaction *getReaction(const uint n) const = 0;
-
+    void getCumsumAndTotalRate();
 
     // Event interface
 public:
