@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kMC>
+#include <utils.h>
 #include "solidonsolidsolver.h"
 
 class SolidOnSolidEvent : public LatticeEvent
@@ -49,18 +50,32 @@ private:
 };
 
 
-class DumpHeights : public SolidOnSolidEvent
+class AverageHeight : public SolidOnSolidEvent
 {
 public:
 
-    DumpHeights() :
-        SolidOnSolidEvent("height", "", true, true),
-        m_filename("/tmp/heighmap.arma")
+    AverageHeight()
+        : SolidOnSolidEvent("AverageHeight", "l0", true, true)
     {
 
     }
 
-protected:
+    void execute();
+};
+
+
+class DumpHeights3D : public SolidOnSolidEvent
+{
+public:
+
+    DumpHeights3D(const string path = "/tmp") :
+        SolidOnSolidEvent("DumpHeights3D"),
+        m_writer(4, "SOS", path)
+    {
+
+    }
+
+    void initialize();
 
     void execute();
 
@@ -68,4 +83,11 @@ private:
 
     const string m_filename;
 
+    lammpswriter m_writer;
+
+    uint m_L;
+    uint m_W;
+    uint m_N;
+
 };
+

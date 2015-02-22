@@ -1,16 +1,22 @@
 #include "solidonsolidsolver.h"
+#include "solidonsolidreaction.h"
 
-SolidOnSolidSolver::SolidOnSolidSolver(const uint length, const double alpha) :
+SolidOnSolidSolver::SolidOnSolidSolver(const uint length, const uint width, const double alpha) :
     KMCSolver(),
     m_length(length),
+    m_width(width),
     m_alpha(alpha),
-    m_heights(length),
-    m_siteReactions(length)
+    m_heights(length, width),
+    m_siteReactions(length, width)
 {
+
     for (uint x = 0; x < length; ++x)
     {
-        m_heights(x) = m_heights(leftSite(x)) + round(-1 + 2*rng.uniform());
-        m_siteReactions(x) = new DiffusionDeposition(x, *this);
+        for (uint y = 0; y < width; ++y)
+        {
+            m_heights(x, y) = (m_heights(leftSite(x), y) + m_heights(x, bottomSite(y)))/2 + round(-1 + 2*rng.uniform());
+            m_siteReactions(x, y) = new DiffusionDeposition(x, y, *this);
+        }
     }
 
 }
@@ -19,32 +25,64 @@ SolidOnSolidSolver::~SolidOnSolidSolver()
 {
     for (uint x = 0; x < length(); ++x)
     {
-        delete m_siteReactions(x);
+        for (uint y = 0; y < width(); ++y)
+        {
+            delete m_siteReactions(x);
+        }
     }
 
     m_siteReactions.clear();
 }
 
-uint SolidOnSolidSolver::nNeighbors(const uint site) const
+uint SolidOnSolidSolver::nNeighbors(const uint x, const uint y) const
 {
 
-    bool hasLeftNeighbor = m_heights(leftSite(site)) >= m_heights(site);
-    bool hasRightNeighbor = m_heights(rightSite(site)) >= m_heights(site);
+    uint n = 1;
 
-    if (hasLeftNeighbor && hasRightNeighbor)
+    const int &h = m_heights(x, y);
+    const int &hLeft = m_heights(leftSite(x), y);
+    const int &hRight = m_heights(rightSite(x), y);
+    const int &hTop = m_heights(x, topSite(y));
+    const int &hBottom = m_heights(x, bottomSite(y));
+
+
+    bool connectedLeft = hLeft >= h;
+    bool connectedRight = hRight >= h;
+    bool connectedTop = hTop >= h;
+    bool connectedBottom = hBottom >= h;
+
+    if (connectedLeft)
     {
-        return 3;
+        n++;
     }
 
-    else if (hasLeftNeighbor || hasRightNeighbor)
+    if (connectedRight)
     {
-        return 2;
+        n++;
     }
 
-    else
+    if (connectedTop)
     {
-        return 1;
+        n++;
     }
+
+    if (connectedBottom)
+    {
+        n++;
+    }
+
+    return n;
+
+}
+
+uint SolidOnSolidSolver::topSite(const uint site, const uint n) const
+{
+    return (site + n)%width();
+}
+
+uint SolidOnSolidSolver::bottomSite(const uint site, const uint n) const
+{
+    return (site + width() - n)%width();
 }
 
 uint SolidOnSolidSolver::leftSite(const uint site, const uint n) const
@@ -56,35 +94,6 @@ uint SolidOnSolidSolver::rightSite(const uint site, const uint n) const
 {
     return (site + n)%length();
 }
-
-bool DiffusionDeposition::isAllowed() const
-{
-    return true;
-}
-
-void DiffusionDeposition::executeAndUpdate()
-{
-    double r = rate()*rng.uniform();
-
-    if (r < 1)
-    {
-        system().registerHeightChange(x(), +1);
-    }
-    else
-    {
-        system().registerHeightChange(x(), -1);
-    }
-
-    calculateRate();
-    system().reaction(system().leftSite(x())).calculateRate();
-    system().reaction(system().rightSite(x())).calculateRate();
-}
-
-double DiffusionDeposition::rateExpression()
-{
-    return 1 + exp(-system().alpha()*((int)nNeighbors() - 2));
-}
-
 
 uint SolidOnSolidSolver::numberOfReactions() const
 {

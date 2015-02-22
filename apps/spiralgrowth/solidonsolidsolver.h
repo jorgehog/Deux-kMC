@@ -9,12 +9,12 @@ using namespace arma;
 class SolidOnSolidSolver : public KMCSolver
 {
 public:
-    SolidOnSolidSolver(const uint length, const double alpha);
+    SolidOnSolidSolver(const uint length, const uint width, const double alpha);
     ~SolidOnSolidSolver();
 
-    void registerHeightChange(const uint x, const int value)
+    void registerHeightChange(const uint x, const uint y, const int value)
     {
-        m_heights(x) += value;
+        m_heights(x, y) += value;
     }
 
     const uint &length() const
@@ -22,39 +22,54 @@ public:
         return m_length;
     }
 
+    const uint &width() const
+    {
+        return m_width;
+    }
+
+    uint area() const
+    {
+        return m_length*m_width;
+    }
+
     const double &alpha() const
     {
         return m_alpha;
     }
 
-    const ivec &heights() const
+    const imat &heights() const
     {
         return m_heights;
     }
 
-    const int &height(const uint site) const
+    const int &height(const uint x, const uint y) const
     {
-        return m_heights(site);
+        return m_heights(x, y);
     }
 
-    uint nNeighbors(const uint site) const;
+    uint nNeighbors(const uint x, const uint y) const;
+
+    uint topSite(const uint site, const uint n = 1) const;
+
+    uint bottomSite(const uint site, const uint n = 1) const;
 
     uint leftSite(const uint site, const uint n = 1) const;
 
     uint rightSite(const uint site, const uint n = 1) const;
 
-    Reaction &reaction(const uint site) const
+    Reaction &reaction(const uint x, const uint y) const
     {
-        return *m_siteReactions(site);
+        return *m_siteReactions(x, y);
     }
 
 private:
 
     const uint m_length;
+    const uint m_width;
 
     const double m_alpha;
 
-    ivec m_heights;
+    imat m_heights;
 
     field<Reaction*> m_siteReactions;
 
@@ -64,49 +79,4 @@ public:
 
 private:
     Reaction *getReaction(const uint n) const;
-};
-
-class SolidOnSolidReaction : public Reaction
-{
-public:
-    SolidOnSolidReaction(const uint x, SolidOnSolidSolver &system) :
-        Reaction(),
-        m_x(x),
-        m_solver(system)
-    {
-
-    }
-
-    SolidOnSolidSolver &system() const
-    {
-        return m_solver;
-    }
-
-    const uint &x() const
-    {
-        return m_x;
-    }
-
-    uint nNeighbors() const
-    {
-        return m_solver.nNeighbors(m_x);
-    }
-
-private:
-    const uint m_x;
-
-    SolidOnSolidSolver &m_solver;
-
-};
-
-class DiffusionDeposition : public SolidOnSolidReaction
-{
-public:
-    using SolidOnSolidReaction::SolidOnSolidReaction;
-
-    // Reaction interface
-public:
-    bool isAllowed() const;
-    void executeAndUpdate();
-    double rateExpression();
 };

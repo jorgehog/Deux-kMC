@@ -7,7 +7,8 @@ include(../app_defaults.pri)
 
 SOURCES += main.cpp \
     solidonsolidsolver.cpp \
-    solidonsolidevents.cpp
+    solidonsolidevents.cpp \
+    solidonsolidreaction.cpp
 
 QMAKE_CXXFLAGS += -std=c++11
 
@@ -15,7 +16,8 @@ QMAKE_LIBS += -larmadillo
 
 HEADERS += \
     solidonsolidsolver.h \
-    solidonsolidevents.h
+    solidonsolidevents.h \
+    solidonsolidreaction.h
 
 
 OTHER_FILES += \
