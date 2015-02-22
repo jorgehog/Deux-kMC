@@ -1,13 +1,18 @@
 #include "solidonsolidsolver.h"
 #include "solidonsolidreaction.h"
 
-SolidOnSolidSolver::SolidOnSolidSolver(const uint length, const uint width, const double alpha, const double mu) :
+SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
+                                       const uint width,
+                                       const double alpha,
+                                       const double mu,
+                                       const bool shadowing) :
     KMCSolver(),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_length(length),
     m_width(width),
     m_alpha(alpha),
     m_mu(mu),
+    m_shadowing(shadowing),
     m_heights(length, width),
     m_siteReactions(length, width)
 {
@@ -94,6 +99,11 @@ uint SolidOnSolidSolver::leftSite(const uint site, const uint n) const
 uint SolidOnSolidSolver::rightSite(const uint site, const uint n) const
 {
     return (site + n)%length();
+}
+
+double SolidOnSolidSolver::shadowScale(const double n) const
+{
+    return 2*(1 + m_dim) - n;
 }
 
 uint SolidOnSolidSolver::numberOfReactions() const

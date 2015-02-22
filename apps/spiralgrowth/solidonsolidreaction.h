@@ -48,6 +48,16 @@ class DiffusionDeposition : public SolidOnSolidReaction
 public:
     using SolidOnSolidReaction::SolidOnSolidReaction;
 
+    const double &depositionRate() const
+    {
+        return m_depositionRate;
+    }
+
+    const double &diffusionRate() const
+    {
+        return m_diffusionRate;
+    }
+
     // Reaction interface
 public:
     bool isAllowed() const;
@@ -56,6 +66,7 @@ public:
 
 private:
     double m_depositionRate;
+    double m_diffusionRate;
 
 };
 

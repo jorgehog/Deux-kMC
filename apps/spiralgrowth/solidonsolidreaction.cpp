@@ -37,9 +37,19 @@ void DiffusionDeposition::executeAndUpdate()
 
 double DiffusionDeposition::rateExpression()
 {
-    m_depositionRate = 1;
-    double diffusionRate = exp(-solver().alpha()*((int)nNeighbors() + (int)solver().dim() - 5) - solver().mu());
+    int n = nNeighbors();
 
-    return m_depositionRate + diffusionRate;
+    if (solver().shadowing())
+    {
+        m_depositionRate = solver().shadowScale(n);
+    }
+    else
+    {
+        m_depositionRate = 1.0;
+    }
+
+    m_diffusionRate = exp(-solver().alpha()*(n + (int)solver().dim() - 5) - solver().mu());
+
+    return m_depositionRate + m_diffusionRate;
 }
 

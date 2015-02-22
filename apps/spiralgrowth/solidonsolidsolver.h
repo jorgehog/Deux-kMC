@@ -6,10 +6,17 @@
 using namespace kMC;
 using namespace arma;
 
+class DiffusionDeposition;
+
 class SolidOnSolidSolver : public KMCSolver
 {
 public:
-    SolidOnSolidSolver(const uint length, const uint width, const double alpha, const double mu);
+    SolidOnSolidSolver(const uint length,
+                       const uint width,
+                       const double alpha,
+                       const double mu,
+                       const bool shadowing);
+
     ~SolidOnSolidSolver();
 
     void registerHeightChange(const uint x, const uint y, const int value)
@@ -47,6 +54,11 @@ public:
         return m_mu;
     }
 
+    const bool &shadowing() const
+    {
+        return m_shadowing;
+    }
+
     const imat &heights() const
     {
         return m_heights;
@@ -67,9 +79,16 @@ public:
 
     uint rightSite(const uint site, const uint n = 1) const;
 
-    Reaction &reaction(const uint x, const uint y) const
+    DiffusionDeposition &reaction(const uint x, const uint y) const
     {
         return *m_siteReactions(x, y);
+    }
+
+    double shadowScale(const double n) const;
+
+    void setMu(const double mu)
+    {
+        m_mu = mu;
     }
 
 private:
@@ -82,14 +101,14 @@ private:
     const double m_alpha;
     double m_mu;
 
+    const bool m_shadowing;
+
     imat m_heights;
 
-    field<Reaction*> m_siteReactions;
+    field<DiffusionDeposition*> m_siteReactions;
 
     // KMCSolver interface
 public:
     uint numberOfReactions() const;
-
-private:
     Reaction *getReaction(const uint n) const;
 };

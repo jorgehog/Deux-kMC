@@ -34,6 +34,8 @@ public:
 
     virtual uint numberOfReactions() const = 0;
 
+    virtual Reaction *getReaction(const uint n) const = 0;
+
 private:
 
     Reaction *m_selectedReaction;
@@ -44,8 +46,6 @@ private:
     double m_totalRate;
 
     vector<double> m_cumsumRates;
-
-    virtual Reaction *getReaction(const uint n) const = 0;
 
     void updateTime();
 
