@@ -7,8 +7,11 @@ include(../app_defaults.pri)
 
 SOURCES += main.cpp \
     solidonsolidsolver.cpp \
-    solidonsolidevents.cpp \
-    solidonsolidreaction.cpp
+    solidonsolidreaction.cpp \
+    pressurewall.cpp \
+    equilibriater.cpp \
+    eqmu.cpp \
+    miscevents.cpp
 
 QMAKE_CXXFLAGS += -std=c++11
 
@@ -16,8 +19,12 @@ QMAKE_LIBS += -larmadillo
 
 HEADERS += \
     solidonsolidsolver.h \
-    solidonsolidevents.h \
-    solidonsolidreaction.h
+    solidonsolidreaction.h \
+    pressurewall.h \
+    solidonsolidevent.h \
+    equilibriater.h \
+    eqmu.h \
+    miscevents.h
 
 
 OTHER_FILES += \

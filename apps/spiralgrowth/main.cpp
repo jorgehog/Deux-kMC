@@ -1,6 +1,8 @@
 #include "solidonsolidsolver.h"
 
-#include "solidonsolidevents.h"
+#include "eqmu.h"
+#include "equilibriater.h"
+#include "miscevents.h"
 
 #include <utils.h>
 

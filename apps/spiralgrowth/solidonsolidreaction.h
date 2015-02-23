@@ -58,6 +58,11 @@ public:
         return m_diffusionRate;
     }
 
+    void setDiffusionRate(const double newRate)
+    {
+        m_diffusionRate = newRate;
+    }
+
     // Reaction interface
 public:
     bool isAllowed() const;

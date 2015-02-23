@@ -29,6 +29,11 @@ public:
         return m_rate;
     }
 
+    void changeRate(const double newRate)
+    {
+        m_rate = newRate;
+    }
+
 private:
 
     double m_rate;

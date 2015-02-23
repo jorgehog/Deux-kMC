@@ -32,6 +32,8 @@ public:
         return m_selectedReaction;
     }
 
+    void initializeReactions();
+
     virtual uint numberOfReactions() const = 0;
 
     virtual Reaction *getReaction(const uint n) const = 0;
@@ -50,8 +52,6 @@ private:
     void updateTime();
 
     void setCurrentTimeStep(double currentTimeStep);
-
-    void initializeReactions();
 
     void getCumsumAndTotalRate();
 
