@@ -121,9 +121,15 @@ double PressureWall::pressureEnergySum() const
 void PressureWall::findNewHeight()
 {
 
-    double theta = accu(m_thetaPartialSumsMat)/solver().area();
+    double theta = accu(m_thetaPartialSumsMat/solver().area());
 
     m_heightChange = m_r0*std::log(theta/m_thetaPrev);
+
+    if (m_heightChange != m_heightChange)
+    {
+        cout << m_heightChange << " " << theta << " " << m_thetaPrev << endl;
+        exit(1);
+    }
 
     m_thetaPrev = theta;
 

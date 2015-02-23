@@ -15,7 +15,8 @@ using namespace ignis;
 
 int main()
 {
-    rng.initialize(time(NULL));
+    int seed = 10;
+    rng.initialize(seed);
 
     const uint nCycles = 1000000;
     const uint thermalization = 10000;

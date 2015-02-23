@@ -23,7 +23,7 @@ private:
 
 void KMCRNGZIG::onInitialize()
 {
-    int inseed = static_cast<int>(m_initialSeed);
+    int inseed = static_cast<int>(initialSeed());
     int cseed = 100;
     int seed2 = inseed * 3;
     RanSetSeed_MWC8222(&seed2, cseed);
