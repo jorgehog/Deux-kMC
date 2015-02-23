@@ -76,7 +76,7 @@ public:
         return m_pressureWallEvent;
     }
 
-    const double &localPressure(const uint x, const uint y) const;
+    double localPressure(const uint x, const uint y) const;
 
     uint nNeighbors(const uint x, const uint y) const;
 

@@ -64,6 +64,11 @@ public:
         m_diffusionRate = newRate;
     }
 
+    double calculateDiffusionRate() const;
+
+    double calculateDepositionRate() const;
+
+
     // Reaction interface
 public:
     bool isAllowed() const;

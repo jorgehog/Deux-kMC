@@ -57,7 +57,7 @@ int main()
     MainMesh<uint> lattice;
     lattice.addEvent(solver);
     lattice.addEvent(averageHeight);
-//    lattice.addEvent(pressureWallEvent);
+    lattice.addEvent(pressureWallEvent);
 //    lattice.addEvent(size);
     lattice.addEvent(dumpHeights3D);
 

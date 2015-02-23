@@ -10,6 +10,26 @@ uint SolidOnSolidReaction::nNeighbors() const
     return m_solver.nNeighbors(m_x, m_y);
 }
 
+double DiffusionDeposition::calculateDiffusionRate() const
+{
+    const double &Ew = solver().localPressure(x(), y());
+    const double E = nNeighbors() + (int)solver().dim() - 5 + Ew;
+
+    return exp(-solver().alpha()*E - solver().mu());
+}
+
+double DiffusionDeposition::calculateDepositionRate() const
+{
+    if (solver().shadowing())
+    {
+        return solver().shadowScale(nNeighbors());
+    }
+    else
+    {
+        return 1.0;
+    }
+}
+
 bool DiffusionDeposition::isAllowed() const
 {
     return true;
@@ -45,6 +65,7 @@ void DiffusionDeposition::executeAndUpdate()
     {
         pressureWallEvent.findNewHeight();
 
+        pressureWallEvent.recalculateLocalPressure(x(), y());
         pressureWallEvent.recalculateLocalPressure(leftSite, y());
         pressureWallEvent.recalculateLocalPressure(rightSite, y());
         pressureWallEvent.recalculateLocalPressure(x(), bottomSite);
@@ -80,21 +101,8 @@ void DiffusionDeposition::executeAndUpdate()
 
 double DiffusionDeposition::rateExpression()
 {
-    int n = nNeighbors();
-
-    if (solver().shadowing())
-    {
-        m_depositionRate = solver().shadowScale(n);
-    }
-    else
-    {
-        m_depositionRate = 1.0;
-    }
-
-    const double &Ew = solver().localPressure(x(), y());
-    const double E = n + (int)solver().dim() - 5 + Ew;
-
-    m_diffusionRate = exp(-solver().alpha()*E - solver().mu());
+    m_depositionRate = calculateDepositionRate();
+    m_diffusionRate = calculateDiffusionRate();
 
     return m_depositionRate + m_diffusionRate;
 }

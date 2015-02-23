@@ -158,6 +158,11 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
         BADAssSimpleDump(cycle(), x, y, localPressure(x, y), m_expFac, m_heightChange);
     });
 
+    BADAssClose(reaction.diffusionRate(), reaction.calculateDiffusionRate(), 1E-5, "incorrect rate update", [&] ()
+    {
+        BADAssSimpleDump(cycle(), x, y, localPressure(x, y), m_expFac, m_heightChange);
+    });
+
 }
 
 void PressureWall::recalculateAllPressures()

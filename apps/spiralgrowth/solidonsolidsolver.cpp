@@ -47,7 +47,7 @@ SolidOnSolidSolver::~SolidOnSolidSolver()
     m_siteReactions.clear();
 }
 
-const double &SolidOnSolidSolver::localPressure(const uint x, const uint y) const
+double SolidOnSolidSolver::localPressure(const uint x, const uint y) const
 {
     if (!m_pressureWallEvent.hasStarted())
     {
