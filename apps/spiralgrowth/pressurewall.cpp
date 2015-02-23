@@ -73,7 +73,9 @@ void PressureWall::setupInitialConditions()
 
 void PressureWall::execute()
 {
-    setValue(m_height - dependency("AverageHeight")->value());
+    double value = m_height - dependency("AverageHeight")->value();
+
+    setValue(value);
 
     if ((cycle() + 1)%10000 == 0)
     {

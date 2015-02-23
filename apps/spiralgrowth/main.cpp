@@ -21,17 +21,19 @@ int main()
     const uint thermalization = 10000;
     const uint nCyclesPerOutput = 100;
 
-    const uint L = 30;
-    const uint W = 30;
+    const uint L = 256;
+    const uint W = 1;
 
     const double alpha = 1.0;
-    const double mu = 1.0;
+    const double mu = 0.0;
 
     const bool shadowing = false;
 
-    const double E0 = -1;
+    const double E0 = -256;
     const double r0 = 1.0;
     const double sigma0 = 1.0;
+
+    const bool equilibriate = false;
 
     SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
@@ -55,8 +57,11 @@ int main()
 //    lattice.addEvent(size);
     lattice.addEvent(dumpHeights3D);
 
-    lattice.addEvent(eqMu);
-    lattice.addEvent(equilibriater);
+    if (equilibriate)
+    {
+        lattice.addEvent(eqMu);
+        lattice.addEvent(equilibriater);
+    }
 
 #ifndef NDEBUG
     RateChecker checker(solver);
