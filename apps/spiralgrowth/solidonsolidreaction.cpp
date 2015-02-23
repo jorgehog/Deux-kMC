@@ -2,12 +2,13 @@
 
 #include "solidonsolidsolver.h"
 
+#include "pressurewall.h"
+
 
 uint SolidOnSolidReaction::nNeighbors() const
 {
     return m_solver.nNeighbors(m_x, m_y);
 }
-
 
 bool DiffusionDeposition::isAllowed() const
 {
@@ -27,11 +28,53 @@ void DiffusionDeposition::executeAndUpdate()
         solver().registerHeightChange(x(), y(), -1);
     }
 
+
+    const uint leftSite = solver().leftSite(x());
+    const uint rightSite = solver().rightSite(x());
+    const uint bottomSite = solver().bottomSite(y());
+    const uint topSite = solver().topSite(y());
+
+    DiffusionDeposition &leftReaction = solver().reaction(leftSite, y());
+    DiffusionDeposition &rightReaction = solver().reaction(rightSite, y());
+    DiffusionDeposition &bottomReaction = solver().reaction(x(), bottomSite);
+    DiffusionDeposition &topReaction = solver().reaction(x(), topSite);
+
+    PressureWall &pressureWallEvent = solver().pressureWallEvent();
+
+    if (pressureWallEvent.hasStarted())
+    {
+        pressureWallEvent.findNewHeight();
+
+        pressureWallEvent.recalculateLocalPressure(leftSite, y());
+        pressureWallEvent.recalculateLocalPressure(rightSite, y());
+        pressureWallEvent.recalculateLocalPressure(x(), bottomSite);
+        pressureWallEvent.recalculateLocalPressure(x(), topSite);
+
+        for (uint x = 0; x < solver().length(); ++x)
+        {
+            for (uint y = 0; y < solver().width(); ++y)
+            {
+
+                DiffusionDeposition &reaction = solver().reaction(x, y);
+
+                if (!( (&reaction == this)
+                       || (&reaction == &leftReaction)
+                       || (&reaction == &rightReaction)
+                       || (&reaction == &bottomReaction)
+                       || (&reaction == &topReaction)
+                       ) )
+                {
+                    pressureWallEvent.updateRatesFor(reaction);
+                }
+            }
+        }
+    }
+
     calculateRate();
-    solver().reaction(solver().leftSite(x()), y()).calculateRate();
-    solver().reaction(solver().rightSite(x()), y()).calculateRate();
-    solver().reaction(x(), solver().bottomSite(y())).calculateRate();
-    solver().reaction(x(), solver().topSite(y())).calculateRate();
+    leftReaction.calculateRate();
+    rightReaction.calculateRate();
+    bottomReaction.calculateRate();
+    topReaction.calculateRate();
 
 }
 
@@ -48,7 +91,10 @@ double DiffusionDeposition::rateExpression()
         m_depositionRate = 1.0;
     }
 
-    m_diffusionRate = exp(-solver().alpha()*(n + (int)solver().dim() - 5) - solver().mu());
+    const double &Ew = solver().localPressure(x(), y());
+    const double E = n + (int)solver().dim() - 5 + Ew;
+
+    m_diffusionRate = exp(-solver().alpha()*E - solver().mu());
 
     return m_depositionRate + m_diffusionRate;
 }

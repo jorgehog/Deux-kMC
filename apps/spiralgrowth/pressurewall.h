@@ -2,69 +2,34 @@
 
 #include "solidonsolidevent.h"
 
-namespace kMC
-{
-
 class SolidOnSolidSystem;
 
 class PressureWall : public SolidOnSolidEvent
 {
 public:
 
-    PressureWall(SolidOnSolidSolver &mutexSolver, const double E0,
-               const double sigma0,
-               const double r0);
-
-    const string numericDescription() const
-    {
-        stringstream s;
-        s << "E0_" << m_E0
-          << "_s0_" << m_s0
-          << "_r0_" << m_r0;
-
-        return s.str();
-
-    }
+    PressureWall(const double E0,
+                 const double sigma0,
+                 const double r0);
 
     ~PressureWall();
 
-    static double expSmallArg(double arg)
-    {
-        if (arg > 0.1 || arg < -0.1)
-        {
-            return exp(arg);
-        }
+    static double expSmallArg(double arg);
 
-        BADAssClose(arg, 0, 0.1, "Argument is not small.", [&arg] ()
-        {
-            BADAssSimpleDump(arg);
-        });
+    void setupInitialConditions();
 
-        double arg2 = arg*arg;
-        double arg4 = arg2*arg2;
-        double approx = 1.0 + arg*(1 + 1.0/6*arg2 + 1.0/120*arg4) + 0.5*(arg2 + 1.0/12*arg4);
-
-        BADAssClose(exp(arg), approx, 1E-5,
-                    "Exponential approximation failed.", [&] ()
-        {
-            BADAssSimpleDump(arg, exp(arg), approx);
-        });
-
-        return approx;
-    }
-
-    void initialize();
-
-    void execute()
-    {
-
-    }
+    void execute();
 
     void reset();
 
     const double &heightChange() const
     {
         return m_heightChange;
+    }
+
+    void recalculateLocalPressure(const uint x, const uint y)
+    {
+        m_localPressure(x, y) = localPressureEvaluate(x, y);
     }
 
     double localPressure(const uint x, const uint y) const
@@ -84,29 +49,18 @@ public:
         return m_height;
     }
 
-    double pressureEnergySum() const
-    {
-        double s = 0;
-        for (uint x = 0; x < solver()->length(); ++x)
-        {
-            for (uint y = 0; y < solver()->width(); ++y)
-            {
-                BADAssClose(m_localPressure(x, y), localPressureEvaluate(x, y), 1E-4);
+    double pressureEnergySum() const;
 
-                s += m_localPressure(x, y);
-            }
-        }
+    void findNewHeight();
 
-        return s;
-    }
+    void updateRatesFor(DiffusionDeposition &reaction);
 
 private:
-
-    SolidOnSolidSolver &m_mutexSolver;
 
     double m_height;
     double m_heightChange;
     double m_thetaPrev;
+    double m_expFac;
 
     uint m_changed;
 
@@ -116,15 +70,6 @@ private:
 
     mat m_localPressure;
 
-    SolidOnSolidSolver *solver() const
-    {
-        return &m_mutexSolver;
-    }
-
-    void _rescaleHeight();
-
-    void _updatePressureRates();
-
     void recalculateAllPressures();
 
     double _pressureExpression(const double heightDifference) const
@@ -133,6 +78,3 @@ private:
     }
 
 };
-
-
-}

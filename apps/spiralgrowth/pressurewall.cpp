@@ -2,15 +2,11 @@
 
 #include "solidonsolidreaction.h"
 
-using namespace kMC;
 
-
-PressureWall::PressureWall(SolidOnSolidSolver &mutexSolver,
-                       const double E0,
-                       const double sigma0,
-                       const double r0):
-    SolidOnSolidEvent("MovingWall", "h0", true, true),
-    m_mutexSolver(mutexSolver),
+PressureWall::PressureWall(const double E0,
+                           const double sigma0,
+                           const double r0):
+    SolidOnSolidEvent("PressureWall", "h0", true, true),
     m_r0(r0),
     m_s0(sigma0),
     m_E0(E0)
@@ -23,12 +19,35 @@ PressureWall::~PressureWall()
 
 }
 
-void PressureWall::initialize()
+double PressureWall::expSmallArg(double arg)
+{
+    if (arg > 0.1 || arg < -0.1)
+    {
+        return exp(arg);
+    }
+
+    BADAssClose(arg, 0, 0.1, "Argument is not small.", [&arg] ()
+    {
+        BADAssSimpleDump(arg);
+    });
+
+    double arg2 = arg*arg;
+    double arg4 = arg2*arg2;
+    double approx = 1.0 + arg*(1 + 1.0/6*arg2 + 1.0/120*arg4) + 0.5*(arg2 + 1.0/12*arg4);
+
+    BADAssClose(exp(arg), approx, 1E-5,
+                "Exponential approximation failed.", [&] ()
+    {
+        BADAssSimpleDump(arg, exp(arg), approx);
+    });
+
+    return approx;
+}
+
+void PressureWall::setupInitialConditions()
 {
     m_localPressure.set_size(solver()->length(), solver()->width());
     m_localPressure.zeros();
-
-    BADAssBool(isActive() && hasStarted());
 
     m_thetaPrev = 0;
 
@@ -44,10 +63,19 @@ void PressureWall::initialize()
 
     m_height = m_r0*std::log(solver()->area()*m_s0*m_thetaPrev/(-m_E0));
 
-    solver()->initializeReactions();
+    recalculateAllPressures();
 
     BADAssClose(pressureEnergySum(), m_E0, 1E-5);
+}
 
+void PressureWall::execute()
+{
+    setValue(m_height - dependency("AverageHeight")->value());
+
+    if ((cycle() + 1)%10000 == 0)
+    {
+        recalculateAllPressures();
+    }
 }
 
 void PressureWall::reset()
@@ -64,23 +92,28 @@ void PressureWall::reset()
     }
 #endif
 
-    //Calculate new height of wall to conserve total force.
-    _rescaleHeight();
-
-    _updatePressureRates();
-
     BADAssClose(pressureEnergySum(), m_E0, 1E-5);
-
-    if ((cycle() + 1)%10000 == 0)
-    {
-        recalculateAllPressures();
-    }
-
-    cout << "derp: update reactions which changed neighbors" << endl;
 
 }
 
-void PressureWall::_rescaleHeight()
+double PressureWall::pressureEnergySum() const
+{
+    double s = 0;
+    for (uint x = 0; x < solver()->length(); ++x)
+    {
+        for (uint y = 0; y < solver()->width(); ++y)
+        {
+            BADAssClose(m_localPressure(x, y), localPressureEvaluate(x, y), 1E-4);
+
+            s += m_localPressure(x, y);
+        }
+    }
+
+    return s;
+}
+
+
+void PressureWall::findNewHeight()
 {
 
     double theta = 0;
@@ -100,52 +133,31 @@ void PressureWall::_rescaleHeight()
 
     m_height += m_heightChange;
 
-    setValue(m_height - dependency("height")->value());
+    m_expFac = expSmallArg(-m_heightChange/m_r0);
 
 }
 
-void PressureWall::_updatePressureRates()
+void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
 {
+    const uint &x = reaction.x();
+    const uint &y = reaction.y();
 
-    double rateChange;
+    double rateChange = expSmallArg(-solver()->alpha()*m_localPressure(x, y)*(m_expFac - 1));
 
-    double expFac = expSmallArg(-m_heightChange/m_r0);
+    //For every affected particle we update only those who include the pressure term.
+    //Vector is set up in initialize based on virtual reaction function isPressureAffected().
 
-    DiffusionDeposition *reaction;
+    double prevDiffRate = reaction.diffusionRate();
+    reaction.setDiffusionRate(prevDiffRate*rateChange);
+    reaction.changeRate(reaction.diffusionRate() + reaction.depositionRate());
 
-    for (uint x = 0; x < solver()->length(); ++x)
+    m_localPressure(x, y) *= m_expFac;
+
+    BADAssClose(localPressureEvaluate(x, y), m_localPressure(x, y), 1E-3, "incorrect pressure update", [&] ()
     {
-        for (uint y = 0; y < solver()->width(); ++y)
-        {
+        BADAssSimpleDump(cycle(), x, y, localPressure(x, y), m_expFac, m_heightChange);
+    });
 
-            reaction = &solver()->reaction(x, y);
-
-            cout << "DERP: IF NOT AFFECTED" << endl;
-            if (true)
-            {
-
-                rateChange = expSmallArg(-solver()->alpha()*m_localPressure(x, y)*(expFac - 1));
-
-                //For every affected particle we update only those who include the pressure term.
-                //Vector is set up in initialize based on virtual reaction function isPressureAffected().
-
-                double prevDiffRate = reaction->diffusionRate();
-                reaction->setDiffusionRate(prevDiffRate*rateChange);
-                reaction->changeRate(reaction->diffusionRate() + reaction->depositionRate());
-
-                m_localPressure(x, y) *= expFac;
-            }
-            else
-            {
-                m_localPressure(x, y) = localPressureEvaluate(x, y);
-            }
-
-            BADAssClose(localPressureEvaluate(x, y), m_localPressure(x, y), 1E-3, "incorrect pressure update", [&] ()
-            {
-                BADAssSimpleDump(cycle(), x, y, localPressure(x, y), expFac, m_heightChange);
-            });
-        }
-    }
 }
 
 void PressureWall::recalculateAllPressures()

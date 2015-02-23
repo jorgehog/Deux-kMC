@@ -1,13 +1,16 @@
 #include "solidonsolidsolver.h"
 #include "solidonsolidreaction.h"
+#include "pressurewall.h"
 
-SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
+
+SolidOnSolidSolver::SolidOnSolidSolver(PressureWall &pressureWallEvent, const uint length,
                                        const uint width,
                                        const double alpha,
                                        const double mu,
                                        const bool shadowing) :
     KMCSolver(),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
+    m_pressureWallEvent(pressureWallEvent),
     m_length(length),
     m_width(width),
     m_alpha(alpha),
@@ -16,6 +19,8 @@ SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
     m_heights(length, width),
     m_siteReactions(length, width)
 {
+    m_pressureWallEvent.setDependency(*this);
+
     for (uint x = 0; x < length; ++x)
     {
         for (uint y = 0; y < width; ++y)
@@ -24,6 +29,8 @@ SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
             m_siteReactions(x, y) = new DiffusionDeposition(x, y, *this);
         }
     }
+
+    m_pressureWallEvent.setupInitialConditions();
 
 }
 
@@ -38,6 +45,16 @@ SolidOnSolidSolver::~SolidOnSolidSolver()
     }
 
     m_siteReactions.clear();
+}
+
+const double &SolidOnSolidSolver::localPressure(const uint x, const uint y) const
+{
+    if (!m_pressureWallEvent.hasStarted())
+    {
+        return 0;
+    }
+
+    return m_pressureWallEvent.localPressure(x, y);
 }
 
 uint SolidOnSolidSolver::nNeighbors(const uint x, const uint y) const

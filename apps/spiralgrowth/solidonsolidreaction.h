@@ -5,6 +5,7 @@
 using namespace kMC;
 
 class SolidOnSolidSolver;
+class PressureWall;
 
 class SolidOnSolidReaction : public Reaction
 {

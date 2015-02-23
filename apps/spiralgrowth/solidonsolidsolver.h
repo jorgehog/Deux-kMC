@@ -7,11 +7,13 @@ using namespace kMC;
 using namespace arma;
 
 class DiffusionDeposition;
+class PressureWall;
 
 class SolidOnSolidSolver : public KMCSolver
 {
 public:
-    SolidOnSolidSolver(const uint length,
+    SolidOnSolidSolver(PressureWall &pressureWallEvent,
+                       const uint length,
                        const uint width,
                        const double alpha,
                        const double mu,
@@ -69,6 +71,13 @@ public:
         return m_heights(x, y);
     }
 
+    PressureWall &pressureWallEvent() const
+    {
+        return m_pressureWallEvent;
+    }
+
+    const double &localPressure(const uint x, const uint y) const;
+
     uint nNeighbors(const uint x, const uint y) const;
 
     uint topSite(const uint site, const uint n = 1) const;
@@ -94,6 +103,8 @@ public:
 private:
 
     const uint m_dim;
+
+    PressureWall &m_pressureWallEvent;
 
     const uint m_length;
     const uint m_width;
