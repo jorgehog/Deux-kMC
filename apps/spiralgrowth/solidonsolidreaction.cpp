@@ -13,7 +13,7 @@ uint SolidOnSolidReaction::nNeighbors() const
 double DiffusionDeposition::calculateDiffusionRate() const
 {
     const double &Ew = solver().localPressure(x(), y());
-    const double E = nNeighbors() + (int)solver().dim() - 5 + Ew;
+    const double E = (int)nNeighbors() + (int)solver().dim() - 5 + Ew;
 
     return exp(-solver().alpha()*E - solver().mu());
 }
@@ -51,9 +51,6 @@ void DiffusionDeposition::executeAndUpdate()
 
     }
 
-    pressureWallEvent.registerHeightChange(x(), y());
-
-
     const uint leftSite = solver().leftSite(x());
     const uint rightSite = solver().rightSite(x());
     const uint bottomSite = solver().bottomSite(y());
@@ -67,6 +64,8 @@ void DiffusionDeposition::executeAndUpdate()
 
     if (pressureWallEvent.hasStarted())
     {
+        pressureWallEvent.registerHeightChange(x(), y());
+
         pressureWallEvent.findNewHeight();
 
         pressureWallEvent.recalculateLocalPressure(x(), y());
