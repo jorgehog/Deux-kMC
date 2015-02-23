@@ -33,26 +33,20 @@ int main()
     const double r0 = 1.0;
     const double sigma0 = 1.0;
 
-    PressureWall pressureWallEvent(E0, sigma0, r0);
-    SolidOnSolidSolver solver(pressureWallEvent, L, W, alpha, mu, shadowing);
+    SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
+    PressureWall pressureWallEvent(solver, E0, sigma0, r0);
+    pressureWallEvent.setupInitialConditions();
 
-    SurfaceSize size;
+    SurfaceSize size(solver);
     size.setOnsetTime(thermalization);
 
-    DumpHeights3D dumpHeights3D;
-    AverageHeight averageHeight;
+    DumpHeights3D dumpHeights3D(solver);
+    AverageHeight averageHeight(solver);
 
     pressureWallEvent.setDependency(averageHeight);
 
-
-    EqMu eqMu;
+    EqMu eqMu(solver);
     Equilibriater equilibriater(solver, eqMu);
-
-    size.setDependency(solver);
-    dumpHeights3D.setDependency(solver);
-    averageHeight.setDependency(solver);
-
-    eqMu.setDependency(solver);
 
     MainMesh<uint> lattice;
     lattice.addEvent(solver);
@@ -63,6 +57,11 @@ int main()
 
     lattice.addEvent(eqMu);
     lattice.addEvent(equilibriater);
+
+#ifndef NDEBUG
+    RateChecker checker(solver);
+    lattice.addEvent(checker);
+#endif
 
     lattice.enableOutput(true, nCyclesPerOutput);
     lattice.enableProgressReport();

@@ -31,17 +31,17 @@ void EqMu::update()
 {
     double localDissolutionRate = 0;
 
-    for (uint x = 0; x < solver()->length(); ++x)
+    for (uint x = 0; x < solver().length(); ++x)
     {
-        for (uint y = 0; y < solver()->width(); ++y)
+        for (uint y = 0; y < solver().width(); ++y)
         {
-            localDissolutionRate += solver()->reaction(x, y).diffusionRate();
+            localDissolutionRate += solver().reaction(x, y).diffusionRate();
         }
     }
 
-    localDissolutionRate /= solver()->area();
+    localDissolutionRate /= solver().area();
 
-    const double &dt = solver()->currentTimeStep();
+    const double &dt = solver().currentTimeStep();
 
     m_totalTime += dt;
 
@@ -51,12 +51,12 @@ void EqMu::update()
 
     double inverseKStar;
 
-    if (solver()->shadowing())
+    if (solver().shadowing())
     {
         m_accuNeighbours += dt*dependency<NNeighbors>("nNeighbors")->localValue();
         const double &avgNeighbors = m_accuNeighbours/m_totalTime;
 
-        inverseKStar = 1./solver()->shadowScale(avgNeighbors);
+        inverseKStar = 1./solver().shadowScale(avgNeighbors);
     }
     else
     {

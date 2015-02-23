@@ -6,27 +6,27 @@ void SurfaceSize::execute()
 {
     m_localValue = 0;
 
-    for (uint x = 0; x < solver()->length(); ++x)
+    for (uint x = 0; x < solver().length(); ++x)
     {
-        for (uint y = 0; y < solver()->width(); ++y)
+        for (uint y = 0; y < solver().width(); ++y)
         {
-            m_localValue += 0.5*abs(solver()->height(x, y) - solver()->height(solver()->rightSite(x), y));
-            m_localValue += 0.5*abs(solver()->height(x, y) - solver()->height(x, solver()->topSite(y)));
+            m_localValue += 0.5*abs(solver().height(x, y) - solver().height(solver().rightSite(x), y));
+            m_localValue += 0.5*abs(solver().height(x, y) - solver().height(x, solver().topSite(y)));
         }
     }
 
-    m_localValue /= (solver()->length()*solver()->width());
+    m_localValue /= (solver().length()*solver().width());
 
-    m_sum += solver()->currentTimeStep()*m_localValue;
+    m_sum += solver().currentTimeStep()*m_localValue;
 
-    setValue(m_sum/(solver()->currentTime() - m_T0));
+    setValue(m_sum/(solver().currentTime() - m_T0));
 }
 
 
 void DumpHeights3D::initialize()
 {
-    m_L = solver()->length();
-    m_W = solver()->width();
+    m_L = solver().length();
+    m_W = solver().width();
     m_N = m_L*m_W;
 }
 
@@ -37,7 +37,7 @@ void DumpHeights3D::execute()
         return;
     }
 
-    const imat &heights = solver()->heights();
+    const imat &heights = solver().heights();
 
     const int max = heights.max();
     const int min = heights.min();
@@ -64,7 +64,7 @@ void DumpHeights3D::execute()
             m_writer << x
                      << y
                      << zSpan
-                     << solver()->nNeighbors(x, y);
+                     << solver().nNeighbors(x, y);
         }
     }
 
@@ -75,7 +75,7 @@ void DumpHeights3D::execute()
 
 void AverageHeight::execute()
 {
-    setValue(accu(solver()->heights())/(double)solver()->area());
+    setValue(accu(solver().heights())/(double)solver().area());
 }
 
 
@@ -85,3 +85,34 @@ void NNeighbors::execute()
 
 
 
+
+RateChecker::RateChecker(const KMCSolver &solver) :
+    LatticeEvent("rateChecker"),
+    m_solver(solver)
+{
+
+}
+
+void RateChecker::reset()
+{
+    for (uint n = 0; n < m_solver.numberOfReactions(); ++n)
+    {
+        Reaction *reaction = m_solver.getReaction(n);
+
+        if (!reaction->isAllowed())
+        {
+            BADAss(reaction->rate(), ==, 0);
+        }
+
+        else
+        {
+            BADAss(reaction->rate(), !=, 0);
+
+            BADAssClose(reaction->rate(), reaction->rateExpression(), 1E-5, "error in rate updating.", [&] ()
+            {
+                BADAssSimpleDump(reaction->rate(), reaction->rateExpression());
+            });
+        }
+
+    }
+}

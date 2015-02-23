@@ -7,8 +7,8 @@ class SurfaceSize : public SolidOnSolidEvent
 {
 public:
 
-    SurfaceSize() :
-        SolidOnSolidEvent("SurfaceSize", "l0", true, true)
+    SurfaceSize(const SolidOnSolidSolver &solver) :
+        SolidOnSolidEvent(solver, "SurfaceSize", "l0", true, true)
     {
 
     }
@@ -16,7 +16,7 @@ public:
     void initialize()
     {
         m_sum = 0;
-        m_T0 = solver()->currentTime() - solver()->currentTimeStep();
+        m_T0 = solver().currentTime() - solver().currentTimeStep();
     }
 
     void execute();
@@ -40,8 +40,8 @@ class AverageHeight : public SolidOnSolidEvent
 {
 public:
 
-    AverageHeight()
-        : SolidOnSolidEvent("AverageHeight", "l0", true, true)
+    AverageHeight(const SolidOnSolidSolver &solver) :
+        SolidOnSolidEvent(solver, "AverageHeight", "l0", true, true)
     {
 
     }
@@ -54,8 +54,9 @@ class DumpHeights3D : public SolidOnSolidEvent
 {
 public:
 
-    DumpHeights3D(const string path = "/tmp") :
-        SolidOnSolidEvent("DumpHeights3D"),
+    DumpHeights3D(const SolidOnSolidSolver &solver,
+                  const string path = "/tmp") :
+        SolidOnSolidEvent(solver, "DumpHeights3D"),
         m_writer(4, "SOS", path)
     {
 
@@ -82,8 +83,8 @@ class NNeighbors : public SolidOnSolidEvent
 {
 public:
 
-    NNeighbors() :
-        SolidOnSolidEvent("nNeighbors", "", true, true)
+    NNeighbors(const SolidOnSolidSolver &solver) :
+        SolidOnSolidEvent(solver, "nNeighbors", "", true, true)
     {
 
     }
@@ -103,4 +104,23 @@ private:
     double m_localValue;
 
 };
+
+
+class RateChecker : public LatticeEvent
+{
+
+public:
+
+    RateChecker(const KMCSolver &solver);
+
+    void execute() {}
+
+    void reset();
+
+private:
+
+    const KMCSolver &m_solver;
+
+};
+
 

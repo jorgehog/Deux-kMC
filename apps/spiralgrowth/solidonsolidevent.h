@@ -6,15 +6,31 @@
 
 using namespace ignis;
 
-class SolidOnSolidEvent : public ignis::LatticeEvent
+class SolidOnSolidEvent : public LatticeEvent
 {
 public:
-    using LatticeEvent::LatticeEvent;
-    virtual ~SolidOnSolidEvent() {}
+    SolidOnSolidEvent(const SolidOnSolidSolver &solver,
+                      string type = "Event",
+                      string unit = "",
+                      bool hasOutput=false,
+                      bool storeValue=false) :
+        LatticeEvent(type, unit, hasOutput, storeValue),
+        m_solver(solver)
 
-    const SolidOnSolidSolver *solver() const
     {
-        return dependency<SolidOnSolidSolver>("KMCSolver");
+        setDependency(solver);
     }
 
+    virtual ~SolidOnSolidEvent() {}
+
+    const SolidOnSolidSolver &solver() const
+    {
+        return m_solver;
+    }
+
+private:
+
+    const SolidOnSolidSolver &m_solver;
+
 };
+

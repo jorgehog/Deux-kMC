@@ -3,16 +3,20 @@
 #include "solidonsolidreaction.h"
 
 
-PressureWall::PressureWall(const double E0,
+PressureWall::PressureWall(SolidOnSolidSolver &solver, const double E0,
                            const double sigma0,
                            const double r0):
-    SolidOnSolidEvent("PressureWall", "h0", true, true),
+    SolidOnSolidEvent(solver, "PressureWall", "h0", true, true),
     m_r0(r0),
     m_s0(sigma0),
-    m_E0(E0)
+    m_E0(E0),
+    m_localPressure(solver.length(), solver.width(), fill::zeros),
+    m_thetaPartialSumsMat(solver.length(), solver.width())
 {
     BADAss(E0, <, 0, "E0 should be negative.");
-}
+
+    solver.setPressureWallEvent(*this);
+ }
 
 PressureWall::~PressureWall()
 {
@@ -23,7 +27,7 @@ double PressureWall::expSmallArg(double arg)
 {
     if (arg > 0.1 || arg < -0.1)
     {
-        return exp(arg);
+        return std::exp(arg);
     }
 
     BADAssClose(arg, 0, 0.1, "Argument is not small.", [&arg] ()
@@ -46,26 +50,25 @@ double PressureWall::expSmallArg(double arg)
 
 void PressureWall::setupInitialConditions()
 {
-    m_localPressure.set_size(solver()->length(), solver()->width());
-    m_localPressure.zeros();
-
     m_thetaPrev = 0;
 
-    for (uint x = 0; x < solver()->length(); ++x)
+    for (uint x = 0; x < solver().length(); ++x)
     {
-        for (uint y = 0; y < solver()->width(); ++y)
+        for (uint y = 0; y < solver().width(); ++y)
         {
-            m_thetaPrev += exp(solver()->height(x, y)/m_r0);
+            m_thetaPartialSumsMat(x, y) = std::exp(solver().height(x, y)/m_r0);
+            m_thetaPrev += m_thetaPartialSumsMat(x, y);
         }
     }
 
-    m_thetaPrev /= solver()->area();
+    m_thetaPrev /= solver().area();
 
-    m_height = m_r0*std::log(solver()->area()*m_s0*m_thetaPrev/(-m_E0));
+    m_height = m_r0*std::log(solver().area()*m_s0*m_thetaPrev/(-m_E0));
 
     recalculateAllPressures();
 
     BADAssClose(pressureEnergySum(), m_E0, 1E-5);
+
 }
 
 void PressureWall::execute()
@@ -83,9 +86,9 @@ void PressureWall::reset()
 
     //Check that everything is updated correctly from previous runs.
 #ifndef NDEBUG
-    for (uint x = 0; x < solver()->length(); ++x)
+    for (uint x = 0; x < solver().length(); ++x)
     {
-        for (uint y = 0; y < solver()->width(); ++y)
+        for (uint y = 0; y < solver().width(); ++y)
         {
             BADAssClose(localPressureEvaluate(x, y), localPressure(x, y), 1E-3);
         }
@@ -99,9 +102,9 @@ void PressureWall::reset()
 double PressureWall::pressureEnergySum() const
 {
     double s = 0;
-    for (uint x = 0; x < solver()->length(); ++x)
+    for (uint x = 0; x < solver().length(); ++x)
     {
-        for (uint y = 0; y < solver()->width(); ++y)
+        for (uint y = 0; y < solver().width(); ++y)
         {
             BADAssClose(m_localPressure(x, y), localPressureEvaluate(x, y), 1E-4);
 
@@ -116,16 +119,7 @@ double PressureWall::pressureEnergySum() const
 void PressureWall::findNewHeight()
 {
 
-    double theta = 0;
-    for (uint x = 0; x < solver()->length(); ++x)
-    {
-        for (uint y = 0; y < solver()->width(); ++y)
-        {
-            theta += exp(solver()->height(x, y)/m_r0);
-        }
-    }
-
-    theta /= solver()->area();
+    double theta = accu(m_thetaPartialSumsMat)/solver().area();
 
     m_heightChange = m_r0*std::log(theta/m_thetaPrev);
 
@@ -142,7 +136,7 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
     const uint &x = reaction.x();
     const uint &y = reaction.y();
 
-    double rateChange = expSmallArg(-solver()->alpha()*m_localPressure(x, y)*(m_expFac - 1));
+    double rateChange = expSmallArg(-solver().alpha()*m_localPressure(x, y)*(m_expFac - 1));
 
     //For every affected particle we update only those who include the pressure term.
     //Vector is set up in initialize based on virtual reaction function isPressureAffected().
@@ -165,11 +159,16 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
 
 }
 
+void PressureWall::registerHeightChange(const uint x, const uint y)
+{
+    m_thetaPartialSumsMat(x, y) = std::exp(solver().height(x, y)/m_r0);
+}
+
 void PressureWall::recalculateAllPressures()
 {
-    for (uint x = 0; x < solver()->length(); ++x)
+    for (uint x = 0; x < solver().length(); ++x)
     {
-        for (uint y = 0; y < solver()->width(); ++y)
+        for (uint y = 0; y < solver().width(); ++y)
         {
             m_localPressure(x, y) = localPressureEvaluate(x, y);
         }

@@ -37,6 +37,8 @@ bool DiffusionDeposition::isAllowed() const
 
 void DiffusionDeposition::executeAndUpdate()
 {
+    PressureWall &pressureWallEvent = solver().pressureWallEvent();
+
     double r = rate()*rng.uniform();
 
     if (r < m_depositionRate)
@@ -46,7 +48,10 @@ void DiffusionDeposition::executeAndUpdate()
     else
     {
         solver().registerHeightChange(x(), y(), -1);
+
     }
+
+    pressureWallEvent.registerHeightChange(x(), y());
 
 
     const uint leftSite = solver().leftSite(x());
@@ -59,7 +64,6 @@ void DiffusionDeposition::executeAndUpdate()
     DiffusionDeposition &bottomReaction = solver().reaction(x(), bottomSite);
     DiffusionDeposition &topReaction = solver().reaction(x(), topSite);
 
-    PressureWall &pressureWallEvent = solver().pressureWallEvent();
 
     if (pressureWallEvent.hasStarted())
     {

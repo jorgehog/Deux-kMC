@@ -8,7 +8,8 @@ class PressureWall : public SolidOnSolidEvent
 {
 public:
 
-    PressureWall(const double E0,
+    PressureWall(SolidOnSolidSolver &solver,
+                 const double E0,
                  const double sigma0,
                  const double r0);
 
@@ -41,7 +42,7 @@ public:
 
     double localPressureEvaluate(const uint x, const uint y) const
     {
-        return _pressureExpression(m_height - solver()->height(x, y));
+        return _pressureExpression(m_height - solver().height(x, y));
     }
 
     const double &height() const
@@ -55,6 +56,8 @@ public:
 
     void updateRatesFor(DiffusionDeposition &reaction);
 
+    void registerHeightChange(const uint x, const uint y);
+
 private:
 
     double m_height;
@@ -62,13 +65,12 @@ private:
     double m_thetaPrev;
     double m_expFac;
 
-    uint m_changed;
-
     const double m_r0;
     const double m_s0;
     const double m_E0;
 
     mat m_localPressure;
+    mat m_thetaPartialSumsMat;
 
     void recalculateAllPressures();
 

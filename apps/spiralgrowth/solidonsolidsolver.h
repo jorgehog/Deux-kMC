@@ -12,8 +12,7 @@ class PressureWall;
 class SolidOnSolidSolver : public KMCSolver
 {
 public:
-    SolidOnSolidSolver(PressureWall &pressureWallEvent,
-                       const uint length,
+    SolidOnSolidSolver(const uint length,
                        const uint width,
                        const double alpha,
                        const double mu,
@@ -71,9 +70,11 @@ public:
         return m_heights(x, y);
     }
 
+    void setPressureWallEvent(PressureWall &pressureWallEvent);
+
     PressureWall &pressureWallEvent() const
     {
-        return m_pressureWallEvent;
+        return *m_pressureWallEvent;
     }
 
     double localPressure(const uint x, const uint y) const;
@@ -104,7 +105,7 @@ private:
 
     const uint m_dim;
 
-    PressureWall &m_pressureWallEvent;
+    PressureWall *m_pressureWallEvent;
 
     const uint m_length;
     const uint m_width;

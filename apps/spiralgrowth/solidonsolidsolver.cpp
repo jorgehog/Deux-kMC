@@ -3,24 +3,21 @@
 #include "pressurewall.h"
 
 
-SolidOnSolidSolver::SolidOnSolidSolver(PressureWall &pressureWallEvent, const uint length,
+SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
                                        const uint width,
                                        const double alpha,
                                        const double mu,
                                        const bool shadowing) :
     KMCSolver(),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
-    m_pressureWallEvent(pressureWallEvent),
     m_length(length),
     m_width(width),
     m_alpha(alpha),
     m_mu(mu),
     m_shadowing(shadowing),
-    m_heights(length, width),
+    m_heights(length, width, fill::zeros),
     m_siteReactions(length, width)
 {
-    m_pressureWallEvent.setDependency(*this);
-
     for (uint x = 0; x < length; ++x)
     {
         for (uint y = 0; y < width; ++y)
@@ -29,9 +26,6 @@ SolidOnSolidSolver::SolidOnSolidSolver(PressureWall &pressureWallEvent, const ui
             m_siteReactions(x, y) = new DiffusionDeposition(x, y, *this);
         }
     }
-
-    m_pressureWallEvent.setupInitialConditions();
-
 }
 
 SolidOnSolidSolver::~SolidOnSolidSolver()
@@ -47,14 +41,19 @@ SolidOnSolidSolver::~SolidOnSolidSolver()
     m_siteReactions.clear();
 }
 
+void SolidOnSolidSolver::setPressureWallEvent(PressureWall &pressureWallEvent)
+{
+    m_pressureWallEvent = &pressureWallEvent;
+}
+
 double SolidOnSolidSolver::localPressure(const uint x, const uint y) const
 {
-    if (!m_pressureWallEvent.hasStarted())
+    if (!m_pressureWallEvent->hasStarted())
     {
         return 0;
     }
 
-    return m_pressureWallEvent.localPressure(x, y);
+    return m_pressureWallEvent->localPressure(x, y);
 }
 
 uint SolidOnSolidSolver::nNeighbors(const uint x, const uint y) const
