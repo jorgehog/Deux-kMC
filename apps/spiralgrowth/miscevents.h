@@ -43,7 +43,7 @@ public:
     AverageHeight(const SolidOnSolidSolver &solver) :
         SolidOnSolidEvent(solver, "AverageHeight", "l0", true, true)
     {
-
+        setValue(0);
     }
 
     void execute();

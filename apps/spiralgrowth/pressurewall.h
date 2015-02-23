@@ -58,12 +58,17 @@ public:
 
     void registerHeightChange(const uint x, const uint y);
 
+    double bruteForceTheta() const;
+
 private:
 
     double m_height;
     double m_heightChange;
-    double m_thetaPrev;
     double m_expFac;
+
+    double m_thetaPrev;
+    double m_thetaShift;
+    double m_thetaExpFactor;
 
     const double m_r0;
     const double m_s0;
@@ -71,6 +76,8 @@ private:
 
     mat m_localPressure;
     mat m_thetaPartialSumsMat;
+
+    void setupTheta();
 
     void recalculateAllPressures();
 

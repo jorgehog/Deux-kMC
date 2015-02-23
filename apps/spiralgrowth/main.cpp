@@ -15,7 +15,7 @@ using namespace ignis;
 
 int main()
 {
-    int seed = 10;
+    int seed = 20;
     rng.initialize(seed);
 
     const uint nCycles = 1000000;
@@ -30,7 +30,7 @@ int main()
 
     const bool shadowing = false;
 
-    const double E0 = -256;
+    const double E0 = -0.1*L;
     const double r0 = 1.0;
     const double sigma0 = 1.0;
 
@@ -38,15 +38,15 @@ int main()
 
     SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
+    AverageHeight averageHeight(solver);
+    pressureWallEvent.setDependency(averageHeight);
     pressureWallEvent.setupInitialConditions();
 
     SurfaceSize size(solver);
     size.setOnsetTime(thermalization);
 
     DumpHeights3D dumpHeights3D(solver);
-    AverageHeight averageHeight(solver);
 
-    pressureWallEvent.setDependency(averageHeight);
 
     EqMu eqMu(solver);
     Equilibriater equilibriater(solver, eqMu);

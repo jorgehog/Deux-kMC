@@ -50,18 +50,7 @@ double PressureWall::expSmallArg(double arg)
 
 void PressureWall::setupInitialConditions()
 {
-    m_thetaPrev = 0;
-
-    for (uint x = 0; x < solver().length(); ++x)
-    {
-        for (uint y = 0; y < solver().width(); ++y)
-        {
-            m_thetaPartialSumsMat(x, y) = std::exp(solver().height(x, y)/m_r0);
-            m_thetaPrev += m_thetaPartialSumsMat(x, y);
-        }
-    }
-
-    m_thetaPrev /= solver().area();
+    setupTheta();
 
     m_height = m_r0*std::log(solver().area()*m_s0*m_thetaPrev/(-m_E0));
 
@@ -76,11 +65,6 @@ void PressureWall::execute()
     double value = m_height - dependency("AverageHeight")->value();
 
     setValue(value);
-
-    if ((cycle() + 1)%10000 == 0)
-    {
-        recalculateAllPressures();
-    }
 }
 
 void PressureWall::reset()
@@ -121,21 +105,25 @@ double PressureWall::pressureEnergySum() const
 void PressureWall::findNewHeight()
 {
 
-    double theta = accu(m_thetaPartialSumsMat/solver().area());
+    double theta = accu(m_thetaPartialSumsMat)/solver().area()*m_thetaExpFactor;
+
+//    BADAssClose(theta, bruteForceTheta(), 1E-5);
+
+    theta = bruteForceTheta();
 
     m_heightChange = m_r0*std::log(theta/m_thetaPrev);
-
-    if (m_heightChange != m_heightChange)
-    {
-        cout << m_heightChange << " " << theta << " " << m_thetaPrev << endl;
-        exit(1);
-    }
 
     m_thetaPrev = theta;
 
     m_height += m_heightChange;
 
     m_expFac = expSmallArg(-m_heightChange/m_r0);
+
+    if ((cycle() + 1)%10000 == 0)
+    {
+        setupTheta();
+        recalculateAllPressures();
+    }
 
 }
 
@@ -169,7 +157,43 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
 
 void PressureWall::registerHeightChange(const uint x, const uint y)
 {
-    m_thetaPartialSumsMat(x, y) = std::exp(solver().height(x, y)/m_r0);
+    m_thetaPartialSumsMat(x, y) = std::exp((solver().height(x, y) - m_thetaShift)/m_r0);
+}
+
+double PressureWall::bruteForceTheta() const
+{
+    double theta = 0;
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            theta += std::exp((solver().height(x, y) - m_thetaShift)/m_r0);
+        }
+    }
+
+    return theta/solver().area()*m_thetaExpFactor;
+}
+
+void PressureWall::setupTheta()
+{
+    m_thetaPrev = 0;
+
+    m_thetaShift = dependency("AverageHeight")->value();
+
+    m_thetaExpFactor = exp(m_thetaShift/m_r0);
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            m_thetaPartialSumsMat(x, y) = std::exp((solver().height(x, y) - m_thetaShift)/m_r0);
+            m_thetaPrev += m_thetaPartialSumsMat(x, y);
+        }
+    }
+
+    m_thetaPrev *= m_thetaExpFactor/solver().area();
+
 }
 
 void PressureWall::recalculateAllPressures()
