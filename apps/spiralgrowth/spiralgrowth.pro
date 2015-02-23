@@ -28,11 +28,4 @@ HEADERS += \
 
 
 OTHER_FILES += \
-    quasidiffusion.cpp \
-    quasidiffusionsystem.cpp \
-    movingwall.cpp \
-    quasidiffusionevents.cpp \
-    quasidiffusion.h \
-    quasidiffusionsystem.h \
-    movingwall.h \
-    quasidiffusionevents.h
+    infiles/spiralgrowth.cfg
