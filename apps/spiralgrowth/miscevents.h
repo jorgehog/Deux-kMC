@@ -94,14 +94,20 @@ public:
         return m_localValue;
     }
 
+    double value() const
+    {
+        return m_sum/(cycle() + 1);
+    }
 
     // Event interface
 public:
+    void initialize();
     void execute();
 
 private:
 
     double m_localValue;
+    double m_sum;
 
 };
 

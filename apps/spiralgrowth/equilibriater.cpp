@@ -5,8 +5,8 @@
 
 Equilibriater::Equilibriater(SolidOnSolidSolver &mutexSolver,
                              EqMu &eqMuEvent,
-                             const uint nRounds,
-                             const uint N) :
+                             const uint nSamplesMuEq,
+                             const uint nSamplesMu) :
     SolidOnSolidEvent(mutexSolver,
                       "ConcEquilibriator",
                       "",
@@ -14,8 +14,8 @@ Equilibriater::Equilibriater(SolidOnSolidSolver &mutexSolver,
                       true),
     m_mutexSolver(mutexSolver),
     m_eqMuEvent(eqMuEvent),
-    m_nRounds(nRounds),
-    m_N(N),
+    m_nSamplesMuEq(nSamplesMuEq),
+    m_nSamplesMu(nSamplesMu),
     m_doAverage(false),
     m_averageMu(0),
     m_averageMu2Sum(0),
@@ -48,7 +48,7 @@ void Equilibriater::execute()
     double shift = m_eqMuEvent.value();
 
     m_counter++;
-    if (m_counter >= m_N)
+    if (m_counter >= m_nSamplesMu)
     {
         initiateNextConcentrationLevel(shift);
         m_counter = 0;
@@ -61,7 +61,6 @@ void Equilibriater::execute()
 
 void Equilibriater::initiateNextConcentrationLevel(const double shift)
 {
-
     double newMu = m_mutexSolver.mu() + shift;
 
     //Cannot use 'else' because this could occur even when the prev test goes through
@@ -81,7 +80,7 @@ void Equilibriater::initiateNextConcentrationLevel(const double shift)
     conv_to<vec>::from(m_values).eval().save("/tmp/values.arma");
 
 
-    if (m_averageMuCount == m_nRounds)
+    if (m_averageMuCount == m_nSamplesMuEq)
     {
         terminateLoop("Concentration converged");
 
@@ -102,11 +101,6 @@ void Equilibriater::initiateNextConcentrationLevel(const double shift)
     m_prevShift = shift;
 
     m_eqMuEvent.restart();
-
-    for (uint n = 0; n < m_mutexSolver.area(); ++n)
-    {
-        m_mutexSolver.getReaction(n)->calculateRate();
-    }
 
 }
 
@@ -130,9 +124,6 @@ void Equilibriater::finalizeAverages()
 
     m_error = sqrt(1.0/(N - 1)*(m_averageMu2Sum - m_averageMu*m_averageMu*N));
 
-    cout << "Average = " << m_averageMu << " error = " << m_error << endl;
-
     m_finalized = true;
 
-    //Update rates?
 }

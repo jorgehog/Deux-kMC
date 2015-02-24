@@ -96,10 +96,7 @@ public:
 
     double shadowScale(const double n) const;
 
-    void setMu(const double mu)
-    {
-        m_mu = mu;
-    }
+    void setMu(const double mu);
 
 private:
 

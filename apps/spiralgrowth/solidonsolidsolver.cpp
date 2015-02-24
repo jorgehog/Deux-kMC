@@ -122,6 +122,27 @@ double SolidOnSolidSolver::shadowScale(const double n) const
     return 2*(1 + m_dim) - n;
 }
 
+void SolidOnSolidSolver::setMu(const double mu)
+{
+    if (hasStarted())
+    {
+        double expFac = exp(m_mu - mu);
+
+        for (uint x = 0; x < length(); ++x)
+        {
+            for (uint y = 0; y < width(); ++y)
+            {
+                DiffusionDeposition &_reaction = reaction(x, y);
+                _reaction.setDiffusionRate(_reaction.diffusionRate()*expFac);
+                _reaction.changeRate(_reaction.diffusionRate() + _reaction.depositionRate());
+            }
+        }
+    }
+
+    m_mu = mu;
+
+}
+
 uint SolidOnSolidSolver::numberOfReactions() const
 {
     return m_siteReactions.size();

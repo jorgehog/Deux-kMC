@@ -62,9 +62,7 @@ int main(int argv, char** argc)
 
     rng.initialize(seed);
 
-    const uint &nCycles = getSetting<uint>(root, "nCycles");
-    const uint &thermalization = getSetting<uint>(root, "thermalization");
-    const uint &nCyclesPerOutput = getSetting<uint>(root, "nCyclesPerOutput");
+    string path = getSetting<string>(root, "path") + "/";
 
     const uint &L = getSetting<uint>(root, "L");
     const uint &W = getSetting<uint>(root, "W");
@@ -84,6 +82,17 @@ int main(int argv, char** argc)
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
     const bool equilibriate = equilibriateInt == 1;
+    const uint &resetInt = getSetting<uint>(root, "reset");
+    const bool reset = resetInt == 1;
+
+    const uint &nSamplesMuEq = getSetting<uint>(root, "nSamplesMuEq");
+    const uint &nSamplesMu = getSetting<uint>(root, "nSamplesMu");
+
+    const double &muShift = getSetting<double>(root, "muShift");
+
+    const uint &nCycles = getSetting<uint>(root, "nCycles");
+    const uint &thermalization = getSetting<uint>(root, "thermalization");
+    const uint &nCyclesPerOutput = getSetting<uint>(root, "nCyclesPerOutput");
 
 
     SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
@@ -95,29 +104,34 @@ int main(int argv, char** argc)
     SurfaceSize size(solver);
     size.setOnsetTime(thermalization);
 
-    DumpHeights3D dumpHeights3D(solver);
+    DumpHeights3D dumpHeights3D(solver, path);
 
+    NNeighbors nNeighbors(solver);
 
     EqMu eqMu(solver);
-    Equilibriater equilibriater(solver, eqMu);
+    Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
+
+    eqMu.setDependency(nNeighbors);
 
     MainMesh<uint> lattice;
     lattice.addEvent(solver);
     lattice.addEvent(averageHeight);
-
-    if (pressureWall)
-    {
-        lattice.addEvent(pressureWallEvent);
-    }
-
-//    lattice.addEvent(size);
-//    lattice.addEvent(dumpHeights3D);
+    lattice.addEvent(nNeighbors);
 
     if (equilibriate)
     {
         lattice.addEvent(eqMu);
         lattice.addEvent(equilibriater);
     }
+
+    if (pressureWall)
+    {
+        lattice.addEvent(pressureWallEvent);
+    }
+
+    //    lattice.addEvent(size);
+    //    lattice.addEvent(dumpHeights3D);
+
 
 #ifndef NDEBUG
     RateChecker checker(solver);
@@ -126,10 +140,28 @@ int main(int argv, char** argc)
 
     lattice.enableOutput(true, nCyclesPerOutput);
     lattice.enableProgressReport();
-    lattice.enableEventValueStorage(true, true, "ignisSOS.ign");
+    lattice.enableEventValueStorage(true, true, "ignisSOS.ign", path);
     lattice.eventLoop(nCycles);
 
-    H5Wrapper::Root h5root("/tmp/" +  addProcEnding("spiralgrowth", "h5", tail));
+    double muEq = 0;
+    double muEqError = 0;
+    if (equilibriate)
+    {
+        equilibriater.finalizeAverages();
+
+        muEq = solver.mu();
+        muEqError = equilibriater.error();
+
+        if (reset)
+        {
+            solver.setMu(muEq + muShift);
+            lattice.removeEvent(&eqMu);
+            lattice.removeEvent(&equilibriater);
+            lattice.eventLoop(nCycles);
+        }
+    }
+
+    H5Wrapper::Root h5root(path +  addProcEnding("spiralgrowth", "h5", tail));
 
 
 
@@ -138,24 +170,31 @@ int main(int argv, char** argc)
     H5Wrapper::Member &sizeMember = h5root.addMember(sizeDesc.str());
 
     stringstream potentialDesc;
-    potentialDesc << "something";
+    potentialDesc <<  "alpha_" << alpha
+                  << "_mu_" << solver.mu()
+                  << "_E0_" << E0*pressureWall
+                  << "_s0_" << sigma0
+                  << "_r0_" << r0;
+
     H5Wrapper::Member &potentialMember = sizeMember.addMember(potentialDesc.str());
 
 
-//    potentialMember.addData("nNeighbors", nNeighbors.value());
+    potentialMember.addData("nNeighbors", nNeighbors.value());
 
     potentialMember.addData("usewall", pressureWallInt);
     potentialMember.addData("sigma0", sigma0);
     potentialMember.addData("r0", r0);
     potentialMember.addData("E0", E0);
 
-//    potentialMember.addData("concAdd", concAdd);
+    potentialMember.addData("muShift", muShift);
+    potentialMember.addData("muEq", muEq);
+    potentialMember.addData("muEqError", muEqError);
     potentialMember.addData("shadowing", shadowingInt);
-//    potentialMember.addData("ConcEquilReset", resetInt);
+    potentialMember.addData("reset", resetInt);
     potentialMember.addData("useConcEquil", equilibriateInt);
-//    potentialMember.addData("usediffusion", useDiffusionInt);
-//    potentialMember.addData("useisotropicdiffusion", isotropicDiffusionInt);
-//    potentialMember.addData("size", size.value());
+    //    potentialMember.addData("usediffusion", useDiffusionInt);
+    //    potentialMember.addData("useisotropicdiffusion", isotropicDiffusionInt);
+    //    potentialMember.addData("size", size.value());
     potentialMember.addData("heightmap", solver.heights());
     potentialMember.addData("ignisData", lattice.storedEventValues());
     potentialMember.addData("ignisEventDescriptions", lattice.outputEventDescriptions());

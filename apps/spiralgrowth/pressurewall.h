@@ -67,8 +67,6 @@ private:
     double m_expFac;
 
     double m_thetaPrev;
-    double m_thetaShift;
-    double m_thetaExpFactor;
 
     const double m_r0;
     const double m_s0;

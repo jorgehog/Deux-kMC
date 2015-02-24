@@ -10,8 +10,8 @@ public:
 
     Equilibriater(SolidOnSolidSolver &mutexSolver,
                   EqMu &eqMuEvent,
-                  const uint nRounds = 100,
-                  const uint N = 1000);
+                  const uint nSamplesMuEq = 100,
+                  const uint nSamplesMu = 1000);
 
     void initialize();
 
@@ -44,8 +44,8 @@ private:
 
     EqMu &m_eqMuEvent;
 
-    const uint m_nRounds;
-    const uint m_N;
+    const uint m_nSamplesMuEq;
+    const uint m_nSamplesMu;
 
     bool m_doAverage;
     double m_averageMu;

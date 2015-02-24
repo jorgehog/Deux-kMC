@@ -79,8 +79,28 @@ void AverageHeight::execute()
 }
 
 
+void NNeighbors::initialize()
+{
+    m_sum = 0;
+}
+
 void NNeighbors::execute()
 {
+    m_localValue = 0;
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            m_localValue += solver().nNeighbors(x, y);
+        }
+    }
+
+    m_localValue /= solver().area();
+
+    m_sum += m_localValue;
+
+    setValue(value());
 }
 
 
