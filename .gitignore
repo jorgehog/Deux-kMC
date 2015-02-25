@@ -4,5 +4,7 @@
 *.npy
 *.arma
 *.png
+*~
 Makefile
 lib/
+fontconfig/
