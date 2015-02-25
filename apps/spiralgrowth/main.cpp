@@ -163,8 +163,6 @@ int main(int argv, char** argc)
 
     H5Wrapper::Root h5root(path +  addProcEnding("spiralgrowth", "h5", tail));
 
-
-
     stringstream sizeDesc;
     sizeDesc << L << "x" << W;
     H5Wrapper::Member &sizeMember = h5root.addMember(sizeDesc.str());

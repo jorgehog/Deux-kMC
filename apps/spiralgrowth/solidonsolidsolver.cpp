@@ -34,7 +34,7 @@ SolidOnSolidSolver::~SolidOnSolidSolver()
     {
         for (uint y = 0; y < width(); ++y)
         {
-            delete m_siteReactions(x);
+            delete m_siteReactions(x, y);
         }
     }
 
