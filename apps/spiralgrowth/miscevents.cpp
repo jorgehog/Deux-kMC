@@ -1,25 +1,83 @@
 #include "miscevents.h"
+#include "solidonsolidreaction.h"
 
 
-
-void SurfaceSize::execute()
+void SurfaceSize::initialize()
 {
+    m_sum = 0;
+    m_T0 = solver().currentTime() - solver().currentTimeStep();
+
     m_localValue = 0;
 
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            m_localValue += 0.5*abs(solver().height(x, y) - solver().height(solver().rightSite(x), y));
-            m_localValue += 0.5*abs(solver().height(x, y) - solver().height(x, solver().topSite(y)));
+            double _relativeHeightSum = relativeHeightSum(x, y);
+
+            m_localValue += _relativeHeightSum;
+            m_relativeHeightSums(x, y) = _relativeHeightSum;
+        }
+    }
+}
+
+double SurfaceSize::relativeHeightSum(const uint x, const uint y)
+{
+    double xDirection = abs(solver().height(x, y) - solver().height(solver().rightSite(x), y));
+    double yDirection = abs(solver().height(x, y) - solver().height(x, solver().topSite(y)));
+
+    return 0.5*(xDirection + yDirection);
+}
+
+void SurfaceSize::updateRelativeHeight(const uint x, const uint y)
+{
+    double newValue = relativeHeightSum(x, y);
+
+    m_localValue += (newValue - m_relativeHeightSums(x, y));
+
+    m_relativeHeightSums(x, y) = newValue;
+}
+
+double SurfaceSize::bruteForceValue() const
+{
+    double value = 0;
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            value += 0.5*abs(solver().height(x, y) - solver().height(solver().rightSite(x), y));
+            value += 0.5*abs(solver().height(x, y) - solver().height(x, solver().topSite(y)));
         }
     }
 
-    m_localValue /= (solver().length()*solver().width());
+    value /= (solver().area());
 
-    m_sum += solver().currentTimeStep()*m_localValue;
+    return value;
+
+}
+
+void SurfaceSize::execute()
+{
+    m_sum += solver().currentTimeStep()*getLocalValue();
 
     setValue(m_sum/(solver().currentTime() - m_T0));
+}
+
+void SurfaceSize::reset()
+{
+    const DiffusionDeposition *currentReaction = dynamic_cast<const DiffusionDeposition*>(solver().selectedReaction());
+
+    const uint &x = currentReaction->x();
+    const uint &y = currentReaction->y();
+
+    const uint leftSite = solver().leftSite(x);
+    const uint bottomSite = solver().bottomSite(y);
+
+    updateRelativeHeight(x, y);
+    updateRelativeHeight(leftSite, y);
+    updateRelativeHeight(x, bottomSite);
+
 }
 
 

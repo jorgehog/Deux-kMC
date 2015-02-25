@@ -123,13 +123,16 @@ int main(int argv, char** argc)
         lattice.addEvent(eqMu);
         lattice.addEvent(equilibriater);
     }
+    else
+    {
+        lattice.addEvent(size);
+    }
 
     if (pressureWall)
     {
         lattice.addEvent(pressureWallEvent);
     }
 
-    //    lattice.addEvent(size);
     //    lattice.addEvent(dumpHeights3D);
 
 
@@ -157,6 +160,7 @@ int main(int argv, char** argc)
             solver.setMu(muEq + muShift);
             lattice.removeEvent(&eqMu);
             lattice.removeEvent(&equilibriater);
+            lattice.addEvent(size);
             lattice.eventLoop(nCycles);
         }
     }
@@ -169,10 +173,10 @@ int main(int argv, char** argc)
 
     stringstream potentialDesc;
     potentialDesc <<  "alpha_" << alpha
-                  << "_mu_" << solver.mu()
-                  << "_E0_" << E0*pressureWall
-                  << "_s0_" << sigma0
-                  << "_r0_" << r0;
+                   << "_mu_" << solver.mu()
+                   << "_E0_" << E0*pressureWall
+                   << "_s0_" << sigma0
+                   << "_r0_" << r0;
 
     H5Wrapper::Member &potentialMember = sizeMember.addMember(potentialDesc.str());
 
@@ -192,7 +196,7 @@ int main(int argv, char** argc)
     potentialMember.addData("useConcEquil", equilibriateInt);
     //    potentialMember.addData("usediffusion", useDiffusionInt);
     //    potentialMember.addData("useisotropicdiffusion", isotropicDiffusionInt);
-    //    potentialMember.addData("size", size.value());
+    potentialMember.addData("size", size.value());
     potentialMember.addData("heightmap", solver.heights());
     potentialMember.addData("ignisData", lattice.storedEventValues());
     potentialMember.addData("ignisEventDescriptions", lattice.outputEventDescriptions());

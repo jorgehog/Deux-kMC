@@ -8,28 +8,35 @@ class SurfaceSize : public SolidOnSolidEvent
 public:
 
     SurfaceSize(const SolidOnSolidSolver &solver) :
-        SolidOnSolidEvent(solver, "SurfaceSize", "l0", true, true)
+        SolidOnSolidEvent(solver, "SurfaceSize", "l0", true, true),
+        m_relativeHeightSums(solver.length(), solver.width())
     {
 
     }
 
-    void initialize()
+    void initialize();
+
+    double relativeHeightSum(const uint x, const uint y);
+
+    double getLocalValue() const
     {
-        m_sum = 0;
-        m_T0 = solver().currentTime() - solver().currentTimeStep();
+        return m_localValue/solver().area();
     }
+
+    void updateRelativeHeight(const uint x, const uint y);
+
+    double bruteForceValue() const;
 
     void execute();
 
-    const double &localValue() const
-    {
-        return m_localValue;
-    }
+    void reset();
 
 private:
 
     double m_sum;
     double m_localValue;
+
+    mat m_relativeHeightSums;
 
     double m_T0;
 
