@@ -16,6 +16,7 @@ SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
     m_mu(mu),
     m_shadowing(shadowing),
     m_heights(length, width, fill::zeros),
+    m_nNeighbors(length, width),
     m_siteReactions(length, width)
 {
     for (uint x = 0; x < length; ++x)
@@ -24,6 +25,14 @@ SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
         {
             m_heights(x, y) = (m_heights(leftSite(x), y) + m_heights(x, bottomSite(y)))/2 + round(-1 + 2*rng.uniform());
             m_siteReactions(x, y) = new DiffusionDeposition(x, y, *this);
+        }
+    }
+
+    for (uint x = 0; x < length; ++x)
+    {
+        for (uint y = 0; y < width; ++y)
+        {
+            setNNeighbors(x, y);
         }
     }
 }
@@ -41,6 +50,23 @@ SolidOnSolidSolver::~SolidOnSolidSolver()
     m_siteReactions.clear();
 }
 
+void SolidOnSolidSolver::registerHeightChange(const uint x, const uint y, const int value)
+{
+    m_heights(x, y) += value;
+
+    setNNeighbors(x, y);
+    setNNeighbors(leftSite(x), y);
+    setNNeighbors(rightSite(x), y);
+    setNNeighbors(x, bottomSite(y));
+    setNNeighbors(x, topSite(y));
+}
+
+void SolidOnSolidSolver::setNNeighbors(const uint x, const uint y)
+{
+    m_nNeighbors(x, y) = calculateNNeighbors(x, y);
+}
+
+
 void SolidOnSolidSolver::setPressureWallEvent(PressureWall &pressureWallEvent)
 {
     m_pressureWallEvent = &pressureWallEvent;
@@ -56,7 +82,7 @@ double SolidOnSolidSolver::localPressure(const uint x, const uint y) const
     return m_pressureWallEvent->localPressure(x, y);
 }
 
-uint SolidOnSolidSolver::nNeighbors(const uint x, const uint y) const
+uint SolidOnSolidSolver::calculateNNeighbors(const uint x, const uint y) const
 {
 
     uint n = 1;

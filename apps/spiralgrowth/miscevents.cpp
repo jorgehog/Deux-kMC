@@ -21,7 +21,7 @@ void SurfaceSize::initialize()
     }
 }
 
-double SurfaceSize::relativeHeightSum(const uint x, const uint y)
+double SurfaceSize::relativeHeightSum(const uint x, const uint y) const
 {
     double xDirection = abs(solver().height(x, y) - solver().height(solver().rightSite(x), y));
     double yDirection = abs(solver().height(x, y) - solver().height(x, solver().topSite(y)));
@@ -46,8 +46,7 @@ double SurfaceSize::bruteForceValue() const
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            value += 0.5*abs(solver().height(x, y) - solver().height(solver().rightSite(x), y));
-            value += 0.5*abs(solver().height(x, y) - solver().height(x, solver().topSite(y)));
+            value += relativeHeightSum(x, y);
         }
     }
 
@@ -137,28 +136,73 @@ void AverageHeight::execute()
 }
 
 
+void NNeighbors::updateNNeighbors(const uint x, const uint y)
+{
+    uint newValue = solver().nNeighbors(x, y);
+
+    m_localValue += ((int)newValue - (int)m_nNeighbors(x, y));
+
+    m_nNeighbors(x, y) = newValue;
+}
+
+double NNeighbors::bruteForceValue() const
+{
+    double value = 0;
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            value += solver().nNeighbors(x, y);
+        }
+    }
+
+    return value/solver().area();
+}
+
 void NNeighbors::initialize()
 {
     m_sum = 0;
-}
 
-void NNeighbors::execute()
-{
     m_localValue = 0;
 
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            m_localValue += solver().nNeighbors(x, y);
+            uint n = solver().nNeighbors(x, y);
+
+            m_nNeighbors(x, y) = n;
+            m_localValue += n;
         }
     }
+}
 
-    m_localValue /= solver().area();
-
-    m_sum += m_localValue;
+void NNeighbors::execute()
+{
+    m_sum += getLocalValue();
 
     setValue(value());
+}
+
+void NNeighbors::reset()
+{
+    const DiffusionDeposition *currentReaction = dynamic_cast<const DiffusionDeposition*>(solver().selectedReaction());
+
+    const uint &x = currentReaction->x();
+    const uint &y = currentReaction->y();
+
+    const uint leftSite = solver().leftSite(x);
+    const uint rightSite = solver().rightSite(x);
+    const uint bottomSite = solver().bottomSite(y);
+    const uint topSite = solver().topSite(y);
+
+    updateNNeighbors(x, y);
+    updateNNeighbors(leftSite, y);
+    updateNNeighbors(rightSite, y);
+    updateNNeighbors(x, bottomSite);
+    updateNNeighbors(x, topSite);
+
 }
 
 

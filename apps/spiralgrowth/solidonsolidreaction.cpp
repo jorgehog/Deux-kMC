@@ -48,7 +48,6 @@ void DiffusionDeposition::executeAndUpdate()
     else
     {
         solver().registerHeightChange(x(), y(), -1);
-
     }
 
     const uint leftSite = solver().leftSite(x());

@@ -16,7 +16,7 @@ public:
 
     void initialize();
 
-    double relativeHeightSum(const uint x, const uint y);
+    double relativeHeightSum(const uint x, const uint y) const;
 
     double getLocalValue() const
     {
@@ -91,7 +91,8 @@ class NNeighbors : public SolidOnSolidEvent
 public:
 
     NNeighbors(const SolidOnSolidSolver &solver) :
-        SolidOnSolidEvent(solver, "nNeighbors", "", true, true)
+        SolidOnSolidEvent(solver, "nNeighbors", "", true, true),
+        m_nNeighbors(solver.length(), solver.width())
     {
 
     }
@@ -106,15 +107,28 @@ public:
         return m_sum/(cycle() + 1);
     }
 
+    double getLocalValue() const
+    {
+        return m_localValue/solver().area();
+    }
+
+    void updateNNeighbors(const uint x, const uint y);
+
+    double bruteForceValue() const;
+
     // Event interface
 public:
     void initialize();
     void execute();
+    void reset();
 
 private:
 
     double m_localValue;
+
     double m_sum;
+
+    umat m_nNeighbors;
 
 };
 

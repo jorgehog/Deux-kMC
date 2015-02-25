@@ -20,10 +20,9 @@ public:
 
     ~SolidOnSolidSolver();
 
-    void registerHeightChange(const uint x, const uint y, const int value)
-    {
-        m_heights(x, y) += value;
-    }
+    void registerHeightChange(const uint x, const uint y, const int value);
+
+    void setNNeighbors(const uint x, const uint y);
 
     const uint &length() const
     {
@@ -70,6 +69,13 @@ public:
         return m_heights(x, y);
     }
 
+    const uint &nNeighbors(const uint x, const uint y) const
+    {
+        BADAssEqual(m_nNeighbors(x, y), calculateNNeighbors(x, y));
+
+        return m_nNeighbors(x, y);
+    }
+
     void setPressureWallEvent(PressureWall &pressureWallEvent);
 
     PressureWall &pressureWallEvent() const
@@ -79,7 +85,7 @@ public:
 
     double localPressure(const uint x, const uint y) const;
 
-    uint nNeighbors(const uint x, const uint y) const;
+    uint calculateNNeighbors(const uint x, const uint y) const;
 
     uint topSite(const uint site, const uint n = 1) const;
 
@@ -113,6 +119,7 @@ private:
     const bool m_shadowing;
 
     imat m_heights;
+    umat m_nNeighbors;
 
     field<DiffusionDeposition*> m_siteReactions;
 
