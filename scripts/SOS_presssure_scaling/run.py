@@ -14,7 +14,7 @@ def main():
 
     path, app, cfg, n_procs = parse_input(sys.argv)
 
-    controller = ParameterSetController()
+    controller = ParameterSetController(use_mpi=True)
 
     E0_values = ParameterSet(cfg, "E0dA\s*\=\s*(.*)\;")
     E0_values.initialize_set_incr(0.05, 0.1, 0.05)
@@ -25,7 +25,7 @@ def main():
     controller.register_parameter_set(E0_values)
     controller.register_parameter_set(alpha_values)
 
-    controller.run(run_kmc, path, app, n_procs=n_procs)
+    controller.run(run_kmc, path, app, ask=False)
 
 
 if __name__ == "__main__":

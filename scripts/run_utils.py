@@ -6,7 +6,6 @@ import time
 this_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 sys.path.append(os.path.join(this_dir, "..", "utils", "ParameterJuggler"))
-print os.path.join(os.getcwd(), "..", "utils", "ParameterJuggler")
 from ParameterJuggler import quick_replace
 
 
@@ -23,7 +22,7 @@ def run_kmc(proc, combination, path, app):
     os.chdir(path)
     success = os.system("./%s %d >> /tmp/kmc_dump_%d.txt" % (app, proc, proc))
     os.chdir(this_dir)
- 
+
     return success
 
 def parse_input(argv):
