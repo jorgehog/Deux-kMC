@@ -61,8 +61,7 @@ def parse_input(argv):
 
     controller = ParameterSetController(use_mpi=use_mpi)
 
-    if out_path and controller.get_rank() == 0:
-        print "Changing out path to", out_path
+    if out_path:
         quick_replace(cfg, "path", out_path)
 
     return controller, path, app, cfg, n_procs
