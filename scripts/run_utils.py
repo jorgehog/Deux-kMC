@@ -52,7 +52,7 @@ def parse_input(argv):
             elif "-path" in input:
                 if "-n" in input:
                     try:
-                        out_path = int(argv[i+1])
+                        out_path = argv[i+1]
                     except:
                         raise ValueError("invalid value succeeding -path")
 
