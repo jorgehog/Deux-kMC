@@ -8,6 +8,7 @@ this_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe(
 sys.path.append(os.path.join(this_dir, "..", "utils", "ParameterJuggler"))
 from ParameterJuggler import ParameterSetController, quick_replace
 
+from mpi4py import MPI
 
 def run_kmc(proc, combination, path, app):
     time.sleep(proc/10.)
@@ -62,6 +63,8 @@ def parse_input(argv):
     controller = ParameterSetController(use_mpi=use_mpi)
 
     if out_path:
-        quick_replace(cfg, "path", out_path)
+        if MPI.COMM_WORLD.rank == 0:
+            quick_replace(cfg, "path", out_path)
+    MPI.COMM_WORLD.Barrier()
 
     return controller, path, app, cfg, n_procs

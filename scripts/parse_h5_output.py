@@ -47,9 +47,10 @@ class ParseKMCHDF5:
 
                     _ignis_index_map = {}
 
-                    for i, name in enumerate(data["ignisEventDescriptions"][0]):
-                        name_strip = str(name).split("@")[0]
-                        _ignis_index_map[name_strip] = i
+                    if data["storeIgnisData"]:
+                        for i, name in enumerate(data["ignisEventDescriptions"][0]):
+                            name_strip = str(name).split("@")[0]
+                            _ignis_index_map[name_strip] = i
 
                     yield l, potential, alpha, mu, E0, s0, r0, neighbors, _ignis_index_map, data, n
 
