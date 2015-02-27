@@ -93,7 +93,8 @@ int main(int argv, char** argc)
     const uint &nCycles = getSetting<uint>(root, "nCycles");
     const uint &thermalization = getSetting<uint>(root, "thermalization");
     const uint &nCyclesPerOutput = getSetting<uint>(root, "nCyclesPerOutput");
-
+    const uint &storeIgnisDataInt = getSetting<uint>(root, "storeIgnisData");
+    const bool storeIgnisData = storeIgnisDataInt == 1;
 
     SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
@@ -143,7 +144,7 @@ int main(int argv, char** argc)
 
     lattice.enableOutput(true, nCyclesPerOutput);
     lattice.enableProgressReport();
-    lattice.enableEventValueStorage(true, true, "ignisSOS.ign", path);
+    lattice.enableEventValueStorage(storeIgnisData, storeIgnisData, "ignisSOS.ign", path);
     lattice.eventLoop(nCycles);
 
     double muEq = 0;
@@ -197,9 +198,15 @@ int main(int argv, char** argc)
     //    potentialMember.addData("usediffusion", useDiffusionInt);
     //    potentialMember.addData("useisotropicdiffusion", isotropicDiffusionInt);
     potentialMember.addData("size", size.value());
-    potentialMember.addData("heightmap", solver.heights());
-    potentialMember.addData("ignisData", lattice.storedEventValues());
-    potentialMember.addData("ignisEventDescriptions", lattice.outputEventDescriptions());
+
+    potentialMember.addData("storeIgnisData", storeIgnisDataInt);
+
+    if (storeIgnisData)
+    {
+        potentialMember.addData("heightmap", solver.heights());
+        potentialMember.addData("ignisData", lattice.storedEventValues());
+        potentialMember.addData("ignisEventDescriptions", lattice.outputEventDescriptions());
+    }
 
     potentialMember.addData("randomSeed", seed);
 
