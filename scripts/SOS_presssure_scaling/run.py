@@ -12,9 +12,7 @@ from ParameterJuggler import ParameterSet, ParameterSetController
 
 def main():
 
-    path, app, cfg, n_procs = parse_input(sys.argv)
-
-    controller = ParameterSetController(use_mpi=True)
+    controller, path, app, cfg, n_procs = parse_input(sys.argv)
 
     E0_values = ParameterSet(cfg, "E0dA\s*\=\s*(.*)\;")
     E0_values.initialize_set_incr(0.05, 0.1, 0.05)
@@ -25,7 +23,7 @@ def main():
     controller.register_parameter_set(E0_values)
     controller.register_parameter_set(alpha_values)
 
-    controller.run(run_kmc, path, app, ask=False)
+    controller.run(run_kmc, path, app, ask=not controller.use_mpi, n_procs=n_procs)
 
 
 if __name__ == "__main__":

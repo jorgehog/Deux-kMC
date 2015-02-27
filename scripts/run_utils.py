@@ -6,7 +6,7 @@ import time
 this_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 sys.path.append(os.path.join(this_dir, "..", "utils", "ParameterJuggler"))
-from ParameterJuggler import quick_replace
+from ParameterJuggler import ParameterSetController, quick_replace
 
 
 def run_kmc(proc, combination, path, app):
@@ -40,23 +40,29 @@ def parse_input(argv):
 
     n_procs = 1
     out_path = None
+    use_mpi = False
 
     if argv:
         for i, input in enumerate(argv):
 
-            if "-n" in input:
+            if "-n" == input:
                 try:
                     n_procs = int(argv[i+1])
                 except:
                     raise ValueError("invalid value succeeding -n")
-            elif "-path" in input:
-                if "-n" in input:
-                    try:
-                        out_path = argv[i+1]
-                    except:
-                        raise ValueError("invalid value succeeding -path")
+            elif "-path" == input:
+                try:
+                    out_path = argv[i+1]
+                except:
+                    raise ValueError("invalid value succeeding -path")
 
-    if out_path:
+            elif "-mpi" == input:
+                use_mpi = True
+
+    controller = ParameterSetController(use_mpi=use_mpi)
+
+    if out_path and controller.get_rank() == 0:
+        print "Changing out path to", out_path
         quick_replace(cfg, "path", out_path)
 
-    return path, app, cfg, n_procs
+    return controller, path, app, cfg, n_procs
