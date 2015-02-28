@@ -32,13 +32,11 @@ class ParseKMCHDF5:
 
         for file in self.files:
             for l, run in file.items():
-
+                L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]
                 for potential, data in run.items():
 
-                    alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*)" % ID, potential)[0]) for ID in
-                                               ["alpha", "mu", "E0", "s0", "r0"]]
-
-                    n = re.findall("\_n_(\d+)", potential)
+                    alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*|nan)" % ID, potential)[0]) for ID in
+                                             ["alpha", "mu", "E0", "s0", "r0"]]
 
                     if "nNeighbors" in data.attrs.keys():
                         neighbors = data.attrs["nNeighbors"]
@@ -52,7 +50,7 @@ class ParseKMCHDF5:
                             name_strip = str(name).split("@")[0]
                             _ignis_index_map[name_strip] = i
 
-                    yield l, potential, alpha, mu, E0, s0, r0, neighbors, _ignis_index_map, data, n
+                    yield L, W, potential, alpha, mu, E0, s0, r0, neighbors, _ignis_index_map, data
 
     def getfiles(self):
         return self.files

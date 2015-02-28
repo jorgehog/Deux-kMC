@@ -158,7 +158,11 @@ int main(int argv, char** argc)
 
         if (reset)
         {
-            solver.setMu(muEq + muShift);
+            if (muShift != 0)
+            {
+                solver.setMu(muEq + muShift);
+            }
+
             lattice.removeEvent(&eqMu);
             lattice.removeEvent(&equilibriater);
             lattice.addEvent(size);
