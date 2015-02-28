@@ -99,7 +99,6 @@ def main():
 
     plt.xlabel(r"$\sigma_0$")
     plt.ylabel(r"$r_0$")
-    plt.zlabel(r"$K$")
 
     fig.colorbar(surf, shrink=0.5, aspect=5)
 
