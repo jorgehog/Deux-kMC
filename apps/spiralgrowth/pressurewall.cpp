@@ -116,9 +116,9 @@ double PressureWall::pressureEnergySum() const
 void PressureWall::findNewHeight()
 {
 
-    double theta = accu(m_thetaPartialSumsMat/solver().area());
+    double theta = accu(m_thetaPartialSumsMat)/solver().area();
 
-//    BADAssClose(theta, bruteForceTheta(), 1E-5);
+    BADAssClose(theta, bruteForceTheta(), 1E-5);
 
 //    theta = bruteForceTheta();
 
