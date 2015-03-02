@@ -40,6 +40,8 @@ public:
         return m_localPressure(x, y);
     }
 
+    double partialTheta(const uint x, const uint y) const;
+
     double localPressureEvaluate(const uint x, const uint y) const
     {
         return _pressureExpression(m_height - solver().height(x, y));

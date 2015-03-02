@@ -97,11 +97,6 @@ public:
 
     }
 
-    const double &localValue() const
-    {
-        return m_localValue;
-    }
-
     double value() const
     {
         return m_sum/(cycle() + 1);

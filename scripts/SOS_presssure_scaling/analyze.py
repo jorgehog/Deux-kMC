@@ -91,7 +91,7 @@ def main():
     fig = plt.figure()
     ax = fig.gca(projection='3d')
 
-    surf = ax.plot_surface(X, Y, coefficients, rstride=1, cstride=1, cmap=cm.coolwarm,
+    surf = ax.plot_surface(X, Y, coefficients.transpose(), rstride=1, cstride=1, cmap=cm.coolwarm,
         linewidth=0, antialiased=False)
 
     ax.zaxis.set_major_locator(LinearLocator(10))

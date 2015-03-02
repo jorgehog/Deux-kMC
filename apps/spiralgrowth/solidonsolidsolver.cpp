@@ -145,7 +145,7 @@ uint SolidOnSolidSolver::rightSite(const uint site, const uint n) const
 
 double SolidOnSolidSolver::shadowScale(const double n) const
 {
-    return 2*(1 + m_dim) - n;
+    return 3 - n/2;
 }
 
 void SolidOnSolidSolver::setMu(const double mu)

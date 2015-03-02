@@ -53,8 +53,14 @@ void EqMu::update()
 
     if (solver().shadowing())
     {
-        m_accuNeighbours += dt*dependency<NNeighbors>("nNeighbors")->localValue();
-        const double &avgNeighbors = m_accuNeighbours/m_totalTime;
+        m_accuNeighbours += dt*dependency<NNeighbors>("nNeighbors")->getLocalValue();
+        const double avgNeighbors = m_accuNeighbours/m_totalTime;
+
+        if (avgNeighbors != avgNeighbors)
+        {
+            cout << "n " << avgNeighbors << " " << m_accuNeighbours << " " << m_totalTime << " " << dt << endl;
+            exit(1);
+        }
 
         inverseKStar = 1./solver().shadowScale(avgNeighbors);
     }
@@ -64,5 +70,14 @@ void EqMu::update()
     }
 
     m_dMu = avgDissolutionRate*inverseKStar;
+
+    if (m_dMu < 0)
+    {
+        cout << m_dMu << endl;
+        cout << inverseKStar << endl;
+        cout << localDissolutionRate << endl;
+        cout << avgDissolutionRate << endl;
+        exit(1);
+    }
 }
 
