@@ -50,7 +50,6 @@ void Equilibriater::execute()
     m_counter++;
     if (m_counter >= m_nSamplesMu)
     {
-        cout << "SHIFTING" << endl;
         initiateNextConcentrationLevel(shift);
         m_counter = 0;
     }

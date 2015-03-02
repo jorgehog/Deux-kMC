@@ -132,7 +132,12 @@ void DumpHeights3D::execute()
 
 void AverageHeight::execute()
 {
-    setValue(accu(solver().heights())/(double)solver().area());
+    setValue(getValue());
+}
+
+double AverageHeight::getValue() const
+{
+    return accu(solver().heights())/(double)solver().area();
 }
 
 

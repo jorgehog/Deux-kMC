@@ -68,6 +68,8 @@ private:
     double m_heightChange;
     double m_expFac;
 
+    double m_thetaShift;
+
     double m_thetaPrev;
 
     const double m_r0;

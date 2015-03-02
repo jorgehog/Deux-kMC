@@ -3,7 +3,8 @@
 #include "solidonsolidreaction.h"
 
 
-PressureWall::PressureWall(SolidOnSolidSolver &solver, const double E0,
+PressureWall::PressureWall(SolidOnSolidSolver &solver,
+                           const double E0,
                            const double sigma0,
                            const double r0):
     SolidOnSolidEvent(solver, "PressureWall", "h0", true, true),
@@ -52,7 +53,7 @@ void PressureWall::setupInitialConditions()
 {
     setupTheta();
 
-    m_height = m_r0*std::log(solver().area()*m_thetaPrev/(m_E0/m_s0));
+    m_height = m_r0*std::log(solver().area()*m_thetaPrev/(m_E0/m_s0)) + m_thetaShift;
 
     recalculateAllPressures();
 
@@ -65,7 +66,6 @@ void PressureWall::execute()
     double value = m_height - dependency("AverageHeight")->value();
 
     setValue(value);
-
 
     if ((cycle() + 1)%100 == 0)
     {
@@ -82,18 +82,18 @@ void PressureWall::reset()
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            BADAssClose(localPressureEvaluate(x, y), localPressure(x, y), 1E-3);
+            BADAssClose(localPressureEvaluate(x, y), localPressure(x, y), 1E-5);
         }
     }
 #endif
 
-    BADAssClose(pressureEnergySum(), -m_E0, 1E-5);
+    BADAssClose(pressureEnergySum(), -m_E0, 1E-3);
 
 }
 
 double PressureWall::partialTheta(const uint x, const uint y) const
 {
-    return std::exp((solver().height(x, y))/m_r0);
+    return std::exp((solver().height(x, y) - m_thetaShift)/m_r0)/solver().area();
 }
 
 double PressureWall::pressureEnergySum() const
@@ -103,7 +103,7 @@ double PressureWall::pressureEnergySum() const
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            BADAssClose(m_localPressure(x, y), localPressureEvaluate(x, y), 1E-4);
+            BADAssClose(m_localPressure(x, y), localPressureEvaluate(x, y), 1E-5);
 
             s += m_localPressure(x, y);
         }
@@ -115,10 +115,29 @@ double PressureWall::pressureEnergySum() const
 
 void PressureWall::findNewHeight()
 {
+    double theta;
 
-    double theta = accu(m_thetaPartialSumsMat)/solver().area();
+    theta = accu(m_thetaPartialSumsMat);
 
-    BADAssClose(theta, bruteForceTheta(), 1E-5);
+#ifndef NDEBUG
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            BADAssClose(m_thetaPartialSumsMat(x, y), partialTheta(x, y), 1E-3, "theta fail", [&]
+            {
+                BADAssSimpleDump(m_thetaPartialSumsMat(x, y), partialTheta(x, y), m_thetaShift);
+            });
+        }
+    }
+#endif
+
+    if (std::isinf(theta) != 0)
+    {
+        terminateLoop("Force convervation failed: Too much noise for numerical precision.");
+    }
+
+//    BADAssClose(theta, bruteForceTheta(), 1E-3);
 
 //    theta = bruteForceTheta();
 
@@ -130,6 +149,10 @@ void PressureWall::findNewHeight()
 
     m_expFac = expSmallArg(-m_heightChange/m_r0);
 
+    if ((cycle() + 1) % 1000 == 0)
+    {
+        setupTheta();
+    }
 }
 
 void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
@@ -148,7 +171,7 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
 
     m_localPressure(x, y) *= m_expFac;
 
-    BADAssClose(localPressureEvaluate(x, y), m_localPressure(x, y), 1E-3, "incorrect pressure update", [&] ()
+    BADAssClose(localPressureEvaluate(x, y), m_localPressure(x, y), 1E-5, "incorrect pressure update", [&] ()
     {
         BADAssSimpleDump(cycle(), x, y, localPressure(x, y), m_expFac, m_heightChange);
     });
@@ -177,11 +200,21 @@ double PressureWall::bruteForceTheta() const
         }
     }
 
-    return theta/solver().area();
+    return theta;
 }
 
 void PressureWall::setupTheta()
 {
+    if (hasStarted())
+    {
+        m_thetaShift += log(accu(m_thetaPartialSumsMat)/solver().area());
+    }
+    else
+    {
+        m_thetaShift = dependency("AverageHeight")->value();
+    }
+
+    m_thetaShift = dependency("AverageHeight")->value();
     m_thetaPrev = 0;
 
     for (uint x = 0; x < solver().length(); ++x)
@@ -192,9 +225,6 @@ void PressureWall::setupTheta()
             m_thetaPrev += m_thetaPartialSumsMat(x, y);
         }
     }
-
-    m_thetaPrev /= solver().area();
-
 }
 
 void PressureWall::recalculateAllPressures()
