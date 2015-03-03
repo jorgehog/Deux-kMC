@@ -66,4 +66,3 @@ void EqMu::update()
     m_dMu = avgDissolutionRate*inverseKStar;
 
 }
-

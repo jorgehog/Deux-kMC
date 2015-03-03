@@ -40,11 +40,12 @@ public:
         return m_localPressure(x, y);
     }
 
-    double partialTheta(const uint x, const uint y) const;
+    double partialRatio(const uint x, const uint y) const;
 
     double localPressureEvaluate(const uint x, const uint y) const
     {
-        return _pressureExpression(m_height - solver().height(x, y));
+        const int &h = solver().height(x, y);
+        return _pressureExpression(m_height - h);
     }
 
     const double &height() const
@@ -60,7 +61,7 @@ public:
 
     void registerHeightChange(const uint x, const uint y);
 
-    double bruteForceTheta() const;
+    double bruteForceRatio() const;
 
 private:
 
@@ -68,16 +69,18 @@ private:
     double m_heightChange;
     double m_expFac;
 
-    double m_thetaShift;
+    //    double m_thetaShift;
 
-    double m_thetaPrev;
+    //    long double m_thetaPrev;
+    long double m_r0LogThetaPrev;
 
     const double m_r0;
     const double m_s0;
     const double m_E0;
 
     mat m_localPressure;
-    mat m_thetaPartialSumsMat;
+    //    vector<vector<long double>> m_thetaPartialSumsMat;
+    mat m_ratioPartialSums;
 
     void setupTheta();
 

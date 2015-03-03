@@ -243,3 +243,37 @@ void RateChecker::reset()
 
     }
 }
+
+
+void DumpHeightSlice::initialize()
+{
+    if (m_axis == 0)
+    {
+        m_heights.set_size(solver().heights().n_rows);
+    }
+
+    else
+    {
+        m_heights.set_size(solver().heights().n_cols);
+    }
+}
+
+void DumpHeightSlice::execute()
+{
+    if (cycle() % m_nCyclesPerOutput != 0)
+    {
+        return;
+    }
+
+    if (m_axis == 0)
+    {
+        m_heights = solver().heights().col(m_slicePosition);
+    }
+
+    else
+    {
+        m_heights = solver().heights().row(m_slicePosition);
+    }
+
+    m_heights.save(m_path + "/heights.arma");
+}

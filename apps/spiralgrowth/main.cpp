@@ -106,6 +106,7 @@ int main(int argv, char** argc)
     size.setOnsetTime(thermalization);
 
     DumpHeights3D dumpHeights3D(solver, path);
+    DumpHeightSlice dumpHeightSlice(solver, 0, 0, path, nCyclesPerOutput);
 
     NNeighbors nNeighbors(solver);
 
@@ -135,6 +136,7 @@ int main(int argv, char** argc)
     }
 
     //    lattice.addEvent(dumpHeights3D);
+    lattice.addEvent(dumpHeightSlice);
 
 
 #ifndef NDEBUG

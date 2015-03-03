@@ -60,7 +60,6 @@ void DiffusionDeposition::executeAndUpdate()
     DiffusionDeposition &bottomReaction = solver().reaction(x(), bottomSite);
     DiffusionDeposition &topReaction = solver().reaction(x(), topSite);
 
-
     if (pressureWallEvent.hasStarted())
     {
         pressureWallEvent.registerHeightChange(x(), y());

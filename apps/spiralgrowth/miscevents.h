@@ -59,6 +59,39 @@ public:
 };
 
 
+class DumpHeightSlice : public SolidOnSolidEvent
+{
+public:
+    DumpHeightSlice(const SolidOnSolidSolver &solver,
+                    const uint slicePosition=0,
+                    const uint axis=0,
+                    const string path = "/tmp",
+                    const uint nCyclesperOutput = 1000) :
+        SolidOnSolidEvent(solver, "DumpHeightSlice"),
+        m_slicePosition(slicePosition),
+        m_axis(axis),
+        m_path(path),
+        m_nCyclesPerOutput(nCyclesperOutput)
+    {
+
+    }
+
+    void initialize();
+
+    void execute();
+
+private:
+
+    const uint m_slicePosition;
+    const uint m_axis;
+
+    const string m_path;
+    const uint m_nCyclesPerOutput;
+
+    ivec m_heights;
+
+};
+
 class DumpHeights3D : public SolidOnSolidEvent
 {
 public:

@@ -12,12 +12,12 @@ PressureWall::PressureWall(SolidOnSolidSolver &solver,
     m_s0(sigma0),
     m_E0(E0),
     m_localPressure(solver.length(), solver.width(), fill::zeros),
-    m_thetaPartialSumsMat(solver.length(), solver.width())
+    m_ratioPartialSums(solver.length(), solver.width())
 {
     BADAss(E0, >, 0, "E0 should be positive.");
 
     solver.setPressureWallEvent(*this);
- }
+}
 
 PressureWall::~PressureWall()
 {
@@ -53,7 +53,7 @@ void PressureWall::setupInitialConditions()
 {
     setupTheta();
 
-    m_height = m_r0*std::log(solver().area()*m_thetaPrev/(m_E0/m_s0)) + m_thetaShift;
+    m_height = m_r0LogThetaPrev + m_r0*std::log(m_s0/m_E0);
 
     recalculateAllPressures();
 
@@ -89,11 +89,24 @@ void PressureWall::reset()
 
     BADAssClose(pressureEnergySum(), -m_E0, 1E-3);
 
+
+//    for (uint x = 0; x < solver().length(); ++x)
+//    {
+//        for (uint y = 0; y < solver().width(); ++y)
+//        {
+//            cout << m_height - m_r0LogThetaPrev - m_r0*log(m_s0/m_E0)
+//                 << "\n" << m_ratioPartialSums(x, y) - partialRatio(x, y)
+//                 << "\n" << m_localPressure(x, y) - localPressureEvaluate(x, y)
+//                 << "\n" << m_localPressure(x, y) + m_E0*m_ratioPartialSums(x, y)
+//                 << "\n------" << endl;
+//        }
+//    }
+
 }
 
-double PressureWall::partialTheta(const uint x, const uint y) const
+double PressureWall::partialRatio(const uint x, const uint y) const
 {
-    return std::exp((solver().height(x, y) - m_thetaShift)/m_r0)/solver().area();
+    return std::exp((solver().height(x, y) - m_r0LogThetaPrev)/m_r0);
 }
 
 double PressureWall::pressureEnergySum() const
@@ -115,50 +128,35 @@ double PressureWall::pressureEnergySum() const
 
 void PressureWall::findNewHeight()
 {
-    double theta;
+    double ratio = 0;
 
-    theta = accu(m_thetaPartialSumsMat);
-
-#ifndef NDEBUG
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            BADAssClose(m_thetaPartialSumsMat(x, y), partialTheta(x, y), 1E-3, "theta fail", [&]
+            ratio += m_ratioPartialSums(x, y);
+            BADAssClose(m_ratioPartialSums(x, y), partialRatio(x, y), 1E-3, "theta fail", [&]
             {
-                BADAssSimpleDump(m_thetaPartialSumsMat(x, y), partialTheta(x, y), m_thetaShift);
+                BADAssSimpleDump(m_ratioPartialSums(x, y), partialRatio(x, y), m_r0LogThetaPrev);
             });
         }
     }
-#endif
 
-    if (std::isinf(theta) != 0)
-    {
-        terminateLoop("Force convervation failed: Too much noise for numerical precision.");
-    }
+    m_heightChange = m_r0*std::log(ratio);
 
-//    BADAssClose(theta, bruteForceTheta(), 1E-3);
-
-//    theta = bruteForceTheta();
-
-    m_heightChange = m_r0*std::log(theta/m_thetaPrev);
-
-    m_thetaPrev = theta;
+    m_r0LogThetaPrev += m_heightChange;
 
     m_height += m_heightChange;
 
     m_expFac = expSmallArg(-m_heightChange/m_r0);
 
-    if ((cycle() + 1) % 1000 == 0)
-    {
-        setupTheta();
-    }
+    m_ratioPartialSums*=m_expFac;
 }
 
 void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
 {
-    const uint &x = reaction.x();
-    const uint &y = reaction.y();
+    const uint x = reaction.x();
+    const uint y = reaction.y();
 
     double rateChange = expSmallArg(-solver().alpha()*m_localPressure(x, y)*(m_expFac - 1));
 
@@ -173,58 +171,62 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
 
     BADAssClose(localPressureEvaluate(x, y), m_localPressure(x, y), 1E-5, "incorrect pressure update", [&] ()
     {
-        BADAssSimpleDump(cycle(), x, y, localPressure(x, y), m_expFac, m_heightChange);
+        BADAssSimpleDump(cycle(), x, y, rateChange, localPressure(x, y), m_expFac, m_heightChange);
     });
 
     BADAssClose(reaction.diffusionRate(), reaction.calculateDiffusionRate(), 1E-5, "incorrect rate update", [&] ()
     {
-        BADAssSimpleDump(cycle(), x, y, localPressure(x, y), m_expFac, m_heightChange);
+        double lp = localPressure(x, y);
+        int h = solver().height(x, y);
+        BADAssSimpleDump(cycle(), x, y, rateChange, prevDiffRate, lp, m_expFac, m_heightChange, h, m_height);
     });
 
 }
 
 void PressureWall::registerHeightChange(const uint x, const uint y)
 {
-    m_thetaPartialSumsMat(x, y) = partialTheta(x, y);
+    m_ratioPartialSums(x, y) = partialRatio(x, y);
 }
 
-double PressureWall::bruteForceTheta() const
+double PressureWall::bruteForceRatio() const
 {
-    double theta = 0;
+    double ratio = 0;
 
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            theta += partialTheta(x, y);
+            ratio += std::exp(((long double)solver().height(x, y) - m_r0LogThetaPrev)/m_r0);
         }
     }
 
-    return theta;
+    return ratio;
 }
 
 void PressureWall::setupTheta()
 {
-    if (hasStarted())
-    {
-        m_thetaShift += log(accu(m_thetaPartialSumsMat)/solver().area());
-    }
-    else
-    {
-        m_thetaShift = dependency("AverageHeight")->value();
-    }
-
-    m_thetaShift = dependency("AverageHeight")->value();
-    m_thetaPrev = 0;
+    double thetaShift = dependency("AverageHeight")->value();
+    long double thetaPrev = 0;
 
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            m_thetaPartialSumsMat(x, y) = partialTheta(x, y);
-            m_thetaPrev += m_thetaPartialSumsMat(x, y);
+            thetaPrev += std::exp((solver().height(x, y) - thetaShift)/m_r0);
         }
     }
+
+    m_r0LogThetaPrev = m_r0*log(thetaPrev) + thetaShift;
+
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            m_ratioPartialSums(x, y) = partialRatio(x, y);
+        }
+    }
+
 }
 
 void PressureWall::recalculateAllPressures()
