@@ -10,7 +10,7 @@ from ParameterJuggler import ParameterSetController, quick_replace
 
 from mpi4py import MPI
 
-def run_kmc(proc, combination, path, app):
+def run_kmc(proc, combination, path, app, cfg):
     time.sleep(proc/10.)
 
     print "Running ",
@@ -21,7 +21,7 @@ def run_kmc(proc, combination, path, app):
     this_dir = os.getcwd()
 
     os.chdir(path)
-    success = os.system("./%s %d >> /tmp/kmc_dump_%d.txt" % (app, proc, proc))
+    success = os.system("./%s %d %s_%d.cfg >> /tmp/kmc_dump_%d.txt" % (app, proc, cfg.strip(".cfg"), proc, proc))
     os.chdir(this_dir)
 
     return success
@@ -37,8 +37,8 @@ def parse_input(argv):
     if os.path.exists("/tmp/kmc_dump"):
         remove("/tmp/kmc_dump")
 
-    cfg = os.path.join(path, "infiles", app + ".cfg")
 
+    cfg = os.path.join(path, "infiles", app + ".cfg")
     n_procs = 1
     out_path = None
     use_mpi = False
@@ -59,6 +59,8 @@ def parse_input(argv):
 
             elif "-mpi" == input:
                 use_mpi = True
+            elif "-cfg" == input:
+                cfg = argv[i+1]
 
     controller = ParameterSetController(use_mpi=use_mpi)
 

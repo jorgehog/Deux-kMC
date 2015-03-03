@@ -23,7 +23,7 @@ def main():
     controller.register_parameter_set(E0_values)
     controller.register_parameter_set(alpha_values)
 
-    controller.run(run_kmc, path, app, ask=not controller.use_mpi, n_procs=n_procs)
+    controller.run(run_kmc, path, app, cfg, ask=not controller.use_mpi, n_procs=n_procs)
 
 
 if __name__ == "__main__":

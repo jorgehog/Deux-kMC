@@ -25,8 +25,9 @@ int main(int argv, char** argc)
 {
 
     string tail;
+    string cfgName;
 
-    if (argv == 2)
+    if (argv != 1)
     {
         int proc = atoi(argc[1]);
 
@@ -34,14 +35,16 @@ int main(int argv, char** argc)
         ending << "_" << proc;
 
         tail = ending.str();
+
+        cfgName = argc[2];
     }
     else
     {
         tail = "";
+        cfgName = "infiles/spiralgrowth.cfg";
     }
 
     Config cfg;
-    string cfgName = "infiles/" + addProcEnding("spiralgrowth", "cfg", tail);
 
     cfg.readFile(cfgName.c_str());
 
