@@ -35,9 +35,11 @@ class ParseKMCHDF5:
                 L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]
                 for potential, data in run.items():
 
-                    alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*|nan)" % ID, potential)[0]) for ID in
-                                             ["alpha", "mu", "E0", "s0", "r0"]]
-
+                    try:
+                        alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*|-?nan)" % ID, potential)[0]) for ID in
+                                                 ["alpha", "mu", "E0", "s0", "r0"]]
+                    except:
+                        raise ValueError("invalid potential: %s" % potential)
                     if "nNeighbors" in data.attrs.keys():
                         neighbors = data.attrs["nNeighbors"]
                     else:

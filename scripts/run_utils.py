@@ -59,6 +59,10 @@ def parse_input(argv):
 
             elif "-mpi" == input:
                 use_mpi = True
+
+                if MPI.COMM_WORLD.rank == 0:
+                    print "Running", MPI.COMM_WORLD.size, "processes."
+
             elif "-cfg" == input:
                 cfg = argv[i+1]
 

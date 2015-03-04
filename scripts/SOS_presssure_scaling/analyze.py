@@ -69,6 +69,7 @@ def main():
 
     n = 0
     for stuff in parser:
+        n += 1
 
         data = stuff[-1]
 
@@ -104,6 +105,7 @@ def main():
         parsed_data[s0][r0][E0]["muEqErrors"].append(muEqError)
         parsed_data[s0][r0][E0]["neighbors"].append(neighbors)
 
+    print "Parsed", n, "entries."
 
     s0_values = np.array(sorted(parsed_data.keys()))
     r0_values = np.array(sorted(parsed_data[s0_values[0]].keys()))
