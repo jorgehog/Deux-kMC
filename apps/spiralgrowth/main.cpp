@@ -109,6 +109,11 @@ int main(int argv, char** argc)
     SurfaceSize size(solver);
     size.setOnsetTime(thermalization);
 
+    SurfaceVariance var(solver);
+    var.setOnsetTime(thermalization);
+
+    var.setDependency(size);
+
     DumpHeights3D dumpHeights3D(solver, path);
     DumpHeightSlice dumpHeightSlice(solver, 0, 0, path, nCyclesPerOutput);
 
@@ -132,6 +137,7 @@ int main(int argv, char** argc)
     else
     {
         lattice.addEvent(size);
+        lattice.addEvent(var);
     }
 
     if (pressureWall)
@@ -172,6 +178,7 @@ int main(int argv, char** argc)
             lattice.removeEvent(&eqMu);
             lattice.removeEvent(&equilibriater);
             lattice.addEvent(size);
+            lattice.addEvent(var);
             lattice.eventLoop(nCycles);
         }
     }
@@ -208,6 +215,7 @@ int main(int argv, char** argc)
     //    potentialMember.addData("usediffusion", useDiffusionInt);
     //    potentialMember.addData("useisotropicdiffusion", isotropicDiffusionInt);
     potentialMember.addData("size", size.value());
+    potentialMember.addData("var", var.value());
 
     potentialMember.addData("storeIgnisData", storeIgnisDataInt);
 

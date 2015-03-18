@@ -46,7 +46,7 @@ def main():
         cut = len(surface_size)/2
 
         mean_s = np.mean(surface_size[cut:])
-        var_s = np.var(surface_size[cut:])
+        var_s = np.mean(surface_size[cut:]**2) - mean_s**2
 
         parsed_data[E0]["alphas"].append(alpha)
         parsed_data[E0]["mean_s"].append(mean_s)
