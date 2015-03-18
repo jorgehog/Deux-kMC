@@ -1,6 +1,8 @@
 import sys
 import os
 import re
+import random
+
 from os.path import join
 from scipy.stats import linregress
 
@@ -23,7 +25,7 @@ max_err1 = 0
 max_err2 = 0
 
 
-def get_coefficient_from_data(data):
+def get_coefficient_from_data(data, s0, r0, store):
 
     global mean_err1
     global mean_err2
@@ -35,9 +37,22 @@ def get_coefficient_from_data(data):
     d_mu_d_alpha_values = []
     E0_values = []
 
-    for E0, raw_data in data.items():
+    if store:
+        f = open("/tmp/linearplots_metadata.dat", 'w')
+        f.write("s0 %g r0 %g\n" % (s0, r0))
 
-        d_mu_d_alpha, a, r1, c, err1 = linregress(raw_data["alphas"], raw_data["muEqs"])
+    i = 0
+    for E0, raw_data in data.items():
+        alphas = raw_data["alphas"]
+        muEqs = raw_data["muEqs"]
+        muEqErrors = raw_data["muEqErrors"]
+
+        d_mu_d_alpha, a, r1, c, err1 = linregress(alphas, muEqs)
+
+        if store:
+            np.save("/tmp/linearplots_alpha_%d.npy" % i, alphas)
+            np.save("/tmp/linearplots_muEqs_%d.npy" % i, muEqs)
+            np.save("/tmp/linearplots_muEqErrors_%d.npy" % i, muEqErrors)
 
         d_mu_d_alpha_values.append(d_mu_d_alpha)
         E0_values.append(E0)
@@ -48,6 +63,12 @@ def get_coefficient_from_data(data):
         if err1 > max_err1:
             max_err1 = err1
 
+        i += 1
+
+    if store:
+        np.save("/tmp/linearplots_E0.npy", E0_values)
+        np.save("/tmp/linearplots_slopes.npy", d_mu_d_alpha_values)
+
     coefficient, a, r2, c, err2 = linregress(E0_values, d_mu_d_alpha_values)
 
     mean_err2 += err2
@@ -57,6 +78,35 @@ def get_coefficient_from_data(data):
         max_err2 = err2
 
     return 1./coefficient
+
+
+def get_coefficient_from_data2(data):
+
+    global mean_err1
+    global mean_err2
+    global c1
+    global c2
+    global max_err1
+    global max_err2
+
+    coeffs = []
+
+    for E0, raw_data in data.items():
+
+        local_coeffs = [E0*a/m for a, m in zip(raw_data["alphas"], raw_data["muEqs"])]
+
+        for coeff in local_coeffs:
+            coeffs.append(coeff)
+
+    mean_err1 += 1
+    c1 += 1
+    mean_err2 += 1
+    c2 += 1
+
+
+    return sum(coeffs)/len(coeffs)
+
+
 
 
 def main():
@@ -105,19 +155,27 @@ def main():
         parsed_data[s0][r0][E0]["muEqErrors"].append(muEqError)
         parsed_data[s0][r0][E0]["neighbors"].append(neighbors)
 
+
     print "Parsed", n, "entries."
 
     s0_values = np.array(sorted(parsed_data.keys()))
     r0_values = np.array(sorted(parsed_data[s0_values[0]].keys()))
     coefficients = np.zeros(shape=[len(s0_values), len(r0_values)])
 
+    chosen_i = random.randint(0, len(s0_values) - 1)
+    chosen_j = random.randint(0, len(r0_values) - 1)
+
     for i, s0 in enumerate(s0_values):
 
         for j, r0 in enumerate(r0_values):
 
-            coefficients[i][j] = get_coefficient_from_data(parsed_data[s0][r0])
+            print s0, r0
+
+            store = (i == chosen_i and j == chosen_j)
+            coefficients[i][j] = get_coefficient_from_data(parsed_data[s0][r0], s0, r0, store)
 
             print s0, r0, coefficients[i][j]
+
 
     print "linearization errors (alpha mu) ( E0 ) : ", mean_err1/c1, mean_err2/c2
     print "max: ", max_err1, max_err2
