@@ -68,7 +68,7 @@ def main():
 
     E0_array = np.asarray(E0_array)
     alpha_array = np.asarray(alpha_array)
-    mean_s_array = np.asarray(maen_s_array)
+    mean_s_array = np.asarray(mean_s_array)
     var_s_array = np.asarray(var_s_array)
 
     np.save("/tmp/pressure_plots_E0.npy", E0_array)

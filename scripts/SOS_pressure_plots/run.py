@@ -15,7 +15,7 @@ def main():
     controller, path, app, cfg, n_procs = parse_input(sys.argv)
 
     E0_values = ParameterSet(cfg, "E0dA\s*\=\s*(.*)\;")
-    E0_values.initialize_set_incr(0.05, 0.2, 0.05)
+    E0_values.initialize_set_incr(0.01, 0.2, 0.01)
 
     alpha_values = ParameterSet(cfg, "alpha\s*=\s*(.*)\;")
     alpha_values.initialize_set_incr(0.1, 2, 0.1)

@@ -98,6 +98,7 @@ int main(int argv, char** argc)
     const uint &nCyclesPerOutput = getSetting<uint>(root, "nCyclesPerOutput");
     const uint &storeIgnisDataInt = getSetting<uint>(root, "storeIgnisData");
     const bool storeIgnisData = storeIgnisDataInt == 1;
+    const uint &ignisDataInterval = getSetting<uint>(root, "ignisDataInterval");
 
     SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
@@ -149,7 +150,7 @@ int main(int argv, char** argc)
 
     lattice.enableOutput(true, nCyclesPerOutput);
     lattice.enableProgressReport();
-    lattice.enableEventValueStorage(storeIgnisData, storeIgnisData, "ignisSOS.ign", path);
+    lattice.enableEventValueStorage(storeIgnisData, storeIgnisData, "ignisSOS.ign", path, ignisDataInterval);
     lattice.eventLoop(nCycles);
 
     double muEq = 0;
