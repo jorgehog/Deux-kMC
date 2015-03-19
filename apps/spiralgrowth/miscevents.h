@@ -55,6 +55,7 @@ public:
     void initialize()
     {
         m_s2 = 0;
+        m_T0 = solver().currentTime();
     }
 
     void execute();
@@ -62,6 +63,8 @@ public:
 private:
 
     double m_s2;
+
+    double m_T0;
 };
 
 

@@ -283,6 +283,6 @@ void SurfaceVariance::execute()
 {
     m_s2 += solver().currentTimeStep()*pow(dependency<SurfaceSize>("SurfaceSize")->getLocalValue(), 2);
 
-    setValue(sqrt(m_s2/solver().currentTime() - pow(dependency<SurfaceSize>("SurfaceSize")->value(), 2))*solver().area());
+    setValue(sqrt(m_s2/(solver().currentTime()-m_T0) - pow(dependency<SurfaceSize>("SurfaceSize")->value(), 2)));
 }
 
