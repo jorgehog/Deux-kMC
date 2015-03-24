@@ -24,8 +24,7 @@ c2 = 0
 max_err1 = 0
 max_err2 = 0
 
-
-def get_coefficient_from_data(data, s0, r0, store):
+def get_coefficient_from_data(data, s0, r0, store, shadowdata):
 
     global mean_err1
     global mean_err2
@@ -46,6 +45,10 @@ def get_coefficient_from_data(data, s0, r0, store):
         alphas = raw_data["alphas"]
         muEqs = raw_data["muEqs"]
         muEqErrors = raw_data["muEqErrors"]
+
+        if shadowdata:
+            for ia, alpha in enumerate(alphas):
+                muEqs[ia] -= shadowdata[alpha]
 
         d_mu_d_alpha, a, r1, c, err1 = linregress(alphas, muEqs)
 
@@ -80,33 +83,6 @@ def get_coefficient_from_data(data, s0, r0, store):
     return 1./coefficient
 
 
-def get_coefficient_from_data2(data):
-
-    global mean_err1
-    global mean_err2
-    global c1
-    global c2
-    global max_err1
-    global max_err2
-
-    coeffs = []
-
-    for E0, raw_data in data.items():
-
-        local_coeffs = [E0*a/m for a, m in zip(raw_data["alphas"], raw_data["muEqs"])]
-
-        for coeff in local_coeffs:
-            coeffs.append(coeff)
-
-    mean_err1 += 1
-    c1 += 1
-    mean_err2 += 1
-    c2 += 1
-
-
-    return sum(coeffs)/len(coeffs)
-
-
 
 
 def main():
@@ -114,6 +90,22 @@ def main():
 
     input_file = sys.argv[1]
     dir_name = os.path.basename(os.path.dirname(input_file))
+
+    try:
+        shadow_data_path = sys.argv[2]
+        shadowparser = ParseKMCHDF5(shadow_data_path)
+
+        shadow_data = {}
+        for shadowstuff in shadowparser:
+            alpha = shadowstuff[3]
+            data = shadowstuff[-1]
+
+            shadow_data[alpha] = data.attrs["muEq"]
+
+            print "shadowdata: ", alpha, shadow_data[alpha]
+    except:
+        shadow_data = {}
+
 
     parser = ParseKMCHDF5(input_file)
 
@@ -172,13 +164,14 @@ def main():
             print s0, r0
 
             store = (i == chosen_i and j == chosen_j)
-            coefficients[i][j] = get_coefficient_from_data(parsed_data[s0][r0], s0, r0, store)
+            coefficients[i][j] = get_coefficient_from_data(parsed_data[s0][r0], s0, r0, store, shadow_data)
 
             print s0, r0, coefficients[i][j]
 
 
     print "linearization errors (alpha mu) ( E0 ) : ", mean_err1/c1, mean_err2/c2
     print "max: ", max_err1, max_err2
+    print "dirname: ", dir_name
 
     np.save("/tmp/analyze_%s_s0_values.npy" % dir_name, s0_values)
     np.save("/tmp/analyze_%s_r0_values.npy" % dir_name, r0_values)

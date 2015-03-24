@@ -1,3 +1,4 @@
+from mercurial.ignore import ignore
 import sys
 import os
 import re
@@ -42,11 +43,8 @@ def main():
                                "mean_s": [],
                                "var_s": []}
 
-        surface_size = data["ignisData"][ignis_map["SurfaceSize"]]
-        cut = len(surface_size)/2
-
-        mean_s = np.mean(surface_size[cut:])
-        var_s = np.mean(surface_size[cut:]**2) - mean_s**2
+        mean_s = data.attrs["size"]
+        var_s = data.attrs["var"]
 
         parsed_data[E0]["alphas"].append(alpha)
         parsed_data[E0]["mean_s"].append(mean_s)
