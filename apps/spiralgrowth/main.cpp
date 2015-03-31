@@ -85,7 +85,6 @@ int main(int argv, char** argc)
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
     const bool equilibriate = equilibriateInt == 1;
-    const bool force = getSetting<int>(root, "force") == 1;
     const uint &resetInt = getSetting<uint>(root, "reset");
     const bool reset = resetInt == 1;
 
@@ -100,22 +99,6 @@ int main(int argv, char** argc)
     const uint &storeIgnisDataInt = getSetting<uint>(root, "storeIgnisData");
     const bool storeIgnisData = storeIgnisDataInt == 1;
     const uint &ignisDataInterval = getSetting<uint>(root, "ignisDataInterval");
-
-    H5Wrapper::Root h5root(path +  addProcEnding("spiralgrowth", "h5", tail));
-
-    stringstream sizeDesc;
-    sizeDesc << L << "x" << W;
-    H5Wrapper::Member &sizeRoot = h5root.addMember(sizeDesc.str());
-
-    stringstream potentialDesc;
-    potentialDesc <<  "alpha_" << alpha
-                   << "_mu_" << mu
-                   << "_E0_" << E0*pressureWall
-                   << "_s0_" << sigma0
-                   << "_r0_" << r0;
-
-    H5Wrapper::Member &potentialRoot = sizeRoot.addMember(potentialDesc.str());
-
 
     SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
@@ -159,25 +142,10 @@ int main(int argv, char** argc)
     lattice.addEvent(speed);
 
     double muEq;
-    bool previouslyEquilibriated = false;
     if (equilibriate)
     {
-        if (!force && potentialRoot.hasAttribute("muEq"))
-        {
-            potentialRoot.readData("muEq", &muEq);
-            solver.setMu(muEq + muShift);
-            previouslyEquilibriated = true;
-            lattice.addEvent(rms);
-            lattice.addEvent(size);
-            lattice.addEvent(var);
-        }
-
-        else
-        {
             lattice.addEvent(eqMu);
             lattice.addEvent(equilibriater);
-        }
-
     }
     else
     {
@@ -205,17 +173,15 @@ int main(int argv, char** argc)
     lattice.enableEventValueStorage(storeIgnisData, storeIgnisData, "ignisSOS.ign", path, ignisDataInterval);
     lattice.eventLoop(nCycles);
 
-    if (equilibriate && !previouslyEquilibriated)
+    double muEqError;
+    if (equilibriate)
     {
 
         equilibriater.finalizeAverages();
 
         muEq = solver.mu();
-        double muEqError = equilibriater.error();
 
-        potentialRoot.addData("muEq", muEq);
-        potentialRoot.addData("muEqError", muEqError);
-
+        muEqError = equilibriater.error();
 
         if (reset)
         {
@@ -231,10 +197,22 @@ int main(int argv, char** argc)
             lattice.addEvent(var);
             lattice.eventLoop(nCycles);
         }
-
-
     }
 
+    H5Wrapper::Root h5root(path +  addProcEnding("spiralgrowth", "h5", tail));
+
+    stringstream sizeDesc;
+    sizeDesc << L << "x" << W;
+    H5Wrapper::Member &sizeRoot = h5root.addMember(sizeDesc.str());
+
+    stringstream potentialDesc;
+    potentialDesc <<  "alpha_" << alpha
+                   << "_mu_" << solver.mu()
+                   << "_E0_" << E0*pressureWall
+                   << "_s0_" << sigma0
+                   << "_r0_" << r0;
+
+    H5Wrapper::Member &potentialRoot = sizeRoot.addMember(potentialDesc.str());
 
 
     potentialRoot.addData("nNeighbors", nNeighbors.value());
@@ -245,11 +223,11 @@ int main(int argv, char** argc)
     potentialRoot.addData("E0", E0);
     potentialRoot.addData("rms", rms.value());
 
+    potentialRoot.addData("muEq", muEq);
+    potentialRoot.addData("muEqError", muEqError);
     potentialRoot.addData("muShift", muShift);
     potentialRoot.addData("reset", resetInt);
     potentialRoot.addData("useConcEquil", equilibriateInt);
-    //    potentialMember.addData("usediffusion", useDiffusionInt);
-    //    potentialMember.addData("useisotropicdiffusion", isotropicDiffusionInt);
     potentialRoot.addData("size", size.timeAverage());
     potentialRoot.addData("var", var.value());
 

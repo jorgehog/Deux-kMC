@@ -1,11 +1,7 @@
 import os
 import sys
-import inspect
 import time
 
-this_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-
-sys.path.append(os.path.join(this_dir, "..", "utils", "ParameterJuggler"))
 from ParameterJuggler import ParameterSetController, quick_replace
 
 from mpi4py import MPI
