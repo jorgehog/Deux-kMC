@@ -20,9 +20,13 @@ def main():
     mu_shift_values = ParameterSet(cfg, "muShift\s*=\s*(.*)\;")
     mu_shift_values.initialize_set([-1., -0.5, 0., 0.5, 1.])
 
+    repeater_values = ParameterSet(cfg, "repeater\s*=\s*(.*)\;")
+    repeater_values.initialize_set_incr(0, 4, 1)
+
     controller.register_parameter_set(E0_values)
     controller.register_parameter_set(alpha_values)
     controller.register_parameter_set(mu_shift_values)
+    controller.register_parameter_set(repeater_values)
 
     controller.run(run_kmc, path, app, cfg, ask=not controller.use_mpi, n_procs=n_procs)
 

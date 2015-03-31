@@ -17,7 +17,7 @@ class ParseKMCHDF5:
 
         if match:
             name = match[0]
-    
+
             filenames = glob.glob1(self.path, name + "_*.h5")
 
             for file in filenames:
