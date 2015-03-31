@@ -42,6 +42,31 @@ private:
 
 };
 
+class SurfaceVariance : public SolidOnSolidEvent
+{
+public:
+
+    SurfaceVariance(const SolidOnSolidSolver &solver) :
+        SolidOnSolidEvent(solver, "SurfaceVariance", "", true)
+    {
+
+    }
+
+    void initialize()
+    {
+        m_s2 = 0;
+        m_T0 = solver().currentTime();
+    }
+
+    void execute();
+
+private:
+
+    double m_s2;
+
+    double m_T0;
+};
+
 
 class AverageHeight : public SolidOnSolidEvent
 {
