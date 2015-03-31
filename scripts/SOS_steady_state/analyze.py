@@ -121,8 +121,6 @@ def main():
 
         L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, repeat = stuff
 
-        print repeat
-
         area = L*W
 
         E0 /= area
@@ -130,15 +128,13 @@ def main():
         mu_shift = data.attrs["muShift"]
 
         if E0 not in parsed_data.keys():
-            print ignis_map, n
             parsed_data[E0] = {}
         if alpha not in parsed_data[E0].keys():
             parsed_data[E0][alpha] = {}
         if mu_shift not in parsed_data[E0][alpha].keys():
-            parsed_data[E0][alpha][mu_shift] = {"data": 0, "count": 0}
+            parsed_data[E0][alpha][mu_shift] = []
 
-        parsed_data[E0][alpha][mu_shift]["data"] += np.array(data["ignisData"])
-        parsed_data[E0][alpha][mu_shift]["count"] += 1
+        parsed_data[E0][alpha][mu_shift].append(np.array(data["ignisData"]))
 
     E0_array = []
     alpha_array = []
@@ -159,10 +155,9 @@ def main():
 
                 if i == 0 and j == 0:
                     mu_shift_array.append(mu_shift)
+                print E0, alpha, mu_shift
 
-                data3["data"]/=data3["count"]
-
-                np.save("/tmp/steadystate_data_%d.npy" % count, data3["data"])
+                np.save("/tmp/steadystate_data_%d.npy" % count, np.array(combine_results([x[0] for x in data3], [x[5] for x in data3])))
 
                 count += 1
 
