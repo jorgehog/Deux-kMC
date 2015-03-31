@@ -284,14 +284,17 @@ void SurfaceVariance::execute()
 {
     m_s2 += solver().currentTimeStep()*pow(dependency<SurfaceSize>("SurfaceSize")->getLocalValue(), 2);
 
-    setValue(sqrt(m_s2/(solver().currentTime()-m_T0) - pow(dependency<SurfaceSize>("SurfaceSize")->timeAverage(), 2)));
+    if (cycle() != 0)
+    {
+        setValue(sqrt(m_s2/(solver().currentTime()-m_T0) - pow(dependency<SurfaceSize>("SurfaceSize")->timeAverage(), 2)));
+    }
 }
 
 
 
 void GrowthSpeed::initialize()
 {
-    m_T0 = solver().currentTime() - solver().currentTimeStep();
+    m_T0 = solver().currentTime();
     m_h0 = dependency<AverageHeight>("AverageHeight")->value();
 }
 
@@ -299,8 +302,10 @@ void GrowthSpeed::execute()
 {
     const double &h = dependency<AverageHeight>("AverageHeight")->value();
 
-    setValue((h - m_h0)/(solver().currentTime() - m_T0));
-
+    if (cycle() != 0)
+    {
+        setValue((h - m_h0)/(solver().currentTime() - m_T0));
+    }
 }
 
 

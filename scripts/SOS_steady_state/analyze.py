@@ -21,7 +21,7 @@ def main():
     for stuff in parser:
         n += 1
 
-        L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data = stuff
+        L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, n = stuff
 
         area = L*W
 

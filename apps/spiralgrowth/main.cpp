@@ -100,7 +100,7 @@ int main(int argv, char** argc)
     const bool storeIgnisData = storeIgnisDataInt == 1;
     const uint &ignisDataInterval = getSetting<uint>(root, "ignisDataInterval");
 
-//    const uint &repeater = getSetting<uint>(root, "repeater");
+    const uint &repeater = getSetting<uint>(root, "repeater");
 
     SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
@@ -211,7 +211,8 @@ int main(int argv, char** argc)
                    << "_mu_" << solver.mu()
                    << "_E0_" << E0*pressureWall
                    << "_s0_" << sigma0
-                   << "_r0_" << r0;
+                   << "_r0_" << r0
+                   << "_n_" << repeater;
 
     H5Wrapper::Member &potentialRoot = sizeRoot.addMember(potentialDesc.str());
 

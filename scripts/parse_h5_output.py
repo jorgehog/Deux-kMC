@@ -17,7 +17,7 @@ class ParseKMCHDF5:
 
         if match:
             name = match[0]
-
+    
             filenames = glob.glob1(self.path, name + "_*.h5")
 
             for file in filenames:
@@ -36,8 +36,14 @@ class ParseKMCHDF5:
                 for potential, data in run.items():
 
                     try:
-                        alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*|-?nan)" % ID, potential)[0]) for ID in
-                                                 ["alpha", "mu", "E0", "s0", "r0"]]
+                        if "_n_" in potential:
+                            alpha, mu, E0, s0, r0, n = [float(re.findall("%s\_(-?\d+\.?\d*|-?nan)" % ID, potential)[0]) for ID in
+                                                     ["alpha", "mu", "E0", "s0", "r0", "n"]]
+                        else:
+                            alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*|-?nan)" % ID, potential)[0]) for ID in
+                                                     ["alpha", "mu", "E0", "s0", "r0"]]
+                            n = 0
+
                     except:
                         raise ValueError("invalid potential: %s" % potential)
                     if "nNeighbors" in data.attrs.keys():
@@ -52,7 +58,7 @@ class ParseKMCHDF5:
                             name_strip = str(name).split("@")[0]
                             _ignis_index_map[name_strip] = i
 
-                    yield L, W, potential, alpha, mu, E0, s0, r0, neighbors, _ignis_index_map, data
+                    yield L, W, potential, alpha, mu, E0, s0, r0, neighbors, _ignis_index_map, data, n
 
     def getfiles(self):
         return self.files
