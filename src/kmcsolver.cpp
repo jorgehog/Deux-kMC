@@ -91,6 +91,8 @@ void KMCSolver::updateTime()
 
 void KMCSolver::initialize()
 {
+    initializeSolver();
+
     initializeReactions();
 
     m_currentTime = 0;

@@ -100,6 +100,8 @@ int main(int argv, char** argc)
     const bool storeIgnisData = storeIgnisDataInt == 1;
     const uint &ignisDataInterval = getSetting<uint>(root, "ignisDataInterval");
 
+//    const uint &repeater = getSetting<uint>(root, "repeater");
+
     SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
 
@@ -107,7 +109,6 @@ int main(int argv, char** argc)
 
     AverageHeight averageHeight(solver);
     pressureWallEvent.setDependency(averageHeight);
-    pressureWallEvent.setupInitialConditions();
 
     HeightRMS rms(solver);
     rms.setDependency(averageHeight);

@@ -123,6 +123,8 @@ private:
 
     field<DiffusionDeposition*> m_siteReactions;
 
+    void initializeSolver();
+
     // KMCSolver interface
 public:
     uint numberOfReactions() const;

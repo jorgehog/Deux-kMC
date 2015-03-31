@@ -23,16 +23,7 @@ SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
     {
         for (uint y = 0; y < width; ++y)
         {
-            m_heights(x, y) = (m_heights(leftSite(x), y) + m_heights(x, bottomSite(y)))/2 + round(-1 + 2*rng.uniform());
             m_siteReactions(x, y) = new DiffusionDeposition(x, y, *this);
-        }
-    }
-
-    for (uint x = 0; x < length; ++x)
-    {
-        for (uint y = 0; y < width; ++y)
-        {
-            setNNeighbors(x, y);
         }
     }
 }
@@ -167,6 +158,29 @@ void SolidOnSolidSolver::setMu(const double mu)
 
     m_mu = mu;
 
+}
+
+void SolidOnSolidSolver::initializeSolver()
+{
+    m_heights.zeros();
+
+    for (uint x = 0; x < m_length; ++x)
+    {
+        for (uint y = 0; y < m_width; ++y)
+        {
+            m_heights(x, y) = (m_heights(leftSite(x), y) + m_heights(x, bottomSite(y)))/2 + round(-1 + 2*rng.uniform());
+        }
+    }
+
+    for (uint x = 0; x < m_length; ++x)
+    {
+        for (uint y = 0; y < m_width; ++y)
+        {
+            setNNeighbors(x, y);
+        }
+    }
+
+    m_pressureWallEvent->setupInitialConditions();
 }
 
 uint SolidOnSolidSolver::numberOfReactions() const

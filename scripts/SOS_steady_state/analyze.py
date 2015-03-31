@@ -27,50 +27,53 @@ def main():
 
         E0 /= area
 
-        muEq = data.attrs["muEq"]
-
-        if muEq != muEq:
-            print "NAN", muEq, alpha, r0, s0
-            import time
-            time.sleep(0.1)
-            continue
+        mu_shift = data.attrs["muShift"]
 
         if E0 not in parsed_data.keys():
-            parsed_data[E0] = {"alphas": [],
-                               "mean_s": [],
-                               "var_s": []}
+            parsed_data[E0] = {}
+        if alpha not in parsed_data[E0].keys():
+            parsed_data[E0][alpha] = {}
+        if mu_shift not in parsed_data[E0][alpha].keys():
+            parsed_data[E0][alpha][mu_shift] = {}
 
-        mean_s = data.attrs["size"]
-        var_s = data.attrs["var"]
-
-        parsed_data[E0]["alphas"].append(alpha)
-        parsed_data[E0]["mean_s"].append(mean_s)
-        parsed_data[E0]["var_s"].append(var_s)
+        parsed_data[E0][alpha][mu_shift] = data["ignisData"]
 
     E0_array = []
     alpha_array = []
-    mean_s_array = []
-    var_s_array = []
+    mu_shift_array = []
 
-    for E0, data in parsed_data.items():
+    count = 0
+
+    for i, (E0, data) in enumerate(sorted(parsed_data.items(), key=lambda x: x[0])):
 
         E0_array.append(E0)
-        alpha_array.append(data["alphas"])
-        mean_s_array.append(data["mean_s"])
-        var_s_array.append(data["var_s"])
+
+        for j, (alpha, data2) in enumerate(sorted(data.items(), key=lambda x: x[0])):
+
+            if i == 0:
+                alpha_array.append(alpha)
+
+            for mu_shift, data3 in sorted(data2.items(), key=lambda x: x[0]):
+
+                if i == 0 and j == 0:
+                    mu_shift_array.append(mu_shift)
+
+                print E0, alpha, mu_shift
+
+                np.save("/tmp/steadystate_data_%d.npy" % count, data3)
+
+                count += 1
+
 
     print "Parsed", n, "entries."
 
     E0_array = np.asarray(E0_array)
     alpha_array = np.asarray(alpha_array)
-    mean_s_array = np.asarray(mean_s_array)
-    var_s_array = np.asarray(var_s_array)
+    mu_shift_array = np.asarray(mu_shift_array)
 
     np.save("/tmp/steadystate_E0.npy", E0_array)
-    np.save("/tmp/steadystate_alphas.npy", alpha_array)
-    np.save("/tmp/steadystate_mean_s.npy", mean_s_array)
-    np.save("/tmp/steadystate_var_s.npy", var_s_array)
-
+    np.save("/tmp/steadystate_alpha.npy", alpha_array)
+    np.save("/tmp/steadystate_mu_shift.npy", mu_shift_array)
 
 if __name__ == "__main__":
     main()

@@ -55,6 +55,8 @@ private:
 
     void getCumsumAndTotalRate();
 
+    virtual void initializeSolver() = 0;
+
     // Event interface
 public:
     virtual void initialize() override final;

@@ -130,6 +130,11 @@ void DumpHeights3D::execute()
 }
 
 
+void AverageHeight::initialize()
+{
+    setValue(getValue());
+}
+
 void AverageHeight::execute()
 {
     setValue(getValue());

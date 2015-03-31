@@ -58,7 +58,6 @@ void PressureWall::setupInitialConditions()
     recalculateAllPressures();
 
     BADAssClose(pressureEnergySum(), -m_E0, 1E-5);
-
 }
 
 void PressureWall::execute()
