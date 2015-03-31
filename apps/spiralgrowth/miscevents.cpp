@@ -60,7 +60,7 @@ void SurfaceSize::execute()
 {
     m_sum += solver().currentTimeStep()*getLocalValue();
 
-    setValue(m_sum/(solver().currentTime() - m_T0));
+    setValue(getLocalValue());
 }
 
 void SurfaceSize::reset()
@@ -167,8 +167,6 @@ double NNeighbors::bruteForceValue() const
 
 void NNeighbors::initialize()
 {
-    m_sum = 0;
-
     m_localValue = 0;
 
     for (uint x = 0; x < solver().length(); ++x)
@@ -185,9 +183,7 @@ void NNeighbors::initialize()
 
 void NNeighbors::execute()
 {
-    m_sum += getLocalValue();
-
-    setValue(value());
+    setValue(m_localValue/solver().area());
 }
 
 void NNeighbors::reset()
@@ -283,6 +279,43 @@ void SurfaceVariance::execute()
 {
     m_s2 += solver().currentTimeStep()*pow(dependency<SurfaceSize>("SurfaceSize")->getLocalValue(), 2);
 
-    setValue(sqrt(m_s2/(solver().currentTime()-m_T0) - pow(dependency<SurfaceSize>("SurfaceSize")->value(), 2)));
+    setValue(sqrt(m_s2/(solver().currentTime()-m_T0) - pow(dependency<SurfaceSize>("SurfaceSize")->timeAverage(), 2)));
 }
 
+
+
+void GrowthSpeed::initialize()
+{
+    m_T0 = solver().currentTime() - solver().currentTimeStep();
+    m_h0 = dependency<AverageHeight>("AverageHeight")->value();
+}
+
+void GrowthSpeed::execute()
+{
+    const double &h = dependency<AverageHeight>("AverageHeight")->value();
+
+    setValue((h - m_h0)/(solver().currentTime() - m_T0));
+
+}
+
+
+void HeightRMS::execute()
+{
+    const double &mh = dependency<AverageHeight>("AverageHeight")->value();
+
+    double rms = 0;
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            double deviation = solver().height(x, y) - mh;
+
+            rms += deviation*deviation;
+        }
+    }
+
+    rms /= solver().area();
+
+    setValue(sqrt(rms));
+}

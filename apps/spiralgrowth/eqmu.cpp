@@ -53,10 +53,11 @@ void EqMu::update()
 
     if (solver().shadowing())
     {
-        m_accuNeighbours += dt*dependency<NNeighbors>("nNeighbors")->getLocalValue();
-        const double avgNeighbors = m_accuNeighbours/m_totalTime;
+        exit(1);
+//        m_accuNeighbours += dt*dependency<NNeighbors>("nNeighbors")->getLocalValue();
+//        const double avgNeighbors = m_accuNeighbours/m_totalTime;
 
-        inverseKStar = 1./solver().shadowScale(avgNeighbors);
+//        inverseKStar = 1./solver().shadowScale(avgNeighbors);
     }
     else
     {

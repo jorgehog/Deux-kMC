@@ -2,6 +2,40 @@
 
 #include "solidonsolidevent.h"
 
+class Time : public SolidOnSolidEvent
+{
+public:
+    Time(const SolidOnSolidSolver &solver) :
+        SolidOnSolidEvent(solver, "Time", "", false, true)
+    {
+
+    }
+
+    void execute()
+    {
+        setValue(solver().currentTime());
+    }
+};
+
+class GrowthSpeed : public SolidOnSolidEvent
+{
+public:
+
+    GrowthSpeed(const SolidOnSolidSolver &solver) :
+        SolidOnSolidEvent(solver, "GrowthSpeed", "", true, true)
+    {
+
+    }
+
+    void initialize();
+
+    void execute();
+
+private:
+
+    double m_T0;
+    double m_h0;
+};
 
 class SurfaceSize : public SolidOnSolidEvent
 {
@@ -15,6 +49,11 @@ public:
     }
 
     void initialize();
+
+    double timeAverage() const
+    {
+        return m_sum/(solver().currentTime() - m_T0);
+    }
 
     double relativeHeightSum(const uint x, const uint y) const;
 
@@ -47,7 +86,7 @@ class SurfaceVariance : public SolidOnSolidEvent
 public:
 
     SurfaceVariance(const SolidOnSolidSolver &solver) :
-        SolidOnSolidEvent(solver, "SurfaceVariance", "", true)
+        SolidOnSolidEvent(solver, "SurfaceVariance", "", true, true)
     {
 
     }
@@ -55,7 +94,7 @@ public:
     void initialize()
     {
         m_s2 = 0;
-        m_T0 = solver().currentTime();
+        m_T0 = solver().currentTime() - solver().currentTimeStep();
     }
 
     void execute();
@@ -65,6 +104,18 @@ private:
     double m_s2;
 
     double m_T0;
+};
+
+class HeightRMS : public SolidOnSolidEvent
+{
+public:
+    HeightRMS(const SolidOnSolidSolver &solver) :
+        SolidOnSolidEvent(solver, "HeightRMS", "", true, true)
+    {
+
+    }
+
+    void execute();
 };
 
 
@@ -157,16 +208,6 @@ public:
 
     }
 
-    double value() const
-    {
-        return m_sum/(cycle() + 1);
-    }
-
-    double getLocalValue() const
-    {
-        return m_localValue/solver().area();
-    }
-
     void updateNNeighbors(const uint x, const uint y);
 
     double bruteForceValue() const;
@@ -180,8 +221,6 @@ public:
 private:
 
     double m_localValue;
-
-    double m_sum;
 
     umat m_nNeighbors;
 
