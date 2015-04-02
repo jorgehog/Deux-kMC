@@ -16,3 +16,6 @@
 [submodule "utils/ParameterJuggler"]
 	path = utils/ParameterJuggler
 	url = https://github.com/jorgehog/ParameterJuggler
+[submodule "utils/intercombinatorzor"]
+	path = utils/intercombinatorzor
+	url = https://github.com/jorgehog/intercombinatorzor

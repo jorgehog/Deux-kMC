@@ -28,6 +28,8 @@ class ParseKMCHDF5:
         else:
             self.files = [h5py.File(which_file, 'r')]
 
+        self.only_n = None
+
     def __iter__(self):
 
         for file in self.files:
@@ -43,9 +45,13 @@ class ParseKMCHDF5:
                             alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*|-?nan)" % ID, potential)[0]) for ID in
                                                      ["alpha", "mu", "E0", "s0", "r0"]]
                             n = 0
-
                     except:
                         raise ValueError("invalid potential: %s" % potential)
+
+                    if self.only_n:
+                        if n != self.only_n:
+                            continue
+
                     if "nNeighbors" in data.attrs.keys():
                         neighbors = data.attrs["nNeighbors"]
                     else:
@@ -59,6 +65,10 @@ class ParseKMCHDF5:
                             _ignis_index_map[name_strip] = i
 
                     yield L, W, potential, alpha, mu, E0, s0, r0, neighbors, _ignis_index_map, data, n
+
+
+    def set_only_n(self, n):
+        self.only_n = n
 
     def getfiles(self):
         return self.files
