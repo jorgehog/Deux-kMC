@@ -2,7 +2,6 @@
 
 from DCViz_sup import DCVizPlotter
 
-
 import numpy as np
 from numpy import exp
 
@@ -26,9 +25,9 @@ class SteadyState(DCVizPlotter):
 
         I, J, K = [int(x) for x in self.argv]
 
-        E0_values = data[self.get_family_index_from_name("steadystate_E0.npy")].data
-        alpha_values = data[self.get_family_index_from_name("steadystate_alpha.npy")].data
-        mu_shift_values = data[self.get_family_index_from_name("steadystate_mu_shift.npy")].data
+        E0_values = data[self.get_family_index_from_name("steadystate_E0.npy")]
+        alpha_values = data[self.get_family_index_from_name("steadystate_alpha.npy")]
+        mu_shift_values = data[self.get_family_index_from_name("steadystate_mu_shift.npy")]
 
         count = 0
         for i, E0 in enumerate(E0_values):
@@ -37,15 +36,15 @@ class SteadyState(DCVizPlotter):
                     if i == I and j == J and k == K:
                         print E0, alpha, mu_shift
 
-                        time = data[self.get_family_index_from_name("steadystate_Time_%d.npy" % count)].data
+                        time = data[self.get_family_index_from_name("steadystate_Time_%d.npy" % count)]
                         L = int(len(time)/clip)
                         time = time[start:L]
 
-                        rms = data[self.get_family_index_from_name("steadystate_HeightRMS_%d.npy" % count)].data[start:L]
+                        rms = data[self.get_family_index_from_name("steadystate_HeightRMS_%d.npy" % count)][start:L]
 
-                        ss = data[self.get_family_index_from_name("steadystate_SurfaceSize_%d.npy" % count)].data[start:L]
+                        ss = data[self.get_family_index_from_name("steadystate_SurfaceSize_%d.npy" % count)][start:L]
 
-                        wh = data[self.get_family_index_from_name("steadystate_PressureWall_%d.npy" % count)].data[start:L]
+                        wh = data[self.get_family_index_from_name("steadystate_PressureWall_%d.npy" % count)][start:L]
 
                         rmslabel=r"$\sigma(h)$"
                         sslabel=r"$\sigma(s)$"
@@ -59,11 +58,6 @@ class SteadyState(DCVizPlotter):
                             self.subfigure.plot(time, rms/rms.max(), label=rmslabel)
                             self.subfigure.plot(time, ss/ss.max(), label=sslabel)
                             self.subfigure.plot(time, wh/wh.max(), label=whlabel)
-
-
-
-                        # self.subfigure.text(time[-1]/clip*xshift, 1./3 - yshift, whlabel,size=self.labelSize)
-
 
                     count += 1
 
@@ -86,11 +80,11 @@ class GrowthSpeed(DCVizPlotter):
     def plot(self, data):
 
 
-        E0_values = data[self.get_family_index_from_name("growthspeed_E0.npy")].data
-        alpha_values = data[self.get_family_index_from_name("growthspeed_alpha.npy")].data
-        mu_shift_values = data[self.get_family_index_from_name("growthspeed_mu_shift.npy")].data
-        mu_values = data[self.get_family_index_from_name("growthspeed_mu.npy")].data
-        v_values = data[self.get_family_index_from_name("growthspeed_v.npy")].data
+        E0_values = data[self.get_family_index_from_name("growthspeed_E0.npy")]
+        alpha_values = data[self.get_family_index_from_name("growthspeed_alpha.npy")]
+        mu_shift_values = data[self.get_family_index_from_name("growthspeed_mu_shift.npy")]
+        mu_values = data[self.get_family_index_from_name("growthspeed_mu.npy")]
+        v_values = data[self.get_family_index_from_name("growthspeed_v.npy")]
 
         V = []
 
