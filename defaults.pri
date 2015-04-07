@@ -27,10 +27,11 @@ QMAKE_LFLAGS_RELEASE += -O3
 QMAKE_LFLAGS_DEBUG += -g
 
 UTILS = $$PWD/utils
+UTILS_OUT = $$shadowed($$UTILS)
 
 INCLUDEPATH += $$UTILS /usr/local/hdf5/include
 
-QMAKE_LIBDIR += $$UTILS/ignis/lib
+QMAKE_LIBDIR += $$UTILS_OUT/ignis/lib
 
 LIBS += \
     -larmadillo \

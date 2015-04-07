@@ -43,6 +43,7 @@ SolidOnSolidSolver::~SolidOnSolidSolver()
 
 void SolidOnSolidSolver::registerHeightChange(const uint x, const uint y, const int value)
 {
+
     m_heights(x, y) += value;
 
     setNNeighbors(x, y);

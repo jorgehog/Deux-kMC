@@ -39,10 +39,10 @@ class ParseKMCHDF5:
 
                     try:
                         if "_n_" in potential:
-                            alpha, mu, E0, s0, r0, n = [float(re.findall("%s\_(-?\d+\.?\d*|-?nan)" % ID, potential)[0]) for ID in
+                            alpha, mu, E0, s0, r0, n = [float(re.findall("%s\_(-?\d+\.?\d*[eE]?-?\d*|-?nan)" % ID, potential)[0]) for ID in
                                                      ["alpha", "mu", "E0", "s0", "r0", "n"]]
                         else:
-                            alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*|-?nan)" % ID, potential)[0]) for ID in
+                            alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*[eE]?-?\d*|-?nan)" % ID, potential)[0]) for ID in
                                                      ["alpha", "mu", "E0", "s0", "r0"]]
                             n = 0
                     except:

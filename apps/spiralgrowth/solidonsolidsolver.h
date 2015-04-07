@@ -54,9 +54,9 @@ public:
         return m_mu;
     }
 
-    const bool &shadowing() const
+    bool shadowing() const
     {
-        return m_shadowing;
+        return false;
     }
 
     const imat &heights() const
@@ -103,6 +103,7 @@ public:
     double shadowScale(const double n) const;
 
     void setMu(const double mu);
+
 
 private:
 

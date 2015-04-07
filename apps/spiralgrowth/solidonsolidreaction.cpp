@@ -15,7 +15,7 @@ double DiffusionDeposition::calculateDiffusionRate() const
     const double &Ew = solver().localPressure(x(), y());
     const double E = (int)nNeighbors() + (int)solver().dim() - 5 + Ew;
 
-    return exp(-solver().alpha()*E - solver().mu());
+    return std::exp(-solver().alpha()*E - solver().mu());
 }
 
 double DiffusionDeposition::calculateDepositionRate() const
