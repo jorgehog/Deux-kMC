@@ -1,4 +1,7 @@
+#DCVIZ
+
 from DCViz_sup import DCVizPlotter
+
 
 import numpy as np
 from numpy import exp
