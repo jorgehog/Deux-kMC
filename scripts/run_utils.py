@@ -65,8 +65,7 @@ def parse_input(argv):
     controller = ParameterSetController(use_mpi=use_mpi)
 
     if out_path:
-        if MPI.COMM_WORLD.rank == 0:
-            quick_replace(cfg, "path", out_path)
+        quick_replace(cfg, "path", out_path)
     MPI.COMM_WORLD.Barrier()
 
     return controller, path, app, cfg, n_procs

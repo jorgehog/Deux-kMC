@@ -39,11 +39,11 @@ def main():
     N = 1
     repeater_values.initialize_set_incr(0, N-1, 1)
 
-    # controller.register_parameter_set(E0_values)
-    # controller.register_parameter_set(r0_values)
-    # controller.register_parameter_set(s0_values)
-    # controller.register_parameter_set(alpha_values)
-    # controller.register_parameter_set(mu_shift_values)
+    controller.register_parameter_set(E0_values)
+    controller.register_parameter_set(r0_values)
+    controller.register_parameter_set(s0_values)
+    controller.register_parameter_set(alpha_values)
+    controller.register_parameter_set(mu_shift_values)
     controller.register_parameter_set(repeater_values)
 
     success = controller.run(run_kmc, path, app, cfg, ask=not controller.use_mpi, n_procs=n_procs)
