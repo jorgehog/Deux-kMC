@@ -99,6 +99,7 @@ int main(int argv, char** argc)
     const uint &storeIgnisDataInt = getSetting<uint>(root, "storeIgnisData");
     const bool storeIgnisData = storeIgnisDataInt == 1;
     const uint &ignisDataInterval = getSetting<uint>(root, "ignisDataInterval");
+    const bool ignisOutput = getSetting<uint>(root, "ignisOutput") == 1;
 
     const uint &repeater = getSetting<uint>(root, "repeater");
 
@@ -169,7 +170,7 @@ int main(int argv, char** argc)
     lattice.addEvent(checker);
 #endif
 
-    lattice.enableOutput(true, nCyclesPerOutput);
+    lattice.enableOutput(ignisOutput, nCyclesPerOutput);
     lattice.enableProgressReport();
     lattice.enableEventValueStorage(storeIgnisData, storeIgnisData, "ignisSOS.ign", path, ignisDataInterval);
     lattice.eventLoop(nCycles);
