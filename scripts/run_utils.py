@@ -31,7 +31,7 @@ def parse_input(argv):
     path, app = os.path.split(argv.pop(1))
 
     if os.path.exists("/tmp/kmc_dump"):
-        remove("/tmp/kmc_dump")
+        os.remove("/tmp/kmc_dump")
 
 
     cfg = os.path.join(path, "infiles", app + ".cfg")

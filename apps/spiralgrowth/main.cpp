@@ -217,6 +217,8 @@ int main(int argv, char** argc)
     H5Wrapper::Member &potentialRoot = sizeRoot.addMember(potentialDesc.str());
 
 
+    potentialRoot.addData("GrowthSpeed", speed.value());
+
     potentialRoot.addData("nNeighbors", nNeighbors.value());
 
     potentialRoot.addData("usewall", pressureWallInt);

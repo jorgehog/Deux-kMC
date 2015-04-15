@@ -22,7 +22,7 @@ class GrowthSpeed : public SolidOnSolidEvent
 public:
 
     GrowthSpeed(const SolidOnSolidSolver &solver) :
-        SolidOnSolidEvent(solver, "GrowthSpeed", "", true, true)
+        SolidOnSolidEvent(solver, "GrowthSpeed", "", true)
     {
 
     }

@@ -12,6 +12,7 @@ class ParseKMCHDF5:
         self.path, self.filename = os.path.split(which_file)
 
         self.files = []
+        self.filenames = []
 
         match = re.findall("(.*)\_\d+\.h5", self.filename)
 
@@ -24,6 +25,7 @@ class ParseKMCHDF5:
 
                 fullpath = os.path.join(self.path, file)
                 self.files.append(h5py.File(fullpath, 'r'))
+                self.filenames.append(file)
 
         else:
             self.files = [h5py.File(which_file, 'r')]

@@ -9,6 +9,7 @@ from parse_h5_output import ParseKMCHDF5
 
 from intercombinatorzor import ICZ
 
+
 def main():
 
     parsed_data = {}
