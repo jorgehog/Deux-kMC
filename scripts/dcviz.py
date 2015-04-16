@@ -82,78 +82,163 @@ class GrowthSpeed(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"omega_vs_v": "subfigure", "slopes": "subfigure2"}
+    # figMap = {"omega_vs_v": "subfigure", "slopes": "subfigure2", "mu0": "subfigure3"}
+
+    figMap = {"omega_vs_v": "subfigure", "slopes": "subfigure2", "slope_slopes": "subfigure4", "cutz": "subfigure5"}
+
+    def plot_and_slopify(self, E0, omega, mu_shifts, mu, v):
+         mu0 = (mu - mu_shifts).mean()
+         c_over_c0 = exp(mu0 + mu_shifts)
+         v *= c_over_c0
+
+         idx = np.where(omega >= 0)
+         idx_low = np.where(omega < 0)
+
+         slope, intercept, _, _, _ = linregress(omega[idx], v[idx])
+         # slope_low, intercept, _, _, _ = linregress(omega[idx_low], v[idx_low])
+         #
+         # print E0, slope/slope_low - 1
+
+         return mu0, slope, v
+
 
     def plot(self, data):
 
-        plot_values = [0, 0.5, 1.0]
+        plot_values = [0.5, 1.0]
         shapes = ["s", "^", "v"]
 
-        E0_values = data[self.get_family_index_from_name("growthspeed_E0.npy")]
-        mu_shift_values = data[self.get_family_index_from_name("growthspeed_mu_shift.npy")]
-        mu_values = data[self.get_family_index_from_name("growthspeed_mu.npy")]
-        v_values = data[self.get_family_index_from_name("growthspeed_v.npy")]
-        unloaded = self.get_family_member_data(data, "unloaded")
+        E0_values = self.get_family_member_data(data, "E0")
+        alpha_values = self.get_family_member_data(data, "alpha")
+        mu_shift_values = self.get_family_member_data(data, "mu_shift")
+        r0_values = self.get_family_member_data(data, "r0")
+        s0_values = self.get_family_member_data(data, "s0")
+        mu_values = self.get_family_member_data(data, "mu")
+        v_values = self.get_family_member_data(data, "v")
 
-        X = np.array([mu_shift_values]).T
-        V = np.array([unloaded]).T
-
-
-        E0_values = np.insert(E0_values, 0, 0)
-        mu_values = np.concatenate((X, mu_values), axis=1)
-        v_values = np.concatenate((V, v_values), axis=1)
-        print mu_shift_values
-        print
-        print mu_values
+        print E0_values.shape
+        print alpha_values.shape
+        print mu_shift_values.shape
+        print r0_values.shape
+        print s0_values.shape
+        print mu_values.shape
+        print v_values.shape
 
         omega = exp(mu_shift_values) - 1
 
-        slopes = np.zeros_like(E0_values)
+        slopes = np.zeros(shape=(len(E0_values), len(alpha_values)))
         mu_zero = np.zeros_like(slopes)
 
+        J, L, M = [int(x) for x in self.argv]
 
-        print unloaded.shape, omega.shape, v_values.shape
+        print "alpha=%g, s0 = %g, r0 = %g" % (alpha_values[J], s0_values[M+1], r0_values[L+1])
 
-        k = 0
-        for i, E0 in enumerate(E0_values):
+        for j in range(len(alpha_values)):
+            _, slope0, v0 = self.plot_and_slopify(0, omega, mu_shift_values, mu_shift_values, v_values[0, j, :, 0, 0])
 
-            mu = mu_values[:, i]
-            mu0 = (mu - mu_shift_values).mean()
+            slopes[0, j] = slope0
+            mu_zero[0, j] = 0
 
-            c_over_c0 = exp(mu0 + mu_shift_values)
-
-            v = v_values[:, i]*c_over_c0
-
-            slope, intercept, _, _, _ = linregress(omega, v)
-
-            if E0 in plot_values:
-                # self.subfigure.plot(omega, intercept + slope*omega, "r--")
-                self.subfigure.plot(omega, v, shapes[k], label="E0=%g" % E0,
+            if j == J:
+                self.subfigure.plot(omega, v0, "k--" + shapes[0], label="E0=0",
                                     linewidth=1,
                                     fillstyle='none',
                                     markersize=7,
                                     markeredgewidth=1.5,
                                     color="black")
-                k += 1
 
-            print intercept
 
-            slopes[i] = slope
-            mu_zero[i] = mu0
+        k = 1
+        for i, E0 in enumerate(E0_values[1:]):
+            for j, alpha in enumerate(alpha_values):
+                # for k, mu_shift in enumerate(mu_shift_values):
+                    for l, r0 in enumerate(r0_values[1:]):
+                        for m, s0 in enumerate(s0_values[1:]):
 
-        self.subfigure2.plot(E0_values, slopes, "ks--",
-                             linewidth=1,
-                             fillstyle='none',
-                             markersize=7,
-                             markeredgewidth=1.5)
+                            if l == L and m == M:
+
+                                mu0, slope, v = self.plot_and_slopify(E0,
+                                                                      omega,
+                                                                      mu_shift_values,
+                                                                      mu_values[i+1, j, :, l+1, m+1],
+                                                                      v_values[i+1, j, :, l+1, m+1])
+
+                                slopes[i+1][j] = slope
+                                mu_zero[i+1][j] = mu0
+
+
+                                if E0 in plot_values and j == J:
+                                    # self.subfigure.plot(omega, slope*omega, "r--")
+                                    self.subfigure.plot(omega, v, "k--" + shapes[k], label="E0=%g" % E0,
+                                                        linewidth=1,
+                                                        fillstyle='none',
+                                                        markersize=7,
+                                                        markeredgewidth=1.5,
+                                                        color="black")
+                                    k += 1
+
+        slope_slopes = np.zeros_like(alpha_values)
+        cutz = np.zeros_like(alpha_values)
+
+        ka = 0
+        na = 4
+        nm = na - 2
+        d = len(alpha_values)/nm
+        for j, alpha in enumerate(alpha_values):
+
+            if j == 0 or j == len(alpha_values) - 1 or j % d == 0:
+
+                self.subfigure2.plot(E0_values, slopes[:, j], "k--" + shapes[ka], label=r"$\alpha=%g$" % alpha,
+                                     linewidth=1,
+                                     fillstyle='none',
+                                     markersize=7,
+                                     markeredgewidth=1.5)
+
+                ka += 1
+
+            slope_slope, intercept, _, _, _ = linregress(E0_values, np.log(slopes[:, j]))
+
+            slope_slopes[j] = slope_slope
+            cutz[j] = intercept
+
+        self.subfigure4.plot(alpha_values, slope_slopes, "ks--",
+                                 linewidth=1,
+                                 fillstyle='none',
+                                 markersize=7,
+                                 markeredgewidth=1.5)
+
+        self.subfigure5.plot(alpha_values, cutz, "ks--",
+                                 linewidth=1,
+                                 fillstyle='none',
+                                 markersize=7,
+                                 markeredgewidth=1.5)
+
+            #
+            # self.subfigure3.plot(E0_values, mu_zero[:, j], "ks--", label=r"$\alpha=%g$" % alpha,
+            #                      linewidth=1,
+            #                      fillstyle='none',
+            #                      markersize=7,
+            #                      markeredgewidth=1.5)
+
 
         self.subfigure.set_xlabel(r"$\Omega$")
         self.subfigure.set_ylabel(r"$\dot{H}$")
         self.subfigure.legend(loc="upper left")
 
-        self.subfigure2.set_xlabel(r"$E_0/L$")
-        self.subfigure2.set_ylabel(r"$\partial \dot{H} / \partial \Omega$")
+        self.subfigure2.legend(loc="upper left")
+        self.subfigure2.axes.set_yscale('log')
+        self.subfigure2.set_xlabel(r"$E_0$")
+        self.subfigure2.set_ylabel(r"$k_g = \partial \dot{H} / \partial \Omega$")
 
+        self.subfigure4.set_xlabel(r"$\alpha$")
+        self.subfigure4.set_ylabel(r"$\mathrm{slope}$")
+
+        self.subfigure5.set_xlabel(r"$\alpha$")
+        self.subfigure5.set_ylabel(r"$\mathrm{shift}$")
+
+
+
+        # self.subfigure3.set_xlabel(r"$E_0$")
+        # self.subfigure3.set_ylabel(r"$\gamma_\mathrm{eq}$")
 
 
 class Quasi2D_slopes_and_stuff(DCVizPlotter):
