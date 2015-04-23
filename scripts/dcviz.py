@@ -39,7 +39,7 @@ class SteadyState(DCVizPlotter):
             for j, alpha in enumerate(alpha_values):
                 for k, mu_shift in enumerate(mu_shift_values):
                     if i == I and j == J and k == K:
-                        print E0, alpha, mu_shift
+                        print "E0 = %g, alpha= %g, mus = %g" % (E0, alpha, mu_shift)
 
                         time = data[self.get_family_index_from_name("steadystate_Time_%d.npy" % count)]
                         L = int(len(time)/clip)
@@ -71,10 +71,112 @@ class SteadyState(DCVizPlotter):
         self.subfigure.set_xlim(0, self.subfigure.get_xlim()[1])
         self.subfigure.set_ylim(0, 1.1)
 
+class UnloadedGrowthSpeed(DCVizPlotter):
+
+    nametag = "unloaded_growthspeed\_(.*)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    figMap = {"omega_vs_v" : "subfigure",
+              "slopes_vs_alpha": "subfigure2",
+              "shifts_vs_alpha": "subfigure3",
+              "omega_vs_v_param": "subfigure4",
+              "linear_omega_vs_v": "subfigure5"}
+
+    figMap = {"omega_vs_v" : "subfigure"}
+
+    def plot(self, data):
+
+        alpha_values = self.get_family_member_data(data, "alpha")
+        mu_values = self.get_family_member_data(data, "mu_shift")
+        v_values = self.get_family_member_data(data, "v")
+
+        c_over_c0 = exp(mu_values)
+        omega = c_over_c0 - 1
+
+        idx = np.where(omega <= 0)
+        omega_growth = (1-omega[idx])[::-1]
+        print omega_growth
+
+        omega_powers = []
+        log_ks = []
+
+        for i, alpha in enumerate(alpha_values):
+
+            v = v_values[i, :]*c_over_c0
+            v_growth = -v[idx][::-1]
+            print v_growth
+
+            self.subfigure.loglog(omega_growth, v_growth, "--o", label=r"$\alpha=%.2f$" % alpha)
+            slope, shift, _, _, _ = linregress(np.log(omega_growth), np.log(v_growth))
+
+            omega_powers.append(slope)
+            log_ks.append(shift)
+
+        return
+        log_ks = np.asarray(log_ks)
+
+        self.subfigure2.plot(alpha_values, omega_powers, "--o")
+        self.subfigure3.loglog(alpha_values, -log_ks, "--o")
+
+        omega_power_slope, power_zero_alpha, _, _, r1 = linregress(alpha_values, omega_powers)
+        slope, shift, _, _, r2 = linregress(np.log(alpha_values), np.log(-log_ks))
+
+        print omega_power_slope, power_zero_alpha, r1
+        print slope, exp(shift), r2
+
+        log_k = lambda alpha: -exp(shift)*alpha**slope
+
+        omega_full = np.linspace(omega_growth[0], omega_growth[-1])
+        for i, alpha in enumerate(alpha_values):
+
+            v = v_values[i, :]*c_over_c0
+            v_growth = v[idx]
+
+            self.subfigure4.plot(omega_growth, v_growth, "o", label=r"$\alpha=%.2f$ n=%.2f" % (alpha, omega_powers[i]))
+            self.subfigure4.plot(omega_full, exp(log_k(alpha))*omega_full**omega_powers[i], "k--")
+            self.subfigure4.plot(omega_full, exp(log_k(alpha))*omega_full, "k-.")
+
+
+
+        self.subfigure.legend(loc="upper left")
+        self.subfigure.set_xlabel(r"$\Omega$")
+        self.subfigure.set_ylabel(r"v")
+
+        self.subfigure2.set_xlabel(r"$\alpha")
+        self.subfigure2.set_ylabel(r"n")
+
+        self.subfigure3.set_xlabel(r"$\alpha$")
+        self.subfigure3.set_ylabel(r"$-\log k_g$")
+
+        self.subfigure4.legend(loc="upper left")
+        self.subfigure4.set_xlabel(r"$\Omega$")
+        self.subfigure4.set_ylabel(r"v")
+
+
+        linear_k_values = []
+        for i, alpha in enumerate(alpha_values):
+
+            v = v_values[i, :]*c_over_c0
+            v_growth = -v[idx][::-1]
+            print v_growth
+            return
+
+            slope, shift, _, _, _ = linregress(omega_growth, v_growth)
+
+            self.subfigure5.plot(omega, v, "o", label=r"$\alpha=%.2f$" % alpha)
+            self.subfigure5.plot(omega, slope*omega, "k--")
+
+            omega_powers.append(slope)
+            linear_k_values.append(shift)
+
+
 
 class GrowthSpeed(DCVizPlotter):
 
-    nametag = "growthspeed\_(.*)\.npy"
+    nametag = "^growthspeed\_(.*)\.npy"
 
     numpyBin = True
 
@@ -102,21 +204,28 @@ class GrowthSpeed(DCVizPlotter):
     #           "subfigure8",
     #           "subfigure9"]}
 
-
     def plot_and_slopify(self, E0, omega, mu_shifts, mu, v):
-         mu0 = (mu - mu_shifts).mean()
-         c_over_c0 = exp(mu0 + mu_shifts)
-         v *= c_over_c0
+        mu0 = (mu - mu_shifts).mean()
+        c_over_c0 = exp(mu0 + mu_shifts)
+        v *= c_over_c0
 
-         idx = np.where(omega >= 0)
-         idx_low = np.where(omega < 0)
+        if E0 == 0:
+            if not (omega == (c_over_c0-1)).all():
 
-         slope, intercept, _, _, _ = linregress(omega[idx], v[idx])
-         # slope_low, intercept, _, _, _ = linregress(omega[idx_low], v[idx_low])
-         #
-         # print E0, slope/slope_low - 1
+                print "OMEGA FAIL"
+                print omega
+                print c_over_c0
+                self.Exit()
 
-         return mu0, slope, v
+        idx = np.where(omega >= 0)
+        idx_low = np.where(omega < 0)
+
+        slope, intercept, _, _, _ = linregress(omega[idx], v[idx])
+        # slope_low, intercept, _, _, _ = linregress(omega[idx_low], v[idx_low])
+        #
+        # print E0, slope/slope_low - 1
+
+        return mu0, slope, v
 
 
     def plot(self, data):

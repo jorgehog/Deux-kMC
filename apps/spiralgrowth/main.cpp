@@ -130,6 +130,7 @@ int main(int argv, char** argc)
 
     GrowthSpeed speed(solver);
     speed.setDependency(averageHeight);
+    speed.setOnsetTime(thermalization);
 
     EqMu eqMu(solver);
     Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
