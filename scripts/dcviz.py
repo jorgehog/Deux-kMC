@@ -20,13 +20,18 @@ class SteadyState(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {}
+    figMap = {"converge_figure": "subfigure", "value_figure": "subfigure2"}
 
     def plot(self, data):
 
         clip = 1.1
         start = 1
         transform = True
+
+        rmslabel=r"$\sigma(h)$"
+        sslabel=r"$\sigma(s)$"
+        whlabel=r"$h_l(t) - \langle h(t) \rangle$"
+
 
         I, J, K = [int(x) for x in self.argv]
 
@@ -36,40 +41,61 @@ class SteadyState(DCVizPlotter):
 
         count = 0
         for i, E0 in enumerate(E0_values):
+            rms_values = []
+
             for j, alpha in enumerate(alpha_values):
                 for k, mu_shift in enumerate(mu_shift_values):
+
                     if i == I and j == J and k == K:
                         print "E0 = %g, alpha= %g, mus = %g" % (E0, alpha, mu_shift)
 
-                        time = data[self.get_family_index_from_name("steadystate_Time_%d.npy" % count)]
-                        L = int(len(time)/clip)
-                        time = time[start:L]
+                    time = data[self.get_family_index_from_name("steadystate_Time_%d.npy" % count)]
+                    L = int(len(time)/clip)
+                    time = time[start:L]
 
-                        rms = data[self.get_family_index_from_name("steadystate_HeightRMS_%d.npy" % count)][start:L]
+                    rms = data[self.get_family_index_from_name("steadystate_HeightRMS_%d.npy" % count)][start:L]
 
-                        ss = data[self.get_family_index_from_name("steadystate_SurfaceSize_%d.npy" % count)][start:L]
+                    ss = data[self.get_family_index_from_name("steadystate_SurfaceSize_%d.npy" % count)][start:L]
 
-                        wh = data[self.get_family_index_from_name("steadystate_PressureWall_%d.npy" % count)][start:L]
+                    wh = data[self.get_family_index_from_name("steadystate_PressureWall_%d.npy" % count)][start:L]
 
-                        rmslabel=r"$\sigma(h)$"
-                        sslabel=r"$\sigma(s)$"
-                        whlabel=r"$h_l(t) - \langle h(t) \rangle$"
+                    if i == I and j == J and k == K:
+                        print E0, alpha, mu_shift
 
                         if transform:
-                            self.subfigure.plot(time[start:], (rms[start:] - rms[start])/(rms.max() - rms[start]), label=rmslabel)
-                            self.subfigure.plot(time[start:], (ss[start:] - ss[start])/(ss.max() - ss[start]), label=sslabel)
-                            self.subfigure.plot(time[start:], (wh[start:] - wh[start])/(wh.max() - wh[start]), label=whlabel)
+                            self.subfigure.plot(time, (rms - rms[0])/(rms.max() - rms[0]), label=rmslabel)
+                            self.subfigure.plot(time, (ss - ss[0])/(ss.max() - ss[0]), label=sslabel)
+                            self.subfigure.plot(time, (wh - wh[0])/(wh.max() - wh[0]), label=whlabel)
                         else:
                             self.subfigure.plot(time, rms/rms.max(), label=rmslabel)
                             self.subfigure.plot(time, ss/ss.max(), label=sslabel)
                             self.subfigure.plot(time, wh/wh.max(), label=whlabel)
 
+
+                    L2 = len(rms)/4
+
+                    rms_value = rms[L2:].mean()
+                    ss_value = ss[L2:].mean()
+                    wh_value = wh[L2:].mean()
+
+                    if j == J:
+
+                        rms_values.append(wh_value)
+
                     count += 1
+
+            self.subfigure2.plot(exp(mu_shift_values), rms_values, "--^",label="E0=%.2f" % E0)
+
 
         self.subfigure.set_xlabel(r"$t$")
         self.subfigure.legend(loc="lower right")
         self.subfigure.set_xlim(0, self.subfigure.get_xlim()[1])
         self.subfigure.set_ylim(0, 1.1)
+
+        self.subfigure2.set_xlabel(r"$c/c_0$")
+        self.subfigure2.set_ylabel(rmslabel)
+        self.subfigure2.legend(loc="upper left")
+
 
 class UnloadedGrowthSpeed(DCVizPlotter):
 
@@ -171,7 +197,6 @@ class UnloadedGrowthSpeed(DCVizPlotter):
 
             omega_powers.append(slope)
             linear_k_values.append(shift)
-
 
 
 class GrowthSpeed(DCVizPlotter):
