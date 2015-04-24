@@ -109,9 +109,7 @@ class UnloadedGrowthSpeed(DCVizPlotter):
               "slopes_vs_alpha": "subfigure2",
               "shifts_vs_alpha": "subfigure3",
               "omega_vs_v_param": "subfigure4",
-              "linear_omega_vs_v": "subfigure5"}
-
-    figMap = {"omega_vs_v" : "subfigure"}
+              "n_Fig": "nfig"}
 
     def plot(self, data):
 
@@ -141,7 +139,6 @@ class UnloadedGrowthSpeed(DCVizPlotter):
             omega_powers.append(slope)
             log_ks.append(shift)
 
-        return
         log_ks = np.asarray(log_ks)
 
         self.subfigure2.plot(alpha_values, omega_powers, "--o")
@@ -181,23 +178,13 @@ class UnloadedGrowthSpeed(DCVizPlotter):
         self.subfigure4.set_xlabel(r"$\Omega$")
         self.subfigure4.set_ylabel(r"v")
 
-
-        linear_k_values = []
+        n_values = self.get_family_member_data(data, "n") - 2
+        print n_values
         for i, alpha in enumerate(alpha_values):
-
-            v = v_values[i, :]*c_over_c0
-            v_growth = -v[idx][::-1]
-            print v_growth
-            return
-
-            slope, shift, _, _, _ = linregress(omega_growth, v_growth)
-
-            self.subfigure5.plot(omega, v, "o", label=r"$\alpha=%.2f$" % alpha)
-            self.subfigure5.plot(omega, slope*omega, "k--")
-
-            omega_powers.append(slope)
-            linear_k_values.append(shift)
-
+            self.nfig.plot(omega, n_values[i, :], "--o", label=r"$\alpha=%.2f$" % alpha)
+        self.nfig.set_xlabel(r"$\Omega$")
+        self.nfig.set_ylabel(r"$\langle n \rangle$")
+        self.nfig.legend()
 
 class GrowthSpeed(DCVizPlotter):
 
@@ -218,7 +205,8 @@ class GrowthSpeed(DCVizPlotter):
               "alpha_cuts_all": "subfigure6",
               "alpha_cutz_r0": "subfigure7",
               "alpha_slopes_full": "subfigure8",
-              "alpha_slopes_comb": "subfigure9"}
+              "alpha_slopes_comb": "subfigure9",
+              "neighborstuff": "subfigure10"}
 
     # figMap = {"omega_vs_v": ["subfigure",
     #           "subfigure2",
@@ -228,6 +216,11 @@ class GrowthSpeed(DCVizPlotter):
     #           "subfigure7",
     #           "subfigure8",
     #           "subfigure9"]}
+
+    # figMap = {"asd": "subfigure"}
+
+    plot_values = [0.2, 0.4]
+    shapes = ["s", "^", "v"]
 
     def plot_and_slopify(self, E0, omega, mu_shifts, mu, v):
         mu0 = (mu - mu_shifts).mean()
@@ -242,21 +235,61 @@ class GrowthSpeed(DCVizPlotter):
                 print c_over_c0
                 self.Exit()
 
-        idx = np.where(omega >= 0)
+        idx_high = np.where(omega >= 0)
         idx_low = np.where(omega < 0)
 
-        slope, intercept, _, _, _ = linregress(omega[idx], v[idx])
+        idx_chosen = idx_high
+
+        slope, intercept, _, _, _ = linregress(omega[idx_chosen], v[idx_chosen])
         # slope_low, intercept, _, _, _ = linregress(omega[idx_low], v[idx_low])
         #
         # print E0, slope/slope_low - 1
 
         return mu0, slope, v
 
+    def uberplot(self, omega, v, k, E0):
+
+        idx_undersat = np.where(omega <= 0)
+        idx_oversat = np.where(omega >= 0)
+
+        omega_undersat = abs(omega[idx_undersat])
+        omega_oversat = omega[idx_oversat]
+
+        v_undersat = abs(v[idx_undersat])
+        v_oversat = v[idx_oversat]
+
+        v = v_undersat
+        omega = omega_undersat
+
+        v_log_under = np.sign(v)*np.log(abs(v))
+        o_log_under = np.sign(omega)*np.log(abs(omega))
+        self.subfigure.plot(o_log_under, v_log_under, "k--" + self.shapes[k], label="E0=%.2f" % E0,
+                              linewidth=1,
+                              fillstyle='none',
+                              markersize=7,
+                              markeredgewidth=1.5,
+                              color="black")
+
+        v = v_oversat
+        omega = omega_oversat
+
+        v_log_over = np.sign(v)*np.log(abs(v))
+        o_log_over = np.sign(omega)*np.log(abs(omega))
+
+        xshift = o_log_over[-1] - o_log_under[0]
+        yshift = v_log_over[-1] - v_log_under[0]
+
+
+        self.subfigure.plot(o_log_over - xshift, v_log_over - yshift, "k-." + self.shapes[k],
+                              linewidth=1,
+                              fillstyle='none',
+                              markersize=7,
+                              markeredgewidth=1.5,
+                              color="black")
+        #
+
 
     def plot(self, data):
-
-        plot_values = [0.5, 1.0]
-        shapes = ["s", "^", "v"]
 
         E0_values = self.get_family_member_data(data, "E0")
         alpha_values = self.get_family_member_data(data, "alpha")
@@ -265,6 +298,7 @@ class GrowthSpeed(DCVizPlotter):
         s0_values = self.get_family_member_data(data, "s0")
         mu_values = self.get_family_member_data(data, "mu")
         v_values = self.get_family_member_data(data, "v")
+        n_values = self.get_family_member_data(data, "n")
 
         print E0_values.shape
         print alpha_values.shape
@@ -273,6 +307,7 @@ class GrowthSpeed(DCVizPlotter):
         print s0_values.shape
         print mu_values.shape
         print v_values.shape
+        print n_values.shape
 
         omega = exp(mu_shift_values) - 1
 
@@ -290,13 +325,13 @@ class GrowthSpeed(DCVizPlotter):
             mu_zero[0, j, :, :] = 0
 
             if j == J:
-                self.subfigure.plot(omega, v0, "k--" + shapes[0], label="E0=0",
-                                    linewidth=1,
-                                    fillstyle='none',
-                                    markersize=7,
-                                    markeredgewidth=1.5,
-                                    color="black")
-
+                self.uberplot(exp(mu_shift_values) - 1, v0, 0, 0)
+                # self.subfigure.loglog(abs(omega), abs(v0), "k--" + shapes[0], label="E0=0",
+                #                     linewidth=1,
+                #                     fillstyle='none',
+                #                     markersize=7,
+                #                     markeredgewidth=1.5,
+                #                     color="black")
 
         k = 1
         for i, E0 in enumerate(E0_values[1:]):
@@ -312,20 +347,24 @@ class GrowthSpeed(DCVizPlotter):
                                                                   v_values[i+1, j, :, l+1, m+1])
 
                             if slope < 0:
-                                print "ERROR", slope, E0, alpha, r0, s0
+                                print "ERROR slope=%g, E0(%d)=%g, alpha(%d)=%g, r0(%d)=%g, s0(%d)=%g" % (slope, i, E0, j, alpha, l, r0, m, s0)
 
                             slopes[i+1][j][l+1][m+1] = slope
                             mu_zero[i+1][j][l+1][m+1] = mu0
 
-                            if E0 in plot_values and j == J and l == L and m == M:
+                            if E0 in self.plot_values and j == J and l == L and m == M:
                                 # self.subfigure.plot(omega, slope*omega, "r--")
-                                self.subfigure.plot(omega, v, "k--" + shapes[k], label="E0=%g" % E0,
-                                                    linewidth=1,
-                                                    fillstyle='none',
-                                                    markersize=7,
-                                                    markeredgewidth=1.5,
-                                                    color="black")
+                                self.uberplot(omega, v, k, E0)
+                                # self.subfigure.loglog(abs(omega), abs(v), "k--" + shapes[k], label="E0=%g" % E0,
+                                #                     linewidth=1,
+                                #                     fillstyle='none',
+                                #                     markersize=7,
+                                #                     markeredgewidth=1.5,
+                                #                     color="black")
                                 k += 1
+
+                            if i == 3 and l == L and m == M:
+                                self.subfigure10.plot(omega, n_values[i+1, j, :, l+1, m+1], label="a=%.2f" % alpha)
 
         log_k_E0_slopes = np.zeros(shape=(len(alpha_values), len(r0_values), len(r0_values)))
         log_k_cutz = np.zeros_like(log_k_E0_slopes)
@@ -341,7 +380,7 @@ class GrowthSpeed(DCVizPlotter):
                     if l == L and m == M:
                         if j == 0 or j == len(alpha_values) - 1 or j % d == 0:
 
-                            self.subfigure2.plot(E0_values, slopes[:, j, l+1, m+1], "k--" + shapes[ka], label=r"$\alpha=%g$" % round(alpha, 1),
+                            self.subfigure2.plot(E0_values, slopes[:, j, l+1, m+1], "k--" + self.shapes[ka], label=r"$\alpha=%g$" % round(alpha, 1),
                                                  linewidth=1,
                                                  fillstyle='none',
                                                  markersize=7,
@@ -385,12 +424,12 @@ class GrowthSpeed(DCVizPlotter):
                 S += log_k_cutz[:, l+1, m+1]
                 count += 1
 
+                self.subfigure5.loglog(alpha_values, -log_k_cutz[:, l+1, m+1], "kx",
+                                     linewidth=1,
+                                     fillstyle='none',
+                                     markersize=7,
+                                     markeredgewidth=1.5)
 
-            self.subfigure5.plot(alpha_values, S/count, "k--",
-                                 linewidth=1,
-                                 fillstyle='none',
-                                 markersize=7,
-                                 markeredgewidth=1.5)
 
             S_tot += S
             count2 += count
@@ -399,8 +438,12 @@ class GrowthSpeed(DCVizPlotter):
 
         print alpha_values, S_tot
 
-        self.subfigure5.plot(alpha_values, S_tot, "r-")
-        self.subfigure5.plot(alpha_values, -0.05*alpha_values*alpha_values, "g-")
+        power, log_constant, _, _, err = linregress(np.log(alpha_values), np.log(-S_tot))
+        print "Power=%g, constant=%g, err=%g" % (power, exp(log_constant), err)
+
+        self.subfigure5.loglog(alpha_values, exp(log_constant)*alpha_values**power, "g-^",
+                               label=r"$%.2f\alpha^{%.2f}$" % (exp(log_constant), power))
+        self.subfigure5.loglog(alpha_values, -S_tot, "r-^", label="Avg all param")
 
         self.subfigure5.legend(numpoints=1, handlelength=1.2)
 
@@ -430,12 +473,15 @@ class GrowthSpeed(DCVizPlotter):
         self.subfigure9.set_xlabel(r"$\lambda_D$")
         self.subfigure9.set_ylabel(r"$\mathrm{avg slope}$")
 
-        self.subfigure.set_xlabel(r"$\Omega$")
-        self.subfigure.set_ylabel(r"$\dot{H}$")
+        self.subfigure.set_xlabel(r"$|\Omega + 1|$")
+        self.subfigure.set_ylabel(r"$|\dot{H}|$")
         self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2)
+        # self.subfigure.axes.set_xscale('log')
+        # self.subfigure.axes.set_yscale('log')
 
         self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2)
         self.subfigure2.axes.set_yscale('log')
+
         self.subfigure2.set_xlabel(r"$E_0$")
         self.subfigure2.set_ylabel(r"$k_g = \partial \dot{H} / \partial \Omega$")
 

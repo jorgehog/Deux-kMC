@@ -128,6 +128,9 @@ int main(int argv, char** argc)
 
     NNeighbors nNeighbors(solver);
 
+    TimeAveragetor nNeighborsAverage(nNeighbors, "avgNeighbors", "", true);
+    nNeighborsAverage.setOnsetTime(thermalization);
+
     GrowthSpeed speed(solver);
     speed.setDependency(averageHeight);
     speed.setOnsetTime(thermalization);
@@ -142,6 +145,7 @@ int main(int argv, char** argc)
     lattice.addEvent(time);
     lattice.addEvent(averageHeight);
     lattice.addEvent(nNeighbors);
+    lattice.addEvent(nNeighborsAverage);
     lattice.addEvent(speed);
 
     double muEq;
@@ -222,6 +226,7 @@ int main(int argv, char** argc)
     potentialRoot.addData("GrowthSpeed", speed.value());
 
     potentialRoot.addData("nNeighbors", nNeighbors.value());
+    potentialRoot.addData("avgNNeighbors", nNeighborsAverage.value());
 
     potentialRoot.addData("usewall", pressureWallInt);
     potentialRoot.addData("sigma0", sigma0);

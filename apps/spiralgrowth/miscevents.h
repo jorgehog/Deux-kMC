@@ -228,6 +228,53 @@ private:
 
 };
 
+class TimeAveragetor : public ignis::LatticeEvent
+{
+public:
+    TimeAveragetor(const SolidOnSolidEvent &event,
+                   string type = "Event",
+                   string unit = "",
+                   bool hasOutput=false,
+                   bool storeValue=false) :
+        ignis::LatticeEvent(type, unit, hasOutput, storeValue),
+        m_event(event)
+    {
+        setDependency(event);
+    }
+
+
+
+    void initialize()
+    {
+        m_T0 = m_event.solver().currentTime() - m_event.solver().currentTimeStep();
+        m_sum = 0;
+    }
+
+    void execute()
+    {
+        const double &localValue = m_event.value();
+        const double &timeStep = m_event.solver().currentTimeStep();
+
+        m_sum += timeStep*localValue;
+
+        setValue(timeAverage());
+    }
+
+    double timeAverage() const
+    {
+        return m_sum/(m_event.solver().currentTime() - m_T0);
+    }
+
+private:
+
+   const SolidOnSolidEvent &m_event;
+
+   double m_T0;
+   double m_sum;
+
+};
+
+
 
 class RateChecker : public LatticeEvent
 {

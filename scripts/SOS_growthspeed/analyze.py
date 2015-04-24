@@ -61,7 +61,7 @@ def main():
             r0_values.add(r0)
 
         if s0 not in parsed_data[E0][alpha][mu_shift][r0].keys():
-            parsed_data[E0][alpha][mu_shift][r0][s0] = [0, 0, 0]
+            parsed_data[E0][alpha][mu_shift][r0][s0] = [0, 0, 0, 0]
             s0_values.add(s0)
 
         pdata = parsed_data[E0][alpha][mu_shift][r0][s0]
@@ -69,6 +69,7 @@ def main():
         pdata[0] += data.attrs["GrowthSpeed"]
         pdata[1] += mu
         pdata[2] += 1
+        pdata[3] += data.attrs["nNeighbors"]
 
         n += 1
 
@@ -82,6 +83,7 @@ def main():
 
     v_values = np.zeros(shape=(len(E0_values), len(alpha_values), len(mu_shift_values), len(r0_values), len(s0_values)))
     mu_values = np.zeros_like(v_values)
+    n_values = np.zeros_like(mu_values)
 
     for i, E0 in enumerate(E0_values):
         for j, alpha in enumerate(alpha_values):
@@ -105,6 +107,7 @@ def main():
                             return
                         v_values[i][j][k][l][m] = pdata[0]/pdata[2]
                         mu_values[i][j][k][l][m] = pdata[1]/pdata[2]
+                        n_values[i][j][k][l][m] = pdata[3]/pdata[2]
 
     E0_values = np.asarray(E0_values)
     alpha_values = np.asarray(alpha_values)
@@ -112,6 +115,7 @@ def main():
     r0_values = np.asarray(r0_values)
     s0_values = np.asarray(s0_values)
     v_values = np.asarray(v_values)
+    n_values = np.asarray(n_values)
     mu_values = np.asarray(mu_values)
 
     np.save("/tmp/growthspeed_E0.npy", E0_values)
@@ -121,6 +125,7 @@ def main():
     np.save("/tmp/growthspeed_s0.npy", s0_values)
     np.save("/tmp/growthspeed_mu.npy", mu_values)
     np.save("/tmp/growthspeed_v.npy", v_values)
+    np.save("/tmp/growthspeed_n.npy", n_values)
 
 if __name__ == "__main__":
     main()
