@@ -37,36 +37,9 @@ class ParseKMCHDF5:
         for file in self.files:
             for l, run in file.items():
                 L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]
-                for potential, data in run.items():
+                for run_id, data in run.items():
 
-                    try:
-                        if "_n_" in potential:
-                            alpha, mu, E0, s0, r0, n = [float(re.findall("%s\_(-?\d+\.?\d*[eE]?-?\d*|-?nan)" % ID, potential)[0]) for ID in
-                                                     ["alpha", "mu", "E0", "s0", "r0", "n"]]
-                        else:
-                            alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*[eE]?-?\d*|-?nan)" % ID, potential)[0]) for ID in
-                                                     ["alpha", "mu", "E0", "s0", "r0"]]
-                            n = 0
-                    except:
-                        raise ValueError("invalid potential: %s" % potential)
-
-                    if self.only_n:
-                        if n != self.only_n:
-                            continue
-
-                    if "nNeighbors" in data.attrs.keys():
-                        neighbors = data.attrs["nNeighbors"]
-                    else:
-                        neighbors = 0
-
-                    _ignis_index_map = {}
-
-                    if data.attrs["storeIgnisData"]:
-                        for i, name in enumerate(data["ignisEventDescriptions"][0]):
-                            name_strip = str(name).split("@")[0]
-                            _ignis_index_map[name_strip] = i
-
-                    yield L, W, potential, alpha, mu, E0, s0, r0, neighbors, _ignis_index_map, data, n
+                    yield data, L, W, run_id
 
 
     def set_only_n(self, n):
@@ -79,6 +52,15 @@ class ParseKMCHDF5:
 
         for file in self.files:
             file.close()
+
+def getIgnisData(data, name):
+
+    if not data.attrs["storeIgnisData"]:
+        raise RuntimeError("No ignis data stored.")
+
+    idx = list(data["ignisEventDescriptions"]).index(name)
+
+    return data["ignisData"][idx]
 
 if __name__ == "__main__":
     obj = ParseKMCHDF5("/home/jorgehog/code/build-kMC-Desktop_Qt_5_3_GCC_64bit-Release/apps/Quasi2DLoaded/Quasi2D.h5")
