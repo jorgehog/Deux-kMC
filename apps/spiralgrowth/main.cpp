@@ -1,4 +1,6 @@
-#include <SOSkMC>
+#include "../apputils.h"
+
+#include <SOSkMC.h>
 
 #include <utils.h>
 
@@ -8,39 +10,14 @@
 
 using namespace ignis;
 
-string addProcEnding(string filename, string ending, string procending)
-{
-    stringstream s;
-    s << filename << procending << "." << ending;
-
-    return s.str();
-}
-
 int main(int argv, char** argc)
 {
 
-    string tail;
-    string cfgName;
+    //---Start default config loading
 
-    if (argv != 1)
-    {
-        int proc = atoi(argc[1]);
-
-        stringstream ending;
-        ending << "_" << proc;
-
-        tail = ending.str();
-
-        cfgName = argc[2];
-    }
-    else
-    {
-        tail = "";
-        cfgName = "infiles/spiralgrowth.cfg";
-    }
+    string cfgName = getCfgName(argv, argc);
 
     Config cfg;
-
     cfg.readFile(cfgName.c_str());
 
     const Setting & root = cfg.getRoot();
@@ -71,9 +48,6 @@ int main(int argv, char** argc)
     const uint &pressureWallInt = getSetting<uint>(root, "pressureWall");
     const bool pressureWall = pressureWallInt == 1;
 
-    const uint &shadowingInt = 0;
-    const bool shadowing = shadowingInt == 1;
-
     const double E0 = getSetting<double>(root, "E0dA")*L*W;
     const double &r0 = getSetting<double>(root, "r0");
     const double &sigma0 = getSetting<double>(root, "sigma0");
@@ -96,15 +70,35 @@ int main(int argv, char** argc)
     const uint &ignisDataInterval = getSetting<uint>(root, "ignisDataInterval");
     const bool ignisOutput = getSetting<uint>(root, "ignisOutput") == 1;
 
-    const uint &repeater = getSetting<uint>(root, "repeater");
+    //---End default config loading
+    //---Start ignis environment and solver creation
 
-    SolidOnSolidSolver solver(L, W, alpha, mu, shadowing);
+    SolidOnSolidSolver solver(L, W, alpha, mu);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
-
-    Time time(solver);
 
     AverageHeight averageHeight(solver);
     pressureWallEvent.setDependency(averageHeight);
+
+    Lattice lattice;
+    lattice.addEvent(solver);
+
+#ifndef NDEBUG
+    RateChecker checker(solver);
+    lattice.addEvent(checker);
+#endif
+
+    lattice.enableOutput(ignisOutput, nCyclesPerOutput);
+    lattice.enableProgressReport();
+    lattice.enableEventValueStorage(storeIgnisData,
+                                    storeIgnisData,
+                                    "ignisSOS.ign",
+                                    path,
+                                    ignisDataInterval);
+
+
+    //---Start Explicit Implementations
+
+    Time currentTime(solver);
 
     HeightRMS rms(solver);
     rms.setDependency(averageHeight);
@@ -116,7 +110,6 @@ int main(int argv, char** argc)
     var.setOnsetTime(thermalization);
 
     var.setDependency(size);
-
 
     DumpHeights3D dumpHeights3D(solver, path);
     DumpHeightSlice dumpHeightSlice(solver, 0, 0, path, nCyclesPerOutput);
@@ -131,9 +124,8 @@ int main(int argv, char** argc)
 
     eqMu.setDependency(nNeighbors);
 
-    MainMesh<uint> lattice;
-    lattice.addEvent(solver);
-    lattice.addEvent(time);
+
+    lattice.addEvent(currentTime);
     lattice.addEvent(averageHeight);
     lattice.addEvent(nNeighbors);
     lattice.addEvent(speed);
@@ -160,15 +152,10 @@ int main(int argv, char** argc)
     // lattice.addEvent(dumpHeightSlice);
 
 
-#ifndef NDEBUG
-    RateChecker checker(solver);
-    lattice.addEvent(checker);
-#endif
-
-    lattice.enableOutput(ignisOutput, nCyclesPerOutput);
-    lattice.enableProgressReport();
-    lattice.enableEventValueStorage(storeIgnisData, storeIgnisData, "ignisSOS.ign", path, ignisDataInterval);
+    //---Running simulation
     lattice.eventLoop(nCycles);
+
+    //---Start post run pre dump
 
     double muEqError;
     if (equilibriate)
@@ -196,51 +183,52 @@ int main(int argv, char** argc)
         }
     }
 
-    H5Wrapper::Root h5root(path +  addProcEnding("spiralgrowth", "h5", tail));
+    //---End post run pre dump
+    //---Start data dump
+
+    H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "spiralgrowth", "h5"));
 
     stringstream sizeDesc;
     sizeDesc << L << "x" << W;
     H5Wrapper::Member &sizeRoot = h5root.addMember(sizeDesc.str());
 
-    stringstream potentialDesc;
-    potentialDesc <<  "alpha_" << alpha
-                   << "_mu_" << solver.mu()
-                   << "_E0_" << E0*pressureWall
-                   << "_s0_" << sigma0
-                   << "_r0_" << r0
-                   << "_n_" << repeater;
+    H5Wrapper::Member &simRoot = sizeRoot.addMember(time(NULL));
 
-    H5Wrapper::Member &potentialRoot = sizeRoot.addMember(potentialDesc.str());
+    simRoot.addData("alpha", alpha);
+    simRoot.addData("mu", mu);
 
+    simRoot.addData("usewall", pressureWallInt);
+    simRoot.addData("reset", resetInt);
+    simRoot.addData("useConcEquil", equilibriateInt);
 
-    potentialRoot.addData("GrowthSpeed", speed.value());
+    simRoot.addData("sigma0", sigma0);
+    simRoot.addData("r0", r0);
+    simRoot.addData("E0", E0);
 
-    potentialRoot.addData("nNeighbors", nNeighbors.value());
-
-    potentialRoot.addData("usewall", pressureWallInt);
-    potentialRoot.addData("sigma0", sigma0);
-    potentialRoot.addData("r0", r0);
-    potentialRoot.addData("E0", E0);
-    potentialRoot.addData("rms", rms.value());
-
-    potentialRoot.addData("muEq", muEq);
-    potentialRoot.addData("muEqError", muEqError);
-    potentialRoot.addData("muShift", muShift);
-    potentialRoot.addData("reset", resetInt);
-    potentialRoot.addData("useConcEquil", equilibriateInt);
-    potentialRoot.addData("size", size.timeAverage());
-    potentialRoot.addData("var", var.value());
-
-    potentialRoot.addData("storeIgnisData", storeIgnisDataInt);
+    simRoot.addData("storeIgnisData", storeIgnisDataInt);
 
     if (storeIgnisData)
     {
-        potentialRoot.addData("heightmap", solver.heights());
-        potentialRoot.addData("ignisData", lattice.storedEventValues());
-        potentialRoot.addData("ignisEventDescriptions", lattice.outputEventDescriptions());
+        simRoot.addData("heightmap", solver.heights());
+        simRoot.addData("ignisData", lattice.storedEventValues());
+        simRoot.addData("ignisEventDescriptions", lattice.outputEventDescriptions());
     }
 
-    potentialRoot.addData("randomSeed", seed);
+    simRoot.addData("randomSeed", seed);
+
+    //---Start Explicit dumps
+
+    simRoot.addData("GrowthSpeed", speed.value());
+    simRoot.addData("nNeighbors", nNeighbors.value());
+
+    simRoot.addData("rms", rms.value());
+    simRoot.addData("muEq", muEq);
+    simRoot.addData("muEqError", muEqError);
+    simRoot.addData("muShift", muShift);
+    simRoot.addData("size", size.timeAverage());
+    simRoot.addData("var", var.value());
+
+    //---End data dump
 
     return 0;
 }

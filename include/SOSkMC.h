@@ -1,4 +1,6 @@
-#include "kMC"
+#pragma once
+
+#include "kMC.h"
 
 #include "../src/soskmc/solidonsolidsolver.h"
 #include "../src/soskmc/Events/pressurewall.h"

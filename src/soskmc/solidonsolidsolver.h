@@ -15,8 +15,7 @@ public:
     SolidOnSolidSolver(const uint length,
                        const uint width,
                        const double alpha,
-                       const double mu,
-                       const bool shadowing);
+                       const double mu);
 
     ~SolidOnSolidSolver();
 
@@ -116,8 +115,6 @@ private:
 
     const double m_alpha;
     double m_mu;
-
-    const bool m_shadowing;
 
     imat m_heights;
     umat m_nNeighbors;

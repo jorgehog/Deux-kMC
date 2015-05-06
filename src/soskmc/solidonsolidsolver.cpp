@@ -6,15 +6,13 @@
 SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
                                        const uint width,
                                        const double alpha,
-                                       const double mu,
-                                       const bool shadowing) :
+                                       const double mu) :
     KMCSolver(),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_length(length),
     m_width(width),
     m_alpha(alpha),
     m_mu(mu),
-    m_shadowing(shadowing),
     m_heights(length, width, fill::zeros),
     m_nNeighbors(length, width),
     m_siteReactions(length, width)
