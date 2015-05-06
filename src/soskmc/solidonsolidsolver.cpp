@@ -1,6 +1,6 @@
 #include "solidonsolidsolver.h"
 #include "solidonsolidreaction.h"
-#include "pressurewall.h"
+#include "Events/pressurewall.h"
 
 
 SolidOnSolidSolver::SolidOnSolidSolver(const uint length,

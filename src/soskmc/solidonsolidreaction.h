@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kMC>
+#include "../kmcsolver/reaction.h"
 
 using namespace kMC;
 

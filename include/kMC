@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../src/RNG/rng.h"
+#include "../src/kmcsolver/RNG/rng.h"
 
-#include "../src/reaction.h"
+#include "../src/kmcsolver/reaction.h"
 
-#include "../src/kmcsolver.h"
+#include "../src/kmcsolver/kmcsolver.h"

@@ -2,7 +2,7 @@
 
 #include "solidonsolidsolver.h"
 
-#include "pressurewall.h"
+#include "Events/pressurewall.h"
 
 
 uint SolidOnSolidReaction::nNeighbors() const

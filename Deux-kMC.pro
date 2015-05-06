@@ -10,6 +10,7 @@ apps.depends = src utils
 
 OTHER_FILES += infiles/config.cfg \
                include/kMC \
+               include/SOSkMC \
                .gitignore
 
 include(deployment.pri)

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <kMC>
+#include "../solidonsolidsolver.h"
+
 #include <utils.h>
-#include "solidonsolidsolver.h"
 
 using namespace ignis;
 

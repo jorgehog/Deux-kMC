@@ -1,9 +1,4 @@
-#include "solidonsolidsolver.h"
-#include "pressurewall.h"
-
-#include "eqmu.h"
-#include "equilibriater.h"
-#include "miscevents.h"
+#include <SOSkMC>
 
 #include <utils.h>
 

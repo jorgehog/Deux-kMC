@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kMC>
+#include "../kmcsolver/kmcsolver.h"
 #include <armadillo>
 
 using namespace kMC;
