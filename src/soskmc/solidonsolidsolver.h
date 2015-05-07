@@ -93,13 +93,13 @@ public:
 
     uint calculateNNeighbors(const uint x, const uint y) const;
 
-    uint topSite(const uint site, const uint n = 1) const;
+    int topSite(const uint site, const uint n = 1) const;
 
-    uint bottomSite(const uint site, const uint n = 1) const;
+    int bottomSite(const uint site, const uint n = 1) const;
 
-    uint leftSite(const uint site, const uint n = 1) const;
+    int leftSite(const uint site, const uint n = 1) const;
 
-    uint rightSite(const uint site, const uint n = 1) const;
+    int rightSite(const uint site, const uint n = 1) const;
 
     DiffusionDeposition &reaction(const uint x, const uint y) const
     {

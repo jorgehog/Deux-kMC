@@ -4,6 +4,8 @@
 
 #include "Events/pressurewall.h"
 
+#include "../kmcsolver/boundary/boundary.h"
+
 
 uint SolidOnSolidReaction::nNeighbors() const
 {
@@ -52,15 +54,40 @@ void DiffusionDeposition::executeAndUpdate()
         solver().registerHeightChange(x(), y(), -1);
     }
 
-    const uint leftSite = solver().leftSite(x());
-    const uint rightSite = solver().rightSite(x());
-    const uint bottomSite = solver().bottomSite(y());
-    const uint topSite = solver().topSite(y());
+    const uint left = solver().leftSite(x());
+    const uint right = solver().rightSite(x());
+    const uint bottom = solver().bottomSite(y());
+    const uint top = solver().topSite(y());
 
-    DiffusionDeposition &leftReaction = solver().reaction(leftSite, y());
-    DiffusionDeposition &rightReaction = solver().reaction(rightSite, y());
-    DiffusionDeposition &bottomReaction = solver().reaction(x(), bottomSite);
-    DiffusionDeposition &topReaction = solver().reaction(x(), topSite);
+    uint n = 1;
+    m_affectedReactions.at(0) = this;
+
+    if (!solver().boundary(0)->isBlocked(left))
+    {
+        m_affectedReactions.at(n) = &solver().reaction(left, y());
+        n++;
+    }
+
+    if (!solver().boundary(0)->isBlocked(right))
+    {
+        m_affectedReactions.at(n) = &solver().reaction(right, y());
+        n++;
+    }
+
+    if (!solver().boundary(1)->isBlocked(top))
+    {
+        m_affectedReactions.at(n) = &solver().reaction(x(), top);
+        n++;
+    }
+
+    if (!solver().boundary(1)->isBlocked(bottom))
+    {
+        m_affectedReactions.at(n) = &solver().reaction(x(), bottom);
+        n++;
+    }
+
+    auto start = m_affectedReactions.begin();
+    auto end = start + n;
 
     if (pressureWallEvent.hasStarted())
     {
@@ -68,11 +95,11 @@ void DiffusionDeposition::executeAndUpdate()
 
         pressureWallEvent.findNewHeight();
 
-        pressureWallEvent.recalculateLocalPressure(x(), y());
-        pressureWallEvent.recalculateLocalPressure(leftSite, y());
-        pressureWallEvent.recalculateLocalPressure(rightSite, y());
-        pressureWallEvent.recalculateLocalPressure(x(), bottomSite);
-        pressureWallEvent.recalculateLocalPressure(x(), topSite);
+        for (uint i = 0; i < n; ++i)
+        {
+            DiffusionDeposition *reaction = m_affectedReactions.at(i);
+            pressureWallEvent.recalculateLocalPressure(reaction->x(), reaction->y());
+        }
 
         for (uint x = 0; x < solver().length(); ++x)
         {
@@ -81,12 +108,7 @@ void DiffusionDeposition::executeAndUpdate()
 
                 DiffusionDeposition &reaction = solver().reaction(x, y);
 
-                if (!( (&reaction == this)
-                       || (&reaction == &leftReaction)
-                       || (&reaction == &rightReaction)
-                       || (&reaction == &bottomReaction)
-                       || (&reaction == &topReaction)
-                       ) )
+                if (std::find(start, end, &reaction) == end)
                 {
                     pressureWallEvent.updateRatesFor(reaction);
                 }
@@ -94,11 +116,11 @@ void DiffusionDeposition::executeAndUpdate()
         }
     }
 
-    calculateRate();
-    leftReaction.calculateRate();
-    rightReaction.calculateRate();
-    bottomReaction.calculateRate();
-    topReaction.calculateRate();
+    for (uint i = 0; i < n; ++i)
+    {
+        DiffusionDeposition *reaction = m_affectedReactions.at(i);
+        reaction->calculateRate();
+    }
 
 }
 
@@ -110,3 +132,4 @@ double DiffusionDeposition::rateExpression()
     return m_depositionRate + m_diffusionRate;
 }
 
+std::vector<DiffusionDeposition*> DiffusionDeposition::m_affectedReactions(5);

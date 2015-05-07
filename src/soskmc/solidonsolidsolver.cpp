@@ -48,11 +48,33 @@ void SolidOnSolidSolver::registerHeightChange(const uint x, const uint y, const 
 
     m_heights(x, y) += value;
 
+    const uint left = leftSite(x);
+    const uint right = rightSite(x);
+    const uint bottom = bottomSite(y);
+    const uint top = topSite(y);
+
     setNNeighbors(x, y);
-    setNNeighbors(leftSite(x), y);
-    setNNeighbors(rightSite(x), y);
-    setNNeighbors(x, bottomSite(y));
-    setNNeighbors(x, topSite(y));
+
+    if (!boundary(0)->isBlocked(left))
+    {
+        setNNeighbors(left, y);
+    }
+
+    if (!boundary(0)->isBlocked(right))
+    {
+        setNNeighbors(right, y);
+    }
+
+    if (!boundary(1)->isBlocked(top))
+    {
+        setNNeighbors(x, top);
+    }
+
+    if (!boundary(1)->isBlocked(bottom))
+    {
+        setNNeighbors(x, bottom);
+    }
+
 }
 
 void SolidOnSolidSolver::setNNeighbors(const uint x, const uint y)
@@ -92,21 +114,44 @@ double SolidOnSolidSolver::localSurfaceSupersaturation(const uint x, const uint 
 }
 
 uint SolidOnSolidSolver::calculateNNeighbors(const uint x, const uint y) const
-{
+{    
+    bool connectedLeft = false;
+    bool connectedRight = false;
+    bool connectedTop = false;
+    bool connectedBottom = false;
 
     uint n = 1;
 
     const int &h = m_heights(x, y);
-    const int &hLeft = m_heights(leftSite(x), y);
-    const int &hRight = m_heights(rightSite(x), y);
-    const int &hTop = m_heights(x, topSite(y));
-    const int &hBottom = m_heights(x, bottomSite(y));
 
+    const int left = leftSite(x);
+    const int right = rightSite(x);
+    const int top = topSite(y);
+    const int bottom = bottomSite(y);
 
-    bool connectedLeft = hLeft >= h;
-    bool connectedRight = hRight >= h;
-    bool connectedTop = hTop >= h;
-    bool connectedBottom = hBottom >= h;
+    if (!boundary(0)->isBlocked(left))
+    {
+        const int &hLeft = m_heights(left, y);
+        connectedLeft = hLeft >= h;
+    }
+
+    if (!boundary(0)->isBlocked(right))
+    {
+        const int &hRight = m_heights(right, y);
+        connectedRight = hRight >= h;
+    }
+
+    if (!boundary(1)->isBlocked(top))
+    {
+        const int &hTop = m_heights(x, top);
+        connectedTop = hTop >= h;
+    }
+
+    if (!boundary(1)->isBlocked(bottom))
+    {
+        const int &hBottom = m_heights(x, bottom);
+        connectedBottom = hBottom >= h;
+    }
 
     if (connectedLeft)
     {
@@ -132,22 +177,22 @@ uint SolidOnSolidSolver::calculateNNeighbors(const uint x, const uint y) const
 
 }
 
-uint SolidOnSolidSolver::topSite(const uint site, const uint n) const
+int SolidOnSolidSolver::topSite(const uint site, const uint n) const
 {
     return boundary(1)->transformCoordinate(site + n);
 }
 
-uint SolidOnSolidSolver::bottomSite(const uint site, const uint n) const
+int SolidOnSolidSolver::bottomSite(const uint site, const uint n) const
 {
     return boundary(1)->transformCoordinate((int)site - (int)n);
 }
 
-uint SolidOnSolidSolver::leftSite(const uint site, const uint n) const
+int SolidOnSolidSolver::leftSite(const uint site, const uint n) const
 {
     return boundary(0)->transformCoordinate((int)site - (int)n);
 }
 
-uint SolidOnSolidSolver::rightSite(const uint site, const uint n) const
+int SolidOnSolidSolver::rightSite(const uint site, const uint n) const
 {
     return boundary(0)->transformCoordinate(site + n);
 }
@@ -177,11 +222,23 @@ void SolidOnSolidSolver::initializeSolver()
 {
     m_heights.zeros();
 
+    int left;
+    int bottom;
+
+
     for (uint x = 0; x < m_length; ++x)
     {
         for (uint y = 0; y < m_width; ++y)
         {
-            m_heights(x, y) = (m_heights(leftSite(x), y) + m_heights(x, bottomSite(y)))/2 + round(-1 + 2*rng.uniform());
+            left = leftSite(x);
+            bottom = bottomSite(y);
+
+            if (boundary(0)->isBlocked(left) || boundary(1)->isBlocked(bottom))
+            {
+                continue;
+            }
+
+            m_heights(x, y) = (m_heights(left, y) + m_heights(x, bottom))/2 + round(-1 + 2*rng.uniform());
         }
     }
 

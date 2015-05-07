@@ -2,6 +2,8 @@
 
 #include "../kmcsolver/reaction.h"
 
+#include <vector>
+
 using namespace kMC;
 
 class SolidOnSolidSolver;
@@ -78,6 +80,8 @@ public:
 private:
     double m_depositionRate;
     double m_diffusionRate;
+
+    static std::vector<DiffusionDeposition*> m_affectedReactions;
 
 };
 

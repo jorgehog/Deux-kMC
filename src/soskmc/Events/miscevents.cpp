@@ -1,6 +1,6 @@
 #include "miscevents.h"
 #include "solidonsolidreaction.h"
-
+#include "../kmcsolver/boundary/boundary.h"
 
 void SurfaceSize::initialize()
 {
@@ -23,8 +23,16 @@ void SurfaceSize::initialize()
 
 double SurfaceSize::relativeHeightSum(const uint x, const uint y) const
 {
-    double xDirection = abs(solver().height(x, y) - solver().height(solver().rightSite(x), y));
-    double yDirection = abs(solver().height(x, y) - solver().height(x, solver().topSite(y)));
+    const uint right = solver().rightSite(x);
+    const uint top = solver().topSite(y);
+
+    if (solver().boundary(0)->isBlocked(right) || solver().boundary(1)->isBlocked(top))
+    {
+        return 0;
+    }
+
+    double xDirection = abs(solver().height(x, y) - solver().height(right, y));
+    double yDirection = abs(solver().height(x, y) - solver().height(x, top));
 
     return 0.5*(xDirection + yDirection);
 }
@@ -67,15 +75,23 @@ void SurfaceSize::reset()
 {
     const DiffusionDeposition *currentReaction = dynamic_cast<const DiffusionDeposition*>(solver().selectedReaction());
 
-    const uint &x = currentReaction->x();
-    const uint &y = currentReaction->y();
+    const int &x = currentReaction->x();
+    const int &y = currentReaction->y();
 
-    const uint leftSite = solver().leftSite(x);
-    const uint bottomSite = solver().bottomSite(y);
+    const int left = solver().leftSite(x);
+    const int bottom = solver().bottomSite(y);
 
     updateRelativeHeight(x, y);
-    updateRelativeHeight(leftSite, y);
-    updateRelativeHeight(x, bottomSite);
+
+    if (!solver().boundary(0)->isBlocked(left))
+    {
+        updateRelativeHeight(left, y);
+    }
+
+    if (!solver().boundary(1)->isBlocked(bottom))
+    {
+        updateRelativeHeight(x, bottom);
+    }
 
 }
 
@@ -198,16 +214,32 @@ void NNeighbors::reset()
     const uint &x = currentReaction->x();
     const uint &y = currentReaction->y();
 
-    const uint leftSite = solver().leftSite(x);
-    const uint rightSite = solver().rightSite(x);
-    const uint bottomSite = solver().bottomSite(y);
-    const uint topSite = solver().topSite(y);
+    const uint left = solver().leftSite(x);
+    const uint right = solver().rightSite(x);
+    const uint bottom = solver().bottomSite(y);
+    const uint top = solver().topSite(y);
 
     updateNNeighbors(x, y);
-    updateNNeighbors(leftSite, y);
-    updateNNeighbors(rightSite, y);
-    updateNNeighbors(x, bottomSite);
-    updateNNeighbors(x, topSite);
+
+    if (!solver().boundary(0)->isBlocked(left))
+    {
+        updateNNeighbors(left, y);
+    }
+
+    if (!solver().boundary(0)->isBlocked(right))
+    {
+        updateNNeighbors(right, y);
+    }
+
+    if (!solver().boundary(1)->isBlocked(top))
+    {
+        updateNNeighbors(x, bottom);
+    }
+
+    if (!solver().boundary(1)->isBlocked(bottom))
+    {
+        updateNNeighbors(x, top);
+    }
 
 }
 

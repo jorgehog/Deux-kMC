@@ -48,9 +48,14 @@ int main(int argv, char** argc)
     const uint &pressureWallInt = getSetting<uint>(root, "pressureWall");
     const bool pressureWall = pressureWallInt == 1;
 
-    const double E0 = getSetting<double>(root, "E0dA")*L*W;
+    const double &E0 = getSetting<double>(root, "E0dA")*L*W;
     const double &r0 = getSetting<double>(root, "r0");
     const double &sigma0 = getSetting<double>(root, "sigma0");
+
+    const uint &diffuseInt = getSetting<uint>(root, "diffuse");
+    const bool diffuse = diffuseInt == 1;
+    const double &D = getSetting<double>(root, "D");
+    const uint &pointsPerLatticeUnit = getSetting<uint>(root, "pointsPerLatticeUnit");
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
     const bool equilibriate = equilibriateInt == 1;
@@ -73,12 +78,22 @@ int main(int argv, char** argc)
     //---End default config loading
     //---Start ignis environment and solver creation
 
-    Periodic xBoundary(L);
-    Periodic yBoundary(W);
 
-    SolidOnSolidSolver solver(L, W, &xBoundary, &yBoundary, alpha, mu);
+    Boundary* xBoundary;
+    if (diffuse)
+    {
+        xBoundary = new Edge(L);
+    }
+    else
+    {
+        xBoundary = new Periodic(L);
+    }
+
+    Boundary* yBoundary = new Periodic(W);
+
+    SolidOnSolidSolver solver(L, W, xBoundary, yBoundary, alpha, mu);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
-    CavityDiffusion diffusion(solver, 1.0, 1);
+    CavityDiffusion diffusion(solver, D, pointsPerLatticeUnit);
 
     AverageHeight averageHeight(solver);
     pressureWallEvent.setDependency(averageHeight);
@@ -140,6 +155,11 @@ int main(int argv, char** argc)
         lattice.addEvent(pressureWallEvent);
     }
 
+    if (diffuse)
+    {
+        lattice.addEvent(diffusion);
+    }
+
     const bool dumpHeights = false;
     if (dumpHeights)
     {
@@ -181,6 +201,10 @@ int main(int argv, char** argc)
     simRoot.addData("r0", r0);
     simRoot.addData("E0", E0);
 
+    simRoot.addData("diffuse", diffuseInt);
+    simRoot.addData("D", D);
+    simRoot.addData("pointsPerLatticeUnit", pointsPerLatticeUnit);
+
     simRoot.addData("useConcEquil", equilibriateInt);
     simRoot.addData("reset", resetInt);
     simRoot.addData("muEq", muEq);
@@ -207,6 +231,9 @@ int main(int argv, char** argc)
     simRoot.addData("var", var.value());
 
     //---End data dump
+
+    delete xBoundary;
+    delete yBoundary;
 
     return 0;
 }
