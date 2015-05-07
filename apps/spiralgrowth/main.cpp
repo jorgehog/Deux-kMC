@@ -79,12 +79,16 @@ int main(int argv, char** argc)
     AverageHeight averageHeight(solver);
     pressureWallEvent.setDependency(averageHeight);
 
+    EqMu eqMu(solver);
+    Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
+
     Lattice lattice;
     lattice.addEvent(solver);
 
 #ifndef NDEBUG
     RateChecker checker(solver);
     lattice.addEvent(checker);
+    eqMu.setDependency(checker);
 #endif
 
     lattice.enableOutput(ignisOutput, nCyclesPerOutput);
@@ -119,71 +123,42 @@ int main(int argv, char** argc)
     GrowthSpeed speed(solver);
     speed.setDependency(averageHeight);
 
-    EqMu eqMu(solver);
-    Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
-
-    eqMu.setDependency(nNeighbors);
-
-
     lattice.addEvent(currentTime);
     lattice.addEvent(averageHeight);
     lattice.addEvent(nNeighbors);
     lattice.addEvent(speed);
-
-    double muEq;
-    if (equilibriate)
-    {
-            lattice.addEvent(eqMu);
-            lattice.addEvent(equilibriater);
-    }
-    else
-    {
-        lattice.addEvent(rms);
-        lattice.addEvent(size);
-        lattice.addEvent(var);
-    }
+    lattice.addEvent(rms);
+    lattice.addEvent(size);
+    lattice.addEvent(var);
 
     if (pressureWall)
     {
         lattice.addEvent(pressureWallEvent);
     }
 
-    //    lattice.addEvent(dumpHeights3D);
-    // lattice.addEvent(dumpHeightSlice);
-
-
-    //---Running simulation
-    lattice.eventLoop(nCycles);
-
-    //---Start post run pre dump
-
-    double muEqError;
-    if (equilibriate)
+    const bool dumpHeights = false;
+    if (dumpHeights)
     {
-
-        equilibriater.finalizeAverages();
-
-        muEq = solver.mu();
-
-        muEqError = equilibriater.error();
-
-        if (reset)
-        {
-            if (muShift != 0)
-            {
-                solver.setMu(muEq + muShift);
-            }
-
-            lattice.removeEvent(&eqMu);
-            lattice.removeEvent(&equilibriater);
-            lattice.addEvent(rms);
-            lattice.addEvent(size);
-            lattice.addEvent(var);
-            lattice.eventLoop(nCycles);
-        }
+        lattice.addEvent(dumpHeights3D);
+        lattice.addEvent(dumpHeightSlice);
     }
 
-    //---End post run pre dump
+    //---End explicit implementation
+    //---Running simulation
+
+    EquilibrationOrganizer eqOrg(lattice, equilibriate, reset, true);
+    eqOrg.prepare({&eqMu, &equilibriater}, {&pressureWallEvent});
+
+    lattice.eventLoop(nCycles);
+
+    equilibriater.finalizeAverages();
+    double muEq = equilibriater.averageMu();
+
+    solver.setMu(muEq + muShift);
+
+    eqOrg.reset(nCycles);
+
+    //---End simulation
     //---Start data dump
 
     H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "spiralgrowth", "h5"));
@@ -198,12 +173,15 @@ int main(int argv, char** argc)
     simRoot.addData("mu", mu);
 
     simRoot.addData("usewall", pressureWallInt);
-    simRoot.addData("reset", resetInt);
-    simRoot.addData("useConcEquil", equilibriateInt);
-
     simRoot.addData("sigma0", sigma0);
     simRoot.addData("r0", r0);
     simRoot.addData("E0", E0);
+
+    simRoot.addData("useConcEquil", equilibriateInt);
+    simRoot.addData("reset", resetInt);
+    simRoot.addData("muEq", muEq);
+    simRoot.addData("muEqError", equilibriater.error());
+    simRoot.addData("muShift", muShift);
 
     simRoot.addData("storeIgnisData", storeIgnisDataInt);
 
@@ -220,11 +198,7 @@ int main(int argv, char** argc)
 
     simRoot.addData("GrowthSpeed", speed.value());
     simRoot.addData("nNeighbors", nNeighbors.value());
-
     simRoot.addData("rms", rms.value());
-    simRoot.addData("muEq", muEq);
-    simRoot.addData("muEqError", muEqError);
-    simRoot.addData("muShift", muShift);
     simRoot.addData("size", size.timeAverage());
     simRoot.addData("var", var.value());
 

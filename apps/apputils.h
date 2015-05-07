@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <BADAss/badass.h>
+#include <ignis/include/ignis.h>
 
 using namespace std;
 
@@ -54,6 +55,161 @@ string getCfgName(int argv, char** argc)
 
     return cfgName;
 }
+
+class EquilibrationOrganizer
+{
+public:
+    EquilibrationOrganizer(MainMesh<uint> &lattice,
+                           const bool equilibrate,
+                           const bool reset,
+                           const bool skipEvents) :
+        m_lattice(lattice),
+        m_equilibrate(equilibrate),
+        m_reset(reset),
+        m_skipEvents(skipEvents)
+    {
+
+    }
+
+    ~EquilibrationOrganizer()
+    {
+        m_neglectedEvents.clear();
+    }
+
+    void prepare(vector<Event<uint>*> equilibriationEvents,
+                 vector<Event<uint>*> staticEvents)
+    {
+        m_equilibrationEvents = equilibriationEvents;
+
+        if (m_equilibrate && m_skipEvents)
+        {
+
+            //Making sure we do not remove any events that the equlibration
+            //events might depend on
+            vector<uint> dependencies;
+            for (uint i = 0; i < m_lattice.getEvents().size(); ++i)
+            {
+                const Event<uint> *event = m_lattice.getEvents().at(i);
+
+                //If the event is not to be removed.
+                if (std::find(staticEvents.begin(), staticEvents.end(), event) != staticEvents.end())
+                {
+                    dependencies.push_back(i);
+                    continue;
+                }
+
+                for (const Event<uint> *staticEvent : staticEvents)
+                {
+                    if (staticEvent->dependsOn(event))
+                    {
+                        dependencies.push_back(i);
+                        break;
+                    }
+                }
+
+                for (const Event<uint> *eqEvent : m_equilibrationEvents)
+                {
+                    if (eqEvent->dependsOn(event))
+                    {
+                        dependencies.push_back(i);
+                        break;
+                    }
+                }
+            }
+
+            //Keep the events which we do not use
+            for (uint i = 0; i < m_lattice.getEvents().size(); ++i)
+            {
+                if (std::find(dependencies.begin(), dependencies.end(), i) != dependencies.end())
+                {
+                    continue;
+                }
+
+                m_neglectedEvents.push_back(m_lattice.getEvents().at(i));
+            }
+
+            //remove events for event lists
+            for (int i = m_lattice.getEvents().size() - 1; i >= 0; --i)
+            {
+                if (std::find(dependencies.begin(), dependencies.end(), i) != dependencies.end())
+                {
+                    continue;
+                }
+
+                m_lattice.removeEvent(i);
+            }
+
+            //Add the equilibration events
+            for (Event<uint> *eqEvent : m_equilibrationEvents)
+            {
+                m_lattice.addEvent(eqEvent);
+            }
+        }
+    }
+
+    void reset(const uint nCycles)
+    {
+        if (m_equilibrate && m_reset)
+        {
+            //Remove the equilibriation events
+            for (Event<uint> *eqEvent : m_equilibrationEvents)
+            {
+                m_lattice.removeEvent(eqEvent);
+            }
+
+            //add the skipped events back in
+            if (m_skipEvents)
+            {
+                for (auto &event : m_neglectedEvents)
+                {
+                    m_lattice.addEvent(event);
+                }
+            }
+
+            //restart the simulation
+            m_lattice.eventLoop(nCycles);
+        }
+    }
+
+private:
+
+    MainMesh<uint> &m_lattice;
+    const bool m_equilibrate;
+    const bool m_reset;
+    const bool m_skipEvents;
+
+    vector<LatticeEvent*> m_neglectedEvents;
+    vector<LatticeEvent*> m_equilibrationEvents;
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
