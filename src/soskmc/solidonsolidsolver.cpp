@@ -1,13 +1,17 @@
 #include "solidonsolidsolver.h"
 #include "solidonsolidreaction.h"
 #include "Events/pressurewall.h"
+#include "Events/cavitydiffusion.h"
+#include "../kmcsolver/boundary/boundary.h"
 
 
 SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
                                        const uint width,
+                                       const Boundary *xBoundary,
+                                       const Boundary *yBoundary,
                                        const double alpha,
                                        const double mu) :
-    KMCSolver(),
+    KMCSolver({xBoundary, yBoundary}),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_length(length),
     m_width(width),
@@ -62,6 +66,11 @@ void SolidOnSolidSolver::setPressureWallEvent(PressureWall &pressureWallEvent)
     m_pressureWallEvent = &pressureWallEvent;
 }
 
+void SolidOnSolidSolver::setDiffusionEvent(CavityDiffusion &diffusionEvent)
+{
+    m_diffusionEvent = &diffusionEvent;
+}
+
 double SolidOnSolidSolver::localPressure(const uint x, const uint y) const
 {
     if (!m_pressureWallEvent->hasStarted())
@@ -70,6 +79,16 @@ double SolidOnSolidSolver::localPressure(const uint x, const uint y) const
     }
 
     return m_pressureWallEvent->localPressure(x, y);
+}
+
+double SolidOnSolidSolver::localSurfaceSupersaturation(const uint x, const uint y) const
+{
+    if (!m_diffusionEvent->hasStarted())
+    {
+        return 1;
+    }
+
+    return m_diffusionEvent->localSurfaceSupersaturation(x, y);
 }
 
 uint SolidOnSolidSolver::calculateNNeighbors(const uint x, const uint y) const
@@ -115,27 +134,22 @@ uint SolidOnSolidSolver::calculateNNeighbors(const uint x, const uint y) const
 
 uint SolidOnSolidSolver::topSite(const uint site, const uint n) const
 {
-    return (site + n)%width();
+    return boundary(1)->transformCoordinate(site + n);
 }
 
 uint SolidOnSolidSolver::bottomSite(const uint site, const uint n) const
 {
-    return (site + width() - n)%width();
+    return boundary(1)->transformCoordinate((int)site - (int)n);
 }
 
 uint SolidOnSolidSolver::leftSite(const uint site, const uint n) const
 {
-    return (site + length() - n)%length();
+    return boundary(0)->transformCoordinate((int)site - (int)n);
 }
 
 uint SolidOnSolidSolver::rightSite(const uint site, const uint n) const
 {
-    return (site + n)%length();
-}
-
-double SolidOnSolidSolver::shadowScale(const double n) const
-{
-    return 3 - n/2;
+    return boundary(0)->transformCoordinate(site + n);
 }
 
 void SolidOnSolidSolver::setMu(const double mu)

@@ -9,11 +9,17 @@ HEADERS = RNG/kmcrng.h \
     kmcsolver.h \
     kmcassets.h \
     reaction.h \
+    boundary/boundary.cpp \
+    boundary/edge.cpp \
+    boundary/periodic.cpp
 
 SOURCES += \
     RNG/rng.cpp \
     reaction.cpp \
-    kmcsolver.cpp
+    kmcsolver.cpp \
+    boundary/boundary.cpp \
+    boundary/edge.cpp \
+    boundary/periodic.cpp
 
 RNG_ZIG
 {

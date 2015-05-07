@@ -87,20 +87,6 @@ void PressureWall::reset()
 #endif
 
     BADAssClose(pressureEnergySum(), -m_E0, 1E-3);
-
-
-//    for (uint x = 0; x < solver().length(); ++x)
-//    {
-//        for (uint y = 0; y < solver().width(); ++y)
-//        {
-//            cout << m_height - m_r0LogThetaPrev - m_r0*log(m_s0/m_E0)
-//                 << "\n" << m_ratioPartialSums(x, y) - partialRatio(x, y)
-//                 << "\n" << m_localPressure(x, y) - localPressureEvaluate(x, y)
-//                 << "\n" << m_localPressure(x, y) + m_E0*m_ratioPartialSums(x, y)
-//                 << "\n------" << endl;
-//        }
-//    }
-
 }
 
 double PressureWall::partialRatio(const uint x, const uint y) const

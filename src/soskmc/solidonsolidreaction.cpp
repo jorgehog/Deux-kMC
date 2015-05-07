@@ -20,14 +20,16 @@ double DiffusionDeposition::calculateDiffusionRate() const
 
 double DiffusionDeposition::calculateDepositionRate() const
 {
-    if (solver().shadowing())
-    {
-        return solver().shadowScale(nNeighbors());
-    }
-    else
-    {
-        return 1.0;
-    }
+//    if (solver().shadowing())
+//    {
+//        return solver().shadowScale(nNeighbors());
+//    }
+//    else
+//    {
+//        return 1.0;
+//    }
+
+    return solver().localSurfaceSupersaturation(x(), y());
 }
 
 bool DiffusionDeposition::isAllowed() const

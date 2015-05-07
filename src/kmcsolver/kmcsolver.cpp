@@ -2,19 +2,22 @@
 
 #include "reaction.h"
 
+#include "boundary/boundary.h"
+
+
 using namespace kMC;
 
 
-KMCSolver::KMCSolver() :
+KMCSolver::KMCSolver(vector<const Boundary *> boundaries) :
     ignis::LatticeEvent("KMCSolver")
 {
-
+    m_boundaries = boundaries;
 }
 
 
 KMCSolver::~KMCSolver()
 {
-
+    m_boundaries.clear();
 }
 
 

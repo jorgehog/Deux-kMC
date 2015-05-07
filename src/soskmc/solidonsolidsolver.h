@@ -8,12 +8,15 @@ using namespace arma;
 
 class DiffusionDeposition;
 class PressureWall;
+class CavityDiffusion;
 
 class SolidOnSolidSolver : public KMCSolver
 {
 public:
     SolidOnSolidSolver(const uint length,
                        const uint width,
+                       const Boundary* xBoundary,
+                       const Boundary* yBoundary,
                        const double alpha,
                        const double mu);
 
@@ -77,12 +80,16 @@ public:
 
     void setPressureWallEvent(PressureWall &pressureWallEvent);
 
+    void setDiffusionEvent(CavityDiffusion &diffusionEvent);
+
     PressureWall &pressureWallEvent() const
     {
         return *m_pressureWallEvent;
     }
 
     double localPressure(const uint x, const uint y) const;
+
+    double localSurfaceSupersaturation(const uint x, const uint y) const;
 
     uint calculateNNeighbors(const uint x, const uint y) const;
 
@@ -99,16 +106,14 @@ public:
         return *m_siteReactions(x, y);
     }
 
-    double shadowScale(const double n) const;
-
     void setMu(const double mu);
-
 
 private:
 
     const uint m_dim;
 
     PressureWall *m_pressureWallEvent;
+    CavityDiffusion *m_diffusionEvent;
 
     const uint m_length;
     const uint m_width;

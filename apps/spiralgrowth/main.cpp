@@ -73,8 +73,12 @@ int main(int argv, char** argc)
     //---End default config loading
     //---Start ignis environment and solver creation
 
-    SolidOnSolidSolver solver(L, W, alpha, mu);
+    Periodic xBoundary(L);
+    Periodic yBoundary(W);
+
+    SolidOnSolidSolver solver(L, W, &xBoundary, &yBoundary, alpha, mu);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
+    CavityDiffusion diffusion(solver, 1.0, 1);
 
     AverageHeight averageHeight(solver);
     pressureWallEvent.setDependency(averageHeight);

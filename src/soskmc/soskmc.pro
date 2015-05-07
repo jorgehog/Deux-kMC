@@ -9,7 +9,8 @@ SOURCES += solidonsolidsolver.cpp \
     Events/pressurewall.cpp \
     Events/equilibriater.cpp \
     Events/eqmu.cpp \
-    Events/miscevents.cpp
+    Events/miscevents.cpp \
+    Events/cavitydiffusion.cpp
 
 HEADERS += \
     solidonsolidsolver.h \
@@ -18,7 +19,8 @@ HEADERS += \
     Events/solidonsolidevent.h \
     Events/equilibriater.h \
     Events/eqmu.h \
-    Events/miscevents.h
+    Events/miscevents.h \
+    Events/cavitydiffusion.h
 
 LIBS += -lkMC
 

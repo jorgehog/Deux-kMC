@@ -10,11 +10,12 @@ namespace kMC
 {
 
 class Reaction;
+class Boundary;
 
 class KMCSolver : public ignis::LatticeEvent
 {
 public:
-    KMCSolver();
+    KMCSolver(vector<const Boundary*> boundaries);
     virtual ~KMCSolver();
 
     const double &currentTimeStep() const
@@ -32,6 +33,11 @@ public:
         return m_selectedReaction;
     }
 
+    const Boundary *boundary(const uint i) const
+    {
+        return m_boundaries.at(i);
+    }
+
     void initializeReactions();
 
     virtual uint numberOfReactions() const = 0;
@@ -39,6 +45,8 @@ public:
     virtual Reaction *getReaction(const uint n) const = 0;
 
 private:
+
+    vector<const Boundary*> m_boundaries;
 
     Reaction *m_selectedReaction;
 
