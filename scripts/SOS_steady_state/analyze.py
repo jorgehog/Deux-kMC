@@ -26,6 +26,11 @@ def main():
 
         L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, repeat = stuff
 
+
+        if repeat > 100:
+            continue
+
+
         area = L*W
 
         E0 /= area
