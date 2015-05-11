@@ -35,7 +35,7 @@ class SteadyState(DCVizPlotter):
 
         rmslabel=r"$\sigma(h)$"
         sslabel=r"$\sigma(s)$"
-        whlabel=r"$\langle \delta h_l(t) \rangle$"
+        whlabel=r"$\langle \delta h_l \rangle$"
 
 
         I, J, K = [int(x) for x in self.argv]
@@ -108,7 +108,7 @@ class SteadyState(DCVizPlotter):
 
                     count += 1
 
-            self.subfigure2.plot(exp(mu_shift_values), rms_values, "k--" + self.shapes[i], label="E0=%.2f" % E0,
+            self.subfigure2.plot(exp(mu_shift_values), rms_values, "k--" + self.shapes[i], label=r"$E_0=%.2f$" % E0,
                                  linewidth=1,
                                  fillstyle='none',
                                  markersize=7,
@@ -127,7 +127,7 @@ class SteadyState(DCVizPlotter):
         # self.subfigure.set_xlim(0, self.subfigure.get_xlim()[1])
         # self.subfigure.set_ylim(0, 1.1)
 
-        self.subfigure2.set_xlabel(r"$c/c_0$")
+        self.subfigure2.set_xlabel(r"$c/c_\mathrm{eq}$")
         self.subfigure2.set_ylabel(rmslabel)
         self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2)
 
@@ -241,7 +241,8 @@ class GrowthSpeed(DCVizPlotter):
               "alpha_cutz_r0": "subfigure7",
               "alpha_slopes_full": "subfigure8",
               "alpha_slopes_comb": "subfigure9",
-              "neighborstuff": "subfigure10"}
+              "neighborstuff": "subfigure10",
+              "abs_stuff": "subfigure11"}
 
     # figMap = {"omega_vs_v": ["subfigure",
     #           "subfigure2",
@@ -254,7 +255,7 @@ class GrowthSpeed(DCVizPlotter):
 
     # figMap = {"asd": "subfigure"}
 
-    plot_values = [0.2, 0.4]
+    plot_values = [0.5, 1.0]
     shapes = ["s", "^", "v"]
 
     def plot_and_slopify(self, E0, omega, mu_shifts, mu, v):
@@ -287,6 +288,12 @@ class GrowthSpeed(DCVizPlotter):
         idx_undersat = np.where(omega <= 0)
         idx_oversat = np.where(omega >= 0)
 
+        omega_undersat_list = list(omega[idx_undersat])
+        omega_oversat_list = list(omega[idx_oversat])
+
+        v_undersat_list = list(v[idx_undersat])
+        v_oversat_list = list(v[idx_oversat])
+
         omega_undersat = abs(omega[idx_undersat])
         omega_oversat = omega[idx_oversat]
 
@@ -298,7 +305,7 @@ class GrowthSpeed(DCVizPlotter):
 
         v_log_under = np.sign(v)*np.log(abs(v))
         o_log_under = np.sign(omega)*np.log(abs(omega))
-        self.subfigure.plot(o_log_under, v_log_under, "k--" + self.shapes[k], label="E0=%.2f" % E0,
+        self.subfigure11.plot(o_log_under, v_log_under, "k--" + self.shapes[k],
                               linewidth=1,
                               fillstyle='none',
                               markersize=7,
@@ -314,14 +321,26 @@ class GrowthSpeed(DCVizPlotter):
         xshift = o_log_over[-1] - o_log_under[0]
         yshift = v_log_over[-1] - v_log_under[0]
 
+        xshift = 0
+        yshift = 0
 
-        self.subfigure.plot(o_log_over - xshift, v_log_over - yshift, "k-." + self.shapes[k],
+        self.subfigure11.plot(o_log_over - xshift, v_log_over - yshift, "k-." + self.shapes[k],
+                            label=r"$E_0=%.1f$" % E0,
                               linewidth=1,
                               fillstyle='none',
                               markersize=7,
                               markeredgewidth=1.5,
                               color="black")
-        #
+
+
+        self.subfigure.plot(omega_undersat_list[::3] + omega_oversat_list, v_undersat_list[::3] + v_oversat_list, "k-." + self.shapes[k],
+                            label=r"$E_0=%.1f$" % E0,
+                              linewidth=1,
+                              fillstyle='none',
+                              markersize=7,
+                              markeredgewidth=1.5,
+                              color="black")
+
 
 
     def plot(self, data):
@@ -508,8 +527,8 @@ class GrowthSpeed(DCVizPlotter):
         self.subfigure9.set_xlabel(r"$\lambda_D$")
         self.subfigure9.set_ylabel(r"$\mathrm{avg slope}$")
 
-        self.subfigure.set_xlabel(r"$|\Omega + 1|$")
-        self.subfigure.set_ylabel(r"$|\dot{H}|$")
+        self.subfigure.set_xlabel(r"$\Omega$")
+        self.subfigure.set_ylabel(r"$\dot{H}$")
         self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2)
         # self.subfigure.axes.set_xscale('log')
         # self.subfigure.axes.set_yscale('log')
@@ -521,11 +540,15 @@ class GrowthSpeed(DCVizPlotter):
         self.subfigure2.set_ylabel(r"$k_g = \partial \dot{H} / \partial \Omega$")
 
         self.subfigure4.set_xlabel(r"$\alpha$")
-        self.subfigure4.set_ylabel(r"$\mathrm{slope}$")
+        self.subfigure4.set_ylabel(r"$\partial \log k_g / \partial E_0$")
         self.subfigure4.set_ybound(0)
 
         self.subfigure5.set_xlabel(r"$\alpha$")
         self.subfigure5.set_ylabel(r"$\mathrm{log k shift}$")
+
+        self.subfigure11.set_xlabel(r"$\log (\Omega + 1)$")
+        self.subfigure11.set_ylabel(r"$\log(|\dot{H}|)$")
+        self.subfigure11.legend(loc="upper left")
 
 
 
