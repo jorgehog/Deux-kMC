@@ -101,6 +101,8 @@ public:
 
     int rightSite(const uint site, const uint n = 1) const;
 
+    uint span() const;
+
     DiffusionDeposition &reaction(const uint x, const uint y) const
     {
         return *m_siteReactions(x, y);

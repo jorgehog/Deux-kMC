@@ -747,3 +747,36 @@ class shifts(DCVizPlotter):
 
 
         # self.zoomed.legend()
+
+
+class saturfield(DCVizPlotter):
+
+    nametag = "saturfield(\d+)\.arma"
+
+    isFamilyMember = True
+    loadSequential = True
+
+    ziggyMagicNumber = 10
+
+    im = None
+
+    def plot(self, data):
+
+        cbar = True
+        if self.im is not None:
+            cbar = False
+
+        self.im = self.subfigure.imshow(np.flipud(data.T))
+        self.subfigure.set_title(self.filepath)
+
+        if cbar:
+            self.figure.colorbar(self.im)
+        else:
+            self.im.autoscale()
+
+
+
+
+
+
+

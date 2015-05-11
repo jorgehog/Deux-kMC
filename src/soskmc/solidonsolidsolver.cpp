@@ -197,6 +197,20 @@ int SolidOnSolidSolver::rightSite(const uint site, const uint n) const
     return boundary(0)->transformCoordinate(site + n);
 }
 
+uint SolidOnSolidSolver::span() const
+{
+    int min = m_heights.min();
+
+    if (pressureWallEvent().hasStarted())
+    {
+        return pressureWallEvent().height() - min;
+    }
+    else
+    {
+        return 5*(m_heights.max() - min);
+    }
+}
+
 void SolidOnSolidSolver::setMu(const double mu)
 {
     if (hasStarted())
@@ -251,6 +265,8 @@ void SolidOnSolidSolver::initializeSolver()
     }
 
     m_pressureWallEvent->setupInitialConditions();
+    m_diffusionEvent->setupInitialConditions();
+
 }
 
 uint SolidOnSolidSolver::numberOfReactions() const
