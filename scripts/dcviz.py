@@ -20,17 +20,22 @@ class SteadyState(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"converge_figure": "subfigure", "value_figure": "subfigure2"}
+    figMap = {"converge_figure": "subfigure", "value_figure": "subfigure2", "slope_figure": "subfigure3"}
+
+    def trans(self, v):
+        return (v/v.min())**10
+
+    shapes = ["s", "^", "v"]
 
     def plot(self, data):
 
         clip = 1.1
         start = 1
-        transform = True
+        transform = False
 
         rmslabel=r"$\sigma(h)$"
         sslabel=r"$\sigma(s)$"
-        whlabel=r"$h_l(t) - \langle h(t) \rangle$"
+        whlabel=r"$\langle \delta h_l(t) \rangle$"
 
 
         I, J, K = [int(x) for x in self.argv]
@@ -40,8 +45,10 @@ class SteadyState(DCVizPlotter):
         mu_shift_values = data[self.get_family_index_from_name("steadystate_mu_shift.npy")]
 
         count = 0
+        slopes = []
         for i, E0 in enumerate(E0_values):
             rms_values = []
+            print i, E0
 
             for j, alpha in enumerate(alpha_values):
                 for k, mu_shift in enumerate(mu_shift_values):
@@ -60,16 +67,33 @@ class SteadyState(DCVizPlotter):
                     wh = data[self.get_family_index_from_name("steadystate_PressureWall_%d.npy" % count)][start:L]
 
                     if i == I and j == J and k == K:
-                        print E0, alpha, mu_shift
 
                         if transform:
-                            self.subfigure.plot(time, (rms - rms[0])/(rms.max() - rms[0]), label=rmslabel)
-                            self.subfigure.plot(time, (ss - ss[0])/(ss.max() - ss[0]), label=sslabel)
-                            self.subfigure.plot(time, (wh - wh[0])/(wh.max() - wh[0]), label=whlabel)
+                            self.subfigure.loglog(time, rms, label=rmslabel)
+                            self.subfigure.loglog(time, (ss - ss[0])/(ss.max() - ss[0]), label=sslabel)
+                            self.subfigure.loglog(time, (wh - wh[0])/(wh.max() - wh[0]), label=whlabel)
                         else:
-                            self.subfigure.plot(time, rms/rms.max(), label=rmslabel)
-                            self.subfigure.plot(time, ss/ss.max(), label=sslabel)
-                            self.subfigure.plot(time, wh/wh.max(), label=whlabel)
+                            self.subfigure.loglog(time, self.trans(rms), "-", label=rmslabel,
+                              linewidth=3,
+                              fillstyle='none',
+                              markersize=7,
+                              markeredgewidth=1.5,
+                              color="red")
+
+                            self.subfigure.loglog(time, self.trans(wh), "-.", label=whlabel,
+                              linewidth=3,
+                              fillstyle='none',
+                              markersize=7,
+                              markeredgewidth=1.5,
+                              color="black")
+
+                            self.subfigure.loglog(time, self.trans(ss), "--", label=sslabel,
+                              linewidth=3,
+                              fillstyle='none',
+                              markersize=7,
+                              markeredgewidth=1.5,
+                              color="green")
+
 
 
                     L2 = len(rms)/4
@@ -80,21 +104,32 @@ class SteadyState(DCVizPlotter):
 
                     if j == J:
 
-                        rms_values.append(wh_value)
+                        rms_values.append(rms_value)
 
                     count += 1
 
-            self.subfigure2.plot(exp(mu_shift_values), rms_values, "--^",label="E0=%.2f" % E0)
+            self.subfigure2.plot(exp(mu_shift_values), rms_values, "k--" + self.shapes[i], label="E0=%.2f" % E0,
+                                 linewidth=1,
+                                 fillstyle='none',
+                                 markersize=7,
+                                 markeredgewidth=1.5,
+                                 color="black")
 
+            slope, intercept, _, _, _ = linregress(exp(mu_shift_values), rms_values)
+            print i, E0, intercept, slope
+            slopes.append(slope)
+
+        self.subfigure3.plot(E0_values, slopes)
 
         self.subfigure.set_xlabel(r"$t$")
-        self.subfigure.legend(loc="lower right")
-        self.subfigure.set_xlim(0, self.subfigure.get_xlim()[1])
-        self.subfigure.set_ylim(0, 1.1)
+        self.subfigure.axes.get_yaxis().set_ticklabels([])
+        self.subfigure.legend(loc="upper left")
+        # self.subfigure.set_xlim(0, self.subfigure.get_xlim()[1])
+        # self.subfigure.set_ylim(0, 1.1)
 
         self.subfigure2.set_xlabel(r"$c/c_0$")
         self.subfigure2.set_ylabel(rmslabel)
-        self.subfigure2.legend(loc="upper left")
+        self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2)
 
 
 class UnloadedGrowthSpeed(DCVizPlotter):
@@ -525,6 +560,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
 
         return n_max + 1
 
+    plot_values = [0.01, 0.1, 0.19]
 
     def plot(self, data):
 
@@ -559,7 +595,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
 
             errors.append(err)
 
-            if n%(n_runs/(N-1)) != 0:
+            if E0s[n] not in self.plot_values:
                 continue
             print n, n_plots
 
@@ -571,7 +607,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
                                       yerr=mu_errors,
                                       fmt=shapes[n_plots],
                                       fillstyle='none',
-                                      label=r"$E_0/L=%1.2f$" % (E0s[n]),
+                                      label=r"$E_0=%1.2f$" % (E0s[n]),
                                       markersize=7,
                                       markeredgewidth=1.5,
                                       linewidth=1,
@@ -585,7 +621,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
         self.gammaslopes.legend(loc="upper left")
 
         self.gammaslopes.set_xlabel(r"$\alpha$")
-        self.gammaslopes.set_ylabel(r"$\gamma_\mathrm{eq} - \gamma_0$")
+        self.gammaslopes.set_ylabel(r"$\gamma_\mathrm{eq}$")
 
         self.E0slopes.errorbar(E0s, slopes,
                                yerr=errors,
@@ -602,8 +638,8 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
         self.E0slopes.set_xbound(0)
         self.E0slopes.set_ylim(0, sslope*E0s.max()*1.05)
 
-        self.E0slopes.set_xlabel(r"$E_0/L$")
-        self.E0slopes.set_ylabel(r"$K(E_0/L)$")
+        self.E0slopes.set_xlabel(r"$E_0$")
+        self.E0slopes.set_ylabel(r"$K(E_0)$")
 
         print sslope, d
 
@@ -637,19 +673,19 @@ class SOS_pressure_sizes(DCVizPlotter):
         analytical_path = os.path.join(self.familyHome, "boltzmann_ascii_full256.arma")
         if os.path.exists(analytical_path):
             analytical = np.loadtxt(analytical_path)
-            self.subfigure.plot(analytical[:, 0], analytical[:, 1], 'r-',
+            self.subfigure.loglog(1./analytical[:, 0], analytical[:, 1], 'r-',
                                 linewidth=3,
-                                label="$E_0 = 0$",
+                                label="$E_0 = 0.00$",
                                 fillstyle='none',
                                 markersize=5)
-            self.subfigure2.plot(analytical[:, 0], analytical[:, 2], 'r-',
+            self.subfigure2.loglog(1./analytical[:, 0], analytical[:, 2], 'r-',
                                 linewidth=3,
-                                label="$E_0 = 0$",
+                                label="$E_0 = 0.00$",
                                 fillstyle='none',
                                 markersize=5)
-            self.subfigure3.plot(analytical[:, 0], analytical[:, 0]**p*analytical[:, 2], 'r-',
+            self.subfigure3.loglog(1./analytical[:, 0], analytical[:, 0]**p*analytical[:, 2], 'r-',
                                 linewidth=3,
-                                label="$E_0 = 0$",
+                                label="$E_0 = 0.00$",
                                 fillstyle='none',
                                 markersize=5)
         else:
@@ -669,53 +705,56 @@ class SOS_pressure_sizes(DCVizPlotter):
 
             alpha_array, mean_s_array, var_s_array = [np.array(x) for x in zip(*sorted(zip(alpha_array, mean_s_array, var_s_array), key=lambda x: x[0]))]
 
-            self.subfigure.plot(alpha_array, mean_s_array, 'k%s' % shapes[nplots],
+            self.subfigure.loglog(1./alpha_array, mean_s_array, 'k%s' % shapes[nplots],
                                  fillstyle='none',
-                                 label="$E_0 = %g$" % E0_value,
+                                 label="$E_0 = %.2f$" % E0_value,
                                  markersize=7,
                                  markeredgewidth=1.5,
                                  linewidth=1)
 
-            self.subfigure2.plot(alpha_array, var_s_array, 'k%s' % shapes[nplots],
+            self.subfigure2.loglog(1./alpha_array, var_s_array, 'k%s' % shapes[nplots],
                      fillstyle='none',
-                     label="$E_0 = %g$" % E0_value,
+                     label="$E_0 = %.2f$" % E0_value,
                      markersize=7,
                      markeredgewidth=1.5,
                      linewidth=1)
 
-            self.subfigure3.plot(alpha_array, var_s_array*alpha_array**p, 'k%s' % shapes[nplots],
+            self.subfigure3.loglog(1./alpha_array, var_s_array*alpha_array**p, 'k%s' % shapes[nplots],
                      fillstyle='none',
-                     label="$E_0 = %g$" % E0_value,
+                     label="$E_0 = %.2f$" % E0_value,
                      markersize=7,
                      markeredgewidth=1.5,
                      linewidth=1)
 
             nplots += 1
 
-        self.subfigure.set_xlabel(r"$\alpha$")
+        self.subfigure.set_xlabel(r"$1/\alpha$")
         self.subfigure.set_ylabel(r"$\langle s \rangle / L$")
         ax = self.subfigure.axes.twinx()
         ax.set_ylabel(r"$\langle E \rangle /E_bL$")
+        ax.yaxis.set_ticks([])
         ax.yaxis.set_ticklabels([])
         self.subfigure.set_xbound(0)
-        self.subfigure.legend(numpoints=1, handlelength=1)
+        self.subfigure.legend(loc="lower right", numpoints=1, handlelength=1)
 
 
-        self.subfigure2.set_xlabel(r"$\alpha$")
+        self.subfigure2.set_xlabel(r"$1/\alpha$")
         self.subfigure2.set_ylabel(r"$\sigma (s) / L$")
         ax2 = self.subfigure2.axes.twinx()
         ax2.set_ylabel(r"$\sigma (E) / E_bL$")
+        ax2.yaxis.set_ticks([])
         ax2.yaxis.set_ticklabels([])
         self.subfigure2.set_xbound(0)
-        self.subfigure2.legend(numpoints=1, handlelength=1)
+        # self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1)
 
-        self.subfigure3.set_xlabel(r"$\alpha$")
-        self.subfigure3.set_ylabel(r"$\alpha^2\sigma(s)^2$")
+        self.subfigure3.set_xlabel(r"$1/\alpha$")
+        self.subfigure3.set_ylabel(r"$\alpha^2\sigma(s)^2/L^2$")
         ax3 = self.subfigure3.axes.twinx()
         ax3.set_ylabel(r"$C_V/k$")
+        ax3.yaxis.set_ticks([])
         ax3.yaxis.set_ticklabels([])
         self.subfigure3.set_xbound(0)
-        self.subfigure3.legend(numpoints=1, handlelength=1, loc="upper left")
+        # self.subfigure3.legend(numpoints=1, handlelength=1, loc="upper right")
 
 
 class SOSanalyze(DCVizPlotter):
