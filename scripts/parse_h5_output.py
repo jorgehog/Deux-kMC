@@ -14,6 +14,8 @@ class ParseKMCHDF5:
         self.files = []
         self.filenames = []
 
+        self.skipWhen = lambda alpha, mu, E0, s0, r0, n: False
+
         match = re.findall("(.*)\_\d+\.h5", self.filename)
 
         if match:
@@ -37,7 +39,7 @@ class ParseKMCHDF5:
         for file in self.files:
             for l, run in file.items():
                 L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]
-                for potential, data in run.items():
+                for potential in run.keys():
 
                     try:
                         if "_n_" in potential:
@@ -50,9 +52,10 @@ class ParseKMCHDF5:
                     except:
                         raise ValueError("invalid potential: %s" % potential)
 
-                    if self.only_n:
-                        if n != self.only_n:
-                            continue
+                    if self.skipWhen(alpha, mu, E0, s0, r0, n):
+                        continue
+
+                    data = run[potential]
 
                     if "nNeighbors" in data.attrs.keys():
                         neighbors = data.attrs["nNeighbors"]

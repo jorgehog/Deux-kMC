@@ -7,12 +7,11 @@ import os
 import re
 from numpy import exp
 from scipy.stats import linregress
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
+from matplotlib.ticker import FormatStrFormatter, MultipleLocator
 
 class SteadyState(DCVizPlotter):
 
-    nametag = "steadystate\_(.*)\.npy"
+    nametag = "steadystate\_(.*)"
 
     numpyBin = True
 
@@ -20,13 +19,20 @@ class SteadyState(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"converge_figure": "subfigure", "value_figure": "subfigure2", "slope_figure": "subfigure3"}
+    figMap = {"converge_figure": ["rms_fig", "srms_fig", "dh_fig"], "value_figure": "subfigure2", "slope_figure": "subfigure3"}
+
+    stack = "V"
+
+    adjust_hspace = 0.05
 
     def trans(self, v):
+        return v
         return (v/v.min())**10
 
-    shapes = ["s", "^", "v"]
-    plot_values = [0.1, 0.5, 1.0]
+    shapes = ["^", "v", "o"]
+    plot_values = [0.01, 0.1, 0.5]
+
+    unloaded = False
 
     def plot(self, data):
 
@@ -34,9 +40,9 @@ class SteadyState(DCVizPlotter):
         start = 1
         transform = False
 
-        rmslabel=r"$\sigma(h)$"
-        sslabel=r"$\sigma(s)$"
-        whlabel=r"$\langle \delta h_l \rangle$"
+        rmslabel=r"\sigma(h)"
+        sslabel=r"\sigma(s)"
+        whlabel=r"\langle \delta h_l \rangle"
 
 
         I, J, K = [int(x) for x in self.argv]
@@ -44,6 +50,32 @@ class SteadyState(DCVizPlotter):
         E0_values = data[self.get_family_index_from_name("steadystate_E0.npy")]
         alpha_values = data[self.get_family_index_from_name("steadystate_alpha.npy")]
         mu_shift_values = data[self.get_family_index_from_name("steadystate_mu_shift.npy")]
+
+        if self.unloaded:
+            unloaded = data[self.get_family_index_from_name("steadystate_unloaded.dat")]
+
+            the_alpha = alpha_values[I]
+
+            unloaded_rms = []
+            for alpha, mu, rms in unloaded:
+
+                if alpha == the_alpha:
+                    unloaded_rms.append([mu, rms])
+
+            _, unloaded_rms = zip(*(sorted(unloaded_rms, key=lambda x: x[0])))
+
+            self.subfigure2.plot(exp(mu_shift_values) - 1, unloaded_rms,
+                                 label=r"$E_0=0.00$",
+                                 marker="s",
+                                 markeredgecolor="k",
+                                 linestyle="--",
+                                 color="r",
+                                 linewidth=1,
+                                 fillstyle='none',
+                                 markersize=7,
+                                 markeredgewidth=1.5)
+        else:
+            self.shapes = ["s"] + self.shapes
 
         count = 0
         slopes = []
@@ -74,34 +106,36 @@ class SteadyState(DCVizPlotter):
                             self.subfigure.loglog(time, (ss - ss[0])/(ss.max() - ss[0]), label=sslabel)
                             self.subfigure.loglog(time, (wh - wh[0])/(wh.max() - wh[0]), label=whlabel)
                         else:
-                            self.subfigure.loglog(time, self.trans(rms), "-", label=rmslabel,
+                            self.rms_fig.plot(time, np.log(self.trans(rms)), ":", label=rmslabel,
                               linewidth=3,
                               fillstyle='none',
                               markersize=7,
                               markeredgewidth=1.5,
                               color="red")
 
-                            self.subfigure.loglog(time, self.trans(wh), "-.", label=whlabel,
+                            self.dh_fig.plot(time, np.log(self.trans(wh)), "-.", label=whlabel,
                               linewidth=3,
                               fillstyle='none',
                               markersize=7,
                               markeredgewidth=1.5,
                               color="black")
 
-                            self.subfigure.loglog(time, self.trans(ss), "--", label=sslabel,
+                            self.srms_fig.plot(time, np.log(self.trans(ss)), "--", label=sslabel,
                               linewidth=3,
                               fillstyle='none',
                               markersize=7,
                               markeredgewidth=1.5,
-                              color="green")
+                              color="0.5")
 
 
 
-                    L2 = len(rms)/4
 
-                    rms_value = rms[L2:].mean()
-                    ss_value = ss[L2:].mean()
-                    wh_value = wh[L2:].mean()
+                    L = len(rms)
+                    L2 = L/3
+
+                    rms_value = rms[L-L2:].mean()
+                    ss_value = ss[L-L2:].mean()
+                    wh_value = wh[L-L2:].mean()
 
                     if j == J:
 
@@ -109,31 +143,70 @@ class SteadyState(DCVizPlotter):
 
                     count += 1
 
+                    if i == I and j == J and k == K:
+
+                        rms_value_chosen = rms_value
+                        srms_value_chosen = ss_value
+                        dh_value_chosen = wh_value
+
             if E0 in self.plot_values:
-                self.subfigure2.plot(exp(mu_shift_values), rms_values, "k--" + self.shapes[FFS], label=r"$E_0=%.2f$" % E0,
+                self.subfigure2.plot(exp(mu_shift_values) - 1, rms_values,
+                                     label=r"$E_0=%.2f$" % E0,
+                                     marker=self.shapes[FFS],
+                                     markeredgecolor="k",
+                                     linestyle="--",
+                                     color="r",
                                      linewidth=1,
                                      fillstyle='none',
                                      markersize=7,
-                                     markeredgewidth=1.5,
-                                     color="black")
-                print E0
+                                     markeredgewidth=1.5)
                 FFS += 1
+            print E0
 
             slope, intercept, _, _, _ = linregress(exp(mu_shift_values), rms_values)
             slopes.append(slope)
 
         self.subfigure3.plot(E0_values, slopes)
 
-        self.subfigure.set_xlabel(r"$t$")
-        self.subfigure.axes.get_yaxis().set_ticklabels([])
-        self.subfigure.legend(loc="upper left")
-        # self.subfigure.set_xlim(0, self.subfigure.get_xlim()[1])
-        # self.subfigure.set_ylim(0, 1.1)
+        self.dh_fig.set_xlabel(r"$t$")
 
-        self.subfigure2.set_xlabel(r"$c/c_\mathrm{eq}$")
+        self.srms_fig.axes.set_xscale('log')
+        self.rms_fig.axes.set_xscale('log')
+        self.dh_fig.axes.set_xscale('log')
+
+        self.srms_fig.axes.xaxis.set_ticklabels([])
+        self.rms_fig.axes.xaxis.set_ticklabels([])
+
+        majorFormatter = FormatStrFormatter('%.1f')
+        self.rms_fig.axes.yaxis.set_major_formatter(majorFormatter)
+        self.srms_fig.axes.yaxis.set_major_formatter(majorFormatter)
+        self.dh_fig.axes.yaxis.set_major_formatter(majorFormatter)
+
+        majorLocator = MultipleLocator(1)
+        self.rms_fig.axes.yaxis.set_major_locator(majorLocator)
+        self.srms_fig.axes.yaxis.set_major_locator(majorLocator)
+        self.dh_fig.axes.yaxis.set_major_locator(majorLocator)
+
+        xmax = 1000
+        self.rms_fig.set_xlim(0, xmax)
+        self.srms_fig.set_xlim(0, xmax)
+        self.dh_fig.set_xlim(0, xmax)
+
+
+        rms_span = self.rms_fig.get_ylim()[1] + self.rms_fig.get_ylim()[0]
+        srms_span = self.srms_fig.get_ylim()[1] + self.srms_fig.get_ylim()[0]
+        dh_span = self.dh_fig.get_ylim()[1] + self.dh_fig.get_ylim()[0]
+
+        self.rms_fig.text(xmax/4, rms_span/2, r"$%s = %.3f$" % (rmslabel, rms_value_chosen), fontsize=self.fontSize)
+        self.srms_fig.text(xmax/4, srms_span/2, r"$%s = %.3f$" % (sslabel, srms_value_chosen), fontsize=self.fontSize)
+        self.dh_fig.text(xmax/4, dh_span/2, r"$%s = %.3f$" % (whlabel, dh_value_chosen), fontsize=self.fontSize)
+
+
+        self.subfigure2.set_xlim([-1, 5])
+        self.subfigure2.axes.get_xaxis().set_ticks([-1, 0, 1, 2, 3, 4, 5])
+        self.subfigure2.set_xlabel(r"$\Omega$")
         self.subfigure2.set_ylabel(rmslabel)
         self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2)
-
 
 class UnloadedGrowthSpeed(DCVizPlotter):
 
@@ -335,15 +408,17 @@ class GrowthSpeed(DCVizPlotter):
                               markeredgewidth=1.5,
                               color="black")
 
-
-        self.subfigure.plot(omega_undersat_list[::3] + omega_oversat_list, v_undersat_list[::3] + v_oversat_list,
-                            "r--" + self.shapes[k],
+        self.subfigure.plot(omega_undersat_list[::3] + omega_oversat_list,
+                            v_undersat_list[::3] + v_oversat_list,
                             label=r"$E_0=%.1f$" % E0,
+                            marker=self.shapes[k],
+                            markeredgecolor="k",
+                            linestyle="--",
+                            color="r",
                             linewidth=1,
                             fillstyle='none',
                             markersize=7,
-                            markeredgewidth=1.5,
-                            color="black")
+                            markeredgewidth=1.5)
 
 
 
@@ -371,16 +446,18 @@ class GrowthSpeed(DCVizPlotter):
 
         slopes = np.zeros(shape=(len(E0_values), len(alpha_values), len(r0_values), len(s0_values)))
         mu_zero = np.zeros_like(slopes)
+        errors = np.zeros_like(slopes)
 
         J, L, M = [int(x) for x in self.argv]
 
         print "alpha=%g, s0 = %g, r0 = %g" % (alpha_values[J], s0_values[M+1], r0_values[L+1])
 
         for j in range(len(alpha_values)):
-            _, slope0, v0 = self.plot_and_slopify(0, omega, mu_shift_values, mu_shift_values, v_values[0, j, :, 0, 0])
+            _, slope0, v0, err = self.plot_and_slopify(0, omega, mu_shift_values, mu_shift_values, v_values[0, j, :, 0, 0])
 
             slopes[0, j, :, :] = slope0
             mu_zero[0, j, :, :] = 0
+            errors[0, j, :, :] = err
 
             if j == J:
                 self.uberplot(exp(mu_shift_values) - 1, v0, 0, 0)
@@ -408,6 +485,7 @@ class GrowthSpeed(DCVizPlotter):
                                 print "ERROR slope=%g, E0(%d)=%g, alpha(%d)=%g, r0(%d)=%g, s0(%d)=%g" % (slope, i, E0, j, alpha, l, r0, m, s0)
 
                             slopes[i+1][j][l+1][m+1] = slope
+                            errors[i+1][j][l+1][m+1] = error
                             mu_zero[i+1][j][l+1][m+1] = mu0
 
                             if E0 in self.plot_values and j == J and l == L and m == M:
@@ -426,6 +504,7 @@ class GrowthSpeed(DCVizPlotter):
 
         log_k_E0_slopes = np.zeros(shape=(len(alpha_values), len(r0_values), len(r0_values)))
         log_k_cutz = np.zeros_like(log_k_E0_slopes)
+        log_k_slope_error = np.zeros_like(log_k_E0_slopes)
 
         ka = 0
         na = 4
@@ -438,7 +517,12 @@ class GrowthSpeed(DCVizPlotter):
                     if l == L and m == M:
                         if j == 0 or j == len(alpha_values) - 1 or j % d == 0:
 
-                            self.subfigure2.plot(E0_values, slopes[:, j, l+1, m+1], "k--" + self.shapes[ka], label=r"$\alpha=%g$" % round(alpha, 1),
+                            self.subfigure2.plot(E0_values, slopes[:, j, l+1, m+1],
+                                                 label=r"$\alpha=%g$" % round(alpha, 1),
+                                                 marker=self.shapes[ka],
+                                                 markeredgecolor="k",
+                                                 linestyle="--",
+                                                 color="r",
                                                  linewidth=1,
                                                  fillstyle='none',
                                                  markersize=7,
@@ -446,28 +530,39 @@ class GrowthSpeed(DCVizPlotter):
 
                             ka += 1
 
-                    log_k_slope, intercept, _, _, _ = linregress(E0_values, np.log(slopes[:, j, l+1, m+1]))
+                    log_k_slope, intercept, _, _, err = linregress(E0_values, np.log(slopes[:, j, l+1, m+1]))
 
                     log_k_E0_slopes[j, l+1, m+1] = log_k_slope
                     log_k_cutz[j, l+1, m+1] = intercept
+                    log_k_slope_error[j, l+1, m+1] = err
 
         alpha_slopes = np.zeros(shape=(len(r0_values), len(s0_values)))
         alpha_cutz = np.zeros_like(alpha_slopes)
 
         for l, r0 in enumerate(r0_values[1:]):
                 for m, s0 in enumerate(s0_values[1:]):
-                    alpha_slope, intercept, _, _, _ = linregress(alpha_values, log_k_E0_slopes[:, l+1, m+1])
+                    alpha_slope, intercept, _, _, err = linregress(alpha_values, log_k_E0_slopes[:, l+1, m+1])
 
                     alpha_slopes[l+1, m+1] = alpha_slope
                     alpha_cutz[l+1, m+1] = intercept
 
 
+        self.subfigure4.plot(alpha_values, log_k_E0_slopes[:, L+1, M+1],
+                             marker="s",
+                             markeredgecolor="k",
+                             linestyle="--",
+                             color="r",
+                             linewidth=1,
+                             fillstyle='none',
+                             markersize=7,
+                             markeredgewidth=1.5)
+        self.subfigure4.plot([0, alpha_values[0]],
+                             [alpha_cutz[L+1, M+1], alpha_cutz[L+1, M+1] + alpha_slopes[L+1, M+1]*alpha_values[0]],
+                             "r--")
+        # X = 1
+        # self.subfigure4.plot([0, X], [X, X], "k:")
+        # self.subfigure4.plot([X, X], [0, X], "k:")
 
-        self.subfigure4.plot(alpha_values, log_k_E0_slopes[:, L+1, M+1], "ks--",
-                                 linewidth=1,
-                                 fillstyle='none',
-                                 markersize=7,
-                                 markeredgewidth=1.5)
 
         S_tot = 0
         count2 = 0
@@ -534,11 +629,13 @@ class GrowthSpeed(DCVizPlotter):
         self.subfigure.set_xlabel(r"$\Omega$")
         self.subfigure.set_ylabel(r"$\dot{H}$")
         self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2)
+        self.subfigure.set_ylim(self.subfigure.get_ylim()[0], self.subfigure.get_ylim()[1]*1.1)
         # self.subfigure.axes.set_xscale('log')
         # self.subfigure.axes.set_yscale('log')
 
         self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2)
         self.subfigure2.axes.set_yscale('log')
+        self.subfigure2.set_xlim(-0.05, 1.05)
 
         self.subfigure2.set_xlabel(r"$E_0$")
         self.subfigure2.set_ylabel(r"$k_g = \partial \dot{H} / \partial \Omega$")
@@ -546,6 +643,8 @@ class GrowthSpeed(DCVizPlotter):
         self.subfigure4.set_xlabel(r"$\alpha$")
         self.subfigure4.set_ylabel(r"$\partial \log k_g / \partial E_0$")
         self.subfigure4.set_ybound(0)
+        self.subfigure4.set_xlim(0, alpha_values.max()*1.1)
+
 
         self.subfigure5.set_xlabel(r"$\alpha$")
         self.subfigure5.set_ylabel(r"$\mathrm{log k shift}$")
