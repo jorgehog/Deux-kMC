@@ -276,12 +276,12 @@ class GrowthSpeed(DCVizPlotter):
 
         idx_chosen = idx_high
 
-        slope, intercept, _, _, _ = linregress(omega[idx_chosen], v[idx_chosen])
+        slope, intercept, _, _, err = linregress(omega[idx_chosen], v[idx_chosen])
         # slope_low, intercept, _, _, _ = linregress(omega[idx_low], v[idx_low])
         #
         # print E0, slope/slope_low - 1
 
-        return mu0, slope, v
+        return mu0, slope, v, err
 
     def uberplot(self, omega, v, k, E0):
 
@@ -333,13 +333,14 @@ class GrowthSpeed(DCVizPlotter):
                               color="black")
 
 
-        self.subfigure.plot(omega_undersat_list[::3] + omega_oversat_list, v_undersat_list[::3] + v_oversat_list, "k-." + self.shapes[k],
+        self.subfigure.plot(omega_undersat_list[::3] + omega_oversat_list, v_undersat_list[::3] + v_oversat_list,
+                            "r--" + self.shapes[k],
                             label=r"$E_0=%.1f$" % E0,
-                              linewidth=1,
-                              fillstyle='none',
-                              markersize=7,
-                              markeredgewidth=1.5,
-                              color="black")
+                            linewidth=1,
+                            fillstyle='none',
+                            markersize=7,
+                            markeredgewidth=1.5,
+                            color="black")
 
 
 
@@ -394,7 +395,7 @@ class GrowthSpeed(DCVizPlotter):
                     for l, r0 in enumerate(r0_values[1:]):
                         for m, s0 in enumerate(s0_values[1:]):
 
-                            mu0, slope, v = self.plot_and_slopify(E0,
+                            mu0, slope, v, error = self.plot_and_slopify(E0,
                                                                   omega,
                                                                   mu_shift_values,
                                                                   mu_values[i+1, j, :, l+1, m+1],
