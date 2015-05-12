@@ -26,6 +26,7 @@ class SteadyState(DCVizPlotter):
         return (v/v.min())**10
 
     shapes = ["s", "^", "v"]
+    plot_values = [0.1, 0.5, 1.0]
 
     def plot(self, data):
 
@@ -46,15 +47,15 @@ class SteadyState(DCVizPlotter):
 
         count = 0
         slopes = []
+        FFS = 0
         for i, E0 in enumerate(E0_values):
             rms_values = []
-            print i, E0
 
             for j, alpha in enumerate(alpha_values):
                 for k, mu_shift in enumerate(mu_shift_values):
 
                     if i == I and j == J and k == K:
-                        print "E0 = %g, alpha= %g, mus = %g" % (E0, alpha, mu_shift)
+                        print "E0 = %g, alpha= %g, mus = %g (om = %g)" % (E0, alpha, mu_shift, exp(mu_shift))
 
                     time = data[self.get_family_index_from_name("steadystate_Time_%d.npy" % count)]
                     L = int(len(time)/clip)
@@ -108,15 +109,17 @@ class SteadyState(DCVizPlotter):
 
                     count += 1
 
-            self.subfigure2.plot(exp(mu_shift_values), rms_values, "k--" + self.shapes[i], label=r"$E_0=%.2f$" % E0,
-                                 linewidth=1,
-                                 fillstyle='none',
-                                 markersize=7,
-                                 markeredgewidth=1.5,
-                                 color="black")
+            if E0 in self.plot_values:
+                self.subfigure2.plot(exp(mu_shift_values), rms_values, "k--" + self.shapes[FFS], label=r"$E_0=%.2f$" % E0,
+                                     linewidth=1,
+                                     fillstyle='none',
+                                     markersize=7,
+                                     markeredgewidth=1.5,
+                                     color="black")
+                print E0
+                FFS += 1
 
             slope, intercept, _, _, _ = linregress(exp(mu_shift_values), rms_values)
-            print i, E0, intercept, slope
             slopes.append(slope)
 
         self.subfigure3.plot(E0_values, slopes)
