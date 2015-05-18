@@ -7,7 +7,7 @@ import os
 import re
 from numpy import exp
 from scipy.stats import linregress
-from matplotlib.ticker import FormatStrFormatter, MultipleLocator
+from matplotlib.ticker import FormatStrFormatter, MultipleLocator, FuncFormatter
 
 class SteadyState(DCVizPlotter):
 
@@ -19,7 +19,7 @@ class SteadyState(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"converge_figure": ["rms_fig", "srms_fig", "dh_fig"], "value_figure": "subfigure2", "slope_figure": "subfigure3"}
+    figMap = {"converge_figure": ["rms_fig", "srms_fig", "dh_fig"], "value_figure": "subfigure2"}
 
     stack = "V"
 
@@ -166,7 +166,6 @@ class SteadyState(DCVizPlotter):
             slope, intercept, _, _, _ = linregress(exp(mu_shift_values), rms_values)
             slopes.append(slope)
 
-        self.subfigure3.plot(E0_values, slopes)
 
         self.dh_fig.set_xlabel(r"$t$")
 
@@ -202,11 +201,11 @@ class SteadyState(DCVizPlotter):
         self.dh_fig.text(xmax/4, dh_span/2, r"$%s = %.3f$" % (whlabel, dh_value_chosen), fontsize=self.fontSize)
 
 
-        self.subfigure2.set_xlim([-1, 5])
-        self.subfigure2.axes.get_xaxis().set_ticks([-1, 0, 1, 2, 3, 4, 5])
+        self.subfigure2.set_xlim([-1, 2.1])
+        self.subfigure2.axes.get_xaxis().set_ticks([-1, 0, 1, 2])
         self.subfigure2.set_xlabel(r"$\Omega$")
         self.subfigure2.set_ylabel(rmslabel)
-        self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2)
+        # self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2)
 
 class UnloadedGrowthSpeed(DCVizPlotter):
 
@@ -671,6 +670,10 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
 
     hugifyFonts = True
 
+    adjust_top = 0.95
+    adjust_bottom = 0.18
+
+
     def n_runs(self):
 
         n_max = -1
@@ -696,7 +699,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
             print meta_data.read()
 
         N = 3
-        shapes = ["s", "^", "v"]
+        shapes = ["^", "v", 'o']
 
         n_runs = self.n_runs()
 
@@ -738,16 +741,24 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
                                       markeredgewidth=1.5,
                                       linewidth=1,
                                       color="black")
-            self.gammaslopes.plot([0, alphas.max()], [0, slopes[n]*alphas.max()], "r--")
+
+            kws = {}
+            if n_plots == 0:
+                kws["label"] = r"$\mathrm{Linear\,\,fit}$"
+
+            self.gammaslopes.plot([0, alphas.max()], [0, slopes[n]*alphas.max()], "r--", **kws)
 
             n_plots += 1
 
+
         self.gammaslopes.set_xbound(0)
         self.gammaslopes.set_ybound(0)
-        self.gammaslopes.legend(loc="upper left")
+        self.gammaslopes.legend(loc="upper left", numpoints=1, handlelength=0.8, ncol=2, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
 
-        self.gammaslopes.set_xlabel(r"$\alpha$")
-        self.gammaslopes.set_ylabel(r"$\gamma_\mathrm{eq}$")
+
+
+        self.gammaslopes.set_xlabel(r"$\alpha = E_b/kT$")
+        self.gammaslopes.set_ylabel(r"$\gamma_\mathrm{eq} = \ln c_\mathrm{eq}/c_0$")
 
         self.E0slopes.errorbar(E0s, slopes,
                                yerr=errors,
@@ -761,11 +772,13 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
         sslope, a, b, c, d = linregress(E0s, slopes)
 
         self.E0slopes.plot([0, E0s.max()], [0, sslope*E0s.max()], 'r--')
-        self.E0slopes.set_xbound(0)
-        self.E0slopes.set_ylim(0, sslope*E0s.max()*1.05)
 
-        self.E0slopes.set_xlabel(r"$E_0$")
-        self.E0slopes.set_ylabel(r"$K(E_0)$")
+        self.E0slopes.axes.yaxis.set_ticks([0, 0.1, 0.2, 0.3])
+        majorFormatter = FormatStrFormatter(r'$%.1f$')
+        self.E0slopes.axes.yaxis.set_major_formatter(majorFormatter)
+
+        self.E0slopes.set_xlabel(r"$E_0 \propto F_0/L$")
+        self.E0slopes.set_ylabel(r"$\gamma_\mathrm{eq}/\alpha$")
 
         print sslope, d
 
@@ -780,7 +793,14 @@ class SOS_pressure_sizes(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"sfig" : "subfigure", "varfig" : "subfigure2", "cvfig" : "subfigure3"}
+    figMap = {"sfig" : ["subfigure", "subfigure2", "subfigure3"]}
+
+    # share_axis = True
+    adjust_hspace = 0.15
+
+    adjust_top = 0.83
+
+    # fig_size = [8, 20]
 
     def plot(self, data):
 
@@ -801,17 +821,17 @@ class SOS_pressure_sizes(DCVizPlotter):
             analytical = np.loadtxt(analytical_path)
             self.subfigure.loglog(1./analytical[:, 0], analytical[:, 1], 'r-',
                                 linewidth=3,
-                                label="$E_0 = 0.00$",
+                                # label="$E_0 = 0.00$",
                                 fillstyle='none',
                                 markersize=5)
             self.subfigure2.loglog(1./analytical[:, 0], analytical[:, 2], 'r-',
                                 linewidth=3,
-                                label="$E_0 = 0.00$",
+                                # label="$E_0 = 0.00$",
                                 fillstyle='none',
                                 markersize=5)
-            self.subfigure3.loglog(1./analytical[:, 0], analytical[:, 0]**p*analytical[:, 2], 'r-',
+            self.subfigure3.loglog(1./analytical[:, 0], (analytical[:, 0]*analytical[:, 2])**p, 'r-',
                                 linewidth=3,
-                                label="$E_0 = 0.00$",
+                                # label="$E_0 = 0.00$",
                                 fillstyle='none',
                                 markersize=5)
         else:
@@ -845,7 +865,7 @@ class SOS_pressure_sizes(DCVizPlotter):
                      markeredgewidth=1.5,
                      linewidth=1)
 
-            self.subfigure3.loglog(1./alpha_array, var_s_array*alpha_array**p, 'k%s' % shapes[nplots],
+            self.subfigure3.loglog(1./alpha_array, (var_s_array*alpha_array)**p, 'k%s' % shapes[nplots],
                      fillstyle='none',
                      label="$E_0 = %.2f$" % E0_value,
                      markersize=7,
@@ -854,34 +874,50 @@ class SOS_pressure_sizes(DCVizPlotter):
 
             nplots += 1
 
-        self.subfigure.set_xlabel(r"$1/\alpha$")
-        self.subfigure.set_ylabel(r"$\langle s \rangle / L$")
+        xmin = 0.5
+        xmax = 6
+
+        # self.subfigure.set_xlabel(r"$1/\alpha$")
+        self.subfigure.set_xlim(xmin, xmax)
+        # self.subfigure.axes.xaxis.set_visible(False)
+        self.subfigure.axes.xaxis.set_ticklabels([])
+        self.subfigure.set_ylabel(r"$\langle s_{\uparrow\downarrow} \rangle / L$")
         ax = self.subfigure.axes.twinx()
-        ax.set_ylabel(r"$\langle E \rangle /E_bL$")
+        ax.set_ylabel(r"$\langle E \rangle /E_bL$", labelpad=15)
         ax.yaxis.set_ticks([])
         ax.yaxis.set_ticklabels([])
-        self.subfigure.set_xbound(0)
-        self.subfigure.legend(loc="lower right", numpoints=1, handlelength=1)
+        self.subfigure.legend(loc="upper left", numpoints=1, handlelength=0.5, ncol=3, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(0, 1.55))
 
-
-        self.subfigure2.set_xlabel(r"$1/\alpha$")
-        self.subfigure2.set_ylabel(r"$\sigma (s) / L$")
+        # self.subfigure2.set_xlabel(r"$1/\alpha$")
+        self.subfigure2.set_xlim(xmin, xmax)
+        self.subfigure2.set_ylabel(r"$\sigma (s_{\uparrow\downarrow}) / L$")
+        # self.subfigure2.axes.xaxis.set_visible(False)
+        self.subfigure2.axes.xaxis.set_ticklabels([])
         ax2 = self.subfigure2.axes.twinx()
-        ax2.set_ylabel(r"$\sigma (E) / E_bL$")
+        ax2.set_ylabel(r"$\sigma (E) / E_bL$", labelpad=15)
         ax2.yaxis.set_ticks([])
         ax2.yaxis.set_ticklabels([])
-        self.subfigure2.set_xbound(0)
         # self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1)
 
-        self.subfigure3.set_xlabel(r"$1/\alpha$")
-        self.subfigure3.set_ylabel(r"$\alpha^2\sigma(s)^2/L^2$")
+        self.subfigure3.set_xlabel(r"$1/\alpha = kT/E_b$")
+        self.subfigure3.set_xlim(xmin, xmax)
+        self.subfigure3.axes.xaxis.set_ticklabels([r"$0.01$", r"$0.1$", r"$1$", r'$10$'])
+
+        self.subfigure3.axes.xaxis.set_minor_formatter(FuncFormatter(self.axisFormat))
+        self.subfigure3.set_ylabel(r"$\alpha^2\sigma(s_{\uparrow\downarrow})^2/L^2$")
         ax3 = self.subfigure3.axes.twinx()
-        ax3.set_ylabel(r"$C_V/k$")
+        ax3.set_ylabel(r"$C_V/k$", labelpad=15)
         ax3.yaxis.set_ticks([])
         ax3.yaxis.set_ticklabels([])
-        self.subfigure3.set_xbound(0)
         # self.subfigure3.legend(numpoints=1, handlelength=1, loc="upper right")
 
+    @staticmethod
+    def axisFormat(value, index):
+
+        if index % 2 == 0:
+            return r'$%g$' % value
+        else:
+            return ''
 
 class SOSanalyze(DCVizPlotter):
 
@@ -893,7 +929,10 @@ class SOSanalyze(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"s0_figure" : "ss", "figure_2" : "mean_figure"}
+    figMap = {"figure_2" : "mean_figure"}
+
+    adjust_top = 0.95
+    adjust_bottom = 0.18
 
     def scale(self, r0):
         return r0*(1-exp(-1./r0))
@@ -908,60 +947,21 @@ class SOSanalyze(DCVizPlotter):
         s0 =  data[self.get_family_index_from_name("analyze_%s_s0_values.npy" % dirname)]
         r0 =  data[self.get_family_index_from_name("analyze_%s_r0_values.npy" % dirname)]
 
-        s0_cut = np.where(s0 >= 0.)
-        r0_cut = np.where(r0 > 0.)
-        r0 = r0[r0_cut]
-        s0 = s0[s0_cut]
+        # C = 1./C
 
-        #
-        r0_idx, s0_idx = np.meshgrid(s0_cut, r0_cut)
-        C = 1./C[s0_idx, r0_idx]
+        print r0.shape, s0.shape, C.shape
+        r0_mean = C.sum(axis=0)/len(s0)
 
-        # print s0_idx.shape, r0_idx.shape
+        # diff = np.zeros_like(r0)
+        # for i in range(len(r0)):
+        #     avg = r0_mean[i]
+        #     diff[i] = sum((C[i, :]*self.scale(r0[i]) - avg)**2)
         #
-        # ax = Axes3D(self.figure)
-        #
-        # X, Y = np.meshgrid(s0[s0_cut], r0[r0_cut])
-        #
-        # Z = C[s0_idx, r0_idx]
-        # Z *= self.scale(X)
-        #
-        # colormap = cm.hot
-        #
-        # ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=colormap, linewidth=0)
-        #
-        # zdir = "x"
-        # offset = -0.5
-        #
-        # cset = ax.contour(X, Y, Z, zdir=zdir, offset=offset*1.05, color='#008000')
-        #
-        # ax.set_xlim(-0.5, s0[s0_cut].max()*1.1)
-        # ax.set_zlim(0, Z.max())
-        #
-        # ax.set_xlabel(r"$\sigma_0$")
-        # ax.set_ylabel(r"$\lambda_D$")
-        # ax.view_init(15, -50)
-        # ax.set_zticks([0, 0.2, 0.4, 0.6, 0.8])
-        #
-        # self.subfigure.axes.contourf(X, Y, Z, zdir='z', cmap=colormap)
-        # self.subfigure.set_xlabel(r"$\sigma_0$")
-        # self.subfigure.set_ylabel(r"$\lambda_D$", rotation=0)
-        # self.subfigure.set_ybound(0)
-        # self.subfigure.axes.get_yaxis().get_label().set_fontsize(20)
-        # self.subfigure.axes.get_xaxis().get_label().set_fontsize(20)
-
-        r0_mean = C.sum(axis=1)/len(s0)*self.scale(r0)
-
-        diff = np.zeros_like(r0)
-        for i in range(len(r0)):
-            avg = r0_mean[i]
-            diff[i] = sum((C[i, :]*self.scale(r0[i]) - avg)**2)
-
-        self.ss.plot(r0, 0.5*np.log(diff) - 0.5*np.log(len(s0) - 1) - np.log(r0_mean), 'ks',
-                      linewidth=1,
-                      fillstyle='none',
-                      markersize=7,
-                      markeredgewidth=1.5)
+        # self.ss.plot(r0, 0.5*np.log(diff) - 0.5*np.log(len(s0) - 1) - np.log(r0_mean), 'ks',
+        #               linewidth=1,
+        #               fillstyle='none',
+        #               markersize=7,
+        #               markeredgewidth=1.5)
 
         # s0_min = s0.min()
         # s0_max = s0.max()
@@ -970,23 +970,23 @@ class SOSanalyze(DCVizPlotter):
 
         # bbox_props = dict(boxstyle="square", fc="white", ec="k", lw=3)
         # self.ss.text(s0_max-width, height, r"$\sigma_0 \in [%g, %g]$" %(s0_min, s0_max),size=self.labelSize, bbox=bbox_props)
+        #
+        # self.ss.set_xlabel(r"$\lambda_D$")
+        # self.ss.set_ylabel(r"$\log \left[\mathrm{\sigma(K_3; \sigma_0})/K_3(\lambda_d)\right]$")
 
-        self.ss.set_xlabel(r"$\lambda_D$")
-        self.ss.set_ylabel(r"$\log \left[\mathrm{\sigma(K_3; \sigma_0})/K_3(\lambda_d)\right]$")
+        self.mean_figure.plot(r0, self.scale(r0), "r-", label=r"$\mathrm{Analytical}$", linewidth=3)
 
-        self.mean_figure.plot(r0, 0*r0, "r-", label="Analytical", linewidth=3)
-
-        self.mean_figure.plot(r0, -np.log(r0_mean), 'ks',
-                              label="KMC",
+        self.mean_figure.plot(r0, r0_mean, 'ks',
+                              label=r"$\mathrm{KMC}$",
                               linewidth=1,
                               fillstyle='none',
                               markersize=7,
                               markeredgewidth=1.5)
 
-        self.mean_figure.legend(loc="upper right", numpoints=1, handlelength=1)
+        self.mean_figure.legend(loc="lower right", numpoints=1, handlelength=0.8, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
 
-        self.mean_figure.set_xlabel(r"$\lambda_D$")
-        self.mean_figure.set_ylabel(r"$-\log K_3(\lambda_D)$")
+        self.mean_figure.set_xlabel(r"$\lambda_D/l_0$")
+        self.mean_figure.set_ylabel(r"$\gamma_\mathrm{eq}/\alpha E_0$")
         self.mean_figure.set_xbound(0)
         # self.mean_figure.set_ybound(-0.45)
         # self.mean_figure.axes.set_yticks([0, 1, 2, 3, 4])

@@ -12,9 +12,10 @@ from intercombinatorzor import ICZ
 
 def main():
 
-    # parsed_data = {}
+    parsed_data = {}
 
     input_file = sys.argv[1]
+    # N = int(sys.argv[2])
 
     parser = ParseKMCHDF5(input_file)
 
@@ -26,7 +27,7 @@ def main():
     alpha_array = []
     mu_shift_array = []
 
-    parser.skipWhen = lambda p_alpha, p_mu, p_E0, p_s0, p_r0, p_n: p_n != 0
+    # parser.skipWhen = lambda p_alpha, p_mu, p_E0, p_s0, p_r0, p_n: p_n > 3
 
     n = 0
     for stuff in parser:
@@ -42,16 +43,29 @@ def main():
         if E0 not in E0_array:
             print "n=%d located E0=%g" % (n, E0)
             E0_array.append(E0)
-        if mu_shift not in mu_shift_array:
-            print "n=%d located muShift=%g" % (n, mu_shift)
-            mu_shift_array.append(mu_shift)
+
+        if E0 not in parsed_data:
+            parsed_data[E0] = {}
+
         if alpha not in alpha_array:
             print "n=%d located alpha=%g" % (n, alpha)
             alpha_array.append(alpha)
 
+        if alpha not in parsed_data[E0]:
+            parsed_data[E0][alpha] = {}
+
+        if mu_shift not in mu_shift_array:
+            print "n=%d located muShift=%g" % (n, mu_shift)
+            mu_shift_array.append(mu_shift)
+
+        if mu_shift not in parsed_data[E0][alpha]:
+            parsed_data[E0][alpha][mu_shift] = []
+
+        parsed_data[E0][alpha][mu_shift].append([parser.file_number, data.name])
+
         n += 1
 
-        if n % 100 == 0:
+        if n % 1000 == 0:
             print "n =", n
 
     E0_array = sorted(E0_array)
@@ -62,11 +76,14 @@ def main():
     alpha_array = np.asarray(alpha_array)
     mu_shift_array = np.asarray(mu_shift_array)
 
+    N = len(parsed_data[E0][alpha][mu_shift])
+    print "N =", N
+
     np.save("/tmp/steadystate_E0.npy", E0_array)
     np.save("/tmp/steadystate_alpha.npy", alpha_array)
     np.save("/tmp/steadystate_mu_shift.npy", mu_shift_array)
 
-    print "located %d parameters" % n
+    combined_data = []
 
     combinator = ICZ(*data_keys)
     count = 0
@@ -75,23 +92,26 @@ def main():
         for alpha_match in alpha_array:
             for mu_shift_match in mu_shift_array:
 
-                parser = ParseKMCHDF5(input_file)
-                parser.skipWhen = lambda p_alpha, p_mu, p_E0, p_s0, p_r0, p_n: (p_E0/area != E0_match or p_alpha != alpha_match)
+                # parser = ParseKMCHDF5(input_file)
+                # parser.skipWhen = lambda p_alpha, p_mu, p_E0, p_s0, p_r0, p_n: (p_E0/area != E0_match or p_alpha != alpha_match)
+                #
+                # n = 0
+                #
+                # for stuff in parser:
+                #
+                #     L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, repeat = stuff
+                #
+                #     area = L*W
+                #
+                #     E0 /= area
+                #
+                #     mu_shift = data.attrs["muShift"]
+                #
+                #     if mu_shift != mu_shift_match:
+                #         continue
 
-                n = 0
-
-                for stuff in parser:
-
-                    L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, repeat = stuff
-
-                    area = L*W
-
-                    E0 /= area
-
-                    mu_shift = data.attrs["muShift"]
-
-                    if mu_shift != mu_shift_match:
-                        continue
+                for file_number, name in parsed_data[E0_match][alpha_match][mu_shift_match]:
+                    data = parser.get_data(file_number, name)
 
                     for key in data_keys:
                         combinator[key].append(data["ignisData"][ignis_map[key]])
@@ -107,15 +127,21 @@ def main():
                         continue
 
                     t, measure = combinator.intercombine("Time", key)
-                    np.save("/tmp/steadystate_%s_%d.npy" % (key, count), measure)
+                    combined_data.append(["/tmp/steadystate_%s_%d.npy" % (key, count), measure])
+                    # np.save("/tmp/steadystate_%s_%d.npy" % (key, count), measure)
 
-                np.save("/tmp/steadystate_Time_%d.npy" % count, t)
+                combined_data.append(["/tmp/steadystate_Time_%d.npy" % count, t])
+                # np.save("/tmp/steadystate_Time_%d.npy" % count, t)
+
                 combinator.clear()
 
                 count += 1
 
                 print
                 print "progress: ", float(count) / (len(E0_array)*len(alpha_array)*len(mu_shift_array))*100, "%"
+
+    for name, data in combined_data:
+        np.save(name, data)
 
     #
     # n = 0

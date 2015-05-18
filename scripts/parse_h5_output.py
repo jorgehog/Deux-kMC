@@ -11,6 +11,8 @@ class ParseKMCHDF5:
     def __init__(self, which_file):
         self.path, self.filename = os.path.split(which_file)
 
+        self.file = None
+        self.file_number = None
         self.files = []
         self.filenames = []
 
@@ -26,7 +28,7 @@ class ParseKMCHDF5:
             for file in filenames:
 
                 fullpath = os.path.join(self.path, file)
-                self.files.append(h5py.File(fullpath, 'r'))
+                self.files.append(fullpath)
                 self.filenames.append(file)
 
         else:
@@ -36,8 +38,10 @@ class ParseKMCHDF5:
 
     def __iter__(self):
 
-        for file in self.files:
-            for l, run in file.items():
+        for self.file_number, self.filepath in enumerate(self.files):
+            self.file = h5py.File(self.filepath, 'r')
+
+            for l, run in self.file.items():
                 L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]
                 for potential in run.keys():
 
@@ -71,6 +75,24 @@ class ParseKMCHDF5:
 
                     yield L, W, potential, alpha, mu, E0, s0, r0, neighbors, _ignis_index_map, data, n
 
+            self.file.close()
+
+
+        self.file = None
+        self.file_number = None
+
+    def get_data(self, file_number, name):
+
+        if self.file_number != file_number:
+            if self.file is not None:
+                self.file.close()
+
+            self.file = h5py.File(self.files[file_number], 'r')
+
+        self.file_number = file_number
+        data = self.file[name]
+
+        return data
 
     def set_only_n(self, n):
         self.only_n = n
