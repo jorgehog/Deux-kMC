@@ -19,11 +19,13 @@ class SteadyState(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"converge_figure": ["rms_fig", "srms_fig", "dh_fig"], "value_figure": "subfigure2"}
+    figMap = {"converge_figure": ["rms_fig", "srms_fig", "dh_fig"], "value_figure": ["subfigure2", "subfigure3", "subfigure4"]}
 
     stack = "V"
 
-    adjust_hspace = 0.05
+    def adjust(self):
+        self.adjust_maps["convergence_figure"]["hspace"] = self.adjust_maps["value_figure"]["hspace"] = 0.2
+        self.adjust_maps["value_figure"]["top"] = 0.83
 
     def trans(self, v):
         return v
@@ -31,8 +33,14 @@ class SteadyState(DCVizPlotter):
 
     shapes = ["^", "v", "o"]
     plot_values = [0.01, 0.1, 0.5]
+    alpha_values = [1, 2, 3]
+    om = -0.75
+    E0 = 0.01
+    alpha = 3
 
     unloaded = False
+
+    fig_size = [8, 8]
 
     def plot(self, data):
 
@@ -44,17 +52,20 @@ class SteadyState(DCVizPlotter):
         sslabel=r"\sigma(s)"
         whlabel=r"\langle \delta h_l \rangle"
 
-
-        I, J, K = [int(x) for x in self.argv]
+        sfigs = [self.subfigure2, self.subfigure3, self.subfigure4]
 
         E0_values = data[self.get_family_index_from_name("steadystate_E0.npy")]
         alpha_values = data[self.get_family_index_from_name("steadystate_alpha.npy")]
         mu_shift_values = data[self.get_family_index_from_name("steadystate_mu_shift.npy")]
 
+        I = list(E0_values).index(self.E0)
+        J = list(alpha_values).index(self.alpha)
+        K = [round(x, 2) for x in list(exp(mu_shift_values))].index(1 + self.om)
+
         if self.unloaded:
             unloaded = data[self.get_family_index_from_name("steadystate_unloaded.dat")]
 
-            the_alpha = alpha_values[I]
+            the_alpha = alpha_values[J]
 
             unloaded_rms = []
             for alpha, mu, rms in unloaded:
@@ -79,19 +90,25 @@ class SteadyState(DCVizPlotter):
 
         count = 0
         slopes = []
-        FFS = 0
+        FFS = [0,0,0]
         for i, E0 in enumerate(E0_values):
-            rms_values = []
 
             for j, alpha in enumerate(alpha_values):
+
+                rms_values = []
+
                 for k, mu_shift in enumerate(mu_shift_values):
 
                     if i == I and j == J and k == K:
                         print "E0 = %g, alpha= %g, mus = %g (om = %g)" % (E0, alpha, mu_shift, exp(mu_shift))
 
                     time = data[self.get_family_index_from_name("steadystate_Time_%d.npy" % count)]
+                    # n = 1 + np.arange(len(time))*1000
+
                     L = int(len(time)/clip)
                     time = time[start:L]
+
+                    n = time
 
                     rms = data[self.get_family_index_from_name("steadystate_HeightRMS_%d.npy" % count)][start:L]
 
@@ -102,30 +119,30 @@ class SteadyState(DCVizPlotter):
                     if i == I and j == J and k == K:
 
                         if transform:
-                            self.subfigure.loglog(time, rms, label=rmslabel)
-                            self.subfigure.loglog(time, (ss - ss[0])/(ss.max() - ss[0]), label=sslabel)
-                            self.subfigure.loglog(time, (wh - wh[0])/(wh.max() - wh[0]), label=whlabel)
+                            self.subfigure.loglog(n, rms, label=rmslabel)
+                            self.subfigure.loglog(n, (ss - ss[0])/(ss.max() - ss[0]), label=sslabel)
+                            self.subfigure.loglog(n, (wh - wh[0])/(wh.max() - wh[0]), label=whlabel)
                         else:
-                            self.rms_fig.plot(time, np.log(self.trans(rms)), ":", label=rmslabel,
-                              linewidth=3,
-                              fillstyle='none',
-                              markersize=7,
-                              markeredgewidth=1.5,
-                              color="red")
+                            self.rms_fig.plot(n, np.log(self.trans(rms)), "--", label=rmslabel,
+                                              linewidth=1,
+                                              fillstyle='none',
+                                              markersize=7,
+                                              markeredgewidth=1.5,
+                                              color="red")
 
-                            self.dh_fig.plot(time, np.log(self.trans(wh)), "-.", label=whlabel,
-                              linewidth=3,
-                              fillstyle='none',
-                              markersize=7,
-                              markeredgewidth=1.5,
-                              color="black")
+                            self.dh_fig.plot(n, np.log(self.trans(wh)), "--", label=whlabel,
+                                             linewidth=1,
+                                             fillstyle='none',
+                                             markersize=7,
+                                             markeredgewidth=1.5,
+                                             color="red")
 
-                            self.srms_fig.plot(time, np.log(self.trans(ss)), "--", label=sslabel,
-                              linewidth=3,
-                              fillstyle='none',
-                              markersize=7,
-                              markeredgewidth=1.5,
-                              color="0.5")
+                            self.srms_fig.plot(n, np.log(self.trans(ss)), "--", label=sslabel,
+                                               linewidth=1,
+                                               fillstyle='none',
+                                               markersize=7,
+                                               markeredgewidth=1.5,
+                                               color="red")
 
 
 
@@ -137,9 +154,8 @@ class SteadyState(DCVizPlotter):
                     ss_value = ss[L-L2:].mean()
                     wh_value = wh[L-L2:].mean()
 
-                    if j == J:
 
-                        rms_values.append(rms_value)
+                    rms_values.append(rms_value)
 
                     count += 1
 
@@ -149,25 +165,27 @@ class SteadyState(DCVizPlotter):
                         srms_value_chosen = ss_value
                         dh_value_chosen = wh_value
 
-            if E0 in self.plot_values:
-                self.subfigure2.plot(exp(mu_shift_values) - 1, rms_values,
-                                     label=r"$E_0=%.2f$" % E0,
-                                     marker=self.shapes[FFS],
-                                     markeredgecolor="k",
-                                     linestyle="--",
-                                     color="r",
-                                     linewidth=1,
-                                     fillstyle='none',
-                                     markersize=7,
-                                     markeredgewidth=1.5)
-                FFS += 1
+                if E0 in self.plot_values and alpha in self.alpha_values:
+
+                    n_sfig = self.alpha_values.index(alpha)
+                    sfigs[n_sfig].plot(exp(mu_shift_values) - 1, rms_values,
+                                                               label=r"$E_0=%.2f$" % E0,
+                                                               marker=self.shapes[FFS[n_sfig]],
+                                                               markeredgecolor="k",
+                                                               linestyle="--",
+                                                               color="r",
+                                                               linewidth=1,
+                                                               fillstyle='none',
+                                                               markersize=7,
+                                                               markeredgewidth=1.5)
+                    FFS[n_sfig] += 1
             print E0
 
             slope, intercept, _, _, _ = linregress(exp(mu_shift_values), rms_values)
             slopes.append(slope)
 
 
-        self.dh_fig.set_xlabel(r"$t$")
+        self.dh_fig.set_xlabel(r"$t\nu c$")
 
         self.srms_fig.axes.set_xscale('log')
         self.rms_fig.axes.set_xscale('log')
@@ -176,17 +194,23 @@ class SteadyState(DCVizPlotter):
         self.srms_fig.axes.xaxis.set_ticklabels([])
         self.rms_fig.axes.xaxis.set_ticklabels([])
 
-        majorFormatter = FormatStrFormatter('%.1f')
-        self.rms_fig.axes.yaxis.set_major_formatter(majorFormatter)
-        self.srms_fig.axes.yaxis.set_major_formatter(majorFormatter)
-        self.dh_fig.axes.yaxis.set_major_formatter(majorFormatter)
+        majorFormatter = FuncFormatter(self.formatter)
+        self.rms_fig.axes.yaxis.set_visible(False)
+        self.srms_fig.axes.yaxis.set_visible(False)
+        self.dh_fig.axes.yaxis.set_visible(False)
 
-        majorLocator = MultipleLocator(1)
-        self.rms_fig.axes.yaxis.set_major_locator(majorLocator)
-        self.srms_fig.axes.yaxis.set_major_locator(majorLocator)
-        self.dh_fig.axes.yaxis.set_major_locator(majorLocator)
 
-        xmax = 1000
+        # majorFormatter = FormatStrFormatter('%.1f')
+        # self.rms_fig.axes.yaxis.set_major_formatter(majorFormatter)
+        # self.srms_fig.axes.yaxis.set_major_formatter(majorFormatter)
+        # self.dh_fig.axes.yaxis.set_major_formatter(majorFormatter)
+        #
+        # majorLocator = MultipleLocator(1)
+        # self.rms_fig.axes.yaxis.set_major_locator(majorLocator)
+        # self.srms_fig.axes.yaxis.set_major_locator(majorLocator)
+        # self.dh_fig.axes.yaxis.set_major_locator(majorLocator)
+
+        xmax = 3E3
         self.rms_fig.set_xlim(0, xmax)
         self.srms_fig.set_xlim(0, xmax)
         self.dh_fig.set_xlim(0, xmax)
@@ -196,16 +220,50 @@ class SteadyState(DCVizPlotter):
         srms_span = self.srms_fig.get_ylim()[1] + self.srms_fig.get_ylim()[0]
         dh_span = self.dh_fig.get_ylim()[1] + self.dh_fig.get_ylim()[0]
 
-        self.rms_fig.text(xmax/4, rms_span/2, r"$%s = %.3f$" % (rmslabel, rms_value_chosen), fontsize=self.fontSize)
-        self.srms_fig.text(xmax/4, srms_span/2, r"$%s = %.3f$" % (sslabel, srms_value_chosen), fontsize=self.fontSize)
-        self.dh_fig.text(xmax/4, dh_span/2, r"$%s = %.3f$" % (whlabel, dh_value_chosen), fontsize=self.fontSize)
+        xtext = 0.25E3
+
+        self.rms_fig.text(xtext, rms_span/2, r"$%s = %.3f$" % (rmslabel, rms_value_chosen), fontsize=self.fontSize)
+        self.srms_fig.text(xtext, srms_span/2, r"$%s = %.3f$" % (sslabel, srms_value_chosen), fontsize=self.fontSize)
+        self.dh_fig.text(xtext, dh_span/2, r"$%s = %.3f$" % (whlabel, dh_value_chosen), fontsize=self.fontSize)
+
+        r = [0.6, 0.65, 0.65]
+        for i, sfig in enumerate(sfigs):
+            sfig.set_xlim([-1, 2.1])
+            sfig.axes.get_xaxis().set_ticks([-1, 0, 1, 2])
+            sfig.axes.yaxis.set_major_formatter(majorFormatter)
+            sfig.set_ylabel(rmslabel)
+            sfig.set_ybound(0)
+
+            if i != 2:
+                sfig.axes.xaxis.set_ticklabels([])
+
+            ax = sfig.axes.twinx()
+            ax.set_ylabel(r"$\alpha=%d$" % self.alpha_values[i], labelpad=15)
+            ax.yaxis.set_ticks([])
+            ax.yaxis.set_ticklabels([])
+
+            # end = sfig.axes.get_ylim()[1]
+            # start = sfig.axes.get_ylim()[0]
+            #
+            # loc_y = start + r[i]*(end - start)
+            # loc_x = 1.5
+            #
+            # sfig.text(loc_x, loc_y, r"$\alpha=%d$" % self.alpha_values[i], fontsize=self.fontSize)
 
 
-        self.subfigure2.set_xlim([-1, 2.1])
-        self.subfigure2.axes.get_xaxis().set_ticks([-1, 0, 1, 2])
-        self.subfigure2.set_xlabel(r"$\Omega$")
-        self.subfigure2.set_ylabel(rmslabel)
-        # self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2)
+        self.subfigure4.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
+        self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=3, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(-0.01, 1.55))
+
+    @staticmethod
+    def formatter(value, index):
+
+        if index is None:
+            return ""
+
+        if index % 2 == 0:
+            return r"$%g$" % value
+        else:
+            return ""
 
 class UnloadedGrowthSpeed(DCVizPlotter):
 
@@ -275,7 +333,7 @@ class UnloadedGrowthSpeed(DCVizPlotter):
 
 
         self.subfigure.legend(loc="upper left")
-        self.subfigure.set_xlabel(r"$\Omega$")
+        self.subfigure.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
         self.subfigure.set_ylabel(r"v")
 
         self.subfigure2.set_xlabel(r"$\alpha")
@@ -333,10 +391,10 @@ class GrowthSpeed(DCVizPlotter):
     plot_values = [0.5, 1.0]
     shapes = ["s", "^", "v"]
 
-    def plot_and_slopify(self, E0, omega, mu_shifts, mu, v):
+    def plot_and_slopify(self, E0, alpha, omega, mu_shifts, mu, v):
         mu0 = (mu - mu_shifts).mean()
         c_over_c0 = exp(mu0 + mu_shifts)
-        v *= c_over_c0
+        v *= c_over_c0*exp(-2*alpha)
 
         if E0 == 0:
             if not (omega == (c_over_c0-1)).all():
@@ -347,7 +405,9 @@ class GrowthSpeed(DCVizPlotter):
                 self.Exit()
 
         idx_high = np.where(omega >= 0)
+        idx_vhigh = np.where(omega >= 2)
         idx_low = np.where(omega < 0)
+        idx_all = np.where(omega > -2)
 
         idx_chosen = idx_high
 
@@ -419,7 +479,13 @@ class GrowthSpeed(DCVizPlotter):
                             markersize=7,
                             markeredgewidth=1.5)
 
+    def adjust(self):
 
+        for map in self.adjust_maps.values():
+            map["bottom"] = 0.2
+            map["top"] = 0.94
+
+    l_min = 2
 
     def plot(self, data):
 
@@ -452,7 +518,7 @@ class GrowthSpeed(DCVizPlotter):
         print "alpha=%g, s0 = %g, r0 = %g" % (alpha_values[J], s0_values[M+1], r0_values[L+1])
 
         for j in range(len(alpha_values)):
-            _, slope0, v0, err = self.plot_and_slopify(0, omega, mu_shift_values, mu_shift_values, v_values[0, j, :, 0, 0])
+            _, slope0, v0, err = self.plot_and_slopify(0, alpha_values[j], omega, mu_shift_values, mu_shift_values, v_values[0, j, :, 0, 0])
 
             slopes[0, j, :, :] = slope0
             mu_zero[0, j, :, :] = 0
@@ -475,6 +541,7 @@ class GrowthSpeed(DCVizPlotter):
                         for m, s0 in enumerate(s0_values[1:]):
 
                             mu0, slope, v, error = self.plot_and_slopify(E0,
+                                                                         alpha,
                                                                   omega,
                                                                   mu_shift_values,
                                                                   mu_values[i+1, j, :, l+1, m+1],
@@ -569,7 +636,7 @@ class GrowthSpeed(DCVizPlotter):
             S = 0
             count = 0
 
-            if r0 == 0.5 or r0 == 1:
+            if r0 < self.l_min:
                 continue
 
             for m, s0 in enumerate(s0_values[1:]):
@@ -597,7 +664,7 @@ class GrowthSpeed(DCVizPlotter):
                                label=r"$%.2f\alpha^{%.2f}$" % (exp(log_constant), power))
         self.subfigure5.loglog(alpha_values, -S_tot, "r-^", label="Avg all param")
 
-        self.subfigure5.legend(numpoints=1, handlelength=1.2)
+        self.subfigure5.legend(numpoints=1, handlelength=1.2, borderaxespad=0.3, )
 
         for l, r0 in enumerate(r0_values[1:]):
             self.subfigure6.plot(s0_values[1:], alpha_cutz[l+1, 1:], label="r0 = %g" % r0)
@@ -625,27 +692,31 @@ class GrowthSpeed(DCVizPlotter):
         self.subfigure9.set_xlabel(r"$\lambda_D$")
         self.subfigure9.set_ylabel(r"$\mathrm{avg slope}$")
 
-        self.subfigure.set_xlabel(r"$\Omega$")
-        self.subfigure.set_ylabel(r"$\dot{H}$")
-        self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2)
-        self.subfigure.set_ylim(self.subfigure.get_ylim()[0], self.subfigure.get_ylim()[1]*1.1)
+        self.subfigure.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
+        self.subfigure.set_ylabel(r"$\dot{H} = \Delta \langle h\rangle / \Delta t$")
+        self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2, borderaxespad=0.3 )
+        self.subfigure.set_xlim(-1, 3)
+        self.subfigure.axes.xaxis.set_ticks([-1, 0, 1, 2, 3])
+        self.subfigure.axes.xaxis.set_major_formatter(FormatStrFormatter(r"$%d$"))
+        self.subfigure.set_ylim(-0.2, 1)
         # self.subfigure.axes.set_xscale('log')
         # self.subfigure.axes.set_yscale('log')
 
-        self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2)
+        self.subfigure2.legend(loc="lower right", numpoints=1, handlelength=1.2, ncol=3, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3)
         self.subfigure2.axes.set_yscale('log')
         self.subfigure2.set_xlim(-0.05, 1.05)
+        self.subfigure2.set_ybound(1E-4)
 
-        self.subfigure2.set_xlabel(r"$E_0$")
-        self.subfigure2.set_ylabel(r"$k_g = \partial \dot{H} / \partial \Omega$")
+        self.subfigure2.set_xlabel(r"$E_0 \propto F_0/L$")
+        self.subfigure2.set_ylabel(r"$k_g = \dot{H} / \Omega$")
 
-        self.subfigure4.set_xlabel(r"$\alpha$")
-        self.subfigure4.set_ylabel(r"$\partial \log k_g / \partial E_0$")
+        self.subfigure4.set_xlabel(r"$\alpha = E_b/kT$")
+        self.subfigure4.set_ylabel(r"$\log (k_g/k_0) / E_0$")
         self.subfigure4.set_ybound(0)
         self.subfigure4.set_xlim(0, alpha_values.max()*1.1)
 
 
-        self.subfigure5.set_xlabel(r"$\alpha$")
+        self.subfigure5.set_xlabel(r"$\alpha = E_b/kT$")
         self.subfigure5.set_ylabel(r"$\mathrm{log k shift}$")
 
         self.subfigure11.set_xlabel(r"$\log (\Omega + 1)$")
@@ -670,9 +741,13 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
 
     hugifyFonts = True
 
-    adjust_top = 0.95
-    adjust_bottom = 0.18
+    def adjust(self):
 
+        for map in self.adjust_maps.values():
+            map["top"] = 0.95
+            map["bottom"] = 0.18
+
+    fig_size = [8, 4]
 
     def n_runs(self):
 
@@ -796,11 +871,13 @@ class SOS_pressure_sizes(DCVizPlotter):
     figMap = {"sfig" : ["subfigure", "subfigure2", "subfigure3"]}
 
     # share_axis = True
-    adjust_hspace = 0.15
 
-    adjust_top = 0.83
+    def adjust(self):
+        for map in self.adjust_maps.values():
+            map["hspace"] = 0.15
+            map["top"] = 0.83
 
-    # fig_size = [8, 20]
+    fig_size = [8, 8]
 
     def plot(self, data):
 
@@ -931,8 +1008,12 @@ class SOSanalyze(DCVizPlotter):
 
     figMap = {"figure_2" : "mean_figure"}
 
-    adjust_top = 0.95
-    adjust_bottom = 0.18
+    fig_size = [8, 4]
+
+    def adjust(self):
+        for map in self.adjust_maps.values():
+            map["top"] = 0.95
+            map["bottom"] = 0.18
 
     def scale(self, r0):
         return r0*(1-exp(-1./r0))
