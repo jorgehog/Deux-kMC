@@ -409,7 +409,7 @@ class GrowthSpeed(DCVizPlotter):
         idx_low = np.where(omega < 0)
         idx_all = np.where(omega > -2)
 
-        idx_chosen = idx_high
+        idx_chosen = idx_vhigh
 
         slope, intercept, _, _, err = linregress(omega[idx_chosen], v[idx_chosen])
         # slope_low, intercept, _, _, _ = linregress(omega[idx_low], v[idx_low])
@@ -509,9 +509,9 @@ class GrowthSpeed(DCVizPlotter):
 
         omega = exp(mu_shift_values) - 1
 
-        slopes = np.zeros(shape=(len(E0_values), len(alpha_values), len(r0_values), len(s0_values)))
-        mu_zero = np.zeros_like(slopes)
-        errors = np.zeros_like(slopes)
+        k_values = np.zeros(shape=(len(E0_values), len(alpha_values), len(r0_values), len(s0_values)))
+        mu_zero = np.zeros_like(k_values)
+        errors = np.zeros_like(k_values)
 
         J, L, M = [int(x) for x in self.argv]
 
@@ -520,7 +520,7 @@ class GrowthSpeed(DCVizPlotter):
         for j in range(len(alpha_values)):
             _, slope0, v0, err = self.plot_and_slopify(0, alpha_values[j], omega, mu_shift_values, mu_shift_values, v_values[0, j, :, 0, 0])
 
-            slopes[0, j, :, :] = slope0
+            k_values[0, j, :, :] = slope0
             mu_zero[0, j, :, :] = 0
             errors[0, j, :, :] = err
 
@@ -550,7 +550,7 @@ class GrowthSpeed(DCVizPlotter):
                             if slope < 0:
                                 print "ERROR slope=%g, E0(%d)=%g, alpha(%d)=%g, r0(%d)=%g, s0(%d)=%g" % (slope, i, E0, j, alpha, l, r0, m, s0)
 
-                            slopes[i+1][j][l+1][m+1] = slope
+                            k_values[i+1][j][l+1][m+1] = slope
                             errors[i+1][j][l+1][m+1] = error
                             mu_zero[i+1][j][l+1][m+1] = mu0
 
@@ -578,12 +578,14 @@ class GrowthSpeed(DCVizPlotter):
         d = len(alpha_values)/nm
         for j, alpha in enumerate(alpha_values):
             for l, r0 in enumerate(r0_values[1:]):
+                F0_values = E0_values/(r0*(1 - np.exp(-1./r0)))
+
                 for m, s0 in enumerate(s0_values[1:]):
 
                     if l == L and m == M:
                         if j == 0 or j == len(alpha_values) - 1 or j % d == 0:
 
-                            self.subfigure2.plot(E0_values, slopes[:, j, l+1, m+1],
+                            self.subfigure2.plot(E0_values, k_values[:, j, l+1, m+1],
                                                  label=r"$\alpha=%g$" % round(alpha, 1),
                                                  marker=self.shapes[ka],
                                                  markeredgecolor="k",
@@ -596,7 +598,7 @@ class GrowthSpeed(DCVizPlotter):
 
                             ka += 1
 
-                    log_k_slope, intercept, _, _, err = linregress(E0_values, np.log(slopes[:, j, l+1, m+1]))
+                    log_k_slope, intercept, _, _, err = linregress(E0_values, np.log(k_values[:, j, l+1, m+1]))
 
                     log_k_E0_slopes[j, l+1, m+1] = log_k_slope
                     log_k_cutz[j, l+1, m+1] = intercept
@@ -608,6 +610,7 @@ class GrowthSpeed(DCVizPlotter):
         for l, r0 in enumerate(r0_values[1:]):
                 for m, s0 in enumerate(s0_values[1:]):
                     alpha_slope, intercept, _, _, err = linregress(alpha_values, log_k_E0_slopes[:, l+1, m+1])
+                    print "slope", alpha_slope
 
                     alpha_slopes[l+1, m+1] = alpha_slope
                     alpha_cutz[l+1, m+1] = intercept
@@ -684,11 +687,11 @@ class GrowthSpeed(DCVizPlotter):
             self.subfigure8.plot(s0_values[1:], alpha_slopes[l+1, 1:], label="r0=%g" % r0)
         # self.subfigure8.legend()
         self.subfigure8.set_xlabel(r"$\sigma_0$")
-        self.subfigure8.set_ylabel(r"$\mathrm{slopes}$")
+        self.subfigure8.set_ylabel(r"$\mathrm{k_values}$")
 
         comb = alpha_slopes[1:, 1:].mean(axis=1)
 
-        self.subfigure9.plot(r0_values[1:], comb)
+        self.subfigure9.plot(r0_values[1:], comb*(r0_values[1:]*(1 - np.exp(-1./r0_values[1:]))))
         self.subfigure9.set_xlabel(r"$\lambda_D$")
         self.subfigure9.set_ylabel(r"$\mathrm{avg slope}$")
 
