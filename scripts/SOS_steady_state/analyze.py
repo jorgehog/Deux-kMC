@@ -27,7 +27,7 @@ def main():
     alpha_array = []
     mu_shift_array = []
 
-    # parser.skipWhen = lambda p_alpha, p_mu, p_E0, p_s0, p_r0, p_n: p_n > 3
+    # parser.skipWhen = lambda p_alpha, p_mu, p_E0, p_s0, p_r0, p_n: p_n > 9
 
     n = 0
     for stuff in parser:
@@ -76,6 +76,7 @@ def main():
     alpha_array = np.asarray(alpha_array)
     mu_shift_array = np.asarray(mu_shift_array)
 
+
     N = len(parsed_data[E0][alpha][mu_shift])
     print "N =", N
 
@@ -88,32 +89,31 @@ def main():
     combinator = ICZ(*data_keys)
     count = 0
 
-    for E0_match in E0_array:
-        for alpha_match in alpha_array:
-            for mu_shift_match in mu_shift_array:
+    eqMu = np.zeros(shape=(len(E0_array), len(alpha_array)))
 
-                # parser = ParseKMCHDF5(input_file)
-                # parser.skipWhen = lambda p_alpha, p_mu, p_E0, p_s0, p_r0, p_n: (p_E0/area != E0_match or p_alpha != alpha_match)
-                #
-                # n = 0
-                #
-                # for stuff in parser:
-                #
-                #     L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, repeat = stuff
-                #
-                #     area = L*W
-                #
-                #     E0 /= area
-                #
-                #     mu_shift = data.attrs["muShift"]
-                #
-                #     if mu_shift != mu_shift_match:
-                #         continue
+    for i, E0_match in enumerate(E0_array):
+        for j, alpha_match in enumerate(alpha_array):
+
+            nEq = 0
+            for mu_shift_match in mu_shift_array:
 
                 for file_number, name in parsed_data[E0_match][alpha_match][mu_shift_match]:
                     data = parser.get_data(file_number, name)
 
+                    try:
+                        eqmu_local = data.attrs["muEq"]
+                        eqMu[i, j] += eqmu_local
+                    except KeyError:
+                        print data.attrs.keys()
+                        print "FAIL", E0_match, alpha_match, mu_shift_match
+                        return
+
+                    nEq += 1
+
                     for key in data_keys:
+                        # if key == "Time":
+                        #     combinator[key].append(data["ignisData"][ignis_map[key]]/np.exp(eqmu_local + mu_shift_match - 2*alpha))
+                        # else:
                         combinator[key].append(data["ignisData"][ignis_map[key]])
 
                     n += 1
@@ -128,10 +128,8 @@ def main():
 
                     t, measure = combinator.intercombine("Time", key)
                     combined_data.append(["/tmp/steadystate_%s_%d.npy" % (key, count), measure])
-                    # np.save("/tmp/steadystate_%s_%d.npy" % (key, count), measure)
 
                 combined_data.append(["/tmp/steadystate_Time_%d.npy" % count, t])
-                # np.save("/tmp/steadystate_Time_%d.npy" % count, t)
 
                 combinator.clear()
 
@@ -140,75 +138,13 @@ def main():
                 print
                 print "progress: ", float(count) / (len(E0_array)*len(alpha_array)*len(mu_shift_array))*100, "%"
 
+        eqMu[i, j] /= nEq
+
+    np.save("/tmp/steadystate_eqMu.npy", eqMu)
+
     for name, data in combined_data:
         np.save(name, data)
 
-    #
-    # n = 0
-    # for stuff in parser:
-    #     n += 1
-    #
-    #     L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, repeat = stuff
-    #
-    #     area = L*W
-    #
-    #     E0 /= area
-    #
-    #     mu_shift = data.attrs["muShift"]
-    #
-    #     if E0 not in parsed_data.keys():
-    #         parsed_data[E0] = {}
-    #     if alpha not in parsed_data[E0].keys():
-    #         parsed_data[E0][alpha] = {}
-    #     if mu_shift not in parsed_data[E0][alpha].keys():
-    #         parsed_data[E0][alpha][mu_shift] = ICZ(*data_keys)
-    #
-    #     for key in data_keys:
-    #         parsed_data[E0][alpha][mu_shift][key].append(data["ignisData"][ignis_map[key]])
-    #
-    # print "Parsed", n, "entries."
-    #
-    # E0_array = []
-    # alpha_array = []
-    # mu_shift_array = []
-    #
-    # count = 0
-    #
-    # for i, (E0, data) in enumerate(sorted(parsed_data.items(), key=lambda x: x[0])):
-    #
-    #     E0_array.append(E0)
-    #
-    #     for j, (alpha, data2) in enumerate(sorted(data.items(), key=lambda x: x[0])):
-    #
-    #         if i == 0:
-    #             alpha_array.append(alpha)
-    #
-    #         for mu_shift, data3 in sorted(data2.items(), key=lambda x: x[0]):
-    #
-    #             if i == 0 and j == 0:
-    #                 mu_shift_array.append(mu_shift)
-    #
-    #             combzor = parsed_data[E0][alpha][mu_shift]
-    #             print E0, alpha, mu_shift, "%d/%d" % (count+1,  n/len(combzor))
-    #
-    #             for key in data_keys:
-    #                 if key == "Time":
-    #                     continue
-    #
-    #                 t, measure = combzor.intercombine("Time", key)
-    #                 np.save("/tmp/steadystate_%s_%d.npy" % (key, count), measure)
-    #
-    #             np.save("/tmp/steadystate_Time_%d.npy" % count, t)
-    #
-    #             count += 1
-    #
-    # E0_array = np.asarray(E0_array)
-    # alpha_array = np.asarray(alpha_array)
-    # mu_shift_array = np.asarray(mu_shift_array)
-    #
-    # np.save("/tmp/steadystate_E0.npy", E0_array)
-    # np.save("/tmp/steadystate_alpha.npy", alpha_array)
-    # np.save("/tmp/steadystate_mu_shift.npy", mu_shift_array)
 
 if __name__ == "__main__":
     main()
