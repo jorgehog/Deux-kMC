@@ -359,7 +359,7 @@ class UnloadedGrowthSpeed(DCVizPlotter):
 
 class GrowthSpeed2(DCVizPlotter):
 
-    nametag = "growthspeed\_(.*)\.npy"
+    nametag = "growthspeed_depr\_(.*)\.npy"
 
     hugifyFonts = True
 
@@ -370,7 +370,8 @@ class GrowthSpeed2(DCVizPlotter):
               "slope_ints": "subfigure5",
               "int_slopes": "subfigure6",
               "int_ints": "subfigure7",
-              "asdASd": "subfigure8"}
+              "asdASd": "subfigure8",
+              "asssasdASd": "subfigure9"}
 
     isFamilyMember = True
 
@@ -405,7 +406,8 @@ class GrowthSpeed2(DCVizPlotter):
                                             v=v_values[0, j, :, 0, 0],
                                             mu=mu_shift_values,
                                             d_mu=mu_shift_values,
-                                            omega=omega)
+                                            omega=omega,
+                                            plot=j==2)
             #
             # params, _ = curve_fit(f, omega, remainder, (1, 1))
             #
@@ -421,7 +423,8 @@ class GrowthSpeed2(DCVizPlotter):
 
         self.subfigure2.plot(alpha_values, slopes, 'r--o')
 
-        # self.subfigure.legend()
+        self.subfigure.set_xlabel("rofldofl")
+        self.subfigure.set_xlim([-1, 4])
 
         slope_slope0, slope_int0, _, _, err = linregress(alpha_values, slopes)
 
@@ -431,11 +434,12 @@ class GrowthSpeed2(DCVizPlotter):
 
         int_slope0, int_int0, _, _, err = linregress(alpha_values, ints)
         #
-        # print int_slope, int_int, err
+        # print int_slope0, int_int0, err
         #
         # print "log(rem) = s(a)*log(1 + omega) + b(a)"
-        # print "s(a) = %g*a + %g" % (slope_slope, slope_intersection)
-        # print "b(a) = %g*a + %g" % (int_slope, int_int)
+        # print "s(a) = %g*a + %g" % (slope_slope0, slope_int0)
+        # print "b(a) = %g*a + %g" % (int_slope0, int_int0)
+        # self.Exit()
 
         int_ints = np.zeros(shape=(len(E0_values)-1, len(r0_values)-1))
         int_slopes = np.zeros_like(int_ints)
@@ -456,7 +460,7 @@ class GrowthSpeed2(DCVizPlotter):
                 for l, l_d in enumerate(r0_values[1:]):
                     for m, s0 in enumerate(s0_values[1:]):
 
-                        doplot = i == 0 & j == 2 & l == 3 & m == 3
+                        doplot = j == 2 and l == 3 and m == 3
 
                         remainder = self.find_remainder(E0,
                                                         alpha,
@@ -472,7 +476,7 @@ class GrowthSpeed2(DCVizPlotter):
 
                         if err > errmax:
                             errmax = err
-                            print E0, alpha, l_d, s0, errmax
+                            # print E0, alpha, l_d, s0, errmax
 
                         pressure_slopes[l, m] = slope
                         pressure_ints[l, m] = intersection
@@ -525,16 +529,18 @@ class GrowthSpeed2(DCVizPlotter):
 
         #claim that int_ints and int_slopes are small and can be neglected (some dependency on lambda is seen)
         #we get: log r = log(om + 1)*(slope_slope*a + slope_int)
-        mean_int_ints = (int_int0 + int_ints.flatten().sum())/len(E0_values)
-        mean_int_slopes = (int_slope0 + int_slopes.flatten().sum())/len(E0_values)
+        # print int_int0, int_ints
+        # self.Exit()
+        mean_int_ints = (int_int0 + int_ints.flatten().sum())/((len(E0_values)-1)*(len(r0_values)-1) + 1)
+        mean_int_slopes = (int_slope0 + int_slopes.flatten().sum())/((len(E0_values)-1)*(len(r0_values)-1) + 1)
 
         print "mean int ints", mean_int_ints
         print "mean int slopes", mean_int_slopes
 
         E0_int_all = 0
         E0_slopes = []
-        E0_log_ints = []
-        E0_log_slopes = []
+        E0_ints = []
+        E0_poly = []
 
         # E0_orig = E0_values.copy()
         for l in range(len(r0_values) - 1):
@@ -552,39 +558,50 @@ class GrowthSpeed2(DCVizPlotter):
             # raw_input()
             # print "done"
 
-            l_slope_slopes = [slope_slope0] + list(slope_slopes[:, l])
             l_slope_ints = [slope_int0] + list(slope_ints[:, l])
 
-            self.subfigure4.plot(np.log(E0_values), l_slope_slopes, "--x")
             self.subfigure5.plot(E0_values, l_slope_ints, "--x")
 
             #claim that slope_int = E0_slope*E_0 + E0_int
             E0_slope, E0_int, _, _, err = linregress(E0_values, l_slope_ints)
 
-            #claim that E0_int is independent of l_d (= -1)
+            #claim that E0_int is independent of l_d (= -1 / 0)
             E0_int_all += E0_int
 
             #E0_slope is found to be exponentially decaying with lambda from 0.24 to 0.08 on l_d 1 to 5
             E0_slopes.append(E0_slope)
 
-            #claim that slope_slope = E0_log_slope*log(E0) + E0_log_int
-            #E0_log_slope is found to be exponentially decaying from 0.02 to 0.01 on l_d 1 to 5
-            #E0_log_int is found to be expoenntially decaying from 0.27 to 0.23 >> log(E0)*E0_log_slope
-            #so we neglect log(E0) term
-            E0_log_slope, E0_log_int, _, _, err = linregress(np.log(E0_values[1:]), l_slope_slopes[1:])
 
-            E0_log_slopes.append(E0_log_slope)
-            E0_log_ints.append(E0_log_int)
+            l_slope_slopes = [slope_slope0] + list(slope_slopes[:, l])
+            self.subfigure4.plot(E0_values, l_slope_slopes, "--x")
+            f_fit = lambda x, a, b, c: a + b*x**0.5
+            (a, b, c), _ = curve_fit(f_fit, E0_values, l_slope_slopes, (0.2, 1, 0.5))
+            print r0_values[l+1], a, b, c
+            #claim that slope_slope = E0_ints + E0_poly[0]*E0^E0_poly[1]
+            self.subfigure4.plot(E0_values, f_fit(E0_values, a, b, c), '^')
+
+
+            # E0_log_slope, E0_log_int, _, _, err = linregress(np.log(E0_values), l_slope_slopes)
+            # E0_values[0] -= 0.001
+
+            E0_poly.append([b, c])
+            E0_ints.append(a)
 
 
         #find <E0_int> ~ -1
         print "e0 int all:", E0_int_all/(len(r0_values)-1)
 
         self.subfigure6.plot(r0_values[1:], E0_slopes)
+        self.subfigure6.set_xlabel("om**(ax + b*E0 + c, here show b(ld)")
 
-        self.subfigure7.plot(r0_values[1:], E0_log_ints, "--o")
 
-        self.subfigure8.plot(r0_values[1:], E0_log_slopes, ":x")
+        self.subfigure7.plot(r0_values[1:], E0_ints, "--o")
+        self.subfigure7.set_xlabel("om**(ax + b*E0 + c(ld), here show c(ld)")
+
+        self.subfigure8.plot(r0_values[1:], [x[0] for x in E0_poly], ":x")
+        self.subfigure9.plot(r0_values[1:], [x[1] for x in E0_poly], ":o")
+        self.subfigure9.set_xlabel("om**(alp(kE0**n + b) + c, here show k(ld)")
+        self.subfigure8.set_xlabel("om**(alp(kE0**n + b) + c, here show n(ld)")
 
         self.subfigure4.set_ylabel("lslopeslopes")
         self.subfigure5.set_ylabel("lslopeints")
@@ -609,10 +626,10 @@ class GrowthSpeed2(DCVizPlotter):
 
         mu_eq = (mu-d_mu).mean()
 
-        if F0 != 0:
-            t = mu_eq/(alpha*F0)
-            if abs(t - 1) > 0.1:
-                print "Thermo fail:", t, "l_d", l_d, "E0", E0
+        # if F0 != 0:
+        #     t = mu_eq/(alpha*F0)
+        #     if abs(t - 1) > 0.1:
+        #         print "Thermo fail:", t, "l_d", l_d, "E0", E0
 
         c_over_c0 = np.exp(mu)
         c0 = exp(-2*alpha)
@@ -621,16 +638,16 @@ class GrowthSpeed2(DCVizPlotter):
         v_transformed = v*c_over_c0*c0
 
         c_eq = exp(mu_eq)*c0
-        remainder = -(v_transformed/(1 + omega) - c_eq)/c_eq
+        remainder = -(v_transformed - c_eq*(1 + omega))/c_eq
         if plot:
-            self.subfigure.loglog(omega+1, remainder, "--" + self.markers.next(), label=r"$\alpha=%.2f$" % alpha)
+            self.subfigure.loglog(omega+1, remainder, "--" + self.markers.next(), label=r"$E_0=%.2f$" % E0)
 
         return remainder
 
 
 class GrowthSpeed(DCVizPlotter):
 
-    nametag = "^growthspeed_depr_\_(.*)\.npy"
+    nametag = "^growthspeed\_(.*)\.npy"
 
     numpyBin = True
 
@@ -668,7 +685,10 @@ class GrowthSpeed(DCVizPlotter):
     def plot_and_slopify(self, E0, alpha,r0, omega, mu_shifts, mu, v):
         mu0 = (mu - mu_shifts).mean()
         c_over_c0 = exp(mu0 + mu_shifts)
-        v *= c_over_c0*exp(-2*alpha)
+        c0 = exp(-2*alpha)
+        c = c_over_c0*c0
+
+        v *= c
 
         if E0 == 0:
             if not (omega == (c_over_c0-1)).all():
@@ -679,15 +699,33 @@ class GrowthSpeed(DCVizPlotter):
                 self.Exit()
 
         idx_high = np.where(omega >= 0)
-        idx_vhigh = np.where(omega >= 2)
+        idx_vhigh = np.where(omega >= 3)
         idx_low = np.where(omega < 0)
         idx_all = np.where(omega > -2)
 
-        idx_chosen = idx_all
+        try:
+            if int(self.argv[3]) < 0:
+                idx_chosen = idx_low
+            else:
+                idx_chosen = idx_high
+        except IndexError:
+            idx_chosen = idx_high
+
 
         F0 = E0/(r0*(1-np.exp(-1./r0)))
 
         slope, intercept, _, _, err = linregress(omega[idx_chosen], v[idx_chosen])
+
+        v_over_omega = v[idx_chosen]/omega[idx_chosen]
+        v_over_omega = v_over_omega[np.where(omega[idx_chosen] != 0)]
+        avg = v_over_omega.mean()
+
+        slope = avg
+
+        if str(avg) == "nan":
+            print avg
+            self.Exit()
+
         # slope_low, intercept, _, _, _ = linregress(omega[idx_low], v[idx_low])
         #
         # print E0, slope/slope_low - 1
@@ -784,7 +822,7 @@ class GrowthSpeed(DCVizPlotter):
         print v_values.shape
         print n_values.shape
 
-        E0_values = E0_values[:6]
+        # E0_values = E0_values[:6]
 
         omega = exp(mu_shift_values) - 1
 
@@ -792,16 +830,19 @@ class GrowthSpeed(DCVizPlotter):
         mu_zero = np.zeros_like(k_values)
         errors = np.zeros_like(k_values)
 
-        J, L, M = [int(x) for x in self.argv]
+        J, L, M = [int(x) for x in self.argv[:3]]
 
         print "alpha=%g, s0 = %g, r0 = %g" % (alpha_values[J], s0_values[M+1], r0_values[L+1])
 
+        unloaded_with_alpha = []
         for j in range(len(alpha_values)):
             _, slope0, v0, err = self.plot_and_slopify(0, alpha_values[j], 1, omega, mu_shift_values, mu_shift_values, v_values[0, j, :, 0, 0])
 
             k_values[0, j, :, :] = slope0
             mu_zero[0, j, :, :] = 0
             errors[0, j, :, :] = err
+
+            unloaded_with_alpha.append(slope0)
 
             if j == J:
                 self.uberplot(exp(mu_shift_values) - 1, v0, 0, 0)
@@ -812,7 +853,12 @@ class GrowthSpeed(DCVizPlotter):
                 #                     markeredgewidth=1.5,
                 #                     color="black")
 
+        unloaded_alpha_slope, unloaded_alpha_cut, _, _, err = linregress(alpha_values, np.log(np.array(unloaded_with_alpha)))
+        print err, unloaded_alpha_slope, unloaded_alpha_cut
+        # raw_input()
+
         k = 1
+        l_skip = []
         for i, E0 in enumerate(E0_values[1:]):
             for j, alpha in enumerate(alpha_values):
                 # for k, mu_shift in enumerate(mu_shift_values):
@@ -830,6 +876,9 @@ class GrowthSpeed(DCVizPlotter):
                             # if slope < 0:
                             #     print "ERROR slope=%g, E0(%d)=%g, alpha(%d)=%g, r0(%d)=%g, s0(%d)=%g" % (slope, i, E0, j, alpha, l, r0, m, s0)
                             #     sys.exit(1)
+
+                            if slope < 0 and abs(slope) < 1E-3:
+                                l_skip.append(l)
 
                             k_values[i+1][j][l+1][m+1] = slope
                             errors[i+1][j][l+1][m+1] = error
@@ -886,6 +935,10 @@ class GrowthSpeed(DCVizPlotter):
         d = len(alpha_values)/nm
         for j, alpha in enumerate(alpha_values):
             for l, r0 in enumerate(r0_values[1:]):
+
+                if l in l_skip:
+                    continue
+
                 F0_values = E0_values/(r0*(1 - np.exp(-1./r0)))
 
                 for m, s0 in enumerate(s0_values[1:]):
@@ -908,6 +961,11 @@ class GrowthSpeed(DCVizPlotter):
 
                     log_k_slope, intercept, _, _, err = linregress(E0_values, np.log(k_values[:, j, l+1, m+1]))
 
+                    if str(intercept) == "nan":
+                        print intercept, alpha, r0, s0
+                        print k_values[:, j, l+1, m+1]
+                        self.Exit()
+
                     log_k_E0_slopes[j, l+1, m+1] = log_k_slope
                     log_k_cutz[j, l+1, m+1] = intercept
                     log_k_slope_error[j, l+1, m+1] = err
@@ -916,13 +974,14 @@ class GrowthSpeed(DCVizPlotter):
         alpha_cutz = np.zeros_like(alpha_slopes)
 
         for l, r0 in enumerate(r0_values[1:]):
-                for m, s0 in enumerate(s0_values[1:]):
-                    alpha_slope, intercept, _, _, err = linregress(alpha_values, log_k_E0_slopes[:, l+1, m+1])
-                    print "slope", alpha_slope
-                    print "int", intercept
+            if l in l_skip:
+                continue
 
-                    alpha_slopes[l+1, m+1] = alpha_slope
-                    alpha_cutz[l+1, m+1] = intercept
+            for m, s0 in enumerate(s0_values[1:]):
+                alpha_slope, intercept, _, _, err = linregress(alpha_values, log_k_E0_slopes[:, l+1, m+1])
+
+                alpha_slopes[l+1, m+1] = alpha_slope
+                alpha_cutz[l+1, m+1] = intercept
 
 
         self.subfigure4.plot(alpha_values, log_k_E0_slopes[:, L+1, M+1],
@@ -944,6 +1003,10 @@ class GrowthSpeed(DCVizPlotter):
         S_tot = 0
         count2 = 0
         for l, r0 in enumerate(r0_values[1:]):
+
+            if l in l_skip:
+                continue
+
             S = 0
             count = 0
 
@@ -969,6 +1032,12 @@ class GrowthSpeed(DCVizPlotter):
 
         power, log_constant, _, _, err = linregress(np.log(alpha_values), np.log(-S_tot))
         print "Power=%g, constant=%g, err=%g" % (power, exp(log_constant), err)
+        print l_skip
+        if len(l_skip) == 0:
+            l_incr = 0
+        else:
+            l_incr = max([l+1 for l in l_skip])
+        # self.Exit()
 
         self.subfigure5.loglog(alpha_values, exp(log_constant)*alpha_values**power, "g-^",
                                label=r"$%.2f\alpha^{%.2f}$" % (exp(log_constant), power))
@@ -976,7 +1045,7 @@ class GrowthSpeed(DCVizPlotter):
 
         self.subfigure5.legend(numpoints=1, handlelength=1.2, borderaxespad=0.3, )
 
-        for l, r0 in enumerate(r0_values[1:]):
+        for l, r0 in enumerate(r0_values[1+l_incr:]):
             self.subfigure6.plot(s0_values[1:], alpha_cutz[l+1, 1:], label="r0 = %g" % r0)
 
         self.subfigure6.set_xlabel(r"$\sigma_0$")
@@ -986,32 +1055,30 @@ class GrowthSpeed(DCVizPlotter):
         cuts = alpha_cutz[1:, 1:].mean(axis=1)
 
         print r0_values[1:], cuts
-        self.subfigure7.plot(r0_values[1:], cuts, 'b-x')
+        self.subfigure7.plot(r0_values[1+l_incr:], cuts[l_incr:], 'b-x')
         self.subfigure7.set_xlabel(r"$\lambda_D$")
         self.subfigure7.set_ylabel(r"$\mathrm{avg alpha shift}$")
 
-        for l, r0 in enumerate(r0_values[1:]):
+        for l, r0 in enumerate(r0_values[1+l_incr:]):
             self.subfigure8.plot(s0_values[1:], alpha_slopes[l+1, 1:], label="r0=%g" % r0)
-        # self.subfigure8.legend()
+        self.subfigure8.legend()
         self.subfigure8.set_xlabel(r"$\sigma_0$")
-        self.subfigure8.set_ylabel(r"$\mathrm{k_values}$")
+        self.subfigure8.set_ylabel("alpha E0 prefac")
 
         comb = alpha_slopes[1:, 1:].mean(axis=1)
-
-        I = np.where(r0_values[1:] > 1)
+        I = np.where(r0_values[1:] > 2.0)
         comb = comb[I]
         x = r0_values[1:][I]
-        fac = x*(1 - np.exp(-1./x))
 
-        self.subfigure9.plot(x, comb*fac, 'b-x')
+        self.subfigure9.plot(x, comb, 'b-x')
         from scipy.optimize import curve_fit
-        f = lambda x, a, b: 1 + np.log(a + b*x)
-        (a, b), _ = curve_fit(f, x, comb*fac, (1, 1))
+        f = lambda x, a, b: a*x + b
+        (a, b), _ = curve_fit(f, x, comb, (1, 1))
         self.subfigure9.plot(x, f(x, a, b), "r-x")
         print a, b
 
         self.subfigure9.set_xlabel(r"$\lambda_D$")
-        self.subfigure9.set_ylabel(r"$\mathrm{avg slope}$")
+        self.subfigure9.set_ylabel(r"avg alpha E0 slope")
 
         self.subfigure.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
         self.subfigure.set_ylabel(r"$\dot{H} = \Delta \langle h\rangle / \Delta t$")
