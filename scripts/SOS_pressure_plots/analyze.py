@@ -24,7 +24,7 @@ def main():
     for stuff in parser:
         n += 1
 
-        L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data = stuff
+        L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, repeat = stuff
 
         area = L*W
 
@@ -43,12 +43,15 @@ def main():
                                "mean_s": [],
                                "var_s": []}
 
-        mean_s = data.attrs["size"]
-        var_s = data.attrs["var"]
+        mean_s = data["ignisData"][ignis_map["SurfaceSize"]]
+        var_s = data["ignisData"][ignis_map["SurfaceVariance"]]
+
+        size = len(mean_s)
+        start = size/4
 
         parsed_data[E0]["alphas"].append(alpha)
-        parsed_data[E0]["mean_s"].append(mean_s)
-        parsed_data[E0]["var_s"].append(var_s)
+        parsed_data[E0]["mean_s"].append(mean_s[start:].mean())
+        parsed_data[E0]["var_s"].append(var_s[start:].mean())
 
     E0_array = []
     alpha_array = []

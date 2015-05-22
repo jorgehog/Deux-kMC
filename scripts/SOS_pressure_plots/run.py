@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 from os.path import join, split
 
 import time
@@ -15,10 +16,18 @@ def main():
     controller, path, app, cfg, n_procs = parse_input(sys.argv)
 
     E0_values = ParameterSet(cfg, "E0dA\s*\=\s*(.*)\;")
-    E0_values.initialize_set_incr(0.01, 0.2, 0.01)
+    E0_values.initialize_set([0.01, 0.1, 1.0])
 
     alpha_values = ParameterSet(cfg, "alpha\s*=\s*(.*)\;")
-    alpha_values.initialize_set_incr(0.1, 2, 0.1)
+
+    alpha_min = 0.1
+    alpha_max = 2.0
+    N = 20
+
+    log_one_over_alpha = np.linspace(np.log(alpha_min), np.log(alpha_max), N)
+    logspaces_alphas = np.exp(log_one_over_alpha)
+
+    alpha_values.initialize_set(logspaces_alphas)
 
     controller.register_parameter_set(E0_values)
     controller.register_parameter_set(alpha_values)

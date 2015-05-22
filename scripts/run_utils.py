@@ -8,10 +8,7 @@ from mpi4py import MPI
 
 def run_kmc(proc, combination, path, app, cfg):
 
-    print "Running ",
-    for value in combination:
-        print "%.3f" % value,
-    print
+    print combination
 
     this_dir = os.getcwd()
 

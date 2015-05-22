@@ -1375,8 +1375,8 @@ class SOS_pressure_sizes(DCVizPlotter):
 
             nplots += 1
 
-        xmin = 0.5
-        xmax = 6
+        xmin = 0.48
+        xmax = 5
 
         # self.subfigure.set_xlabel(r"$1/\alpha$")
         self.subfigure.set_xlim(xmin, xmax)
