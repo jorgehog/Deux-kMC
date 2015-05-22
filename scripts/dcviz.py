@@ -1340,6 +1340,7 @@ class SOS_pressure_sizes(DCVizPlotter):
 
         nplots = 0
         for i, E0_value in sorted(enumerate(E0_array), key=lambda x: x[1]):
+            print E0_value
             #
             #
             # if i%(len(E0_array)/(N-1)) != 0:

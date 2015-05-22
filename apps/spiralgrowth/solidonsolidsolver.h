@@ -104,10 +104,18 @@ public:
 
     void setMu(const double mu);
 
+    void reInitialize(bool value)
+    {
+        m_reInitialize = value;
+    }
+
 
 private:
 
     const uint m_dim;
+
+    bool m_initialized;
+    bool m_reInitialize;
 
     PressureWall *m_pressureWallEvent;
 

@@ -10,6 +10,8 @@ SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
                                        const bool shadowing) :
     KMCSolver(),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
+    m_initialized(false),
+    m_reInitialize(false),
     m_length(length),
     m_width(width),
     m_alpha(alpha),
@@ -163,13 +165,16 @@ void SolidOnSolidSolver::setMu(const double mu)
 
 void SolidOnSolidSolver::initializeSolver()
 {
-    m_heights.zeros();
-
-    for (uint x = 0; x < m_length; ++x)
+    if (!m_initialized || (m_initialized && m_reInitialize))
     {
-        for (uint y = 0; y < m_width; ++y)
+        m_heights.zeros();
+
+        for (uint x = 0; x < m_length; ++x)
         {
-            m_heights(x, y) = (m_heights(leftSite(x), y) + m_heights(x, bottomSite(y)))/2 + round(-1 + 2*rng.uniform());
+            for (uint y = 0; y < m_width; ++y)
+            {
+                m_heights(x, y) = (m_heights(leftSite(x), y) + m_heights(x, bottomSite(y)))/2 + round(-1 + 2*rng.uniform());
+            }
         }
     }
 
