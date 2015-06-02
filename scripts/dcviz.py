@@ -679,10 +679,9 @@ class GrowthSpeed2(DCVizPlotter):
 
         return remainder
 
-
 class GrowthSpeed(DCVizPlotter):
 
-    nametag = "^growthspeed\_(.*)\.npy"
+    nametag = "^growthspeed_dated_\_(.*)\.npy"
 
     numpyBin = True
 
@@ -1150,6 +1149,492 @@ class GrowthSpeed(DCVizPlotter):
 
         # self.subfigure3.set_xlabel(r"$E_0$")
         # self.subfigure3.set_ylabel(r"$\gamma_\mathrm{eq}$")
+
+
+class GrowthSpeed3(DCVizPlotter):
+
+    nametag = "^growthspeed\_(.*)\.npy"
+
+    numpyBin = True
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    # figMap = {"omega_vs_v": "subfigure", "slopes": "subfigure2", "mu0": "subfigure3"}
+
+    figMap = {"omega_vs_v": "subfigure",
+              "slopes": "subfigure2",
+              "logk_slopes": "subfigure4",
+              "logk_cutz": "subfigure5",
+              "alpha_cuts_all": "subfigure6",
+              "alpha_cutz_r0": "subfigure7",
+              "alpha_slopes_full": "subfigure8",
+              "alpha_slopes_comb": "subfigure9",
+              "alpha_p0": "subfigure10"}
+
+    # figMap = {"omega_vs_v": ["subfigure",
+    #           "subfigure2",
+    #           "subfigure4",
+    #           "subfigure5",
+    #           "subfigure6",
+    #           "subfigure7",
+    #           "subfigure8",
+    #           "subfigure9"]}
+
+    # figMap = {"asd": "subfigure"}
+
+    plot_values = [0.5, 1.0]
+    shapes = ["s", "^", "v", 'o']
+
+    def plot_and_slopify(self, E0, alpha,r0, omega, mu_shifts, mu, v):
+        mu0 = (mu - mu_shifts).mean()
+        c_over_c0 = exp(mu0 + mu_shifts)
+        c0 = exp(-2*alpha)
+        c = c_over_c0*c0
+
+        v *= c_over_c0
+
+        if E0 == 0:
+            if not (omega == (c_over_c0-1)).all():
+
+                print "OMEGA FAIL"
+                print omega
+                print c_over_c0
+                self.Exit()
+
+        idx_high = np.where(omega >= 0)
+        idx_vhigh = np.where(omega >= 3)
+        idx_low = np.where(omega < 0)
+        idx_all = np.where(omega > -2)
+
+        try:
+            if int(self.argv[3]) < 0:
+                idx_chosen = idx_low
+            else:
+                idx_chosen = idx_high
+        except IndexError:
+            idx_chosen = idx_high
+
+
+        F0 = E0/(r0*(1-np.exp(-1./r0)))
+
+        slope1, intercept, _, _, err = linregress(omega[idx_chosen], v[idx_chosen])
+
+        v_over_omega = v[idx_chosen]/omega[idx_chosen]
+        v_over_omega = v_over_omega[np.where(omega[idx_chosen] != 0)]
+        avg = v_over_omega.mean()
+
+        slope = avg
+
+
+        if str(avg) == "nan":
+            print avg
+            self.Exit()
+
+        # slope_low, intercept, _, _, _ = linregress(omega[idx_low], v[idx_low])
+        #
+        # print E0, slope/slope_low - 1
+
+        # slope -= np.exp(-2*alpha + alpha*F0)
+        return mu0, slope1, v, err
+
+    def uberplot(self, omega, v, k, E0):
+
+        idx_undersat = np.where(omega <= 0)
+        idx_oversat = np.where(omega >= 0)
+
+        omega_undersat_list = list(omega[idx_undersat])
+        omega_oversat_list = list(omega[idx_oversat])
+
+        v_undersat_list = list(v[idx_undersat])
+        v_oversat_list = list(v[idx_oversat])
+
+        self.subfigure.plot(omega_undersat_list[::3] + omega_oversat_list,
+                            v_undersat_list[::3] + v_oversat_list,
+                            label=r"$E_0=%.1f$" % E0,
+                            marker=self.shapes[k],
+                            markeredgecolor="k",
+                            linestyle="--",
+                            color="r",
+                            linewidth=1,
+                            fillstyle='none',
+                            markersize=7,
+                            markeredgewidth=1.5)
+
+    def adjust(self):
+
+        for map in self.adjust_maps.values():
+            map["bottom"] = 0.2
+            map["top"] = 0.94
+
+    l_min = 2
+
+    def plot(self, data):
+
+        E0_values = self.get_family_member_data(data, "E0")
+        alpha_values = self.get_family_member_data(data, "alpha")
+        mu_shift_values = self.get_family_member_data(data, "mu_shift")
+        r0_values = self.get_family_member_data(data, "r0")
+        s0_values = self.get_family_member_data(data, "s0")
+        mu_values = self.get_family_member_data(data, "mu")
+        v_values = self.get_family_member_data(data, "v")
+        n_values = self.get_family_member_data(data, "n")
+
+        print E0_values.shape
+        print alpha_values.shape
+        print mu_shift_values.shape
+        print r0_values.shape
+        print s0_values.shape
+        print mu_values.shape
+        print v_values.shape
+        print n_values.shape
+
+        # E0_values = E0_values[:6]
+
+        omega = exp(mu_shift_values) - 1
+
+        k_values = np.zeros(shape=(len(E0_values), len(alpha_values), len(r0_values), len(s0_values)))
+        mu_zero = np.zeros_like(k_values)
+        errors = np.zeros_like(k_values)
+
+        J, L, M = [int(x) for x in self.argv[:3]]
+
+        print "alpha=%g, s0 = %g, r0 = %g" % (alpha_values[J], s0_values[M+1], r0_values[L+1])
+
+        unloaded_with_alpha = []
+        for j in range(len(alpha_values)):
+            _, slope0, v0, err = self.plot_and_slopify(0, alpha_values[j], 1, omega, mu_shift_values, mu_shift_values, v_values[0, j, :, 0, 0])
+
+            k_values[0, j, :, :] = slope0
+            mu_zero[0, j, :, :] = 0
+            errors[0, j, :, :] = err
+
+            unloaded_with_alpha.append(slope0)
+
+            if j == J:
+                self.uberplot(exp(mu_shift_values) - 1, v0, 0, 0)
+
+        ula = -np.log(np.array(unloaded_with_alpha))
+        self.subfigure5.plot(alpha_values, ula, label="ZERO")
+
+        unloaded_alpha_slope, unloaded_alpha_cut, _, _, err = linregress(alpha_values, np.log(np.array(unloaded_with_alpha)))
+        print err, unloaded_alpha_slope, unloaded_alpha_cut
+
+        k = 1
+        l_skip = []
+        for i, E0 in enumerate(E0_values[1:]):
+            for j, alpha in enumerate(alpha_values):
+                    for l, r0 in enumerate(r0_values[1:]):
+                        for m, s0 in enumerate(s0_values[1:]):
+
+                            mu0, slope, v, error = self.plot_and_slopify(E0,
+                                                                         alpha,
+                                                                         r0,
+                                                                         omega,
+                                                                         mu_shift_values,
+                                                                         mu_values[i+1, j, :, l+1, m+1],
+                                                                         v_values[i+1, j, :, l+1, m+1])
+
+                            if slope < 0 and abs(slope) < 1E-3:
+                                l_skip.append(l)
+
+                            k_values[i+1][j][l+1][m+1] = slope
+                            errors[i+1][j][l+1][m+1] = error
+                            mu_zero[i+1][j][l+1][m+1] = mu0
+
+                            if E0 in self.plot_values and j == J and l == L and m == M:
+                                self.uberplot(omega, v, k, E0)
+
+                                k += 1
+
+        log_k_E0_slopes = np.zeros(shape=(len(alpha_values), len(r0_values), len(s0_values)))
+        log_k_cutz = np.zeros_like(log_k_E0_slopes)
+        log_k_slope_error = np.zeros_like(log_k_E0_slopes)
+
+        ka = 0
+        na = 5
+        nm = na - 2
+        d = len(alpha_values)/nm
+        for j, alpha in enumerate(alpha_values):
+            for l, r0 in enumerate(r0_values[1:]):
+
+                if l in l_skip:
+                    continue
+
+                # F0_values = E0_values/(r0*(1 - np.exp(-1./r0)))
+
+                for m, s0 in enumerate(s0_values[1:]):
+
+                    log_k_slope, intercept, _, _, err = linregress(E0_values, np.log(k_values[:, j, l+1, m+1]))
+
+                    if l == L and m == M:
+                        if j == 0 or j == len(alpha_values) - 1 or j % d == 0:
+
+                            self.subfigure2.plot(E0_values, k_values[:, j, l+1, m+1],
+                                                 label=r"$\alpha=%g$" % round(alpha, 1),
+                                                 marker=self.shapes[ka],
+                                                 markeredgecolor="k",
+                                                 linestyle="--",
+                                                 color="r",
+                                                 linewidth=1,
+                                                 fillstyle='none',
+                                                 markersize=7,
+                                                 markeredgewidth=1.5)
+
+                            ka += 1
+
+                    if str(intercept) == "nan":
+                        print intercept, alpha, r0, s0
+                        print k_values[:, j, l+1, m+1]
+                        self.Exit()
+
+                    log_k_E0_slopes[j, l+1, m+1] = log_k_slope
+                    log_k_cutz[j, l+1, m+1] = intercept
+                    log_k_slope_error[j, l+1, m+1] = err
+
+
+        alpha_slopes = np.zeros(shape=(len(r0_values), len(s0_values)))
+        alpha_cutz = np.zeros_like(alpha_slopes)
+
+        for l, r0 in enumerate(r0_values[1:]):
+            if l in l_skip:
+                continue
+
+            for m, s0 in enumerate(s0_values[1:]):
+                alpha_slope, intercept, _, _, err = linregress(alpha_values, log_k_E0_slopes[:, l+1, m+1])
+
+                alpha_slopes[l+1, m+1] = alpha_slope
+                alpha_cutz[l+1, m+1] = intercept
+
+
+        self.subfigure4.plot(alpha_values, log_k_E0_slopes[:, L+1, M+1],
+                             marker="s",
+                             markeredgecolor="k",
+                             linestyle="--",
+                             color="r",
+                             linewidth=1,
+                             fillstyle='none',
+                             markersize=7,
+                             markeredgewidth=1.5)
+        self.subfigure4.plot([0, alpha_values[0]],
+                             [alpha_cutz[L+1, M+1], alpha_cutz[L+1, M+1] + alpha_slopes[L+1, M+1]*alpha_values[0]],
+                             "r--")
+
+        a_cut = np.where(alpha_values > 1.0)
+
+        S_tot = 0
+        count2 = 0
+        for l, r0 in enumerate(r0_values[1:]):
+
+            if l in l_skip:
+                continue
+
+            S = 0
+            count = 0
+
+            for m, s0 in enumerate(s0_values[1:]):
+                S += log_k_cutz[:, l+1, m+1]
+                count += 1
+
+
+                if l == L and m == M:
+
+                    self.subfigure5.plot(alpha_values[a_cut], -log_k_cutz[:, l+1, m+1][a_cut],
+                                         linestyle="--",
+                                         marker="s",
+                                         linewidth=1,
+                                         fillstyle='none',
+                                         markersize=7,
+                                         markeredgewidth=1.5)
+
+
+            S_tot += S
+            count2 += count
+
+        S_tot /= count2
+
+        power, log_constant, _, _, err = linregress(np.log(alpha_values), np.log(-S_tot))
+        print "Power=%g, constant=%g, err=%g" % (power, exp(log_constant), err)
+        print l_skip
+        if len(l_skip) == 0:
+            l_incr = 0
+        else:
+            l_incr = max([l+1 for l in l_skip])
+
+        self.subfigure5.plot(alpha_values, exp(log_constant)*alpha_values**power, "g-^",
+                               label=r"$%.2f\alpha^{%.2f}$" % (exp(log_constant), power))
+
+        FUNC = lambda x, a, b, c: x*(exp(b*x) - 1)
+        (a, b, c), _ = curve_fit(FUNC, alpha_values, ula, (1, 1, 1))
+        self.subfigure5.plot(alpha_values, FUNC(alpha_values, a, b, c), "k--x", label="cf")
+        print "--a-a--a", a, b, c
+
+        slope, intercept, _, _, _ = linregress(alpha_values[a_cut], S_tot[a_cut])
+        print intercept, slope
+
+        self.subfigure5.plot(alpha_values, -S_tot, "r-^", label="Avg all param")
+
+        self.subfigure5.legend(numpoints=1, handlelength=1.2, borderaxespad=0.3, )
+
+        for l, r0 in enumerate(r0_values[1+l_incr:]):
+            self.subfigure6.plot(s0_values[1:], alpha_cutz[l+1, 1:], label="r0 = %g" % r0)
+
+        self.subfigure6.set_xlabel(r"$\sigma_0$")
+        self.subfigure6.set_ylabel(r"$\mathrm{alpha shift}$")
+        # self.subfigure6.legend()
+
+        cuts = alpha_cutz[1:, 1:].mean(axis=1)
+
+        print r0_values[1:], cuts
+        self.subfigure7.plot(r0_values[1+l_incr:], cuts[l_incr:], 'b-x')
+        self.subfigure7.set_xlabel(r"$\lambda_D$")
+        self.subfigure7.set_ylabel(r"$\mathrm{avg alpha shift}$")
+
+        for l, r0 in enumerate(r0_values[1+l_incr:]):
+            self.subfigure8.plot(s0_values[1:], alpha_slopes[l+1, 1:], label="r0=%g" % r0)
+        self.subfigure8.legend()
+        self.subfigure8.set_xlabel(r"$\sigma_0$")
+        self.subfigure8.set_ylabel("alpha E0 prefac")
+
+        comb = alpha_slopes[1:, 1:].mean(axis=1)
+        I = np.where(r0_values[1:] > 3.0)
+        comb = comb[I]
+        x = r0_values[1:][I]
+
+        self.subfigure9.plot(x, comb, 'b-x')
+        f = lambda x, a, b: a*x + b
+        (a, b), _ = curve_fit(f, x, comb, (1, 1))
+        self.subfigure9.plot(x, f(x, a, b), "r-x")
+        print a, b
+
+        self.subfigure9.set_xlabel(r"$\lambda_D$")
+        self.subfigure9.set_ylabel(r"avg alpha E0 slope")
+
+        self.subfigure.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
+        self.subfigure.set_ylabel(r"$\dot{H} = \Delta \langle h\rangle / \Delta t$")
+        self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2, borderaxespad=0.3 )
+        self.subfigure.set_xlim(-1, 3)
+        self.subfigure.axes.xaxis.set_ticks([-1, 0, 1, 2, 3])
+        self.subfigure.axes.xaxis.set_major_formatter(FormatStrFormatter(r"$%g$"))
+        self.subfigure.set_ylim(-3, 12)
+        self.subfigure.axes.yaxis.set_ticks([-2, 0, 2, 4, 6, 8, 10])
+
+        self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=2, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3)
+        self.subfigure2.axes.set_yscale('log')
+        self.subfigure2.set_xlim(-0.05, 1.05)
+        self.subfigure2.set_ylim(0.6, 23)
+
+        self.subfigure2.set_xlabel(r"$E_0 \propto F_0/L$")
+        self.subfigure2.set_ylabel(r"$k_g = \dot{H} / \Omega$")
+
+        self.subfigure4.set_xlabel(r"$\alpha = E_b/kT$")
+        self.subfigure4.set_ylabel(r"$\log (k_g/k_0) / E_0$")
+        self.subfigure4.set_ybound(0)
+        self.subfigure4.set_xlim(0, alpha_values.max()*1.075)
+
+
+        self.subfigure5.set_xlabel(r"$\alpha = E_b/kT$")
+        self.subfigure5.set_ylabel(r"$\mathrm{log k shift}$")
+
+        CV = 0
+        NN = 0
+        p0_mat = np.zeros(shape=(len(alpha_values)))
+        log_k_averaged = np.zeros(shape=(len(E0_values), len(alpha_values)))
+        for j, alpha in enumerate(alpha_values):
+            N = 0
+            opt_func = lambda x, p0: alpha*(x - p0)
+
+            for l, r0 in enumerate(r0_values[1:]):
+
+                if l in l_skip or r0 < 3:
+                    continue
+
+                for m, s0 in enumerate(s0_values[1:]):
+
+
+                    pj, cv = curve_fit(opt_func, E0_values, np.log(k_values[:, j, l+1, m+1]), (0.5,))
+
+                    # self.subfigure10.plot(E0_values, np.log(k_values[:, j, l+1, m+1]))
+                    # self.subfigure10.plot(E0_values, opt_func(E0_values, pj))
+                    CV += cv[0][0]
+
+                    N += 1
+                    NN += 1
+
+                    phax = (E0_values - np.log(k_values[:, j, l+1, m+1])/alpha/alpha_slopes[l+1, m+1]).mean()
+
+                    print phax, pj
+                    p0_mat[j] += phax
+
+                    log_k_averaged[:, j] += np.log(k_values[:, j, l+1, m+1])
+
+            p0_mat[j] /= N
+            log_k_averaged[:, j] /= N
+
+        amin = 0
+
+        for j, alpha in enumerate(alpha_values):
+            if alpha < amin:
+                continue
+
+            self.subfigure10.plot(E0_values, log_k_averaged[:, j], label=r"$\alpha=%.2f$" % alpha)
+
+
+        print "cov", CV/NN
+        # self.subfigure10.plot(alpha_values, p0_mat)
+        self.subfigure10.legend()
+        self.subfigure10.set_xlabel("E0")
+        self.subfigure10.set_ylabel("logk")
+
+        log_k_start = log_k_averaged.min()
+        log_k_end = log_k_averaged.max()
+
+        global_match = 100000000000
+        win = []
+        for E0_ref in np.linspace(E0_values.min(), E0_values.max()):
+            for log_k_ref in np.linspace(log_k_start, log_k_end):
+                match = 0
+                nm = 0
+
+                x0 = E0_ref
+                x1 = E0_values[0]
+                x2 = E0_values[-1]
+
+                y0 = log_k_ref
+
+                for j, alpha in enumerate(alpha_values):
+
+                    if alpha < amin:
+                        continue
+
+                    y1 = log_k_averaged[0, j]
+                    y2 = log_k_averaged[-1, j]
+
+                    # match += self.distance(x1, y1, x2, y2, x0, y0)
+
+
+                    a, c, _, _, _ = linregress(E0_values, log_k_averaged[:, j])
+                    b = -1
+
+                    match += self.distance2(a, b, c, x0, y0)
+                    nm+=1
+
+                match /= nm
+
+                if match < global_match:
+                    global_match = match
+                    win = [x0, y0]
+
+        self.subfigure10.scatter(win[0], win[1], s=40)
+
+        print win
+
+    def distance(self, x1, y1, x2, y2, x0, y0):
+        return abs((y2 - y1)*x0 - (x2 - x1)*y0 + x2*y1 - y2*x1)/np.sqrt((y2-y1)**2 + (x2-x1)**2)
+    def distance2(self, a, b, c, x0, y0):
+        return abs(a*x0 + b*y0 + c)/np.sqrt(a**2 + b**2)
+
 
 
 class Quasi2D_slopes_and_stuff(DCVizPlotter):
