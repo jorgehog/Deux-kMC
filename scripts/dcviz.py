@@ -1964,10 +1964,10 @@ class SOSanalyze(DCVizPlotter):
         # self.ss.set_xlabel(r"$\lambda_D$")
         # self.ss.set_ylabel(r"$\log \left[\mathrm{\sigma(K_3; \sigma_0})/K_3(\lambda_d)\right]$")
 
-        self.mean_figure.plot(r0, self.scale(r0), "r-", label=r"$\mathrm{Analytical}$", linewidth=3)
+        self.mean_figure.plot(r0, self.scale(r0), "r-", label=r"$\mathrm{Analytical\,\,thermodynamics}$", linewidth=3)
 
         self.mean_figure.plot(r0, r0_mean, 'ks',
-                              label=r"$\mathrm{KMC}$",
+                              label=r"$\mathrm{The\,\,model\,\,(KMC)}$",
                               linewidth=1,
                               fillstyle='none',
                               markersize=7,
