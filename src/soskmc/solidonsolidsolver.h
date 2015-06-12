@@ -18,7 +18,7 @@ public:
                        const Boundary* xBoundary,
                        const Boundary* yBoundary,
                        const double alpha,
-                       const double mu);
+                       const double gamma);
 
     ~SolidOnSolidSolver();
 
@@ -51,14 +51,9 @@ public:
         return m_alpha;
     }
 
-    const double &mu() const
+    const double &gamma() const
     {
         return m_mu;
-    }
-
-    bool shadowing() const
-    {
-        return false;
     }
 
     const imat &heights() const
@@ -87,6 +82,11 @@ public:
         return *m_pressureWallEvent;
     }
 
+    CavityDiffusion &diffusionEvent() const
+    {
+        return *m_diffusionEvent;
+    }
+
     double localPressure(const uint x, const uint y) const;
 
     double localSurfaceSupersaturation(const uint x, const uint y) const;
@@ -108,7 +108,7 @@ public:
         return *m_siteReactions(x, y);
     }
 
-    void setMu(const double mu);
+    void setMu(const double gamma);
 
 private:
 

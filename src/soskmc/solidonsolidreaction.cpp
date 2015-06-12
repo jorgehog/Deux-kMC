@@ -4,6 +4,8 @@
 
 #include "Events/pressurewall.h"
 
+#include "Events/cavitydiffusion.h"
+
 #include "../kmcsolver/boundary/boundary.h"
 
 
@@ -17,20 +19,11 @@ double DiffusionDeposition::calculateDiffusionRate() const
     const double &Ew = solver().localPressure(x(), y());
     const double E = (int)nNeighbors() + (int)solver().dim() - 5 + Ew;
 
-    return std::exp(-solver().alpha()*E - solver().mu());
+    return std::exp(-solver().alpha()*E - solver().gamma());
 }
 
 double DiffusionDeposition::calculateDepositionRate() const
 {
-//    if (solver().shadowing())
-//    {
-//        return solver().shadowScale(nNeighbors());
-//    }
-//    else
-//    {
-//        return 1.0;
-//    }
-
     return solver().localSurfaceSupersaturation(x(), y());
 }
 
@@ -42,6 +35,7 @@ bool DiffusionDeposition::isAllowed() const
 void DiffusionDeposition::executeAndUpdate()
 {
     PressureWall &pressureWallEvent = solver().pressureWallEvent();
+    CavityDiffusion &diffusionEvent = solver().diffusionEvent();
 
     double r = rate()*rng.uniform();
 
@@ -120,6 +114,11 @@ void DiffusionDeposition::executeAndUpdate()
     {
         DiffusionDeposition *reaction = m_affectedReactions.at(i);
         reaction->calculateRate();
+    }
+
+    if (diffusionEvent.hasStarted())
+    {
+        diffusionEvent.registerHeightChange(x(), y());
     }
 
 }

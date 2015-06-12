@@ -55,7 +55,6 @@ int main(int argv, char** argc)
     const uint &diffuseInt = getSetting<uint>(root, "diffuse");
     const bool diffuse = diffuseInt == 1;
     const double &D = getSetting<double>(root, "D");
-    const uint &pointsPerLatticeUnit = getSetting<uint>(root, "pointsPerLatticeUnit");
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
     const bool equilibriate = equilibriateInt == 1;
@@ -93,7 +92,7 @@ int main(int argv, char** argc)
 
     SolidOnSolidSolver solver(L, W, xBoundary, yBoundary, alpha, mu);
     PressureWall pressureWallEvent(solver, E0, sigma0, r0);
-    CavityDiffusion diffusion(solver, D, pointsPerLatticeUnit);
+    CavityDiffusion diffusion(solver, D);
 
     AverageHeight averageHeight(solver);
     pressureWallEvent.setDependency(averageHeight);
@@ -203,7 +202,6 @@ int main(int argv, char** argc)
 
     simRoot.addData("diffuse", diffuseInt);
     simRoot.addData("D", D);
-    simRoot.addData("pointsPerLatticeUnit", pointsPerLatticeUnit);
 
     simRoot.addData("useConcEquil", equilibriateInt);
     simRoot.addData("reset", resetInt);

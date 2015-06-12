@@ -48,22 +48,8 @@ void EqMu::update()
     m_accuDissolutionRate += dt*localDissolutionRate;
 
     double avgDissolutionRate = m_accuDissolutionRate/m_totalTime;
+    const double avgDepositionRate = 1.0;
 
-    double inverseKStar;
-
-    if (solver().shadowing())
-    {
-        exit(1);
-//        m_accuNeighbours += dt*dependency<NNeighbors>("nNeighbors")->getLocalValue();
-//        const double avgNeighbors = m_accuNeighbours/m_totalTime;
-
-//        inverseKStar = 1./solver().shadowScale(avgNeighbors);
-    }
-    else
-    {
-        inverseKStar = 1.;
-    }
-
-    m_dMu = avgDissolutionRate*inverseKStar;
+    m_dMu = avgDissolutionRate/avgDepositionRate;
 
 }

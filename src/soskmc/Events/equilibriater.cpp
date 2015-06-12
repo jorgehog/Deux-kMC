@@ -54,14 +54,14 @@ void Equilibriater::execute()
         m_counter = 0;
     }
 
-    setValue(m_mutexSolver.mu());
+    setValue(m_mutexSolver.gamma());
 
 }
 
 
 void Equilibriater::initiateNextConcentrationLevel(const double shift)
 {
-    double newMu = m_mutexSolver.mu() + shift;
+    double newMu = m_mutexSolver.gamma() + shift;
 
     //Cannot use 'else' because this could occur even when the prev test goes through
     if (m_doAverage)
@@ -72,7 +72,7 @@ void Equilibriater::initiateNextConcentrationLevel(const double shift)
     }
 
     m_shifts.push_back(shift);
-    m_values.push_back(m_mutexSolver.mu());
+    m_values.push_back(m_mutexSolver.gamma());
 
     m_mutexSolver.setMu(newMu);
 
@@ -117,8 +117,6 @@ void Equilibriater::finalizeAverages()
     }
 
     const uint &N = m_averageMuCount;
-
-    cout << "N = " << N << endl;
 
     m_averageMu /= N;
 

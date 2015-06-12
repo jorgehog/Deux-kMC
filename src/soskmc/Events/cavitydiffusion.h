@@ -7,8 +7,7 @@ class CavityDiffusion : public SolidOnSolidEvent
 public:
 
     CavityDiffusion(SolidOnSolidSolver &solver,
-                    const double D,
-                    const uint pointsPerLatticeUnit = 1);
+                    const double D);
 
     ~CavityDiffusion() {}
 
@@ -24,12 +23,20 @@ public:
 
     double localSurfaceSupersaturation(const uint x, const uint y);
 
+    double volume() const;
+
+    const uint &nParticles() const
+    {
+        return m_particlePositions.n_cols;
+    }
+
+    bool isBlockedPosition(const double x, const double y, const double z) const;
+
+    void _dump(const uint frameNumber) const;
 
 private:
 
     const double m_D;
-    const uint m_pointsPerLatticeUnit;
 
-    cube m_saturationField;
-
+    mat m_particlePositions;
 };

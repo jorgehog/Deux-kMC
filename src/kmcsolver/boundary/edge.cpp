@@ -17,5 +17,5 @@ int Edge::transformCoordinate(const int xi) const
 
 bool Edge::isBlocked(const int xi) const
 {
-    return xi < 0 || xi >= m_span;
+    return xi < 0 || xi >= signed(m_span);
 }
