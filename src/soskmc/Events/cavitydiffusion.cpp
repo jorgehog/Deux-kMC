@@ -4,6 +4,8 @@
 
 #include "lammpswriter/lammpswriter.h"
 
+#include "../solidonsolidreaction.h"
+
 CavityDiffusion::CavityDiffusion(SolidOnSolidSolver &solver,
                                  const double D,
                                  const double dt) :
@@ -52,6 +54,8 @@ void CavityDiffusion::setupInitialConditions()
 
     m_F = zeros(3, N);
 
+    m_localRates.set_size(nParticles(), solver().length(), solver().width());
+
 }
 
 void CavityDiffusion::initialize()
@@ -89,11 +93,38 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
         return;
     }
 
-    (void) x;
-    (void) y;
-    (void) value;
 
     //Remove / add the correct particle.
+
+    if (value == -1)
+    {
+
+        vector<double> localRatesForSite(nParticles());
+
+        double Rtot = 0;
+        for (uint n = 0; n < nParticles(); ++n)
+        {
+            localRatesForSite.at(n) = m_localRates(n, x, y);
+            Rtot += localRatesForSite.at(n);
+        }
+
+        double R = rng.uniform()*Rtot;
+
+        uint N = binarySearchForInterval(R, localRatesForSite);
+
+        cout << "should remove particle " << N << endl;
+
+    }
+
+    else
+    {
+        uint ns = 6 - solver().nNeighbors(x, y);
+
+        uint R = (uint)(rng.uniform()*ns);
+
+
+
+    }
 
     const double &h = solver().pressureWallEvent().height();
     double zMin = solver().heights().min();
@@ -117,14 +148,19 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
         }
     }
 
+    DiffusionDeposition *r;
+    for (uint _x = 0; _x < solver().length(); ++_x)
+    {
+        for (uint _y = 0; _y < solver().width(); ++_y)
+        {
+            r = &solver().reaction(_x, _y);
+            r->setDepositionRate(r->calculateDepositionRate());
+        }
+    }
 }
 
 double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y)
 {
-    (void) x;
-    (void) y;
-
-    //do stuff
 
     double R = 0;
 
@@ -132,12 +168,17 @@ double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y)
 
     for (uint n = 0; n < nParticles(); ++n)
     {
-        double dxSquared = pow((double)x - m_particlePositions(0, n), 2);
-        double dySquared = pow((double)y - m_particlePositions(1, n), 2);
-        double dzSquared = pow((double)z - m_particlePositions(2, n), 2);
+        const double dxSquared = pow((double)x - m_particlePositions(0, n), 2);
+        const double dySquared = pow((double)y - m_particlePositions(1, n), 2);
+        const double dzSquared = pow((double)z - m_particlePositions(2, n), 2);
 
-        R += 1./sqrt(dxSquared + dySquared + dzSquared);
+        const double Rn = 1./sqrt(dxSquared + dySquared + dzSquared);
+        R += Rn;
+
+        m_localRates(n, x, y) = Rn;
     }
+
+    return R*exp(-solver().gamma());
 
     return 1.0;
 }

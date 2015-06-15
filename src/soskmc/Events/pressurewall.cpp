@@ -150,7 +150,6 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
 
     double prevDiffRate = reaction.diffusionRate();
     reaction.setDiffusionRate(prevDiffRate*rateChange);
-    reaction.changeRate(reaction.diffusionRate() + reaction.depositionRate());
 
     m_localPressure(x, y) *= m_expFac;
 

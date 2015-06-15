@@ -46,6 +46,9 @@ private:
     mat m_particlePositions;
     mat m_F;
 
+    cube m_localRates;
+
+
     void diffuse(const double dt);
 
 };

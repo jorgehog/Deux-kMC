@@ -64,6 +64,13 @@ public:
     void setDiffusionRate(const double newRate)
     {
         m_diffusionRate = newRate;
+        changeRate(m_diffusionRate + m_depositionRate);
+    }
+
+    void setDepositionRate(const double newRate)
+    {
+        m_depositionRate = newRate;
+        changeRate(m_diffusionRate + m_depositionRate);
     }
 
     double calculateDiffusionRate() const;

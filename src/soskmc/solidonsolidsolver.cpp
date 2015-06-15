@@ -246,7 +246,6 @@ void SolidOnSolidSolver::setMu(const double mu)
             {
                 DiffusionDeposition &_reaction = reaction(x, y);
                 _reaction.setDiffusionRate(_reaction.diffusionRate()*expFac);
-                _reaction.changeRate(_reaction.diffusionRate() + _reaction.depositionRate());
             }
         }
     }

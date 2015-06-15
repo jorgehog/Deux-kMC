@@ -68,7 +68,7 @@ void KMCSolver::getCumsumAndTotalRate()
         if (reaction->isAllowed())
         {
             rate = reaction->rate();
-            BADAssClose(rate, reaction->rateExpression(), 1E-5);
+            BADAssClose(reaction->rate(), reaction->rateExpression(), 1E-5);
 
             m_totalRate += rate;
         }
