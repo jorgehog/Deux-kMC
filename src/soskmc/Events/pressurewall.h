@@ -59,7 +59,7 @@ public:
 
     void updateRatesFor(DiffusionDeposition &reaction);
 
-    void registerHeightChange(const uint x, const uint y);
+    void registerHeightChange(const uint x, const uint y, std::vector<DiffusionDeposition *> affectedReactions, const uint n);
 
     double bruteForceRatio() const;
 

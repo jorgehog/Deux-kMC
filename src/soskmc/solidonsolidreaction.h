@@ -80,8 +80,5 @@ public:
 private:
     double m_depositionRate;
     double m_diffusionRate;
-
-    static std::vector<DiffusionDeposition*> m_affectedReactions;
-
 };
 

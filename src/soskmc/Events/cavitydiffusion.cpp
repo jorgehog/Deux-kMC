@@ -99,10 +99,18 @@ void CavityDiffusion::reset()
 
 }
 
-void CavityDiffusion::registerHeightChange(const uint x, const uint y)
+void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int value)
 {
+    if (!hasStarted())
+    {
+        return;
+    }
+
     (void) x;
     (void) y;
+    (void) value;
+
+    //Remove / add the correct particle.
 
     const double &h = solver().pressureWallEvent().height();
     double zMin = solver().heights().min();

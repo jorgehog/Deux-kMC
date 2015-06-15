@@ -19,7 +19,9 @@ SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
     m_mu(mu),
     m_heights(length, width, fill::zeros),
     m_nNeighbors(length, width),
-    m_siteReactions(length, width)
+    m_siteReactions(length, width),
+    m_affectedReactions(5)
+
 {
     for (uint x = 0; x < length; ++x)
     {
@@ -45,7 +47,6 @@ SolidOnSolidSolver::~SolidOnSolidSolver()
 
 void SolidOnSolidSolver::registerHeightChange(const uint x, const uint y, const int value)
 {
-
     m_heights(x, y) += value;
 
     const uint left = leftSite(x);
@@ -53,26 +54,48 @@ void SolidOnSolidSolver::registerHeightChange(const uint x, const uint y, const 
     const uint bottom = bottomSite(y);
     const uint top = topSite(y);
 
+    uint n = 0;
+
     setNNeighbors(x, y);
+    m_affectedReactions.at(n) = &reaction(x, y);
+    n++;
 
     if (!boundary(0)->isBlocked(left))
     {
         setNNeighbors(left, y);
+        m_affectedReactions.at(n) = &reaction(left, y);
+        n++;
     }
 
     if (!boundary(0)->isBlocked(right))
     {
         setNNeighbors(right, y);
+        m_affectedReactions.at(n) = &reaction(right, y);
+        n++;
     }
 
     if (!boundary(1)->isBlocked(top))
     {
         setNNeighbors(x, top);
+        m_affectedReactions.at(n) = &reaction(x, top);
+        n++;
     }
 
     if (!boundary(1)->isBlocked(bottom))
     {
         setNNeighbors(x, bottom);
+        m_affectedReactions.at(n) = &reaction(x, bottom);
+        n++;
+    }
+
+    m_pressureWallEvent->registerHeightChange(x, y, m_affectedReactions, n);
+
+    m_diffusionEvent->registerHeightChange(x, y, value);
+
+    for (uint i = 0; i < n; ++i)
+    {
+        DiffusionDeposition *reaction = m_affectedReactions.at(i);
+        reaction->calculateRate();
     }
 
 }

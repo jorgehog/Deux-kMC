@@ -168,10 +168,43 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
 
 }
 
-void PressureWall::registerHeightChange(const uint x, const uint y)
+void PressureWall::registerHeightChange(const uint x,
+                                        const uint y,
+                                        std::vector<DiffusionDeposition*> affectedReactions,
+                                        const uint n)
 {
+    if (!hasStarted())
+    {
+        return;
+    }
+
+    auto start = affectedReactions.begin();
+    auto end = start + n;
+
     m_ratioPartialSums(x, y) = partialRatio(x, y);
+
+    findNewHeight();
+
+    for (uint i = 0; i < n; ++i)
+    {
+        DiffusionDeposition *reaction = affectedReactions.at(i);
+        recalculateLocalPressure(reaction->x(), reaction->y());
+    }
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            DiffusionDeposition &reaction = solver().reaction(x, y);
+
+            if (std::find(start, end, &reaction) == end)
+            {
+                updateRatesFor(reaction);
+            }
+        }
+    }
 }
+
 
 double PressureWall::bruteForceRatio() const
 {

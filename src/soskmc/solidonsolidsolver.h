@@ -130,6 +130,9 @@ private:
 
     void initializeSolver();
 
+    std::vector<DiffusionDeposition*> m_affectedReactions;
+
+
     // KMCSolver interface
 public:
     uint numberOfReactions() const;
