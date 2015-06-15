@@ -5,9 +5,13 @@
 #include "lammpswriter/lammpswriter.h"
 
 CavityDiffusion::CavityDiffusion(SolidOnSolidSolver &solver,
-                                 const double D) :
+                                 const double D,
+                                 const double dt) :
     SolidOnSolidEvent(solver, "Diffusion"),
-    m_D(D)
+    m_D0(D),
+    m_D(D*exp(-solver.gamma())/(2*solver.dim())),
+    m_dt0(dt),
+    m_dt(dt*exp(solver.gamma())/solver.area())
 {
     solver.setDiffusionEvent(*this);
     setDependency(solver.pressureWallEvent());
@@ -46,6 +50,8 @@ void CavityDiffusion::setupInitialConditions()
         n++;
     }
 
+    m_F = zeros(3, N);
+
 }
 
 void CavityDiffusion::initialize()
@@ -62,41 +68,18 @@ void CavityDiffusion::reset()
 {
 
     //Has not yet been updated: Represents time spent in current state.
-    //    const double &dt = solver().currentTimeStep();
-    const double dt = 1.0;
+    const double &dtFull = solver().currentTimeStep();
 
-    mat F = zeros(3, nParticles());
+    const uint N = dtFull/m_dt;
 
-    double x1, y1, z1;
-    double x0, y0, z0;
+    cout << dtFull << " " << m_dt << " " << N << endl;
 
-    for (uint n = 0; n < nParticles(); ++n)
+    for (uint i = 0; i < N; ++i)
     {
-        x0 = m_particlePositions(0, n);
-        y0 = m_particlePositions(1, n);
-        z0 = m_particlePositions(2, n);
-
-        BADAssBool(!isBlockedPosition(x0, y0, z0));
-
-        do
-        {
-            x1 = x0 + sqrt(2*m_D*dt)*rng.normal();// + m_D*F(0, n)*dt;
-            y1 = y0 + sqrt(2*m_D*dt)*rng.normal();// + m_D*F(1, n)*dt;
-            z1 = z0 + sqrt(2*m_D*dt)*rng.normal();// + m_D*F(2, n)*dt;
-
-            if (solver().dim() == 1)
-            {
-                y1 = y0;
-            }
-
-        } while(isBlockedPosition(x1, y1, z1));
-
-        m_particlePositions(0, n) = x1;
-        m_particlePositions(1, n) = y1;
-        m_particlePositions(2, n) = z1;
-
+        diffuse(m_dt);
     }
 
+    diffuse(dtFull - N*m_dt);
 }
 
 void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int value)
@@ -143,12 +126,26 @@ double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y)
 
     //do stuff
 
+    double R = 0;
+
+    const int z = solver().height(x, y) + 1;
+
+    for (uint n = 0; n < nParticles(); ++n)
+    {
+        double dxSquared = pow((double)x - m_particlePositions(0, n), 2);
+        double dySquared = pow((double)y - m_particlePositions(1, n), 2);
+        double dzSquared = pow((double)z - m_particlePositions(2, n), 2);
+
+        R += 1./sqrt(dxSquared + dySquared + dzSquared);
+    }
+
     return 1.0;
 }
 
 double CavityDiffusion::volume() const
 {
-    return solver().pressureWallEvent().height()*solver().area() - arma::accu(solver().heights());
+    //sum (h_l - h_i) - 1
+    return (solver().pressureWallEvent().height() - 1)*solver().area() - arma::accu(solver().heights());
 }
 
 bool CavityDiffusion::isBlockedPosition(const double x, const double y, const double z) const
@@ -159,7 +156,7 @@ bool CavityDiffusion::isBlockedPosition(const double x, const double y, const do
 
     bool isOutSideBox_y = (y < 0) || (y > solver().width());
 
-    bool isOutSideBox_z = (z > solver().pressureWallEvent().height());
+    bool isOutSideBox_z = (z > solver().pressureWallEvent().height() - 0.5);
 
     if (isOutSideBox_x || isOutSideBox_y || isOutSideBox_z)
     {
@@ -180,7 +177,7 @@ bool CavityDiffusion::isBlockedPosition(const double x, const double y, const do
     }
 
     //DERP: collide in x-y plane
-    return z < solver().height(X, Y);
+    return z < solver().height(X, Y) + 0.5;
 
 }
 
@@ -245,4 +242,43 @@ void CavityDiffusion::_dump(const uint frameNumber) const
 
 
 }
+
+void CavityDiffusion::diffuse(const double dt)
+{
+    if (dt < 0 || fabs(dt) < 1E-15)
+    {
+        return;
+    }
+
+    double x1, y1, z1;
+    double x0, y0, z0;
+
+    for (uint n = 0; n < nParticles(); ++n)
+    {
+        x0 = m_particlePositions(0, n);
+        y0 = m_particlePositions(1, n);
+        z0 = m_particlePositions(2, n);
+
+        BADAssBool(!isBlockedPosition(x0, y0, z0));
+
+        do
+        {
+            x1 = x0 + sqrt(2*m_D*dt)*rng.normal() + m_D*m_F(0, n)*dt;
+            y1 = y0 + sqrt(2*m_D*dt)*rng.normal() + m_D*m_F(1, n)*dt;
+            z1 = z0 + sqrt(2*m_D*dt)*rng.normal() + m_D*m_F(2, n)*dt;
+
+            if (solver().dim() == 1)
+            {
+                y1 = y0;
+            }
+
+        } while(isBlockedPosition(x1, y1, z1));
+
+        m_particlePositions(0, n) = x1;
+        m_particlePositions(1, n) = y1;
+        m_particlePositions(2, n) = z1;
+    }
+}
+
+
 
