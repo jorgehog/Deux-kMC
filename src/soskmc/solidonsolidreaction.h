@@ -56,7 +56,7 @@ public:
         return m_depositionRate;
     }
 
-    const double &diffusionRate() const
+    const double &dissolutionRate() const
     {
         return m_diffusionRate;
     }
@@ -73,7 +73,7 @@ public:
         changeRate(m_diffusionRate + m_depositionRate);
     }
 
-    double calculateDiffusionRate() const;
+    double calculateDissolutionRate() const;
 
     double calculateDepositionRate() const;
 

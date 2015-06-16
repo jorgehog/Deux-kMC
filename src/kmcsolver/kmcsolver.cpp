@@ -54,6 +54,11 @@ void KMCSolver::initializeReactions()
     }
 }
 
+double KMCSolver::getRandomLogNumber() const
+{
+    return -std::log(rng.uniform());
+}
+
 void KMCSolver::getCumsumAndTotalRate()
 {
     m_totalRate = 0;
@@ -84,7 +89,7 @@ void KMCSolver::getCumsumAndTotalRate()
 
 void KMCSolver::updateTime()
 {
-    setCurrentTimeStep(-std::log(rng.uniform())/m_totalRate);
+    setCurrentTimeStep(m_nextRandomLogNumber/m_totalRate);
 
     BADAss(currentTimeStep(), >, 0, "timestep should be posiive.");
 
@@ -94,11 +99,12 @@ void KMCSolver::updateTime()
 
 void KMCSolver::initialize()
 {
+    m_currentTime = 0;
+    m_nextRandomLogNumber = getRandomLogNumber();
+
     initializeSolver();
 
     initializeReactions();
-
-    m_currentTime = 0;
 
     updateTime();
 }
@@ -111,6 +117,8 @@ void KMCSolver::execute()
     uint choice = binarySearchForInterval(R, m_cumsumRates);
 
     m_selectedReaction = getReaction(choice);
+
+    m_nextRandomLogNumber = getRandomLogNumber();
 
     BADAssBool(selectedReaction()->isAllowed());
 }

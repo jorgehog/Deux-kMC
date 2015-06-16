@@ -56,6 +56,8 @@ void CavityDiffusion::setupInitialConditions()
 
     m_localProbabilities.set_size(solver().length(), solver().width(), nParticles());
 
+    m_currentTimeStep = calculateTimeStep(1.0, true);
+
 }
 
 void CavityDiffusion::initialize()
@@ -65,6 +67,8 @@ void CavityDiffusion::initialize()
 
 void CavityDiffusion::execute()
 {
+    m_currentTimeStep = calculateTimeStep(m_currentTimeStep);
+
     _dump(cycle());
 }
 
@@ -74,9 +78,9 @@ void CavityDiffusion::reset()
     //Has not yet been updated: Represents time spent in current state.
     const double &dtFull = solver().currentTimeStep();
 
-    const uint N = dtFull/m_dt;
+    BADAssClose(dtFull, m_currentTimeStep, 1E-3);
 
-//    cout << dtFull << " " << m_dt << " " << N << endl;
+    const uint N = dtFull/m_dt;
 
     for (uint i = 0; i < N; ++i)
     {
@@ -156,6 +160,8 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
         }
     }
 
+    m_currentTimeStep = calculateTimeStep(m_currentTimeStep);
+
     DiffusionDeposition *r;
     for (uint _x = 0; _x < solver().length(); ++_x)
     {
@@ -167,15 +173,14 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
     }
 }
 
-double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y)
+double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y, const double timeStep)
 {
 
     double P = 0;
 
     const int z = solver().height(x, y) + 1;
 
-    //DERP: USE ITERATED DT
-    const double sigmaSquared = 2*solver().dim()*m_D*m_dt;
+    const double sigmaSquared = 2*solver().dim()*m_D*timeStep;
 
     for (uint n = 0; n < nParticles(); ++n)
     {
@@ -353,6 +358,73 @@ void CavityDiffusion::insertParticle(const double x, const double y, const doubl
 
     m_F.resize(3, nParticles());
     m_localProbabilities.resize(solver().length(), solver().width(), nParticles());
+}
+
+double CavityDiffusion::calculateTimeStep(const double initialCondition, bool calculateDissolutionRate)
+{
+    double timeStep = initialCondition;
+
+    double totalDissolutionRate = 0;
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            if (calculateDissolutionRate)
+            {
+                totalDissolutionRate += solver().reaction(x, y).calculateDissolutionRate();
+            }
+
+            else
+            {
+                totalDissolutionRate += solver().reaction(x, y).dissolutionRate();
+            }
+        }
+    }
+
+    double eps;
+    uint i = 0;
+
+    cout << "start: " << timeStep << endl;
+
+    do
+    {
+        double totalDepositionRate = 0;
+        for (uint x = 0; x < solver().length(); ++x)
+        {
+            for (uint y = 0; y < solver().width(); ++y)
+            {
+                totalDepositionRate += localSurfaceSupersaturation(x, y, timeStep);
+            }
+        }
+
+        double newTimeStep = solver().nextRandomLogNumber()/(totalDissolutionRate + totalDepositionRate);
+
+        cout << i << " " << newTimeStep << endl;
+
+        i++;
+
+        eps = fabs(timeStep - newTimeStep);
+
+        timeStep = newTimeStep;
+
+    } while (eps > m_eps);
+
+    double totalDepositionRate = 0;
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            totalDepositionRate += localSurfaceSupersaturation(x, y, timeStep);
+        }
+    }
+
+    double newTimeStep = solver().nextRandomLogNumber()/(totalDissolutionRate + totalDepositionRate);
+
+    cout << fabs(newTimeStep - timeStep) << endl;
+    cout << "---" << endl;
+
+    return timeStep;
 }
 
 

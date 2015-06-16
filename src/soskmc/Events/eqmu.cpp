@@ -35,7 +35,7 @@ void EqMu::update()
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            localDissolutionRate += solver().reaction(x, y).diffusionRate();
+            localDissolutionRate += solver().reaction(x, y).dissolutionRate();
         }
     }
 

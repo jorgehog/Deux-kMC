@@ -44,6 +44,11 @@ public:
 
     virtual Reaction *getReaction(const uint n) const = 0;
 
+    const double &nextRandomLogNumber() const
+    {
+        return m_nextRandomLogNumber;
+    }
+
 private:
 
     vector<const Boundary*> m_boundaries;
@@ -55,7 +60,11 @@ private:
 
     double m_totalRate;
 
+    double m_nextRandomLogNumber;
+
     vector<double> m_cumsumRates;
+
+    double getRandomLogNumber() const;
 
     void updateTime();
 

@@ -103,7 +103,8 @@ protected:
 
 TEST_F(SOSkMCTest, test)
 {
-    primeSolver(100);
+    uint prime = 10;
+    primeSolver(prime);
 
     uint repCount = 100;
     for (uint rep = 0; rep < repCount; ++rep)
@@ -184,7 +185,7 @@ TEST_F(SOSkMCTest, test)
             m_diffusionEvent->diffuse(m_diffusionEvent->dt());
         }
 
-        m_diffusionEvent->_dump(rep);
+        m_diffusionEvent->_dump(prime + rep);
     }
 
 }

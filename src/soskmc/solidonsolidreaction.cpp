@@ -14,7 +14,7 @@ uint SolidOnSolidReaction::nNeighbors() const
     return m_solver.nNeighbors(m_x, m_y);
 }
 
-double DiffusionDeposition::calculateDiffusionRate() const
+double DiffusionDeposition::calculateDissolutionRate() const
 {
     const double &Ew = solver().localPressure(x(), y());
     const double E = (int)nNeighbors() + (int)solver().dim() - 5 + Ew;
@@ -50,7 +50,7 @@ void DiffusionDeposition::executeAndUpdate()
 double DiffusionDeposition::rateExpression()
 {
     m_depositionRate = calculateDepositionRate();
-    m_diffusionRate = calculateDiffusionRate();
+    m_diffusionRate = calculateDissolutionRate();
 
     return m_depositionRate + m_diffusionRate;
 }

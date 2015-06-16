@@ -22,7 +22,12 @@ public:
 
     void registerHeightChange(const uint x, const uint y, const int value);
 
-    double localSurfaceSupersaturation(const uint x, const uint y);
+    double localSurfaceSupersaturation(const uint x, const uint y)
+    {
+        return localSurfaceSupersaturation(x, y, m_currentTimeStep);
+    }
+
+    double localSurfaceSupersaturation(const uint x, const uint y, const double timeStep);
 
     double volume() const;
 
@@ -46,6 +51,8 @@ public:
 
     void insertParticle(const double x, const double y, const double z);
 
+    double calculateTimeStep(const double initialCondition, bool calculateDissolutionRate = false);
+
     const double &dt() const
     {
         return m_dt;
@@ -58,6 +65,10 @@ private:
 
     const double m_dt0;
     const double m_dt;
+
+    double m_currentTimeStep;
+
+    static constexpr double m_eps = 0.00001;
 
     mat m_particlePositions;
     mat m_F;

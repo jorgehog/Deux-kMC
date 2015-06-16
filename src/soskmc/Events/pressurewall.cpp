@@ -148,7 +148,7 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
     //For every affected particle we update only those who include the pressure term.
     //Vector is set up in initialize based on virtual reaction function isPressureAffected().
 
-    double prevDiffRate = reaction.diffusionRate();
+    double prevDiffRate = reaction.dissolutionRate();
     reaction.setDiffusionRate(prevDiffRate*rateChange);
 
     m_localPressure(x, y) *= m_expFac;
@@ -158,7 +158,7 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
         BADAssSimpleDump(cycle(), x, y, rateChange, localPressure(x, y), m_expFac, m_heightChange);
     });
 
-    BADAssClose(reaction.diffusionRate(), reaction.calculateDiffusionRate(), 1E-5, "incorrect rate update", [&] ()
+    BADAssClose(reaction.dissolutionRate(), reaction.calculateDissolutionRate(), 1E-5, "incorrect rate update", [&] ()
     {
         double lp = localPressure(x, y);
         int h = solver().height(x, y);
