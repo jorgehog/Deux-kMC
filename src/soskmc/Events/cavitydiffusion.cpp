@@ -112,18 +112,28 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
 
         uint N = binarySearchForInterval(R, localRatesForSite);
 
-        cout << "should remove particle " << N << endl;
+        removeParticle(N);
 
     }
 
     else
     {
-        uint ns = 6 - solver().nNeighbors(x, y);
+        double x1, y1, z1;
 
-        uint R = (uint)(rng.uniform()*ns);
+        const int &z = solver().height(x, y);
 
+        do
+        {
+            double theta = rng.uniform()*datum::pi;
+            double phi = rng.uniform()*datum::pi*2;
 
+            x1 = (double)x + sin(theta)*cos(phi);
+            y1 = (double)y + sin(theta)*sin(phi);
+            z1 = (double)z + cos(theta);
 
+        } while (isBlockedPosition(x1, y1, z1));
+
+        insertParticle(x1, y1, z1);
     }
 
     const double &h = solver().pressureWallEvent().height();
@@ -319,6 +329,22 @@ void CavityDiffusion::diffuse(const double dt)
         m_particlePositions(1, n) = y1;
         m_particlePositions(2, n) = z1;
     }
+}
+
+void CavityDiffusion::removeParticle(const uint n)
+{
+    m_particlePositions.shed_row(n);
+    m_F.shed_row(n);
+    m_localRates.shed_slice(n);
+}
+
+void CavityDiffusion::insertParticle(const uint x, const uint y, const uint z)
+{
+    m_particlePositions.resize(3, nParticles() + 1);
+
+    m_particlePositions(0, nParticles() - 1) = x;
+    m_particlePositions(1, nParticles() - 1) = y;
+    m_particlePositions(2, nParticles() - 1) = z;
 }
 
 

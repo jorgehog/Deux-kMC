@@ -51,4 +51,8 @@ private:
 
     void diffuse(const double dt);
 
+    void removeParticle(const uint n);
+
+    void insertParticle(const uint x, const uint y, const uint z);
+
 };
