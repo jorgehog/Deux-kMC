@@ -35,6 +35,22 @@ public:
 
     void _dump(const uint frameNumber) const;
 
+    const mat &particlePositions() const
+    {
+        return m_particlePositions;
+    }
+
+    void diffuse(const double dt);
+
+    void removeParticle(const uint n);
+
+    void insertParticle(const double x, const double y, const double z);
+
+    const double &dt() const
+    {
+        return m_dt;
+    }
+
 private:
 
     const double m_D0;
@@ -46,13 +62,6 @@ private:
     mat m_particlePositions;
     mat m_F;
 
-    cube m_localRates;
-
-
-    void diffuse(const double dt);
-
-    void removeParticle(const uint n);
-
-    void insertParticle(const uint x, const uint y, const uint z);
+    cube m_localProbabilities;
 
 };

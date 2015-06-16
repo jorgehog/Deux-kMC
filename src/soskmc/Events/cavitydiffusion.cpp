@@ -11,7 +11,7 @@ CavityDiffusion::CavityDiffusion(SolidOnSolidSolver &solver,
                                  const double dt) :
     SolidOnSolidEvent(solver, "Diffusion"),
     m_D0(D),
-    m_D(D*exp(-solver.gamma())/(2*solver.dim())),
+    m_D(D*exp(-solver.gamma())),
     m_dt0(dt),
     m_dt(dt*exp(solver.gamma())/solver.area())
 {
@@ -54,7 +54,7 @@ void CavityDiffusion::setupInitialConditions()
 
     m_F = zeros(3, N);
 
-    m_localRates.set_size(nParticles(), solver().length(), solver().width());
+    m_localProbabilities.set_size(solver().length(), solver().width(), nParticles());
 
 }
 
@@ -76,7 +76,7 @@ void CavityDiffusion::reset()
 
     const uint N = dtFull/m_dt;
 
-    cout << dtFull << " " << m_dt << " " << N << endl;
+//    cout << dtFull << " " << m_dt << " " << N << endl;
 
     for (uint i = 0; i < N; ++i)
     {
@@ -93,10 +93,8 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
         return;
     }
 
-
-    //Remove / add the correct particle.
-
-    if (value == -1)
+    //Remove particle based on the probability of it being the deposited
+    if (value == 1)
     {
 
         vector<double> localRatesForSite(nParticles());
@@ -104,7 +102,7 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
         double Rtot = 0;
         for (uint n = 0; n < nParticles(); ++n)
         {
-            localRatesForSite.at(n) = m_localRates(n, x, y);
+            localRatesForSite.at(n) = m_localProbabilities(x, y, n);
             Rtot += localRatesForSite.at(n);
         }
 
@@ -113,14 +111,14 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
         uint N = binarySearchForInterval(R, localRatesForSite);
 
         removeParticle(N);
-
     }
 
+    //Add a particle on a unit sphere around the site;
     else
     {
         double x1, y1, z1;
 
-        const int &z = solver().height(x, y);
+        const int &z = solver().height(x, y) + 1;
 
         do
         {
@@ -149,7 +147,7 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
         {
             x0 = rng.uniform()*solver().length();
 
-            if (solver().dim() == 3)
+            if (solver().dim() != 1)
             {
                 y0 = rng.uniform()*solver().width();
             }
@@ -172,9 +170,12 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
 double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y)
 {
 
-    double R = 0;
+    double P = 0;
 
     const int z = solver().height(x, y) + 1;
+
+    //DERP: USE ITERATED DT
+    const double sigmaSquared = 2*solver().dim()*m_D*m_dt;
 
     for (uint n = 0; n < nParticles(); ++n)
     {
@@ -182,15 +183,19 @@ double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y)
         const double dySquared = pow((double)y - m_particlePositions(1, n), 2);
         const double dzSquared = pow((double)z - m_particlePositions(2, n), 2);
 
-        const double Rn = 1./sqrt(dxSquared + dySquared + dzSquared);
-        R += Rn;
+        const double dr2 = dxSquared + dySquared + dzSquared;
 
-        m_localRates(n, x, y) = Rn;
+        const double Pn = exp(-dr2/(2*sigmaSquared));
+        P += Pn;
+
+        BADAss(dr2, !=, 0, "lols", [&] () {
+            cout << m_particlePositions << endl;
+        });
+
+        m_localProbabilities(x, y, n) = Pn;
     }
 
-    return R*exp(-solver().gamma());
-
-    return 1.0;
+    return P*exp(2*solver().alpha() - solver().gamma())/sqrt(2*datum::pi*sigmaSquared);
 }
 
 double CavityDiffusion::volume() const
@@ -333,18 +338,21 @@ void CavityDiffusion::diffuse(const double dt)
 
 void CavityDiffusion::removeParticle(const uint n)
 {
-    m_particlePositions.shed_row(n);
-    m_F.shed_row(n);
-    m_localRates.shed_slice(n);
+    m_particlePositions.shed_col(n);
+    m_F.shed_col(n);
+    m_localProbabilities.shed_slice(n);
 }
 
-void CavityDiffusion::insertParticle(const uint x, const uint y, const uint z)
+void CavityDiffusion::insertParticle(const double x, const double y, const double z)
 {
     m_particlePositions.resize(3, nParticles() + 1);
 
     m_particlePositions(0, nParticles() - 1) = x;
     m_particlePositions(1, nParticles() - 1) = y;
     m_particlePositions(2, nParticles() - 1) = z;
+
+    m_F.resize(3, nParticles());
+    m_localProbabilities.resize(solver().length(), solver().width(), nParticles());
 }
 
 
