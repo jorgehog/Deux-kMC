@@ -190,7 +190,7 @@ double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y, 
 
         const double dr2 = dxSquared + dySquared + dzSquared;
 
-        const double Pn = exp(-dr2/(2*sigmaSquared));
+        const double Pn = exp(-dr2/(2*sigmaSquared))/dr2;
         P += Pn;
 
         BADAss(dr2, !=, 0, "lols", [&] () {
@@ -200,7 +200,8 @@ double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y, 
         m_localProbabilities(x, y, n) = Pn;
     }
 
-    return P*exp(2*solver().alpha() - solver().gamma())/sqrt(2*datum::pi*sigmaSquared);
+    double geometric = (6 - solver().nNeighbors(x, y))/(4*datum::pi);
+    return P*exp(2*solver().alpha() - solver().gamma())/sqrt(2*datum::pi*sigmaSquared)*geometric;
 }
 
 double CavityDiffusion::volume() const
