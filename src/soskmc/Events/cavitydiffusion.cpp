@@ -25,6 +25,7 @@ void CavityDiffusion::setupInitialConditions()
     const double &h = solver().pressureWallEvent().height();
 
     uint N = V*exp(solver().gamma()-2*solver().alpha());
+    N = V/2;
 
     m_particlePositions.set_size(3, N);
 
@@ -62,14 +63,16 @@ void CavityDiffusion::setupInitialConditions()
 
 void CavityDiffusion::initialize()
 {
-
+    m_accepted = 0;
+    m_trials = 0;
 }
 
 void CavityDiffusion::execute()
 {
     m_currentTimeStep = calculateTimeStep(m_currentTimeStep);
 
-    _dump(cycle());
+    if (cycle() % 100 == 0)
+        _dump(cycle()/100);
 }
 
 void CavityDiffusion::reset()
@@ -78,7 +81,7 @@ void CavityDiffusion::reset()
     //Has not yet been updated: Represents time spent in current state.
     const double &dtFull = solver().currentTimeStep();
 
-    BADAssClose(dtFull, m_currentTimeStep, 1E-3);
+    //    BADAssClose(dtFull, m_currentTimeStep, 1E-3); //DERP
 
     const uint N = dtFull/m_dt;
 
@@ -98,45 +101,45 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
     }
 
     //Remove particle based on the probability of it being the deposited
-    if (value == 1)
-    {
+//    if (value == 1)
+//    {
 
-        vector<double> localRatesForSite(nParticles());
+//        vector<double> localRatesForSite(nParticles());
 
-        double Rtot = 0;
-        for (uint n = 0; n < nParticles(); ++n)
-        {
-            localRatesForSite.at(n) = m_localProbabilities(x, y, n);
-            Rtot += localRatesForSite.at(n);
-        }
+//        double Rtot = 0;
+//        for (uint n = 0; n < nParticles(); ++n)
+//        {
+//            localRatesForSite.at(n) = m_localProbabilities(x, y, n);
+//            Rtot += localRatesForSite.at(n);
+//        }
 
-        double R = rng.uniform()*Rtot;
+//        double R = rng.uniform()*Rtot;
 
-        uint N = binarySearchForInterval(R, localRatesForSite);
+//        uint N = binarySearchForInterval(R, localRatesForSite);
 
-        removeParticle(N);
-    }
+//        removeParticle(N);
+//    }
 
-    //Add a particle on a unit sphere around the site;
-    else
-    {
-        double x1, y1, z1;
+//    //Add a particle on a unit sphere around the site;
+//    else
+//    {
+//        double x1, y1, z1;
 
-        const int &z = solver().height(x, y) + 1;
+//        const int &z = solver().height(x, y) + 1;
 
-        do
-        {
-            double theta = rng.uniform()*datum::pi;
-            double phi = rng.uniform()*datum::pi*2;
+//        do
+//        {
+//            double theta = rng.uniform()*datum::pi;
+//            double phi = rng.uniform()*datum::pi*2;
 
-            x1 = (double)x + sin(theta)*cos(phi);
-            y1 = (double)y + sin(theta)*sin(phi);
-            z1 = (double)z + cos(theta);
+//            x1 = (double)x + sin(theta)*cos(phi);
+//            y1 = (double)y + sin(theta)*sin(phi);
+//            z1 = (double)z + cos(theta);
 
-        } while (isBlockedPosition(x1, y1, z1));
+//        } while (isBlockedPosition(x1, y1, z1));
 
-        insertParticle(x1, y1, z1);
-    }
+//        insertParticle(x1, y1, z1);
+//    }
 
     const double &h = solver().pressureWallEvent().height();
     double zMin = solver().heights().min();
@@ -175,6 +178,7 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
 
 double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y, const double timeStep)
 {
+    return 1.0; //DERP
 
     double P = 0;
 
@@ -225,8 +229,8 @@ bool CavityDiffusion::isBlockedPosition(const double x, const double y, const do
         return true;
     }
 
-    uint X = uint(round(x));
-    uint Y = uint(round(y));
+    uint X = uint(x);
+    uint Y = uint(y);
 
     if (X == solver().length())
     {
@@ -321,7 +325,11 @@ void CavityDiffusion::diffuse(const double dt)
         y0 = m_particlePositions(1, n);
         z0 = m_particlePositions(2, n);
 
+        double prevDensity = calculateDensity(x0, y0, z0);
+
         BADAssBool(!isBlockedPosition(x0, y0, z0));
+
+        m_F(2, n) = calculateDrift(x0, y0, z0);
 
         do
         {
@@ -333,12 +341,30 @@ void CavityDiffusion::diffuse(const double dt)
             {
                 y1 = y0;
             }
+            //            cout << x1 << " " << y1 << " " << z1 << " " << m_F(2, n) << " " << dt << " " << m_D << endl;
 
         } while(isBlockedPosition(x1, y1, z1));
 
-        m_particlePositions(0, n) = x1;
-        m_particlePositions(1, n) = y1;
-        m_particlePositions(2, n) = z1;
+        double newDensity = calculateDensity(x1, y1, z1);
+
+        double a = newDensity/prevDensity;
+
+        if ((uint)m_trials % 100 == 0)
+        {
+            //            cout << solver().height(x0, y0) << " " << solver().pressureWallEvent().height() << endl;
+            m_accepted += 0;
+        }
+
+        if (rng.uniform() <= a)
+        {
+            m_particlePositions(0, n) = x1;
+            m_particlePositions(1, n) = y1;
+            m_particlePositions(2, n) = z1;
+
+            m_accepted++;
+        }
+
+        m_trials++;
     }
 }
 
@@ -363,6 +389,8 @@ void CavityDiffusion::insertParticle(const double x, const double y, const doubl
 
 double CavityDiffusion::calculateTimeStep(const double initialCondition, bool calculateDissolutionRate)
 {
+    return initialCondition; //DERP
+
     double timeStep = initialCondition;
 
     double totalDissolutionRate = 0;
@@ -427,6 +455,82 @@ double CavityDiffusion::calculateTimeStep(const double initialCondition, bool ca
 
     return timeStep;
 }
+
+double CavityDiffusion::calculateDrift(const double x, const double y, const double z) const
+{
+    return 0;
+
+    const uint X = (uint)x;
+    const uint Y = (uint)y;
+
+    const double K = sqrt(2)*solver().pressureWallEvent().debyeLength();
+
+    const int &h = solver().height(X, Y);
+    const double &hl = solver().pressureWallEvent().height();
+
+    const double D = hl - h;
+
+    const double zRel = ((z-h) - D/2);
+
+    double F = 2*K*tan(K*zRel);
+
+    if (F > 10)
+    {
+        //        cout << D << " " << F << endl;
+        //        cout << endl;
+
+        F = 0;
+    }
+
+    return F;
+
+}
+
+double CavityDiffusion::calculateAverageDensity(const double x, const double y, const double z) const
+{
+    double averageDensity;
+
+
+
+
+
+    averageDensity = 0;
+
+    int D = 5;
+    for (int dx = -D; dx <= D; ++dx)
+    {
+        for (int dy = -D; dy <= D; ++dy)
+        {
+            averageDensity += calculateDensity(x + dx, y + dy, z);
+        }
+    }
+
+    return averageDensity/pow(2*D + 1., 2.);
+}
+
+double CavityDiffusion::calculateDensity(const double x, const double y, const double z) const
+{
+    const uint X = (uint)x;
+    const uint Y = (uint)y;
+
+    //DERP PERIDOCITY
+    if (X >= solver().length() || Y >= solver().width())
+    {
+        return 1;
+    }
+
+    const int &h = solver().height(X, Y);
+    const double &hl = solver().pressureWallEvent().height();
+
+    const double D = hl - h;
+    //    const double K = sqrt(2)*solver().pressureWallEvent().debyeLength();
+    const double K = datum::pi/D;
+
+    const double zRel = ((z-h) - D/2);
+
+    return 1.0/pow(cos(K*zRel), 2);
+}
+
 
 
 

@@ -63,6 +63,11 @@ public:
 
     double bruteForceRatio() const;
 
+    const double &debyeLength() const
+    {
+        return m_r0;
+    }
+
 private:
 
     double m_height;

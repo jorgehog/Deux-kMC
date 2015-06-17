@@ -58,6 +58,18 @@ public:
         return m_dt;
     }
 
+    double calculateDrift(const double x, const double y, const double z) const;
+
+    double calculateAverageDensity(const double x, const double y, const double z) const;
+
+    double calculateDensity(const double x, const double y, const double z) const;
+
+
+    double acceptanceRatio() const
+    {
+        return m_accepted/m_trials;
+    }
+
 private:
 
     const double m_D0;
@@ -74,5 +86,8 @@ private:
     mat m_F;
 
     cube m_localProbabilities;
+
+    long double m_accepted;
+    long double m_trials;
 
 };

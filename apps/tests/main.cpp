@@ -31,15 +31,15 @@ protected:
         // Code here will be called immediately after the constructor (right
         // before each test).
 
-        uint L = 10;
+        uint L = 100;
         uint W = 10;
         double alpha = 1.0;
         double mu = 0;
         double E0 = 0.01;
         double sigma0 = 1;
-        double r0 = 4;
-        double D = 10.;
-        double dt = 1.;
+        double r0 = 4.;
+        double D = 1.;
+        double dt = 100.;
 
         Boundary* xBoundary = new Periodic(L);
         Boundary* yBoundary = new Periodic(W);
@@ -101,6 +101,31 @@ protected:
     Lattice *m_lattice;
 };
 
+TEST_F(SOSkMCTest, diffusionTest)
+{
+    uint prime = 10;
+    primeSolver(prime);
+
+    uint nDiff = 1000;
+
+    uint nDump = 0;
+    for (uint n = 0; n < nDiff; ++n)
+    {
+        m_diffusionEvent->diffuse(m_diffusionEvent->dt());
+
+        cout.flush();
+
+        if (n % 1 == 0)
+        {
+            m_diffusionEvent->_dump(nDump);
+            cout << "\rProgress: " << n/double(nDiff)*100 << " % - acceptance: " << m_diffusionEvent->acceptanceRatio()*100 << " %";
+            nDump++;
+        }
+    }
+    cout << endl;
+
+}
+
 TEST_F(SOSkMCTest, test)
 {
     uint prime = 10;
@@ -126,6 +151,7 @@ TEST_F(SOSkMCTest, test)
 
         EXPECT_EQ(newHeight, originalHeight - 1);
         EXPECT_EQ(newNParticles, originalNParticles + 1);
+
 
         for (uint n = 0; n < originalNParticles; ++n)
         {
@@ -157,11 +183,20 @@ TEST_F(SOSkMCTest, test)
         EXPECT_EQ(newNParticles2, originalNParticles);
 
         uint match = 0;
+        int sub = 0;
         for (uint n1 = 0; n1 < originalNParticles; ++n1)
         {
-            double x0 = originalParticlePositions(0, n1);
-            double y0 = originalParticlePositions(1, n1);
-            double z0 = originalParticlePositions(2, n1);
+            double x0 = newParticlePositions(0, n1);
+            double y0 = newParticlePositions(1, n1);
+            double z0 = newParticlePositions(2, n1);
+
+            uint XX = newParticlePositions(0, n1);
+            uint YY = newParticlePositions(1, n1);
+
+            if (XX == x && YY == y && (newParticlePositions(2, n1) < newHeight2 + 0.5))
+            {
+                sub--;
+            }
 
             for (uint n2 = 0; n2 < originalNParticles; ++n2)
             {
@@ -177,7 +212,7 @@ TEST_F(SOSkMCTest, test)
             }
         }
 
-        EXPECT_GE(match, originalNParticles - 1);
+        EXPECT_GE(match, originalNParticles + sub - 1) << match <<" "<< originalNParticles << " " << sub << endl;
 
         uint nDiff = 100;
         for (uint i = 0; i < nDiff; ++i)
@@ -185,7 +220,6 @@ TEST_F(SOSkMCTest, test)
             m_diffusionEvent->diffuse(m_diffusionEvent->dt());
         }
 
-        m_diffusionEvent->_dump(prime + rep);
     }
 
 }
