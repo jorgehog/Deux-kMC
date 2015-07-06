@@ -7,7 +7,7 @@ using namespace kMC;
 using namespace arma;
 
 class DiffusionDeposition;
-class PressureWall;
+class ConfiningSurface;
 class CavityDiffusion;
 
 class SolidOnSolidSolver : public KMCSolver
@@ -73,13 +73,13 @@ public:
         return m_nNeighbors(x, y);
     }
 
-    void setPressureWallEvent(PressureWall &pressureWallEvent);
+    void setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent);
 
     void setDiffusionEvent(CavityDiffusion &diffusionEvent);
 
-    PressureWall &pressureWallEvent() const
+    ConfiningSurface &confiningSurfaceEvent() const
     {
-        return *m_pressureWallEvent;
+        return *m_confiningSurfaceEvent;
     }
 
     CavityDiffusion &diffusionEvent() const
@@ -87,7 +87,7 @@ public:
         return *m_diffusionEvent;
     }
 
-    double localPressure(const uint x, const uint y) const;
+    double confinementEnergy(const uint x, const uint y) const;
 
     double localSurfaceSupersaturation(const uint x, const uint y) const;
 
@@ -114,7 +114,7 @@ private:
 
     const uint m_dim;
 
-    PressureWall *m_pressureWallEvent;
+    ConfiningSurface *m_confiningSurfaceEvent;
     CavityDiffusion *m_diffusionEvent;
 
     const uint m_length;

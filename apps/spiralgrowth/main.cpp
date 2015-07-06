@@ -92,7 +92,7 @@ int main(int argv, char** argc)
     Boundary* yBoundary = new Periodic(W);
 
     SolidOnSolidSolver solver(L, W, xBoundary, yBoundary, alpha, mu);
-    PressureWall pressureWallEvent(solver, E0, sigma0, r0);
+    RDLSurface pressureWallEvent(solver, E0, sigma0, r0);
     CavityDiffusion diffusion(solver, D, dt);
 
     AverageHeight averageHeight(solver);

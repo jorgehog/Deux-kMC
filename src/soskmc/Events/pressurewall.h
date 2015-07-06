@@ -28,24 +28,24 @@ public:
         return m_heightChange;
     }
 
-    void recalculateLocalPressure(const uint x, const uint y)
+    void recalculateRDLEnergy(const uint x, const uint y)
     {
-        m_localPressure(x, y) = localPressureEvaluate(x, y);
+        m_RDLEnergy(x, y) = EvaluateRDLEnergy(x, y);
     }
 
-    double localPressure(const uint x, const uint y) const
+    double RDLEnergy(const uint x, const uint y) const
     {
-        if (m_onsetTime != 0) BADAssClose(m_localPressure(x, y), localPressureEvaluate(x, y), 1E-5);
+        if (m_onsetTime != 0) BADAssClose(m_RDLEnergy(x, y), EvaluateRDLEnergy(x, y), 1E-5);
 
-        return m_localPressure(x, y);
+        return m_RDLEnergy(x, y);
     }
 
-    double partialRatio(const uint x, const uint y) const;
+    double partialThetaRatio(const uint x, const uint y) const;
 
-    double localPressureEvaluate(const uint x, const uint y) const
+    double EvaluateRDLEnergy(const uint x, const uint y) const
     {
         const int &h = solver().height(x, y);
-        return _pressureExpression(m_height - h);
+        return _RDLEnergyExpression(m_height - h);
     }
 
     const double &height() const
@@ -53,7 +53,7 @@ public:
         return m_height;
     }
 
-    double pressureEnergySum() const;
+    double RDLEnergySum() const;
 
     void findNewHeight();
 
@@ -61,11 +61,11 @@ public:
 
     void registerHeightChange(const uint x, const uint y, std::vector<DiffusionDeposition *> affectedReactions, const uint n);
 
-    double bruteForceRatio() const;
+    double bruteForceThetaRatio() const;
 
     const double &debyeLength() const
     {
-        return m_r0;
+        return m_lD;
     }
 
 private:
@@ -79,21 +79,21 @@ private:
     //    long double m_thetaPrev;
     long double m_r0LogThetaPrev;
 
-    const double m_r0;
+    const double m_lD;
     const double m_s0;
     const double m_E0;
 
-    mat m_localPressure;
+    mat m_RDLEnergy;
     //    vector<vector<long double>> m_thetaPartialSumsMat;
     mat m_ratioPartialSums;
 
     void setupTheta();
 
-    void recalculateAllPressures();
+    void recalculateAllRDLEnergies();
 
-    double _pressureExpression(const double heightDifference) const
+    double _RDLEnergyExpression(const double heightDifference) const
     {
-        return -m_s0*std::exp(-heightDifference/m_r0);
+        return -m_s0*std::exp(-heightDifference/m_lD);
     }
 
 };

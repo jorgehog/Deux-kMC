@@ -8,15 +8,15 @@ PressureWall::PressureWall(SolidOnSolidSolver &solver,
                            const double sigma0,
                            const double r0):
     SolidOnSolidEvent(solver, "PressureWall", "h0", true, true),
-    m_r0(r0),
+    m_lD(r0),
     m_s0(sigma0),
     m_E0(E0),
-    m_localPressure(solver.length(), solver.width(), fill::zeros),
+    m_RDLEnergy(solver.length(), solver.width(), fill::zeros),
     m_ratioPartialSums(solver.length(), solver.width())
 {
     BADAss(E0, >, 0, "E0 should be positive.");
 
-    solver.setPressureWallEvent(*this);
+    solver.setConfiningSurfaceEvent(*this);
 }
 
 PressureWall::~PressureWall()
@@ -53,11 +53,11 @@ void PressureWall::setupInitialConditions()
 {
     setupTheta();
 
-    m_height = m_r0LogThetaPrev + m_r0*std::log(m_s0/m_E0);
+    m_height = m_r0LogThetaPrev + m_lD*std::log(m_s0/m_E0);
 
-    recalculateAllPressures();
+    recalculateAllRDLEnergies();
 
-    BADAssClose(pressureEnergySum(), -m_E0, 1E-5);
+    BADAssClose(RDLEnergySum(), -m_E0, 1E-5);
 }
 
 void PressureWall::execute()
@@ -68,7 +68,7 @@ void PressureWall::execute()
 
     if ((cycle() + 1)%100 == 0)
     {
-        recalculateAllPressures();
+        recalculateAllRDLEnergies();
     }
 }
 
@@ -86,24 +86,24 @@ void PressureWall::reset()
     }
 #endif
 
-    BADAssClose(pressureEnergySum(), -m_E0, 1E-3);
+    BADAssClose(RDLEnergySum(), -m_E0, 1E-3);
 }
 
-double PressureWall::partialRatio(const uint x, const uint y) const
+double PressureWall::partialThetaRatio(const uint x, const uint y) const
 {
-    return std::exp((solver().height(x, y) - m_r0LogThetaPrev)/m_r0);
+    return std::exp((solver().height(x, y) - m_r0LogThetaPrev)/m_lD);
 }
 
-double PressureWall::pressureEnergySum() const
+double PressureWall::RDLEnergySum() const
 {
     double s = 0;
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            BADAssClose(m_localPressure(x, y), localPressureEvaluate(x, y), 1E-5);
+            BADAssClose(m_RDLEnergy(x, y), EvaluateRDLEnergy(x, y), 1E-5);
 
-            s += m_localPressure(x, y);
+            s += m_RDLEnergy(x, y);
         }
     }
 
@@ -120,20 +120,20 @@ void PressureWall::findNewHeight()
         for (uint y = 0; y < solver().width(); ++y)
         {
             ratio += m_ratioPartialSums(x, y);
-            BADAssClose(m_ratioPartialSums(x, y), partialRatio(x, y), 1E-3, "theta fail", [&]
+            BADAssClose(m_ratioPartialSums(x, y), partialThetaRatio(x, y), 1E-3, "theta fail", [&]
             {
-                BADAssSimpleDump(m_ratioPartialSums(x, y), partialRatio(x, y), m_r0LogThetaPrev);
+                BADAssSimpleDump(m_ratioPartialSums(x, y), partialThetaRatio(x, y), m_r0LogThetaPrev);
             });
         }
     }
 
-    m_heightChange = m_r0*std::log(ratio);
+    m_heightChange = m_lD*std::log(ratio);
 
     m_r0LogThetaPrev += m_heightChange;
 
     m_height += m_heightChange;
 
-    m_expFac = expSmallArg(-m_heightChange/m_r0);
+    m_expFac = expSmallArg(-m_heightChange/m_lD);
 
     m_ratioPartialSums*=m_expFac;
 }
@@ -143,7 +143,7 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
     const uint x = reaction.x();
     const uint y = reaction.y();
 
-    double rateChange = expSmallArg(-solver().alpha()*m_localPressure(x, y)*(m_expFac - 1));
+    double rateChange = expSmallArg(-solver().alpha()*m_RDLEnergy(x, y)*(m_expFac - 1));
 
     //For every affected particle we update only those who include the pressure term.
     //Vector is set up in initialize based on virtual reaction function isPressureAffected().
@@ -151,9 +151,9 @@ void PressureWall::updateRatesFor(DiffusionDeposition &reaction)
     double prevDiffRate = reaction.dissolutionRate();
     reaction.setDiffusionRate(prevDiffRate*rateChange);
 
-    m_localPressure(x, y) *= m_expFac;
+    m_RDLEnergy(x, y) *= m_expFac;
 
-    BADAssClose(localPressureEvaluate(x, y), m_localPressure(x, y), 1E-5, "incorrect pressure update", [&] ()
+    BADAssClose(EvaluateRDLEnergy(x, y), m_RDLEnergy(x, y), 1E-5, "incorrect pressure update", [&] ()
     {
         BADAssSimpleDump(cycle(), x, y, rateChange, localPressure(x, y), m_expFac, m_heightChange);
     });
@@ -180,14 +180,14 @@ void PressureWall::registerHeightChange(const uint x,
     auto start = affectedReactions.begin();
     auto end = start + n;
 
-    m_ratioPartialSums(x, y) = partialRatio(x, y);
+    m_ratioPartialSums(x, y) = partialThetaRatio(x, y);
 
     findNewHeight();
 
     for (uint i = 0; i < n; ++i)
     {
         DiffusionDeposition *reaction = affectedReactions.at(i);
-        recalculateLocalPressure(reaction->x(), reaction->y());
+        recalculateRDLEnergy(reaction->x(), reaction->y());
     }
 
     for (uint x = 0; x < solver().length(); ++x)
@@ -205,7 +205,7 @@ void PressureWall::registerHeightChange(const uint x,
 }
 
 
-double PressureWall::bruteForceRatio() const
+double PressureWall::bruteForceThetaRatio() const
 {
     double ratio = 0;
 
@@ -213,7 +213,7 @@ double PressureWall::bruteForceRatio() const
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            ratio += std::exp(((long double)solver().height(x, y) - m_r0LogThetaPrev)/m_r0);
+            ratio += std::exp(((long double)solver().height(x, y) - m_r0LogThetaPrev)/m_lD);
         }
     }
 
@@ -229,30 +229,30 @@ void PressureWall::setupTheta()
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            thetaPrev += std::exp((solver().height(x, y) - thetaShift)/m_r0);
+            thetaPrev += std::exp((solver().height(x, y) - thetaShift)/m_lD);
         }
     }
 
-    m_r0LogThetaPrev = m_r0*log(thetaPrev) + thetaShift;
+    m_r0LogThetaPrev = m_lD*log(thetaPrev) + thetaShift;
 
 
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            m_ratioPartialSums(x, y) = partialRatio(x, y);
+            m_ratioPartialSums(x, y) = partialThetaRatio(x, y);
         }
     }
 
 }
 
-void PressureWall::recalculateAllPressures()
+void PressureWall::recalculateAllRDLEnergies()
 {
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            m_localPressure(x, y) = localPressureEvaluate(x, y);
+            m_RDLEnergy(x, y) = EvaluateRDLEnergy(x, y);
         }
     }
 }

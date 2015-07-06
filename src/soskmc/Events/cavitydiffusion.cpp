@@ -1,6 +1,6 @@
 #include "cavitydiffusion.h"
 
-#include "pressurewall.h"
+#include "confiningsurface/confiningsurface.h"
 
 #include "lammpswriter/lammpswriter.h"
 
@@ -16,16 +16,16 @@ CavityDiffusion::CavityDiffusion(SolidOnSolidSolver &solver,
     m_dt(dt*exp(solver.gamma())/solver.area())
 {
     solver.setDiffusionEvent(*this);
-    setDependency(solver.pressureWallEvent());
+    setDependency(solver.confiningSurfaceEvent());
 }
 
 void CavityDiffusion::setupInitialConditions()
 {
     const double V = volume();
-    const double &h = solver().pressureWallEvent().height();
+    const double &h = solver().confiningSurfaceEvent().height();
 
     uint N = V*exp(solver().gamma()-2*solver().alpha());
-    N = V/2;
+    N = 10000;
 
     m_particlePositions.set_size(3, N);
 
@@ -141,7 +141,7 @@ void CavityDiffusion::registerHeightChange(const uint x, const uint y, const int
 //        insertParticle(x1, y1, z1);
 //    }
 
-    const double &h = solver().pressureWallEvent().height();
+    const double &h = solver().confiningSurfaceEvent().height();
     double zMin = solver().heights().min();
 
     for (uint n = 0; n < nParticles(); ++n)
@@ -211,7 +211,7 @@ double CavityDiffusion::localSurfaceSupersaturation(const uint x, const uint y, 
 double CavityDiffusion::volume() const
 {
     //sum (h_l - h_i) - 1
-    return (solver().pressureWallEvent().height() - 1)*solver().area() - arma::accu(solver().heights());
+    return (solver().confiningSurfaceEvent().height() - 1)*solver().area() - arma::accu(solver().heights());
 }
 
 bool CavityDiffusion::isBlockedPosition(const double x, const double y, const double z) const
@@ -222,7 +222,7 @@ bool CavityDiffusion::isBlockedPosition(const double x, const double y, const do
 
     bool isOutSideBox_y = (y < 0) || (y > solver().width());
 
-    bool isOutSideBox_z = (z > solver().pressureWallEvent().height() - 0.5);
+    bool isOutSideBox_z = (z > solver().confiningSurfaceEvent().height() - 0.5);
 
     if (isOutSideBox_x || isOutSideBox_y || isOutSideBox_z)
     {
@@ -249,7 +249,7 @@ bool CavityDiffusion::isBlockedPosition(const double x, const double y, const do
 
 void CavityDiffusion::_dump(const uint frameNumber) const
 {
-    const double &h = solver().pressureWallEvent().height();
+    const double &h = solver().confiningSurfaceEvent().height();
     const int zMin = solver().heights().min();
 
     lammpswriter writer(4, "cavitydiff", "/tmp");
@@ -460,29 +460,29 @@ double CavityDiffusion::calculateDrift(const double x, const double y, const dou
 {
     return 0;
 
-    const uint X = (uint)x;
-    const uint Y = (uint)y;
+//    const uint X = (uint)x;
+//    const uint Y = (uint)y;
 
-    const double K = sqrt(2)*solver().pressureWallEvent().debyeLength();
+//    const double K = sqrt(2)*solver().confiningSurfaceEvent().debyeLength(); //put in confined surface class
 
-    const int &h = solver().height(X, Y);
-    const double &hl = solver().pressureWallEvent().height();
+//    const int &h = solver().height(X, Y);
+//    const double &hl = solver().confiningSurfaceEvent().height();
 
-    const double D = hl - h;
+//    const double D = hl - h;
 
-    const double zRel = ((z-h) - D/2);
+//    const double zRel = ((z-h) - D/2);
 
-    double F = 2*K*tan(K*zRel);
+//    double F = 2*K*tan(K*zRel);
 
-    if (F > 10)
-    {
-        //        cout << D << " " << F << endl;
-        //        cout << endl;
+//    if (F > 10)
+//    {
+//        //        cout << D << " " << F << endl;
+//        //        cout << endl;
 
-        F = 0;
-    }
+//        F = 0;
+//    }
 
-    return F;
+//    return F;
 
 }
 
@@ -520,7 +520,7 @@ double CavityDiffusion::calculateDensity(const double x, const double y, const d
     }
 
     const int &h = solver().height(X, Y);
-    const double &hl = solver().pressureWallEvent().height();
+    const double &hl = solver().confiningSurfaceEvent().height();
 
     const double D = hl - h;
     //    const double K = sqrt(2)*solver().pressureWallEvent().debyeLength();

@@ -44,7 +44,7 @@ protected:
         Boundary* xBoundary = new Periodic(L);
         Boundary* yBoundary = new Periodic(W);
         m_solver = new SolidOnSolidSolver(L, W, xBoundary, yBoundary, alpha, mu);
-        m_pressureWallEvent = new PressureWall(*m_solver, E0, sigma0, r0);
+        m_pressureWallEvent = new RDLSurface(*m_solver, E0, sigma0, r0);
         m_diffusionEvent = new CavityDiffusion(*m_solver, D, dt);
 
         m_averageHeight = new AverageHeight(*m_solver);
@@ -95,7 +95,7 @@ protected:
 
     SolidOnSolidSolver *m_solver;
     AverageHeight *m_averageHeight;
-    PressureWall *m_pressureWallEvent;
+    RDLSurface *m_pressureWallEvent;
     CavityDiffusion *m_diffusionEvent;
 
     Lattice *m_lattice;

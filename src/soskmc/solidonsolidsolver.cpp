@@ -1,6 +1,6 @@
 #include "solidonsolidsolver.h"
 #include "solidonsolidreaction.h"
-#include "Events/pressurewall.h"
+#include "Events/confiningsurface/confiningsurface.h"
 #include "Events/cavitydiffusion.h"
 #include "../kmcsolver/boundary/boundary.h"
 
@@ -88,7 +88,7 @@ void SolidOnSolidSolver::registerHeightChange(const uint x, const uint y, const 
         n++;
     }
 
-    m_pressureWallEvent->registerHeightChange(x, y, m_affectedReactions, n);
+    m_confiningSurfaceEvent->registerHeightChange(x, y, m_affectedReactions, n);
 
     m_diffusionEvent->registerHeightChange(x, y, value);
 
@@ -106,9 +106,9 @@ void SolidOnSolidSolver::setNNeighbors(const uint x, const uint y)
 }
 
 
-void SolidOnSolidSolver::setPressureWallEvent(PressureWall &pressureWallEvent)
+void SolidOnSolidSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
 {
-    m_pressureWallEvent = &pressureWallEvent;
+    m_confiningSurfaceEvent = &confiningSurfaceEvent;
 }
 
 void SolidOnSolidSolver::setDiffusionEvent(CavityDiffusion &diffusionEvent)
@@ -116,14 +116,14 @@ void SolidOnSolidSolver::setDiffusionEvent(CavityDiffusion &diffusionEvent)
     m_diffusionEvent = &diffusionEvent;
 }
 
-double SolidOnSolidSolver::localPressure(const uint x, const uint y) const
+double SolidOnSolidSolver::confinementEnergy(const uint x, const uint y) const
 {
-    if (!m_pressureWallEvent->hasStarted())
+    if (!m_confiningSurfaceEvent->hasStarted())
     {
         return 0;
     }
 
-    return m_pressureWallEvent->localPressure(x, y);
+    return m_confiningSurfaceEvent->confinementEnergy(x, y);
 }
 
 double SolidOnSolidSolver::localSurfaceSupersaturation(const uint x, const uint y) const
@@ -224,9 +224,9 @@ uint SolidOnSolidSolver::span() const
 {
     int min = m_heights.min();
 
-    if (pressureWallEvent().hasStarted())
+    if (confiningSurfaceEvent().hasStarted())
     {
-        return pressureWallEvent().height() - min;
+        return confiningSurfaceEvent().height() - min;
     }
     else
     {
@@ -286,7 +286,7 @@ void SolidOnSolidSolver::initializeSolver()
         }
     }
 
-    m_pressureWallEvent->setupInitialConditions();
+    m_confiningSurfaceEvent->setupInitialConditions();
     m_diffusionEvent->setupInitialConditions();
 
 }

@@ -3,7 +3,9 @@
 #include "kMC.h"
 
 #include "../src/soskmc/solidonsolidsolver.h"
-#include "../src/soskmc/Events/pressurewall.h"
+#include "../src/soskmc/Events/confiningsurface/fixedsurface.h"
+#include "../src/soskmc/Events/confiningsurface/rdlsurface.h"
+#include "../src/soskmc/Events/confiningsurface/fixedrdlsurface.h"
 #include "../src/soskmc/Events/cavitydiffusion.h"
 
 #include "../src/soskmc/Events/eqmu.h"
