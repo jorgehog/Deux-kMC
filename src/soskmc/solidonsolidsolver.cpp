@@ -109,6 +109,7 @@ void SolidOnSolidSolver::setNNeighbors(const uint x, const uint y)
 void SolidOnSolidSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
 {
     m_confiningSurfaceEvent = &confiningSurfaceEvent;
+    m_diffusionEvent->setDependency(confiningSurfaceEvent);
 }
 
 void SolidOnSolidSolver::setDiffusionEvent(CavityDiffusion &diffusionEvent)

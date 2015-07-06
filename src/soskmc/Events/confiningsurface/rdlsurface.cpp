@@ -163,6 +163,22 @@ void RDLSurface::setupTheta()
 
 }
 
+double RDLSurface::calculateKZrel(const double x, const double y, const double z, double &K, double &zRel) const
+{
+    const uint X = (uint)x;
+    const uint Y = (uint)y;
+
+    const int &h = solver().height(X, Y);
+    const double &hl = height();
+
+    const double D = hl - h;
+
+    K = datum::pi/D;
+    zRel = ((z-h) - D/2);
+
+    return K*zRel;
+}
+
 void RDLSurface::recalculateAllRDLEnergies()
 {
     for (uint x = 0; x < solver().length(); ++x)
@@ -253,3 +269,23 @@ void RDLSurface::registerHeightChange(const uint x, const uint y, std::vector<Di
     }
 }
 
+bool RDLSurface::acceptDiffusionMove(const double x0, const double y0, const double z0,
+                                     const double x1, const double y1, const double z1) const
+{
+    double kZrel0 = calculateKZrel(x0, y0, z0);
+    double kZrel1 = calculateKZrel(x1, y1, z1);
+
+    double a = pow(cos(kZrel0)/cos(kZrel1), 2.0);
+
+    return rng.uniform() <= a;
+}
+
+double RDLSurface::diffusionDrift(const double x, const double y, const double z) const
+{
+    return 0;
+
+    double K;
+    double KZrel = calculateKZrel(x, y, z, K);
+
+    return 2*K*tan(KZrel);
+}

@@ -16,7 +16,6 @@ CavityDiffusion::CavityDiffusion(SolidOnSolidSolver &solver,
     m_dt(dt*exp(solver.gamma())/solver.area())
 {
     solver.setDiffusionEvent(*this);
-    setDependency(solver.confiningSurfaceEvent());
 }
 
 void CavityDiffusion::setupInitialConditions()
@@ -325,11 +324,9 @@ void CavityDiffusion::diffuse(const double dt)
         y0 = m_particlePositions(1, n);
         z0 = m_particlePositions(2, n);
 
-        double prevDensity = calculateDensity(x0, y0, z0);
-
         BADAssBool(!isBlockedPosition(x0, y0, z0));
 
-        m_F(2, n) = calculateDrift(x0, y0, z0);
+        m_F(2, n) = solver().confiningSurfaceEvent().diffusionDrift(x0, y0, z0);
 
         do
         {
@@ -345,17 +342,7 @@ void CavityDiffusion::diffuse(const double dt)
 
         } while(isBlockedPosition(x1, y1, z1));
 
-        double newDensity = calculateDensity(x1, y1, z1);
-
-        double a = newDensity/prevDensity;
-
-        if ((uint)m_trials % 100 == 0)
-        {
-            //            cout << solver().height(x0, y0) << " " << solver().pressureWallEvent().height() << endl;
-            m_accepted += 0;
-        }
-
-        if (rng.uniform() <= a)
+        if (solver().confiningSurfaceEvent().acceptDiffusionMove(x0, y0, z0, x1, y1, x1))
         {
             m_particlePositions(0, n) = x1;
             m_particlePositions(1, n) = y1;
@@ -456,80 +443,6 @@ double CavityDiffusion::calculateTimeStep(const double initialCondition, bool ca
     return timeStep;
 }
 
-double CavityDiffusion::calculateDrift(const double x, const double y, const double z) const
-{
-    return 0;
-
-//    const uint X = (uint)x;
-//    const uint Y = (uint)y;
-
-//    const double K = sqrt(2)*solver().confiningSurfaceEvent().debyeLength(); //put in confined surface class
-
-//    const int &h = solver().height(X, Y);
-//    const double &hl = solver().confiningSurfaceEvent().height();
-
-//    const double D = hl - h;
-
-//    const double zRel = ((z-h) - D/2);
-
-//    double F = 2*K*tan(K*zRel);
-
-//    if (F > 10)
-//    {
-//        //        cout << D << " " << F << endl;
-//        //        cout << endl;
-
-//        F = 0;
-//    }
-
-//    return F;
-
-}
-
-double CavityDiffusion::calculateAverageDensity(const double x, const double y, const double z) const
-{
-    double averageDensity;
-
-
-
-
-
-    averageDensity = 0;
-
-    int D = 5;
-    for (int dx = -D; dx <= D; ++dx)
-    {
-        for (int dy = -D; dy <= D; ++dy)
-        {
-            averageDensity += calculateDensity(x + dx, y + dy, z);
-        }
-    }
-
-    return averageDensity/pow(2*D + 1., 2.);
-}
-
-double CavityDiffusion::calculateDensity(const double x, const double y, const double z) const
-{
-    const uint X = (uint)x;
-    const uint Y = (uint)y;
-
-    //DERP PERIDOCITY
-    if (X >= solver().length() || Y >= solver().width())
-    {
-        return 1;
-    }
-
-    const int &h = solver().height(X, Y);
-    const double &hl = solver().confiningSurfaceEvent().height();
-
-    const double D = hl - h;
-    //    const double K = sqrt(2)*solver().pressureWallEvent().debyeLength();
-    const double K = datum::pi/D;
-
-    const double zRel = ((z-h) - D/2);
-
-    return 1.0/pow(cos(K*zRel), 2);
-}
 
 
 

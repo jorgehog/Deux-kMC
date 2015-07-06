@@ -76,6 +76,20 @@ private:
 
     void setupTheta();
 
+    double calculateKZrel(const double x, const double y, const double z, double &K, double &zRel) const;
+
+    double calculateKZrel(const double x, const double y, const double z, double &K) const
+    {
+        double zRel;
+        return calculateKZrel(x, y, z, K, zRel);
+    }
+
+    double calculateKZrel(const double x, const double y, const double z) const
+    {
+        double K, zRel;
+        return calculateKZrel(x, y, z, K, zRel);
+    }
+
 
     // Event interface
 public:
@@ -95,6 +109,11 @@ public:
     {
         return RDLEnergy(x, y);
     }
+
+    bool acceptDiffusionMove(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1) const;
+
+    double diffusionDrift(const double x, const double y, const double z) const;
+
 };
 
 #endif // RDLSURFACE_H

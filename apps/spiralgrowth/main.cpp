@@ -45,11 +45,12 @@ int main(int argv, char** argc)
     const double &alpha = getSetting<double>(root, "alpha");
     const double &mu = getSetting<double>(root, "mu");
 
-    const uint &pressureWallInt = getSetting<uint>(root, "pressureWall");
-    const bool pressureWall = pressureWallInt == 1;
+    const uint &confinementInt = getSetting<uint>(root, "confinement");
+    const bool confinement = confinementInt == 1;
 
+    const double &confiningSurfaceHeight = getSetting<double>(root, "confiningSurfaceHeight");
     const double &E0 = getSetting<double>(root, "E0dA")*L*W;
-    const double &r0 = getSetting<double>(root, "r0");
+    const double &lD = getSetting<double>(root, "lD");
     const double &sigma0 = getSetting<double>(root, "sigma0");
 
     const uint &diffuseInt = getSetting<uint>(root, "diffuse");
@@ -91,12 +92,26 @@ int main(int argv, char** argc)
 
     Boundary* yBoundary = new Periodic(W);
 
-    SolidOnSolidSolver solver(L, W, xBoundary, yBoundary, alpha, mu);
-    RDLSurface pressureWallEvent(solver, E0, sigma0, r0);
-    CavityDiffusion diffusion(solver, D, dt);
+    ConfiningSurface *confiningSurface;
 
+    SolidOnSolidSolver solver(L, W, xBoundary, yBoundary, alpha, mu);
+    CavityDiffusion diffusion(solver, D, dt);
     AverageHeight averageHeight(solver);
-    pressureWallEvent.setDependency(averageHeight);
+
+    if (true)
+    {
+        confiningSurface = new FixedSurface(solver, confiningSurfaceHeight);
+    }
+    else if (true)
+    {
+        confiningSurface = new FixedRDLSurface(solver, E0, sigma0, lD, confiningSurfaceHeight);
+    }
+    else
+    {
+        confiningSurface = new RDLSurface(solver, E0, sigma0, lD);
+        confiningSurface->setDependency(averageHeight);
+    }
+
 
     EqMu eqMu(solver);
     Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
@@ -150,9 +165,9 @@ int main(int argv, char** argc)
     lattice.addEvent(size);
     lattice.addEvent(var);
 
-    if (pressureWall)
+    if (confinement)
     {
-        lattice.addEvent(pressureWallEvent);
+        lattice.addEvent(confiningSurface);
     }
 
     if (diffuse)
@@ -171,7 +186,7 @@ int main(int argv, char** argc)
     //---Running simulation
 
     EquilibrationOrganizer eqOrg(lattice, equilibriate, reset, true);
-    eqOrg.prepare({&eqMu, &equilibriater}, {&pressureWallEvent});
+    eqOrg.prepare({&eqMu, &equilibriater}, {confiningSurface});
 
     lattice.eventLoop(nCycles);
 
@@ -196,9 +211,9 @@ int main(int argv, char** argc)
     simRoot.addData("alpha", alpha);
     simRoot.addData("mu", mu);
 
-    simRoot.addData("usewall", pressureWallInt);
+    simRoot.addData("confinement", confinementInt);
     simRoot.addData("sigma0", sigma0);
-    simRoot.addData("r0", r0);
+    simRoot.addData("r0", lD);
     simRoot.addData("E0", E0);
 
     simRoot.addData("diffuse", diffuseInt);
@@ -233,6 +248,7 @@ int main(int argv, char** argc)
 
     delete xBoundary;
     delete yBoundary;
+    delete confiningSurface;
 
     return 0;
 }

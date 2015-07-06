@@ -32,7 +32,7 @@ public:
 
         if (solver().height(x, y) > height())
         {
-            cout << "DERP: crashing in surface.." << endl;
+            terminateLoop("CRASH CRASH...");
         }
     }
 
@@ -43,6 +43,11 @@ public:
 
         return 0;
     }
+
+    bool acceptDiffusionMove(const double x0, const double y0, const double z0,
+                             const double x1, const double y1, const double z1) const;
+
+    double diffusionDrift(const double x, const double y, const double z) const;
 };
 
 #endif // FIXEDSURFACE_H
