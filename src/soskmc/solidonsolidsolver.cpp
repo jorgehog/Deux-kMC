@@ -1,7 +1,7 @@
 #include "solidonsolidsolver.h"
 #include "solidonsolidreaction.h"
 #include "Events/confiningsurface/confiningsurface.h"
-#include "Events/cavitydiffusion.h"
+#include "Events/diffusion/constantconcentration.h"
 #include "../kmcsolver/boundary/boundary.h"
 
 
@@ -109,12 +109,17 @@ void SolidOnSolidSolver::setNNeighbors(const uint x, const uint y)
 void SolidOnSolidSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
 {
     m_confiningSurfaceEvent = &confiningSurfaceEvent;
-    m_diffusionEvent->setDependency(confiningSurfaceEvent);
 }
 
-void SolidOnSolidSolver::setDiffusionEvent(CavityDiffusion &diffusionEvent)
+void SolidOnSolidSolver::setDiffusionEvent(Diffusion &diffusionEvent)
 {
     m_diffusionEvent = &diffusionEvent;
+}
+
+double SolidOnSolidSolver::volume() const
+{
+    //sum (h_l - h_i) - 1
+    return (m_confiningSurfaceEvent->height() - 1)*area() - arma::accu(m_heights);
 }
 
 double SolidOnSolidSolver::confinementEnergy(const uint x, const uint y) const
@@ -127,14 +132,14 @@ double SolidOnSolidSolver::confinementEnergy(const uint x, const uint y) const
     return m_confiningSurfaceEvent->confinementEnergy(x, y);
 }
 
-double SolidOnSolidSolver::localSurfaceSupersaturation(const uint x, const uint y) const
+double SolidOnSolidSolver::depositionRate(const uint x, const uint y) const
 {
     if (!m_diffusionEvent->hasStarted())
     {
         return 1;
     }
 
-    return m_diffusionEvent->localSurfaceSupersaturation(x, y);
+    return m_diffusionEvent->depositionRate(x, y);
 }
 
 uint SolidOnSolidSolver::calculateNNeighbors(const uint x, const uint y) const
@@ -233,6 +238,38 @@ uint SolidOnSolidSolver::span() const
     {
         return 5*(m_heights.max() - min);
     }
+}
+
+bool SolidOnSolidSolver::isBlockedPosition(const double x, const double y, const double z) const
+{
+    //DERP: Check periodicity
+
+    bool isOutSideBox_x = (x < 0) || (x > length());
+
+    bool isOutSideBox_y = (y < 0) || (y > width());
+
+    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 0.5);
+
+    if (isOutSideBox_x || isOutSideBox_y || isOutSideBox_z)
+    {
+        return true;
+    }
+
+    uint X = uint(x);
+    uint Y = uint(y);
+
+    if (X == length())
+    {
+        X = length() - 1;
+    }
+
+    if (Y == width())
+    {
+        Y = width() - 1;
+    }
+
+    //DERP: collide in x-y plane
+    return z < height(X, Y) + 0.5;
 }
 
 void SolidOnSolidSolver::setMu(const double mu)

@@ -46,7 +46,6 @@ int main(int argv, char** argc)
     const double &mu = getSetting<double>(root, "mu");
 
     const uint &confinementInt = getSetting<uint>(root, "confinement");
-    const bool confinement = confinementInt == 1;
 
     const double &confiningSurfaceHeight = getSetting<double>(root, "confiningSurfaceHeight");
     const double &E0 = getSetting<double>(root, "E0dA")*L*W;
@@ -79,6 +78,8 @@ int main(int argv, char** argc)
     //---End default config loading
     //---Start ignis environment and solver creation
 
+    ConfiningSurface *confiningSurface;
+    Diffusion *diffusion;
 
     Boundary* xBoundary;
     if (diffuse)
@@ -92,24 +93,48 @@ int main(int argv, char** argc)
 
     Boundary* yBoundary = new Periodic(W);
 
-    ConfiningSurface *confiningSurface;
-
     SolidOnSolidSolver solver(L, W, xBoundary, yBoundary, alpha, mu);
-    CavityDiffusion diffusion(solver, D, dt);
+
     AverageHeight averageHeight(solver);
 
-    if (true)
+    if (confinementInt == 1)
+    {
+        confiningSurface = new NoConfinement(solver);
+
+        if (diffuse)
+        {
+            cout << "Diffusion without confinement is not implemented." << endl;
+            return 1;
+        }
+    }
+    else if (confinementInt == 2)
     {
         confiningSurface = new FixedSurface(solver, confiningSurfaceHeight);
     }
-    else if (true)
+    else if (confinementInt == 3)
     {
         confiningSurface = new FixedRDLSurface(solver, E0, sigma0, lD, confiningSurfaceHeight);
     }
-    else
+    else if (confinementInt == 4)
     {
         confiningSurface = new RDLSurface(solver, E0, sigma0, lD);
         confiningSurface->setDependency(averageHeight);
+    }
+    else
+    {
+        cout << "Invalid confinement: " << confinementInt << endl;
+        return 1;
+    }
+
+    if (diffuse)
+    {
+        diffusion = new OfflatticeMonteCarlo(solver, D, dt);
+        diffusion->setDependency(confiningSurface);
+    }
+
+    else
+    {
+        diffusion = new ConstantConcentration(solver);
     }
 
 
@@ -165,15 +190,8 @@ int main(int argv, char** argc)
     lattice.addEvent(size);
     lattice.addEvent(var);
 
-    if (confinement)
-    {
-        lattice.addEvent(confiningSurface);
-    }
-
-    if (diffuse)
-    {
-        lattice.addEvent(diffusion);
-    }
+    lattice.addEvent(confiningSurface);
+    lattice.addEvent(diffusion);
 
     const bool dumpHeights = false;
     if (dumpHeights)
@@ -248,6 +266,7 @@ int main(int argv, char** argc)
 
     delete xBoundary;
     delete yBoundary;
+    delete diffusion;
     delete confiningSurface;
 
     return 0;

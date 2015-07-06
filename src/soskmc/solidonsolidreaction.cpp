@@ -2,10 +2,6 @@
 
 #include "solidonsolidsolver.h"
 
-#include "Events/pressurewall.h"
-
-#include "Events/cavitydiffusion.h"
-
 #include "../kmcsolver/boundary/boundary.h"
 
 
@@ -24,7 +20,7 @@ double DiffusionDeposition::calculateDissolutionRate() const
 
 double DiffusionDeposition::calculateDepositionRate() const
 {
-    return solver().localSurfaceSupersaturation(x(), y());
+    return solver().depositionRate(x(), y());
 }
 
 bool DiffusionDeposition::isAllowed() const

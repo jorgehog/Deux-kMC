@@ -8,7 +8,7 @@ using namespace arma;
 
 class DiffusionDeposition;
 class ConfiningSurface;
-class CavityDiffusion;
+class Diffusion;
 
 class SolidOnSolidSolver : public KMCSolver
 {
@@ -75,21 +75,23 @@ public:
 
     void setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent);
 
-    void setDiffusionEvent(CavityDiffusion &diffusionEvent);
+    void setDiffusionEvent(Diffusion &diffusionEvent);
 
     ConfiningSurface &confiningSurfaceEvent() const
     {
         return *m_confiningSurfaceEvent;
     }
 
-    CavityDiffusion &diffusionEvent() const
+    Diffusion &diffusionEvent() const
     {
         return *m_diffusionEvent;
     }
 
+    double volume() const;
+
     double confinementEnergy(const uint x, const uint y) const;
 
-    double localSurfaceSupersaturation(const uint x, const uint y) const;
+    double depositionRate(const uint x, const uint y) const;
 
     uint calculateNNeighbors(const uint x, const uint y) const;
 
@@ -103,6 +105,8 @@ public:
 
     uint span() const;
 
+    bool isBlockedPosition(const double x, const double y, const double z) const;
+
     DiffusionDeposition &reaction(const uint x, const uint y) const
     {
         return *m_siteReactions(x, y);
@@ -115,7 +119,7 @@ private:
     const uint m_dim;
 
     ConfiningSurface *m_confiningSurfaceEvent;
-    CavityDiffusion *m_diffusionEvent;
+    Diffusion *m_diffusionEvent;
 
     const uint m_length;
     const uint m_width;

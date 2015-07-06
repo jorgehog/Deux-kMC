@@ -45,7 +45,7 @@ protected:
         Boundary* yBoundary = new Periodic(W);
         m_solver = new SolidOnSolidSolver(L, W, xBoundary, yBoundary, alpha, mu);
         m_pressureWallEvent = new RDLSurface(*m_solver, E0, sigma0, r0);
-        m_diffusionEvent = new CavityDiffusion(*m_solver, D, dt);
+        m_diffusionEvent = new OfflatticeMonteCarlo(*m_solver, D, dt);
 
         m_averageHeight = new AverageHeight(*m_solver);
 
@@ -95,8 +95,8 @@ protected:
 
     SolidOnSolidSolver *m_solver;
     AverageHeight *m_averageHeight;
-    RDLSurface *m_pressureWallEvent;
-    CavityDiffusion *m_diffusionEvent;
+    ConfiningSurface *m_pressureWallEvent;
+    OfflatticeMonteCarlo *m_diffusionEvent;
 
     Lattice *m_lattice;
 };
@@ -117,7 +117,7 @@ TEST_F(SOSkMCTest, diffusionTest)
 
         if (n % 1 == 0)
         {
-            m_diffusionEvent->_dump(nDump);
+            m_diffusionEvent->dump(nDump);
             cout << "\rProgress: " << n/double(nDiff)*100 << " % - acceptance: " << m_diffusionEvent->acceptanceRatio()*100 << " %";
             nDump++;
         }
