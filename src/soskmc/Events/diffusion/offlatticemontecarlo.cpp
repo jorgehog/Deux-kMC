@@ -204,7 +204,7 @@ double OfflatticeMonteCarlo::calculateTimeStep(const double initialCondition, bo
 
     double newTimeStep = solver().nextRandomLogNumber()/(totalDissolutionRate + totalDepositionRate);
 
-    cout << fabs(newTimeStep - timeStep) << endl;
+    cout << fabs(newTimeStep - timeStep) << " " << timeStep/initialCondition << endl;
     cout << "---" << endl;
 
     return timeStep;
@@ -224,7 +224,8 @@ double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y, double t
         P += Pn;
     }
 
-    double geometric = (6 - solver().nNeighbors(x, y))/(4*datum::pi);
+//    double geometric = (6 - solver().nNeighbors(x, y))/(4*datum::pi);
+    double geometric = 1;
     return P*exp(2*solver().alpha() - solver().gamma())/sqrt(2*datum::pi*sigmaSquared)*geometric;
 }
 
@@ -248,7 +249,7 @@ double OfflatticeMonteCarlo::calculateLocalProbability(const uint x,
         cout << m_particlePositions << endl;
     });
 
-    return exp(-dr2/(2*sigmaSquared))/dr2;
+    return exp(-dr2/(2*sigmaSquared));
 }
 
 
