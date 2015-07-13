@@ -45,6 +45,10 @@ int main(int argv, char** argc)
     const double &alpha = getSetting<double>(root, "alpha");
     const double &mu = getSetting<double>(root, "mu");
 
+    const Setting &boundaries = getSetting(root, "boundaries");
+    const uint xBoundaryID = boundaries[0];
+    const uint yBoundaryID = boundaries[1];
+
     const uint &confinementInt = getSetting<uint>(root, "confinement");
 
     const double &confiningSurfaceHeight = getSetting<double>(root, "confiningSurfaceHeight");
@@ -81,17 +85,8 @@ int main(int argv, char** argc)
     ConfiningSurface *confiningSurface;
     Diffusion *diffusion;
 
-    Boundary* xBoundary;
-    if (diffuse)
-    {
-        xBoundary = new Edge(L);
-    }
-    else
-    {
-        xBoundary = new Periodic(L);
-    }
-
-    Boundary* yBoundary = new Periodic(W);
+    Boundary* xBoundary = getBoundaryFromID(xBoundaryID, L);
+    Boundary* yBoundary = getBoundaryFromID(yBoundaryID, W);
 
     SolidOnSolidSolver solver(L, W, xBoundary, yBoundary, alpha, mu);
 
@@ -229,6 +224,9 @@ int main(int argv, char** argc)
 
     simRoot.addData("alpha", alpha);
     simRoot.addData("mu", mu);
+
+    simRoot.addData("xBoundaryID", xBoundaryID);
+    simRoot.addData("yBoundaryID", yBoundaryID);
 
     simRoot.addData("confinement", confinementInt);
     simRoot.addData("sigma0", sigma0);

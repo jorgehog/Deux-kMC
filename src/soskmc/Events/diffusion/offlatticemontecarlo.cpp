@@ -168,8 +168,6 @@ double OfflatticeMonteCarlo::calculateTimeStep(const double initialCondition, bo
     double eps;
     uint i = 0;
 
-    cout << "start: " << timeStep << endl;
-
     do
     {
         double totalDepositionRate = 0;
@@ -183,7 +181,8 @@ double OfflatticeMonteCarlo::calculateTimeStep(const double initialCondition, bo
 
         double newTimeStep = solver().nextRandomLogNumber()/(totalDissolutionRate + totalDepositionRate);
 
-        cout << i << " " << newTimeStep << endl;
+        cout << "\r" << std::setw(3) << i << " " << std::setprecision(6) << std::fixed << newTimeStep;
+        cout.flush();
 
         i++;
 
@@ -204,8 +203,7 @@ double OfflatticeMonteCarlo::calculateTimeStep(const double initialCondition, bo
 
     double newTimeStep = solver().nextRandomLogNumber()/(totalDissolutionRate + totalDepositionRate);
 
-    cout << fabs(newTimeStep - timeStep) << " " << timeStep/initialCondition << endl;
-    cout << "---" << endl;
+    cout << "  " << fabs(newTimeStep - timeStep) << " " << timeStep/initialCondition << endl;
 
     return timeStep;
 }
@@ -264,9 +262,10 @@ void OfflatticeMonteCarlo::execute()
 {
     m_currentTimeStep = calculateTimeStep(m_currentTimeStep);
 
-    if (cycle() % 100 == 0)
+    const uint THRESH = 1;
+    if (cycle() % THRESH == 0)
     {
-        dump(cycle()/100);
+        dump(cycle()/THRESH);
     }
 }
 
@@ -294,7 +293,6 @@ void OfflatticeMonteCarlo::setupInitialConditions()
     const double &h = solver().confiningSurfaceEvent().height();
 
     uint N = V*exp(solver().gamma()-2*solver().alpha());
-    N = 10000;
 
     m_particlePositions.set_size(3, N);
 

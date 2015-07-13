@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SOSkMC.h>
+
 #include <sstream>
 #include <BADAss/badass.h>
 #include <ignis/include/ignis.h>
@@ -183,8 +185,21 @@ private:
 
 };
 
-
-
+Boundary *getBoundaryFromID(const uint ID, const uint span)
+{
+    switch (ID) {
+    case 1:
+        return new Periodic(span);
+        break;
+    case 2:
+        return new Edge(span);
+        break;
+    default:
+        cerr << "invalid boundary: " << ID << endl;
+        return NULL;
+        break;
+    }
+}
 
 
 
