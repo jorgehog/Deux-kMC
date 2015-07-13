@@ -23,7 +23,7 @@ public:
     }
     void reset()
     {
-        return RDLSurface::reset();
+        return RDLSurface::_validateStoredEnergies();
     }
 
     // ConfiningSurface interface

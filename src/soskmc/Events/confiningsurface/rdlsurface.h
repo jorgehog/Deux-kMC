@@ -59,6 +59,8 @@ public:
         m_RDLEnergy(x, y) = evaluateRDLEnergy(x, y);
     }
 
+    void _validateStoredEnergies() const;
+
 
 private:
 

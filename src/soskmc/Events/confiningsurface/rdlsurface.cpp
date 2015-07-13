@@ -179,6 +179,20 @@ double RDLSurface::calculateKZrel(const double x, const double y, const double z
     return K*zRel;
 }
 
+void RDLSurface::_validateStoredEnergies() const
+{
+    //Check that everything is updated correctly from previous runs.
+#ifndef NDEBUG
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            BADAssClose(evaluateRDLEnergy(x, y), RDLEnergy(x, y), 1E-5);
+        }
+    }
+#endif
+}
+
 void RDLSurface::recalculateAllRDLEnergies()
 {
     for (uint x = 0; x < solver().length(); ++x)
@@ -210,16 +224,7 @@ void RDLSurface::initialize()
 void RDLSurface::reset()
 {
 
-    //Check that everything is updated correctly from previous runs.
-#ifndef NDEBUG
-    for (uint x = 0; x < solver().length(); ++x)
-    {
-        for (uint y = 0; y < solver().width(); ++y)
-        {
-            BADAssClose(evaluateRDLEnergy(x, y), RDLEnergy(x, y), 1E-5);
-        }
-    }
-#endif
+    _validateStoredEnergies();
 
     BADAssClose(RDLEnergySum(), -m_E0, 1E-3);
 }

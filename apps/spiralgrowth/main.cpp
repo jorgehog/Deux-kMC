@@ -190,6 +190,7 @@ int main(int argv, char** argc)
     lattice.addEvent(size);
     lattice.addEvent(var);
 
+
     lattice.addEvent(confiningSurface);
     lattice.addEvent(diffusion);
 
@@ -204,7 +205,7 @@ int main(int argv, char** argc)
     //---Running simulation
 
     EquilibrationOrganizer eqOrg(lattice, equilibriate, reset, true);
-    eqOrg.prepare({&eqMu, &equilibriater}, {confiningSurface});
+    eqOrg.prepare({&eqMu, &equilibriater}, {&averageHeight, confiningSurface});
 
     lattice.eventLoop(nCycles);
 
