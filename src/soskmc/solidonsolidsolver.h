@@ -41,7 +41,12 @@ public:
         return m_length*m_width;
     }
 
-    const uint &dim() const
+    uint dim() const
+    {
+        return surfaceDim() + 1;
+    }
+
+    const uint &surfaceDim() const
     {
         return m_dim;
     }

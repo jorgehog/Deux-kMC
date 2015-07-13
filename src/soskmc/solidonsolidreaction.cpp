@@ -13,7 +13,7 @@ uint SolidOnSolidReaction::nNeighbors() const
 double DiffusionDeposition::calculateDissolutionRate() const
 {
     const double &Ew = solver().confinementEnergy(x(), y());
-    const double E = (int)nNeighbors() + (int)solver().dim() - 5 + Ew;
+    const double E = (int)nNeighbors() + (int)solver().surfaceDim() - 5 + Ew;
 
     return std::exp(-solver().alpha()*E - solver().gamma());
 }

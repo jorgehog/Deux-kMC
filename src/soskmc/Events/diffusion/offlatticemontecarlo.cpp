@@ -104,7 +104,7 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
             y1 = y0 + sqrt(2*m_D*dt)*rng.normal() + m_D*m_F(1, n)*dt;
             z1 = z0 + sqrt(2*m_D*dt)*rng.normal() + m_D*m_F(2, n)*dt;
 
-            if (solver().dim() == 1)
+            if (solver().surfaceDim() == 1)
             {
                 y1 = y0;
             }
@@ -168,6 +168,7 @@ double OfflatticeMonteCarlo::calculateTimeStep(const double initialCondition, bo
     double eps;
     uint i = 0;
 
+    vector<double> prevTimeSteps;
     do
     {
         double totalDepositionRate = 0;
@@ -190,6 +191,43 @@ double OfflatticeMonteCarlo::calculateTimeStep(const double initialCondition, bo
 
         timeStep = newTimeStep;
 
+        //checks the new time step against previous time steps
+        //if it is identical, then the iteration failed.
+        for (const double &prevTimeStep : prevTimeSteps)
+        {
+            if (prevTimeStep == timeStep)
+            {
+                cout << "Fixed point iteration failed." << prevTimeStep << " " << timeStep << endl;
+
+                for (const double &prevTimeStep2 : prevTimeSteps)
+                {
+                    cout << prevTimeStep2 << " ";
+                }
+                cout << endl;
+                sleep(2);
+                return solver().nextRandomLogNumber()/totalDissolutionRate;
+            }
+        }
+
+
+        //cycle previous time steps back one index and add the new one to the end.
+        if (!prevTimeSteps.empty())
+        {
+            for (uint j = 0; j < prevTimeSteps.size() - 1; ++j)
+            {
+                prevTimeSteps.at(j) = prevTimeSteps.at(j + 1);
+            }
+            prevTimeSteps.back() = timeStep;
+        }
+
+        //every 100 iteration cycles we check against one extra time step
+        //to be able to locate larger loops, i.e. a-b-c-d-e-f-d-e-f-d-e-f-.. etc.
+        //and not only let's say a-b-c-b-c-b-c..
+        if (i % 100 == 0)
+        {
+            prevTimeSteps.push_back(timeStep);
+        }
+
     } while (eps > m_eps);
 
     double totalDepositionRate = 0;
@@ -203,7 +241,7 @@ double OfflatticeMonteCarlo::calculateTimeStep(const double initialCondition, bo
 
     double newTimeStep = solver().nextRandomLogNumber()/(totalDissolutionRate + totalDepositionRate);
 
-    cout << "  " << fabs(newTimeStep - timeStep) << " " << timeStep/initialCondition << endl;
+    cout << "  " << fabs(newTimeStep - timeStep) << " " << timeStep/initialCondition << " --- " << totalDepositionRate << " " << totalDissolutionRate << " " << totalDepositionRate/totalDissolutionRate << endl;
 
     return timeStep;
 }
@@ -211,8 +249,6 @@ double OfflatticeMonteCarlo::calculateTimeStep(const double initialCondition, bo
 double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y, double timeStep) const
 {
     double P = 0;
-
-    const double sigmaSquared = 2*solver().dim()*m_D*timeStep;
 
     for (uint n = 0; n < nParticles(); ++n)
     {
@@ -222,9 +258,7 @@ double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y, double t
         P += Pn;
     }
 
-//    double geometric = (6 - solver().nNeighbors(x, y))/(4*datum::pi);
-    double geometric = 1;
-    return P*exp(2*solver().alpha() - solver().gamma())/sqrt(2*datum::pi*sigmaSquared)*geometric;
+    return P*exp(2*solver().alpha() - solver().gamma());
 }
 
 double OfflatticeMonteCarlo::calculateLocalProbability(const uint x,
@@ -235,19 +269,32 @@ double OfflatticeMonteCarlo::calculateLocalProbability(const uint x,
 
     const int z = solver().height(x, y) + 1;
 
-    const double sigmaSquared = 2*solver().dim()*m_D*timeStep;
+    const double sigmaSquared = 4*m_D*timeStep;
 
     const double dxSquared = pow((double)x - m_particlePositions(0, n), 2);
     const double dySquared = pow((double)y - m_particlePositions(1, n), 2);
     const double dzSquared = pow((double)z - m_particlePositions(2, n), 2);
 
     const double dr2 = dxSquared + dySquared + dzSquared;
+    const double r = sqrt(dr2);
 
     BADAss(dr2, !=, 0, "lols", [&] () {
         cout << m_particlePositions << endl;
     });
 
-    return exp(-dr2/(2*sigmaSquared));
+    if (solver().dim() == 2)
+    {
+        BADAssBreak("Not supported in 2D.");
+        cout << "2D sucks" << endl;
+        exit(1);
+    }
+
+    //This takes into account that the particle can deposit at any time between t and t + dt, not only at t + dt.
+    const double N = 4*m_D*r;
+//    const double N = 1;
+    return std::erfc(r/sqrt(sigmaSquared))/N;
+
+    //    return exp(-dr2/(2*sigmaSquared))/sqrt(2*datum::pi*sigmaSquared);
 }
 
 
@@ -391,7 +438,7 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x, const uint y, cons
         {
             x0 = rng.uniform()*solver().length();
 
-            if (solver().dim() != 1)
+            if (solver().surfaceDim() != 1)
             {
                 y0 = rng.uniform()*solver().width();
             }
