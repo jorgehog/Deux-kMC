@@ -19,7 +19,7 @@ public:
 public:
     void execute()
     {
-        return FixedRDLSurface::execute();
+        return FixedSurface::execute();
     }
     void reset()
     {
