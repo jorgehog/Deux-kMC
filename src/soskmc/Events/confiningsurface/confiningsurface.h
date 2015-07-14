@@ -1,5 +1,4 @@
-#ifndef CONFININGSURFACE_H
-#define CONFININGSURFACE_H
+#pragma once
 
 #include "../solidonsolidevent.h"
 
@@ -44,5 +43,3 @@ private:
 
     double m_height;
 };
-
-#endif // CONFININGSURFACE_H

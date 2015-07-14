@@ -1,5 +1,4 @@
-#ifndef DIFFUSION_H
-#define DIFFUSION_H
+#pragma once
 
 #include "../solidonsolidevent.h"
 
@@ -21,5 +20,3 @@ public:
     virtual void registerHeightChange(const uint x, const uint y, const int delta) = 0;
 
 };
-
-#endif // DIFFUSION_H

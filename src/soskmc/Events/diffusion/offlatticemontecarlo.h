@@ -1,5 +1,4 @@
-#ifndef OFFLATTICEMONTECARLO_H
-#define OFFLATTICEMONTECARLO_H
+#pragma once
 
 #include "diffusion.h"
 
@@ -7,10 +6,16 @@ class OfflatticeMonteCarlo : public Diffusion
 {
 public:
     OfflatticeMonteCarlo(SolidOnSolidSolver &solver,
-                         const double D,
-                         const double dt);
+                         const double dt,
+                         string type,
+                         string unit = "",
+                         bool hasOutput = false,
+                         bool storeValue = false);
 
-    ~OfflatticeMonteCarlo();
+    virtual ~OfflatticeMonteCarlo();
+
+    virtual void onInsertParticle(const double x, const double y, const double z) = 0;
+    virtual void onRemoveParticle(const uint n) = 0;
 
     void dump(const uint frameNumber) const;
 
@@ -20,25 +25,26 @@ public:
 
     void insertParticle(const double x, const double y, const double z);
 
-    double calculateTimeStep(const double initialCondition, bool calculateDissolutionRate = false);
-
-    double depositionRate(const uint x, const uint y, double timeStep) const;
-
-    double calculateLocalProbability(const uint x, const uint y, const uint n, const double timeStep) const;
-
-    double calculateLocalProbability(const uint x, const uint y, const uint n) const
-    {
-        return calculateLocalProbability(x, y, n, m_currentTimeStep);
-    }
+    void initializeParticleMatrices(const uint nParticles);
 
     const double &dt() const
     {
         return m_dt;
     }
 
+    const double &D() const
+    {
+        return m_D;
+    }
+
     double acceptanceRatio() const
     {
         return m_accepted/m_trials;
+    }
+
+    const double &particlePositions(const uint i, const uint j) const
+    {
+        return m_particlePositions(i, j);
     }
 
     const mat &particlePositions() const
@@ -51,47 +57,33 @@ public:
         return m_particlePositions.n_cols;
     }
 
+    void setParticlePosition(const uint i, const uint j, const double value)
+    {
+        m_particlePositions(i, j) = value;
+    }
+
+protected:
+
+    double &particlePositions(const uint i, const uint j)
+    {
+        return m_particlePositions(i, j);
+    }
 
 private:
 
-    const double m_D0;
     const double m_D;
-
-    const double m_dt0;
     const double m_dt;
-
-    double m_currentTimeStep;
-
-    static constexpr double m_eps = 0.00001;
 
     mat m_particlePositions;
     mat m_F;
-
-    cube m_localProbabilities;
 
     long double m_accepted;
     long double m_trials;
 
 
+
     // Event interface
 public:
     void initialize();
-
-    void execute();
-
-    void reset();
-
-    // Diffusion interface
-public:
-    void setupInitialConditions();
-
-    double depositionRate(const uint x, const uint y) const
-    {
-        return depositionRate(x, y, m_currentTimeStep);
-    }
-
-    void registerHeightChange(const uint x, const uint y, const int delta);
-
 };
 
-#endif // OFFLATTICEMONTECARLO_H

@@ -1,5 +1,4 @@
-#ifndef CONSTANTCONCENTRATION_H
-#define CONSTANTCONCENTRATION_H
+#pragma once
 
 #include "diffusion.h"
 
@@ -42,5 +41,3 @@ public:
         //pass
     }
 };
-
-#endif // CONSTANTCONCENTRATION_H

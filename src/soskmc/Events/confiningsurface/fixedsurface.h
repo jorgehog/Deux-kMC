@@ -1,5 +1,4 @@
-#ifndef FIXEDSURFACE_H
-#define FIXEDSURFACE_H
+#pragma once
 
 #include "confiningsurface.h"
 
@@ -49,5 +48,3 @@ public:
 
     double diffusionDrift(const double x, const double y, const double z) const;
 };
-
-#endif // FIXEDSURFACE_H

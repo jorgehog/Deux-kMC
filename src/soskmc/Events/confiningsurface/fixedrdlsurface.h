@@ -1,5 +1,4 @@
-#ifndef FIXEDRDLSURFACE_H
-#define FIXEDRDLSURFACE_H
+#pragma once
 
 #include "fixedsurface.h"
 #include "rdlsurface.h"
@@ -59,5 +58,3 @@ public:
         return RDLSurface::acceptDiffusionMove(x0, y0, z0, x1, y1, z1);
     }
 };
-
-#endif // FIXEDRDLSURFACE_H

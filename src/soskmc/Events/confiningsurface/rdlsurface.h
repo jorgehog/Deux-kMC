@@ -1,5 +1,4 @@
-#ifndef RDLSURFACE_H
-#define RDLSURFACE_H
+#pragma once
 
 #include "confiningsurface.h"
 
@@ -117,5 +116,3 @@ public:
     double diffusionDrift(const double x, const double y, const double z) const;
 
 };
-
-#endif // RDLSURFACE_H

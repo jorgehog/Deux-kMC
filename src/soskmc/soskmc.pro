@@ -15,8 +15,10 @@ SOURCES += solidonsolidsolver.cpp \
     Events/confiningsurface/fixedsurface.cpp \
     Events/diffusion/diffusion.cpp \
     Events/diffusion/constantconcentration.cpp \
-    Events/diffusion/offlatticemontecarlo.cpp \
-    Events/confiningsurface/noconfinement.cpp
+    Events/confiningsurface/noconfinement.cpp \
+    Events/diffusion/offlatticemontecarloboundary.cpp \
+    Events/diffusion/offlatticemontecarlonoboundary.cpp \
+    Events/diffusion/offlatticemontecarlo.cpp
 
 HEADERS += \
     solidonsolidsolver.h \
@@ -31,8 +33,10 @@ HEADERS += \
     Events/confiningsurface/fixedsurface.h \
     Events/diffusion/diffusion.h \
     Events/diffusion/constantconcentration.h \
-    Events/diffusion/offlatticemontecarlo.h \
-    Events/confiningsurface/noconfinement.h
+    Events/confiningsurface/noconfinement.h \
+    Events/diffusion/offlatticemontecarloboundary.h \
+    Events/diffusion/offlatticemontecarlonoboundary.h \
+    Events/diffusion/offlatticemontecarlo.h
 
 LIBS += -lkMC
 

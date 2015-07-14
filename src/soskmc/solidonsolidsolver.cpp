@@ -7,10 +7,10 @@
 
 SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
                                        const uint width,
-                                       const Boundary *xBoundary,
-                                       const Boundary *yBoundary,
                                        const double alpha,
-                                       const double mu) :
+                                       const double mu,
+                                       const Boundary *xBoundary,
+                                       const Boundary *yBoundary) :
     KMCSolver({xBoundary, yBoundary}),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_length(length),

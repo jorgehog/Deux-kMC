@@ -1,4 +1,4 @@
-TEMPLATE = app
+TARGET = kmctests
 
 include(../app_defaults.pri)
 
@@ -8,4 +8,8 @@ LIBS += -lgtest -lgtest_main -lpthread
 
 OTHER_FILES += \
     infiles/tests.cfg
+
+HEADERS += \
+    testdiffusion.h \
+    kmctestfixture.h
 

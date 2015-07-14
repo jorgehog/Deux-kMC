@@ -43,7 +43,7 @@ int main(int argv, char** argc)
     const uint &W = getSetting<uint>(root, "W");
 
     const double &alpha = getSetting<double>(root, "alpha");
-    const double &mu = getSetting<double>(root, "mu");
+    const double &gamma = getSetting<double>(root, "gamma");
 
     const Setting &boundaries = getSetting(root, "boundaries");
     const uint xBoundaryID = boundaries[0];
@@ -58,7 +58,8 @@ int main(int argv, char** argc)
 
     const uint &diffuseInt = getSetting<uint>(root, "diffuse");
     const bool diffuse = diffuseInt == 1;
-    const double &D = getSetting<double>(root, "D");
+//    const double &D = getSetting<double>(root, "D");
+    const double D = 1./6*exp(2*alpha-gamma);
     const double &dt = getSetting<double>(root, "dt");
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
@@ -88,7 +89,7 @@ int main(int argv, char** argc)
     Boundary* xBoundary = getBoundaryFromID(xBoundaryID, L);
     Boundary* yBoundary = getBoundaryFromID(yBoundaryID, W);
 
-    SolidOnSolidSolver solver(L, W, xBoundary, yBoundary, alpha, mu);
+    SolidOnSolidSolver solver(L, W, alpha, gamma, xBoundary, yBoundary);
 
     AverageHeight averageHeight(solver);
 
@@ -123,7 +124,7 @@ int main(int argv, char** argc)
 
     if (diffuse)
     {
-        diffusion = new OfflatticeMonteCarlo(solver, D, dt);
+        diffusion = new OfflatticeMonteCarloNoBoundary(solver, dt);
         diffusion->setDependency(confiningSurface);
     }
 
@@ -223,7 +224,7 @@ int main(int argv, char** argc)
     H5Wrapper::Member &simRoot = sizeRoot.addMember(time(NULL));
 
     simRoot.addData("alpha", alpha);
-    simRoot.addData("mu", mu);
+    simRoot.addData("gamma", gamma);
 
     simRoot.addData("xBoundaryID", xBoundaryID);
     simRoot.addData("yBoundaryID", yBoundaryID);

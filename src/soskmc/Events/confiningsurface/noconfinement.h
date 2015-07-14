@@ -1,5 +1,4 @@
-#ifndef NOCONFINEMENT_H
-#define NOCONFINEMENT_H
+#pragma once
 
 #include "confiningsurface.h"
 
@@ -21,5 +20,3 @@ public:
     bool acceptDiffusionMove(const double x0, const double y0, const double z0, const double x1, const double y1, const double z1) const;
     double diffusionDrift(const double x, const double y, const double z) const;
 };
-
-#endif // NOCONFINEMENT_H

@@ -15,10 +15,10 @@ class SolidOnSolidSolver : public KMCSolver
 public:
     SolidOnSolidSolver(const uint length,
                        const uint width,
-                       const Boundary* xBoundary,
-                       const Boundary* yBoundary,
                        const double alpha,
-                       const double gamma);
+                       const double gamma,
+                       const Boundary* xBoundary,
+                       const Boundary* yBoundary);
 
     ~SolidOnSolidSolver();
 
