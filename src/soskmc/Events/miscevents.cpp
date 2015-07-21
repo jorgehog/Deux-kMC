@@ -73,7 +73,7 @@ void SurfaceSize::execute()
 
 void SurfaceSize::reset()
 {
-    const DiffusionDeposition *currentReaction = dynamic_cast<const DiffusionDeposition*>(solver().selectedReaction());
+    const SOSReaction *currentReaction = dynamic_cast<const SOSReaction*>(solver().selectedReaction());
 
     const int &x = currentReaction->x();
     const int &y = currentReaction->y();
@@ -209,7 +209,7 @@ void NNeighbors::execute()
 
 void NNeighbors::reset()
 {
-    const DiffusionDeposition *currentReaction = dynamic_cast<const DiffusionDeposition*>(solver().selectedReaction());
+    const SOSReaction *currentReaction = dynamic_cast<const SOSReaction*>(solver().selectedReaction());
 
     const uint &x = currentReaction->x();
     const uint &y = currentReaction->y();

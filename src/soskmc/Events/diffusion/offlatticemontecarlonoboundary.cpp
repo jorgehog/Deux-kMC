@@ -1,6 +1,6 @@
 #include "offlatticemontecarlonoboundary.h"
 #include "../confiningsurface/confiningsurface.h"
-#include "../../sosreaction.h"
+#include "../../dissolutiondeposition.h"
 
 OfflatticeMonteCarloNoBoundary::OfflatticeMonteCarloNoBoundary(SOSSolver &solver,
                                                                const double dt) :
@@ -27,12 +27,12 @@ double OfflatticeMonteCarloNoBoundary::calculateTimeStep(const double initialCon
         {
             if (calculateDissolutionRate)
             {
-                totalDissolutionRate += solver().reaction(x, y).calculateDissolutionRate();
+                totalDissolutionRate += solver().surfaceReaction(x, y).calculateDissolutionRate();
             }
 
             else
             {
-                totalDissolutionRate += solver().reaction(x, y).dissolutionRate();
+                totalDissolutionRate += solver().surfaceReaction(x, y).dissolutionRate();
             }
         }
     }
@@ -316,12 +316,12 @@ void OfflatticeMonteCarloNoBoundary::registerHeightChange(const uint x, const ui
 
     m_currentTimeStep = calculateTimeStep(m_currentTimeStep);
 
-    DiffusionDeposition *r;
+    DissolutionDeposition *r;
     for (uint _x = 0; _x < solver().length(); ++_x)
     {
         for (uint _y = 0; _y < solver().width(); ++_y)
         {
-            r = &solver().reaction(_x, _y);
+            r = &solver().surfaceReaction(_x, _y);
             r->setDepositionRate(r->calculateDepositionRate());
         }
     }

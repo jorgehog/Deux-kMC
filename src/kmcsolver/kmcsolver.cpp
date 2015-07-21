@@ -17,6 +17,8 @@ KMCSolver::KMCSolver(vector<const Boundary *> boundaries) :
 
 KMCSolver::~KMCSolver()
 {
+    //KMCSolver is not responsible for deletion
+    m_reactions.clear();
     m_boundaries.clear();
 }
 
@@ -52,6 +54,22 @@ void KMCSolver::initializeReactions()
 
         m_cumsumRates.at(i) = m_totalRate;
     }
+}
+
+void KMCSolver::addReaction(Reaction *reaction)
+{
+    m_reactions.push_back(reaction);
+}
+
+void KMCSolver::removeReaction(const uint n)
+{
+    m_reactions.erase(m_reactions.begin() + n);
+}
+
+void KMCSolver::removeReaction(Reaction *reaction)
+{
+    auto &r = m_reactions;
+    r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
 }
 
 double KMCSolver::getRandomLogNumber() const

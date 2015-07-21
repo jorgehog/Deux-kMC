@@ -1,5 +1,5 @@
 #include "rdlsurface.h"
-#include "../../sosreaction.h"
+#include "../../dissolutiondeposition.h"
 
 RDLSurface::RDLSurface(SOSSolver &solver,
                        const double E0,
@@ -93,7 +93,7 @@ void RDLSurface::findNewHeight()
     m_ratioPartialSums*=m_expFac;
 }
 
-void RDLSurface::updateRatesFor(DiffusionDeposition &reaction)
+void RDLSurface::updateRatesFor(DissolutionDeposition &reaction)
 {
     const uint x = reaction.x();
     const uint y = reaction.y();
@@ -240,7 +240,7 @@ void RDLSurface::setupInitialConditions()
     BADAssClose(RDLEnergySum(), -m_E0, 1E-5);
 }
 
-void RDLSurface::registerHeightChange(const uint x, const uint y, std::vector<DiffusionDeposition *> affectedReactions, const uint n)
+void RDLSurface::registerHeightChange(const uint x, const uint y, std::vector<DissolutionDeposition *> affectedReactions, const uint n)
 {
     if (!hasStarted())
     {
@@ -256,7 +256,7 @@ void RDLSurface::registerHeightChange(const uint x, const uint y, std::vector<Di
 
     for (uint i = 0; i < n; ++i)
     {
-        DiffusionDeposition *reaction = affectedReactions.at(i);
+        DissolutionDeposition *reaction = affectedReactions.at(i);
         recalculateRDLEnergy(reaction->x(), reaction->y());
     }
 
@@ -264,7 +264,7 @@ void RDLSurface::registerHeightChange(const uint x, const uint y, std::vector<Di
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            DiffusionDeposition &reaction = solver().reaction(x, y);
+            DissolutionDeposition &reaction = solver().surfaceReaction(x, y);
 
             if (std::find(start, end, &reaction) == end)
             {

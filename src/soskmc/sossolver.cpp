@@ -1,5 +1,5 @@
 #include "sossolver.h"
-#include "sosreaction.h"
+#include "dissolutiondeposition.h"
 #include "Events/confiningsurface/confiningsurface.h"
 #include "Events/diffusion/constantconcentration.h"
 #include "../kmcsolver/boundary/boundary.h"
@@ -27,7 +27,8 @@ SOSSolver::SOSSolver(const uint length,
     {
         for (uint y = 0; y < width; ++y)
         {
-            m_siteReactions(x, y) = new DiffusionDeposition(x, y, *this);
+            m_siteReactions(x, y) = new DissolutionDeposition(x, y, *this);
+            addReaction(m_siteReactions(x, y));
         }
     }
 }
@@ -57,34 +58,34 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
     uint n = 0;
 
     setNNeighbors(x, y);
-    m_affectedReactions.at(n) = &reaction(x, y);
+    m_affectedReactions.at(n) = &surfaceReaction(x, y);
     n++;
 
     if (!boundary(0)->isBlocked(left))
     {
         setNNeighbors(left, y);
-        m_affectedReactions.at(n) = &reaction(left, y);
+        m_affectedReactions.at(n) = &surfaceReaction(left, y);
         n++;
     }
 
     if (!boundary(0)->isBlocked(right))
     {
         setNNeighbors(right, y);
-        m_affectedReactions.at(n) = &reaction(right, y);
+        m_affectedReactions.at(n) = &surfaceReaction(right, y);
         n++;
     }
 
     if (!boundary(1)->isBlocked(top))
     {
         setNNeighbors(x, top);
-        m_affectedReactions.at(n) = &reaction(x, top);
+        m_affectedReactions.at(n) = &surfaceReaction(x, top);
         n++;
     }
 
     if (!boundary(1)->isBlocked(bottom))
     {
         setNNeighbors(x, bottom);
-        m_affectedReactions.at(n) = &reaction(x, bottom);
+        m_affectedReactions.at(n) = &surfaceReaction(x, bottom);
         n++;
     }
 
@@ -94,7 +95,7 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
 
     for (uint i = 0; i < n; ++i)
     {
-        DiffusionDeposition *reaction = m_affectedReactions.at(i);
+        DissolutionDeposition *reaction = m_affectedReactions.at(i);
         reaction->calculateRate();
     }
 
@@ -103,6 +104,26 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
 void SOSSolver::setNNeighbors(const uint x, const uint y)
 {
     m_nNeighbors(x, y) = calculateNNeighbors(x, y);
+}
+
+void SOSSolver::setHeight(const uint x, const uint y, const int value)
+{
+    //extremely slow implementation
+
+    int dh = value - height(x, y);
+
+    if (dh == 0)
+    {
+        return;
+    }
+
+    int direction = dh/abs(dh);
+
+    for (int i = 0; i < abs(dh); i += 1)
+    {
+        registerHeightChange(x, y, direction);
+    }
+
 }
 
 
@@ -144,43 +165,13 @@ double SOSSolver::depositionRate(const uint x, const uint y) const
 
 uint SOSSolver::calculateNNeighbors(const uint x, const uint y) const
 {    
-    bool connectedLeft = false;
-    bool connectedRight = false;
-    bool connectedTop = false;
-    bool connectedBottom = false;
+    bool connectedLeft, connectedRight,
+            connectedTop, connectedBottom;
+
+    findConnections(x, y, connectedLeft, connectedRight,
+                    connectedBottom, connectedTop);
 
     uint n = 1;
-
-    const int &h = m_heights(x, y);
-
-    const int left = leftSite(x);
-    const int right = rightSite(x);
-    const int top = topSite(y);
-    const int bottom = bottomSite(y);
-
-    if (!boundary(0)->isBlocked(left))
-    {
-        const int &hLeft = m_heights(left, y);
-        connectedLeft = hLeft >= h;
-    }
-
-    if (!boundary(0)->isBlocked(right))
-    {
-        const int &hRight = m_heights(right, y);
-        connectedRight = hRight >= h;
-    }
-
-    if (!boundary(1)->isBlocked(top))
-    {
-        const int &hTop = m_heights(x, top);
-        connectedTop = hTop >= h;
-    }
-
-    if (!boundary(1)->isBlocked(bottom))
-    {
-        const int &hBottom = m_heights(x, bottom);
-        connectedBottom = hBottom >= h;
-    }
 
     if (connectedLeft)
     {
@@ -206,6 +197,95 @@ uint SOSSolver::calculateNNeighbors(const uint x, const uint y) const
 
 }
 
+uint SOSSolver::nSurroundingSolutionSites(const uint x, const uint y) const
+{
+    return 6u - nNeighbors(x, y);
+}
+
+
+void SOSSolver::getSolutionSite(const uint x, const uint y,
+                                int &dx, int &dy, int &dz,
+                                const uint siteNumber) const
+{
+    /*
+     *   4
+     * 1 0 2
+     *   3
+     */
+
+    BADAss(siteNumber, <=, nSurroundingSolutionSites(x, y));
+
+    //#0 site is above the (x, y, h+1) site.
+    if (siteNumber == 0)
+    {
+        dx = 0;
+        dy = 0;
+        dz = 2;
+
+        return;
+    }
+
+    //all other sites are besides (x,y, h+1) and has zs = h+1
+    else
+    {
+        dz = 1;
+    }
+
+    uint n = 1;
+
+    bool connectedLeft, connectedRight,
+            connectedBottom, connectedTop;
+
+    findConnections(x, y, connectedLeft, connectedRight, connectedBottom, connectedTop);
+
+    if (!connectedLeft)
+    {
+        if (n == siteNumber)
+        {
+            dx = -1;
+            dy =  0;
+            return;
+        }
+
+        n++;
+    }
+
+    if (!connectedRight)
+    {
+        if (n == siteNumber)
+        {
+            dx = 1;
+            dy = 0;
+            return;
+        }
+
+        n++;
+    }
+
+    if (!connectedTop)
+    {
+        if (n == siteNumber)
+        {
+            dx =  0;
+            dy = -1;
+            return;
+        }
+
+        n++;
+    }
+
+    if (!connectedBottom)
+    {
+        if (n == siteNumber)
+        {
+            dx = 0;
+            dy = 1;
+            return;
+        }
+    }
+
+}
+
 int SOSSolver::topSite(const uint site, const uint n) const
 {
     return boundary(1)->transformCoordinate(site + n);
@@ -224,6 +304,50 @@ int SOSSolver::leftSite(const uint site, const uint n) const
 int SOSSolver::rightSite(const uint site, const uint n) const
 {
     return boundary(0)->transformCoordinate(site + n);
+}
+
+void SOSSolver::findConnections(const uint x,
+                                const uint y,
+                                bool &connectedLeft,
+                                bool &connectedRight,
+                                bool &connectedBottom,
+                                bool &connectedTop) const
+{
+    connectedLeft = false;
+    connectedRight = false;
+    connectedBottom = false;
+    connectedTop = false;
+
+    const int left = leftSite(x);
+    const int right = rightSite(x);
+    const int top = topSite(y);
+    const int bottom = bottomSite(y);
+
+    const int &h = height(x, y);
+
+    if (!boundary(0)->isBlocked(left))
+    {
+        const int &hLeft = m_heights(left, y);
+        connectedLeft = hLeft >= h;
+    }
+
+    if (!boundary(0)->isBlocked(right))
+    {
+        const int &hRight = m_heights(right, y);
+        connectedRight = hRight >= h;
+    }
+
+    if (!boundary(1)->isBlocked(top))
+    {
+        const int &hTop = m_heights(x, top);
+        connectedTop = hTop >= h;
+    }
+
+    if (!boundary(1)->isBlocked(bottom))
+    {
+        const int &hBottom = m_heights(x, bottom);
+        connectedBottom = hBottom >= h;
+    }
 }
 
 uint SOSSolver::span() const
@@ -282,7 +406,7 @@ void SOSSolver::setMu(const double mu)
         {
             for (uint y = 0; y < width(); ++y)
             {
-                DiffusionDeposition &_reaction = reaction(x, y);
+                DissolutionDeposition &_reaction = surfaceReaction(x, y);
                 _reaction.setDiffusionRate(_reaction.dissolutionRate()*expFac);
             }
         }
@@ -327,14 +451,4 @@ void SOSSolver::initializeSolver()
     m_confiningSurfaceEvent->setupInitialConditions();
     m_diffusionEvent->setupInitialConditions();
 
-}
-
-uint SOSSolver::numberOfReactions() const
-{
-    return m_siteReactions.size();
-}
-
-Reaction *SOSSolver::getReaction(const uint n) const
-{
-    return m_siteReactions(n);
 }

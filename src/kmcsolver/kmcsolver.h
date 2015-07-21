@@ -40,16 +40,30 @@ public:
 
     void initializeReactions();
 
-    virtual uint numberOfReactions() const = 0;
-
-    virtual Reaction *getReaction(const uint n) const = 0;
+    Reaction *getReaction(const uint n) const
+    {
+        return m_reactions.at(n);
+    }
 
     const double &nextRandomLogNumber() const
     {
         return m_nextRandomLogNumber;
     }
 
+    void addReaction(Reaction *reaction);
+
+    void removeReaction(const uint n);
+
+    void removeReaction(Reaction *reaction);
+
+    uint numberOfReactions() const
+    {
+        return m_reactions.size();
+    }
+
 private:
+    vector<Reaction*> m_reactions;
+
     vector<const Boundary*> m_boundaries;
 
     Reaction *m_selectedReaction;
@@ -71,7 +85,7 @@ private:
 
     void getCumsumAndTotalRate();
 
-protected:
+private:
     virtual void initializeSolver() = 0;
 
     // Event interface

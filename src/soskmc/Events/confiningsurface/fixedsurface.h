@@ -24,7 +24,7 @@ public:
         //pass
     }
 
-    void registerHeightChange(const uint x, const uint y, std::vector<DiffusionDeposition *> affectedReactions, const uint n)
+    void registerHeightChange(const uint x, const uint y, std::vector<DissolutionDeposition *> affectedReactions, const uint n)
     {
         (void) affectedReactions;
         (void) n;

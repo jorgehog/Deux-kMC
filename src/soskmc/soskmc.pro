@@ -18,9 +18,10 @@ SOURCES += \
     Events/diffusion/offlatticemontecarloboundary.cpp \
     Events/diffusion/offlatticemontecarlonoboundary.cpp \
     Events/diffusion/offlatticemontecarlo.cpp \
-    diffusionsossolver.cpp \
     sossolver.cpp \
-    sosreaction.cpp
+    sosreaction.cpp \
+    sosdiffusionreaction.cpp \
+    dissolutiondeposition.cpp
 
 HEADERS += \
     Events/solidonsolidevent.h \
@@ -37,9 +38,10 @@ HEADERS += \
     Events/diffusion/offlatticemontecarloboundary.h \
     Events/diffusion/offlatticemontecarlonoboundary.h \
     Events/diffusion/offlatticemontecarlo.h \
-    diffusionsossolver.h \
     sossolver.h \
-    sosreaction.h
+    sosreaction.h \
+    sosdiffusionreaction.h \
+    dissolutiondeposition.h
 
 LIBS += -lkMC
 

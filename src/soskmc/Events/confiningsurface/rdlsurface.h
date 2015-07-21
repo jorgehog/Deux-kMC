@@ -20,7 +20,7 @@ public:
 
     void findNewHeight();
 
-    void updateRatesFor(DiffusionDeposition &reaction);
+    void updateRatesFor(DissolutionDeposition &reaction);
 
     double bruteForceThetaRatio() const;
 
@@ -104,7 +104,7 @@ public:
 public:
     void setupInitialConditions();
 
-    void registerHeightChange(const uint x, const uint y, std::vector<DiffusionDeposition *> affectedReactions, const uint n);
+    void registerHeightChange(const uint x, const uint y, std::vector<DissolutionDeposition *> affectedReactions, const uint n);
 
     double confinementEnergy(const uint x, const uint y)
     {

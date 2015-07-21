@@ -6,7 +6,7 @@
 using namespace kMC;
 using namespace arma;
 
-class DiffusionDeposition;
+class DissolutionDeposition;
 class ConfiningSurface;
 class Diffusion;
 
@@ -25,6 +25,8 @@ public:
     void registerHeightChange(const uint x, const uint y, const int value);
 
     void setNNeighbors(const uint x, const uint y);
+
+    void setHeight(const uint x, const uint y, const int value);
 
     const uint &length() const
     {
@@ -100,6 +102,12 @@ public:
 
     uint calculateNNeighbors(const uint x, const uint y) const;
 
+    uint nSurroundingSolutionSites(const uint x, const uint y) const;
+
+    void getSolutionSite(const uint x, const uint y,
+                         int &dx, int &dy, int &dz,
+                         const uint siteNumber) const;
+
     int topSite(const uint site, const uint n = 1) const;
 
     int bottomSite(const uint site, const uint n = 1) const;
@@ -108,11 +116,18 @@ public:
 
     int rightSite(const uint site, const uint n = 1) const;
 
+    void findConnections(const uint x,
+                         const uint y,
+                         bool &connectedLeft,
+                         bool &connectedRight,
+                         bool &connectedBottom,
+                         bool &connectedTop) const;
+
     uint span() const;
 
     bool isBlockedPosition(const double x, const double y, const double z) const;
 
-    DiffusionDeposition &reaction(const uint x, const uint y) const
+    DissolutionDeposition &surfaceReaction(const uint x, const uint y) const
     {
         return *m_siteReactions(x, y);
     }
@@ -135,18 +150,12 @@ private:
     imat m_heights;
     umat m_nNeighbors;
 
-    field<DiffusionDeposition*> m_siteReactions;
+    field<DissolutionDeposition*> m_siteReactions;
 
-
-    std::vector<DiffusionDeposition*> m_affectedReactions;
-
+    std::vector<DissolutionDeposition*> m_affectedReactions;
 
     // KMCSolver interface
-public:
-    uint numberOfReactions() const;
-    Reaction *getReaction(const uint n) const;
-
-protected:
+private:
     void initializeSolver();
 
 };

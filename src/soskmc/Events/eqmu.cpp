@@ -1,6 +1,6 @@
 #include "eqmu.h"
 
-#include "sosreaction.h"
+#include "dissolutiondeposition.h"
 
 #include "miscevents.h"
 
@@ -35,7 +35,7 @@ void EqMu::update()
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            localDissolutionRate += solver().reaction(x, y).dissolutionRate();
+            localDissolutionRate += solver().surfaceReaction(x, y).dissolutionRate();
         }
     }
 

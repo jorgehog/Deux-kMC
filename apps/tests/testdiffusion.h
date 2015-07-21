@@ -10,8 +10,8 @@
 
 TEST_F(SOSkMCTest, diffusion)
 {
-    const uint L = 10;
-    const uint W = 10;
+    const uint L = 3;
+    const uint W = 3;
     const double alpha = 1.0;
     const double mu = 0;
     const double dt = 1.;
@@ -31,20 +31,79 @@ TEST_F(SOSkMCTest, diffusion)
 
     primeSolver(0);
 
-    EXPECT_TRUE(diffusionEvent->checkIfEnoughRoom());
-
-    const int h0 = m_solver->height(L/2, W/2);
-    const int hmax = m_solver->heights().max();
-    const double dh = m_solver->confiningSurfaceEvent().height() - hmax;
-
-    for (int h = h0; h <= (int)(dh - 2*spacing); ++h)
+    for (uint x = 0; x < L; ++x)
     {
-        m_solver->registerHeightChange(L/2, W/2, 1);
-        EXPECT_TRUE(diffusionEvent->checkIfEnoughRoom());
+        for (uint y = 0; y < W; ++y)
+        {
+            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->nSurroundingSolutionSites(x, y), 6);
+            m_solver->setHeight(x, y, 0);
+        }
     }
 
-    m_solver->registerHeightChange(L/2, W/2, 1);
-    EXPECT_FALSE(diffusionEvent->checkIfEnoughRoom());
+    const uint cx = L/2;
+    const uint cy = W/2;
+
+    int dx, dy, dz;
+
+
+    //COMPLETELY FLAT
+
+    EXPECT_EQ(1, m_solver->nSurroundingSolutionSites(cx, cy));
+
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
+
+    EXPECT_EQ(0, dx); EXPECT_EQ(0, dy); EXPECT_EQ(2, dz);
+
+    //NO NEIGHBORS
+
+    m_solver->registerHeightChange(cx, cy, 1);
+
+    EXPECT_EQ(5, m_solver->nSurroundingSolutionSites(cx, cy));
+
+    //0 = above => dr = (0, 0, 2)
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(2, dz);
+
+    //1 = left => dr = (-1, 0, 1)
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 1);
+    EXPECT_EQ(-1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
+
+    //2 = right => dr = (1, 0, 1)
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 2);
+    EXPECT_EQ( 1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
+
+    //3 = bottom => dr = (0, -1, 1)
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 3);
+    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(1, dz);
+
+    //4 = top => dr = (0, 1, 1)
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 4);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 1, dy); EXPECT_EQ(1, dz);
+
+
+    //ONE NEIGHBOR AT LEFT
+    //increase bottom site to 1
+    m_solver->registerHeightChange(cx-1, cy, 1);
+
+    EXPECT_EQ(4, m_solver->nSurroundingSolutionSites(cx, cy));
+
+    //0 = above => dr = (0, 0, 2)
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(2, dz);
+
+    //1 = left => dr = (-1, 0, 1) BLOCKED
+
+    //1 = right => dr = (1, 0, 1)
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 1);
+    EXPECT_EQ( 1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
+
+    //2 = bottom => dr = (0, -1, 1)
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 2);
+    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(1, dz);
+
+    //3 = top => dr = (0, 1, 1)
+    m_solver->getSolutionSite(cx, cy, dx, dy, dz, 3);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 1, dy); EXPECT_EQ(1, dz);
 
 
     m_lattice->reConnect();

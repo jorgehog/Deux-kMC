@@ -2,7 +2,7 @@
 
 #include "../solidonsolidevent.h"
 
-class DiffusionDeposition;
+class DissolutionDeposition;
 
 class ConfiningSurface : public SolidOnSolidEvent
 {
@@ -19,7 +19,7 @@ public:
 
     virtual void registerHeightChange(const uint x,
                                       const uint y,
-                                      std::vector<DiffusionDeposition *> affectedReactions,
+                                      std::vector<DissolutionDeposition *> affectedReactions,
                                       const uint n) = 0;
 
     virtual double confinementEnergy(const uint x, const uint y) = 0;
