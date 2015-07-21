@@ -5,7 +5,7 @@
 class OfflatticeMonteCarlo : public Diffusion
 {
 public:
-    OfflatticeMonteCarlo(SolidOnSolidSolver &solver,
+    OfflatticeMonteCarlo(SOSSolver &solver,
                          const double dt,
                          string type,
                          string unit = "",

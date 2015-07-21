@@ -5,7 +5,7 @@
 class Diffusion : public SolidOnSolidEvent
 {
 public:
-    Diffusion(SolidOnSolidSolver &solver,
+    Diffusion(SOSSolver &solver,
               string type,
               string unit = "",
               bool hasOutput = false,

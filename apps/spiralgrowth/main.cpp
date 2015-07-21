@@ -89,7 +89,7 @@ int main(int argv, char** argc)
     Boundary* xBoundary = getBoundaryFromID(xBoundaryID, L);
     Boundary* yBoundary = getBoundaryFromID(yBoundaryID, W);
 
-    SolidOnSolidSolver solver(L, W, alpha, gamma, xBoundary, yBoundary);
+    SOSSolver solver(L, W, alpha, gamma, xBoundary, yBoundary);
 
     AverageHeight averageHeight(solver);
 

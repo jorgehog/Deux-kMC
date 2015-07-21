@@ -7,7 +7,7 @@ class EqMu : public SolidOnSolidEvent
 {
 public:
 
-    EqMu(const SolidOnSolidSolver &solver) :
+    EqMu(const SOSSolver &solver) :
         SolidOnSolidEvent(solver, "EqMu", "", true, true),
         m_accuNeighbours(0),
         m_accuDissolutionRate(0),

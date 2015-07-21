@@ -1,6 +1,6 @@
 #include "fixedrdlsurface.h"
 
-FixedRDLSurface::FixedRDLSurface(SolidOnSolidSolver &solver,
+FixedRDLSurface::FixedRDLSurface(SOSSolver &solver,
                                  const double E0,
                                  const double s0,
                                  const double ld,

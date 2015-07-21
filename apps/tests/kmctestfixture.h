@@ -84,7 +84,7 @@ protected:
         m_lattice->removeEvent(&primer);
     }
 
-    SolidOnSolidSolver *m_solver = NULL;
+    SOSSolver *m_solver = NULL;
     AverageHeight *m_averageHeight = NULL;
     ConfiningSurface *m_pressureWallEvent = NULL;
     OfflatticeMonteCarlo *m_diffusionEvent = NULL;

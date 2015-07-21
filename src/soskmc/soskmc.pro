@@ -4,8 +4,7 @@ TEMPLATE = lib
 
 TARGET = ../../lib/SOSkMC
 
-SOURCES += solidonsolidsolver.cpp \
-    solidonsolidreaction.cpp \
+SOURCES += \
     Events/equilibriater.cpp \
     Events/eqmu.cpp \
     Events/miscevents.cpp \
@@ -18,11 +17,12 @@ SOURCES += solidonsolidsolver.cpp \
     Events/confiningsurface/noconfinement.cpp \
     Events/diffusion/offlatticemontecarloboundary.cpp \
     Events/diffusion/offlatticemontecarlonoboundary.cpp \
-    Events/diffusion/offlatticemontecarlo.cpp
+    Events/diffusion/offlatticemontecarlo.cpp \
+    diffusionsossolver.cpp \
+    sossolver.cpp \
+    sosreaction.cpp
 
 HEADERS += \
-    solidonsolidsolver.h \
-    solidonsolidreaction.h \
     Events/solidonsolidevent.h \
     Events/equilibriater.h \
     Events/eqmu.h \
@@ -36,7 +36,10 @@ HEADERS += \
     Events/confiningsurface/noconfinement.h \
     Events/diffusion/offlatticemontecarloboundary.h \
     Events/diffusion/offlatticemontecarlonoboundary.h \
-    Events/diffusion/offlatticemontecarlo.h
+    Events/diffusion/offlatticemontecarlo.h \
+    diffusionsossolver.h \
+    sossolver.h \
+    sosreaction.h
 
 LIBS += -lkMC
 

@@ -1,6 +1,6 @@
 #include "eqmu.h"
 
-#include "solidonsolidreaction.h"
+#include "sosreaction.h"
 
 #include "miscevents.h"
 

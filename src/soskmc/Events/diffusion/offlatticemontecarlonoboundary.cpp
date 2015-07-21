@@ -1,8 +1,8 @@
 #include "offlatticemontecarlonoboundary.h"
 #include "../confiningsurface/confiningsurface.h"
-#include "../../solidonsolidreaction.h"
+#include "../../sosreaction.h"
 
-OfflatticeMonteCarloNoBoundary::OfflatticeMonteCarloNoBoundary(SolidOnSolidSolver &solver,
+OfflatticeMonteCarloNoBoundary::OfflatticeMonteCarloNoBoundary(SOSSolver &solver,
                                                                const double dt) :
     OfflatticeMonteCarlo(solver, dt, "OfflatticeMC")
 {

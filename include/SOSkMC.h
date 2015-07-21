@@ -2,7 +2,7 @@
 
 #include "kMC.h"
 
-#include "../src/soskmc/solidonsolidsolver.h"
+#include "../src/soskmc/sossolver.h"
 #include "../src/soskmc/Events/confiningsurface/noconfinement.h"
 #include "../src/soskmc/Events/confiningsurface/fixedsurface.h"
 #include "../src/soskmc/Events/confiningsurface/rdlsurface.h"

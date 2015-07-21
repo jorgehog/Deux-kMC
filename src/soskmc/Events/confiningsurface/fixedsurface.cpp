@@ -1,6 +1,6 @@
 #include "fixedsurface.h"
 
-FixedSurface::FixedSurface(SolidOnSolidSolver &solver,
+FixedSurface::FixedSurface(SOSSolver &solver,
                            const double height) :
     ConfiningSurface(solver, "fixedSurface")
 {

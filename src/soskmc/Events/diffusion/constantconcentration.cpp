@@ -1,6 +1,6 @@
 #include "constantconcentration.h"
 
-ConstantConcentration::ConstantConcentration(SolidOnSolidSolver &solver) :
+ConstantConcentration::ConstantConcentration(SOSSolver &solver) :
     Diffusion(solver, "ConstantConcentration")
 {
 

@@ -10,17 +10,17 @@ class DiffusionDeposition;
 class ConfiningSurface;
 class Diffusion;
 
-class SolidOnSolidSolver : public KMCSolver
+class SOSSolver : public KMCSolver
 {
 public:
-    SolidOnSolidSolver(const uint length,
-                       const uint width,
-                       const double alpha,
-                       const double gamma,
-                       const Boundary* xBoundary,
-                       const Boundary* yBoundary);
+    SOSSolver(const uint length,
+              const uint width,
+              const double alpha,
+              const double gamma,
+              const Boundary* xBoundary,
+              const Boundary* yBoundary);
 
-    ~SolidOnSolidSolver();
+    virtual ~SOSSolver();
 
     void registerHeightChange(const uint x, const uint y, const int value);
 
@@ -137,7 +137,6 @@ private:
 
     field<DiffusionDeposition*> m_siteReactions;
 
-    void initializeSolver();
 
     std::vector<DiffusionDeposition*> m_affectedReactions;
 
@@ -146,4 +145,8 @@ private:
 public:
     uint numberOfReactions() const;
     Reaction *getReaction(const uint n) const;
+
+protected:
+    void initializeSolver();
+
 };

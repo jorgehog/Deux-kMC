@@ -21,7 +21,7 @@ TEST_F(SOSkMCTest, diffusion)
 
     Boundary* xBoundary = new Periodic(L);
     Boundary* yBoundary = new Periodic(W);
-    m_solver = new SolidOnSolidSolver(L, W, alpha, mu, xBoundary, yBoundary);
+    m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     m_diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
 

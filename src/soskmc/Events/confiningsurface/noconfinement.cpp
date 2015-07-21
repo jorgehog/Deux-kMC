@@ -1,6 +1,6 @@
 #include "noconfinement.h"
 
-NoConfinement::NoConfinement(SolidOnSolidSolver &solver) :
+NoConfinement::NoConfinement(SOSSolver &solver) :
     ConfiningSurface(solver, "NoConfinement")
 {
 

@@ -5,7 +5,7 @@
 class Time : public SolidOnSolidEvent
 {
 public:
-    Time(const SolidOnSolidSolver &solver) :
+    Time(const SOSSolver &solver) :
         SolidOnSolidEvent(solver, "Time", "", false, true)
     {
 
@@ -21,7 +21,7 @@ class GrowthSpeed : public SolidOnSolidEvent
 {
 public:
 
-    GrowthSpeed(const SolidOnSolidSolver &solver) :
+    GrowthSpeed(const SOSSolver &solver) :
         SolidOnSolidEvent(solver, "GrowthSpeed", "", true)
     {
 
@@ -41,7 +41,7 @@ class SurfaceSize : public SolidOnSolidEvent
 {
 public:
 
-    SurfaceSize(const SolidOnSolidSolver &solver) :
+    SurfaceSize(const SOSSolver &solver) :
         SolidOnSolidEvent(solver, "SurfaceSize", "l0", true, true),
         m_relativeHeightSums(solver.length(), solver.width())
     {
@@ -85,7 +85,7 @@ class SurfaceVariance : public SolidOnSolidEvent
 {
 public:
 
-    SurfaceVariance(const SolidOnSolidSolver &solver) :
+    SurfaceVariance(const SOSSolver &solver) :
         SolidOnSolidEvent(solver, "SurfaceVariance", "", true, true)
     {
 
@@ -109,7 +109,7 @@ private:
 class HeightRMS : public SolidOnSolidEvent
 {
 public:
-    HeightRMS(const SolidOnSolidSolver &solver) :
+    HeightRMS(const SOSSolver &solver) :
         SolidOnSolidEvent(solver, "HeightRMS", "", true, true)
     {
 
@@ -123,7 +123,7 @@ class AverageHeight : public SolidOnSolidEvent
 {
 public:
 
-    AverageHeight(const SolidOnSolidSolver &solver) :
+    AverageHeight(const SOSSolver &solver) :
         SolidOnSolidEvent(solver, "AverageHeight", "l0", true, true)
     {
 
@@ -140,7 +140,7 @@ public:
 class DumpHeightSlice : public SolidOnSolidEvent
 {
 public:
-    DumpHeightSlice(const SolidOnSolidSolver &solver,
+    DumpHeightSlice(const SOSSolver &solver,
                     const uint slicePosition=0,
                     const uint axis=0,
                     const string path = "/tmp",
@@ -174,7 +174,7 @@ class DumpHeights3D : public SolidOnSolidEvent
 {
 public:
 
-    DumpHeights3D(const SolidOnSolidSolver &solver,
+    DumpHeights3D(const SOSSolver &solver,
                   const string path = "/tmp") :
         SolidOnSolidEvent(solver, "DumpHeights3D"),
         m_writer(4, "SOS", path)
@@ -203,7 +203,7 @@ class NNeighbors : public SolidOnSolidEvent
 {
 public:
 
-    NNeighbors(const SolidOnSolidSolver &solver) :
+    NNeighbors(const SOSSolver &solver) :
         SolidOnSolidEvent(solver, "nNeighbors", "", true, true),
         m_nNeighbors(solver.length(), solver.width())
     {

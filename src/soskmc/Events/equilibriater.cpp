@@ -3,7 +3,7 @@
 #include "eqmu.h"
 
 
-Equilibriater::Equilibriater(SolidOnSolidSolver &mutexSolver,
+Equilibriater::Equilibriater(SOSSolver &mutexSolver,
                              EqMu &eqMuEvent,
                              const uint nSamplesMuEq,
                              const uint nSamplesMu) :

@@ -6,7 +6,7 @@
 class FixedRDLSurface : public FixedSurface, public RDLSurface
 {
 public:
-    FixedRDLSurface(SolidOnSolidSolver &solver,
+    FixedRDLSurface(SOSSolver &solver,
                     const double E0,
                     const double s0,
                     const double ld,

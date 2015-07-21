@@ -1,6 +1,6 @@
 #include "diffusion.h"
 
-Diffusion::Diffusion(SolidOnSolidSolver &solver,
+Diffusion::Diffusion(SOSSolver &solver,
                      string type,
                      string unit,
                      bool hasOutput,

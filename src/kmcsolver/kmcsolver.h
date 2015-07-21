@@ -50,7 +50,6 @@ public:
     }
 
 private:
-
     vector<const Boundary*> m_boundaries;
 
     Reaction *m_selectedReaction;
@@ -72,6 +71,7 @@ private:
 
     void getCumsumAndTotalRate();
 
+protected:
     virtual void initializeSolver() = 0;
 
     // Event interface

@@ -8,7 +8,7 @@ class Equilibriater : public SolidOnSolidEvent
 {
 public:
 
-    Equilibriater(SolidOnSolidSolver &mutexSolver,
+    Equilibriater(SOSSolver &mutexSolver,
                   EqMu &eqMuEvent,
                   const uint nSamplesMuEq = 100,
                   const uint nSamplesMu = 1000);
@@ -40,7 +40,7 @@ public:
 
 private:
 
-    SolidOnSolidSolver &m_mutexSolver;
+    SOSSolver &m_mutexSolver;
 
     EqMu &m_eqMuEvent;
 

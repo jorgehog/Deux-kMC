@@ -1,16 +1,16 @@
-#include "solidonsolidsolver.h"
-#include "solidonsolidreaction.h"
+#include "sossolver.h"
+#include "sosreaction.h"
 #include "Events/confiningsurface/confiningsurface.h"
 #include "Events/diffusion/constantconcentration.h"
 #include "../kmcsolver/boundary/boundary.h"
 
 
-SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
-                                       const uint width,
-                                       const double alpha,
-                                       const double mu,
-                                       const Boundary *xBoundary,
-                                       const Boundary *yBoundary) :
+SOSSolver::SOSSolver(const uint length,
+                     const uint width,
+                     const double alpha,
+                     const double mu,
+                     const Boundary *xBoundary,
+                     const Boundary *yBoundary) :
     KMCSolver({xBoundary, yBoundary}),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_length(length),
@@ -32,7 +32,7 @@ SolidOnSolidSolver::SolidOnSolidSolver(const uint length,
     }
 }
 
-SolidOnSolidSolver::~SolidOnSolidSolver()
+SOSSolver::~SOSSolver()
 {
     for (uint x = 0; x < length(); ++x)
     {
@@ -45,7 +45,7 @@ SolidOnSolidSolver::~SolidOnSolidSolver()
     m_siteReactions.clear();
 }
 
-void SolidOnSolidSolver::registerHeightChange(const uint x, const uint y, const int value)
+void SOSSolver::registerHeightChange(const uint x, const uint y, const int value)
 {
     m_heights(x, y) += value;
 
@@ -100,29 +100,29 @@ void SolidOnSolidSolver::registerHeightChange(const uint x, const uint y, const 
 
 }
 
-void SolidOnSolidSolver::setNNeighbors(const uint x, const uint y)
+void SOSSolver::setNNeighbors(const uint x, const uint y)
 {
     m_nNeighbors(x, y) = calculateNNeighbors(x, y);
 }
 
 
-void SolidOnSolidSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
+void SOSSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
 {
     m_confiningSurfaceEvent = &confiningSurfaceEvent;
 }
 
-void SolidOnSolidSolver::setDiffusionEvent(Diffusion &diffusionEvent)
+void SOSSolver::setDiffusionEvent(Diffusion &diffusionEvent)
 {
     m_diffusionEvent = &diffusionEvent;
 }
 
-double SolidOnSolidSolver::volume() const
+double SOSSolver::volume() const
 {
     //sum (h_l - h_i) - 1
     return (m_confiningSurfaceEvent->height() - 1)*area() - arma::accu(m_heights);
 }
 
-double SolidOnSolidSolver::confinementEnergy(const uint x, const uint y) const
+double SOSSolver::confinementEnergy(const uint x, const uint y) const
 {
     if (!m_confiningSurfaceEvent->hasStarted())
     {
@@ -132,7 +132,7 @@ double SolidOnSolidSolver::confinementEnergy(const uint x, const uint y) const
     return m_confiningSurfaceEvent->confinementEnergy(x, y);
 }
 
-double SolidOnSolidSolver::depositionRate(const uint x, const uint y) const
+double SOSSolver::depositionRate(const uint x, const uint y) const
 {
     if (!m_diffusionEvent->hasStarted())
     {
@@ -142,7 +142,7 @@ double SolidOnSolidSolver::depositionRate(const uint x, const uint y) const
     return m_diffusionEvent->depositionRate(x, y);
 }
 
-uint SolidOnSolidSolver::calculateNNeighbors(const uint x, const uint y) const
+uint SOSSolver::calculateNNeighbors(const uint x, const uint y) const
 {    
     bool connectedLeft = false;
     bool connectedRight = false;
@@ -206,27 +206,27 @@ uint SolidOnSolidSolver::calculateNNeighbors(const uint x, const uint y) const
 
 }
 
-int SolidOnSolidSolver::topSite(const uint site, const uint n) const
+int SOSSolver::topSite(const uint site, const uint n) const
 {
     return boundary(1)->transformCoordinate(site + n);
 }
 
-int SolidOnSolidSolver::bottomSite(const uint site, const uint n) const
+int SOSSolver::bottomSite(const uint site, const uint n) const
 {
     return boundary(1)->transformCoordinate((int)site - (int)n);
 }
 
-int SolidOnSolidSolver::leftSite(const uint site, const uint n) const
+int SOSSolver::leftSite(const uint site, const uint n) const
 {
     return boundary(0)->transformCoordinate((int)site - (int)n);
 }
 
-int SolidOnSolidSolver::rightSite(const uint site, const uint n) const
+int SOSSolver::rightSite(const uint site, const uint n) const
 {
     return boundary(0)->transformCoordinate(site + n);
 }
 
-uint SolidOnSolidSolver::span() const
+uint SOSSolver::span() const
 {
     int min = m_heights.min();
 
@@ -240,7 +240,7 @@ uint SolidOnSolidSolver::span() const
     }
 }
 
-bool SolidOnSolidSolver::isBlockedPosition(const double x, const double y, const double z) const
+bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
 {
     //DERP: Check periodicity
 
@@ -272,7 +272,7 @@ bool SolidOnSolidSolver::isBlockedPosition(const double x, const double y, const
     return z < height(X, Y) + 0.5;
 }
 
-void SolidOnSolidSolver::setMu(const double mu)
+void SOSSolver::setMu(const double mu)
 {
     if (hasStarted())
     {
@@ -292,7 +292,7 @@ void SolidOnSolidSolver::setMu(const double mu)
 
 }
 
-void SolidOnSolidSolver::initializeSolver()
+void SOSSolver::initializeSolver()
 {
     m_heights.zeros();
 
@@ -329,12 +329,12 @@ void SolidOnSolidSolver::initializeSolver()
 
 }
 
-uint SolidOnSolidSolver::numberOfReactions() const
+uint SOSSolver::numberOfReactions() const
 {
     return m_siteReactions.size();
 }
 
-Reaction *SolidOnSolidSolver::getReaction(const uint n) const
+Reaction *SOSSolver::getReaction(const uint n) const
 {
     return m_siteReactions(n);
 }

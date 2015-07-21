@@ -2,7 +2,7 @@
 
 #include "../confiningsurface/confiningsurface.h"
 
-OfflatticeMonteCarloBoundary::OfflatticeMonteCarloBoundary(SolidOnSolidSolver &solver,
+OfflatticeMonteCarloBoundary::OfflatticeMonteCarloBoundary(SOSSolver &solver,
                                                            const double dt,
                                                            const uint boundarySpacing) :
     OfflatticeMonteCarlo(solver, dt, "MCDiffBound"),

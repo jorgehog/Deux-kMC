@@ -1,7 +1,7 @@
 #include "offlatticemontecarlo.h"
 #include "../confiningsurface/confiningsurface.h"
 
-OfflatticeMonteCarlo::OfflatticeMonteCarlo(SolidOnSolidSolver &solver,
+OfflatticeMonteCarlo::OfflatticeMonteCarlo(SOSSolver &solver,
                                            const double dt,
                                            string type,
                                            string unit,

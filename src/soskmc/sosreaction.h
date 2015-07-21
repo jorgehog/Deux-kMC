@@ -6,12 +6,12 @@
 
 using namespace kMC;
 
-class SolidOnSolidSolver;
+class SOSSolver;
 
-class SolidOnSolidReaction : public Reaction
+class SOSReaction : public Reaction
 {
 public:
-    SolidOnSolidReaction(const uint x, const uint y, SolidOnSolidSolver &system) :
+    SOSReaction(const uint x, const uint y, SOSSolver &system) :
         Reaction(),
         m_x(x),
         m_y(y),
@@ -20,7 +20,7 @@ public:
 
     }
 
-    SolidOnSolidSolver &solver() const
+    SOSSolver &solver() const
     {
         return m_solver;
     }
@@ -41,14 +41,14 @@ private:
     const uint m_x;
     const uint m_y;
 
-    SolidOnSolidSolver &m_solver;
+    SOSSolver &m_solver;
 
 };
 
-class DiffusionDeposition : public SolidOnSolidReaction
+class DiffusionDeposition : public SOSReaction
 {
 public:
-    using SolidOnSolidReaction::SolidOnSolidReaction;
+    using SOSReaction::SOSReaction;
 
     const double &depositionRate() const
     {

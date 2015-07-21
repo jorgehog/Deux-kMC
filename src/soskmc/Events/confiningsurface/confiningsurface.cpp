@@ -1,6 +1,6 @@
 #include "confiningsurface.h"
 
-ConfiningSurface::ConfiningSurface(SolidOnSolidSolver &solver,
+ConfiningSurface::ConfiningSurface(SOSSolver &solver,
                                    string type,
                                    string unit,
                                    bool hasOutput,

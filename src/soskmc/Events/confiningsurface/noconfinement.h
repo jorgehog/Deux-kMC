@@ -5,7 +5,7 @@
 class NoConfinement : public ConfiningSurface
 {
 public:
-    NoConfinement(SolidOnSolidSolver &solver);
+    NoConfinement(SOSSolver &solver);
     ~NoConfinement();
 
     // Event interface

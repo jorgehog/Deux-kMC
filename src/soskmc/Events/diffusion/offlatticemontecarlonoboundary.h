@@ -5,7 +5,7 @@
 class OfflatticeMonteCarloNoBoundary : public OfflatticeMonteCarlo
 {
 public:
-    OfflatticeMonteCarloNoBoundary(SolidOnSolidSolver &solver,
+    OfflatticeMonteCarloNoBoundary(SOSSolver &solver,
                                    const double dt);
 
     ~OfflatticeMonteCarloNoBoundary();

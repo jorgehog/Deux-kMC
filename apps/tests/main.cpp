@@ -1,4 +1,3 @@
-#include <kMC.h>
 #include <SOSkMC.h>
 #include <gtest/gtest.h>
 

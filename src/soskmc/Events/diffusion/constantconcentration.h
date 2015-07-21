@@ -5,7 +5,7 @@
 class ConstantConcentration : public Diffusion
 {
 public:
-    ConstantConcentration(SolidOnSolidSolver &solver);
+    ConstantConcentration(SOSSolver &solver);
 
     ~ConstantConcentration();
 

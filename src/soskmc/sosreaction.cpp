@@ -1,11 +1,11 @@
-#include "solidonsolidreaction.h"
+#include "sosreaction.h"
 
-#include "solidonsolidsolver.h"
+#include "sossolver.h"
 
 #include "../kmcsolver/boundary/boundary.h"
 
 
-uint SolidOnSolidReaction::nNeighbors() const
+uint SOSReaction::nNeighbors() const
 {
     return m_solver.nNeighbors(m_x, m_y);
 }

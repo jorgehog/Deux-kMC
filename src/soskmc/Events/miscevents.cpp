@@ -1,5 +1,5 @@
 #include "miscevents.h"
-#include "solidonsolidreaction.h"
+#include "sosreaction.h"
 #include "../kmcsolver/boundary/boundary.h"
 
 void SurfaceSize::initialize()

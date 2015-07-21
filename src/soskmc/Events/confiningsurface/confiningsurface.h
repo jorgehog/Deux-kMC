@@ -7,7 +7,7 @@ class DiffusionDeposition;
 class ConfiningSurface : public SolidOnSolidEvent
 {
 public:
-    ConfiningSurface(SolidOnSolidSolver &solver,
+    ConfiningSurface(SOSSolver &solver,
                      string type,
                      string unit = "",
                      bool hasOutput = false,

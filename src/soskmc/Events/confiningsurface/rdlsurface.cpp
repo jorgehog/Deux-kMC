@@ -1,7 +1,7 @@
 #include "rdlsurface.h"
-#include "../../solidonsolidreaction.h"
+#include "../../sosreaction.h"
 
-RDLSurface::RDLSurface(SolidOnSolidSolver &solver,
+RDLSurface::RDLSurface(SOSSolver &solver,
                        const double E0,
                        const double s0,
                        const double lD) :

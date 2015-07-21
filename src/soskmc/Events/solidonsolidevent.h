@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../solidonsolidsolver.h"
+#include "../sossolver.h"
 
 #include <utils.h>
 
@@ -9,7 +9,7 @@ using namespace ignis;
 class SolidOnSolidEvent : public LatticeEvent
 {
 public:
-    SolidOnSolidEvent(const SolidOnSolidSolver &solver,
+    SolidOnSolidEvent(const SOSSolver &solver,
                       string type = "Event",
                       string unit = "",
                       bool hasOutput=false,
@@ -23,14 +23,14 @@ public:
 
     virtual ~SolidOnSolidEvent() {}
 
-    const SolidOnSolidSolver &solver() const
+    const SOSSolver &solver() const
     {
         return m_solver;
     }
 
 private:
 
-    const SolidOnSolidSolver &m_solver;
+    const SOSSolver &m_solver;
 
 };
 

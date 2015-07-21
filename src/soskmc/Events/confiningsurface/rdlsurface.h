@@ -5,7 +5,7 @@
 class RDLSurface : public virtual ConfiningSurface
 {
 public:
-    RDLSurface(SolidOnSolidSolver &solver,
+    RDLSurface(SOSSolver &solver,
                const double E0,
                const double s0,
                const double lD);

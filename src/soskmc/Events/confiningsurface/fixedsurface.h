@@ -5,7 +5,7 @@
 class FixedSurface : public virtual ConfiningSurface
 {
 public:
-    FixedSurface(SolidOnSolidSolver &solver,
+    FixedSurface(SOSSolver &solver,
                  const double height);
 
     virtual ~FixedSurface();
