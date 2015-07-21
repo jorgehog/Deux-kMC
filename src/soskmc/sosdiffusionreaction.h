@@ -1,16 +1,27 @@
 #pragma once
 
-#include "../kmcsolver/reaction.h"
+#include "sosreaction.h"
 
 using namespace kMC;
 
-class SOSDiffusionReaction : public Reaction
+class SOSDiffusionReaction : public SOSReaction
 {
 public:
-    SOSDiffusionReaction(const uint x0, const uint y0, const int z0);
+    SOSDiffusionReaction(SOSSolver &solver, const uint x0, const uint y0, const int z0);
     ~SOSDiffusionReaction();
 
+    bool isSurfaceSite(const uint x, const uint y, const int z) const;
+
+    const int &z() const
+    {
+        return m_z;
+    }
+
+    void getRandomDiffusionPath(int &dx, int &dy, int &dz) const;
+
 private:
+
+    int m_z;
 
     // Reaction interface
 public:

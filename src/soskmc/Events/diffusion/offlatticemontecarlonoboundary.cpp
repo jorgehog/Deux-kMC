@@ -125,7 +125,7 @@ double OfflatticeMonteCarloNoBoundary::depositionRate(const uint x, const uint y
 {
     double P = 0;
 
-    for (uint n = 0; n < nParticles(); ++n)
+    for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
 
         const double Pn = calculateLocalProbability(x, y, n, timeStep);
@@ -133,7 +133,7 @@ double OfflatticeMonteCarloNoBoundary::depositionRate(const uint x, const uint y
         P += Pn;
     }
 
-    return P*exp(2*solver().alpha() - solver().gamma());
+    return P/solver().concentration();
 }
 
 double OfflatticeMonteCarloNoBoundary::calculateLocalProbability(const uint x,
@@ -206,37 +206,13 @@ void OfflatticeMonteCarloNoBoundary::reset()
 void OfflatticeMonteCarloNoBoundary::setupInitialConditions()
 {
     const double V = solver().volume();
-    const double &h = solver().confiningSurfaceEvent().height();
 
-    uint N = V*exp(solver().gamma()-2*solver().alpha());
+    uint N = V*solver().concentration();
 
-    initializeParticleMatrices(N);
+    const double zMin = solver().heights().min();
+    initializeParticleMatrices(N, zMin);
 
-    double zMin = solver().heights().min();
-
-    double x0;
-    double y0;
-    double z0;
-
-    uint n = 0;
-    while (n < N)
-    {
-        do
-        {
-            x0 = rng.uniform()*(solver().length() - 1);
-            y0 = rng.uniform()*(solver().width() - 1);
-            z0 = zMin + rng.uniform()*(h - zMin);
-
-        } while(solver().isBlockedPosition(x0, y0, z0));
-
-        particlePositions(0, n) = x0;
-        particlePositions(1, n) = y0;
-        particlePositions(2, n) = z0;
-
-        n++;
-    }
-
-    m_localProbabilities.set_size(solver().length(), solver().width(), nParticles());
+    m_localProbabilities.set_size(solver().length(), solver().width(), nOfflatticeParticles());
 
     m_currentTimeStep = calculateTimeStep(1.0, true);
 
@@ -252,10 +228,10 @@ void OfflatticeMonteCarloNoBoundary::registerHeightChange(const uint x, const ui
     //Remove particle based on the probability of it being the deposited
     if (delta == 1)
     {
-        vector<double> localRatesForSite(nParticles());
+        vector<double> localRatesForSite(nOfflatticeParticles());
 
         double Rtot = 0;
-        for (uint n = 0; n < nParticles(); ++n)
+        for (uint n = 0; n < nOfflatticeParticles(); ++n)
         {
             m_localProbabilities(x, y, n) = calculateLocalProbability(x, y, n);
             BADAssClose(m_localProbabilities(x, y, n), calculateLocalProbability(x, y, n), 1E-5);
@@ -295,7 +271,7 @@ void OfflatticeMonteCarloNoBoundary::registerHeightChange(const uint x, const ui
     const double &h = solver().confiningSurfaceEvent().height();
     double zMin = solver().heights().min();
 
-    for (uint n = 0; n < nParticles(); ++n)
+    for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
         double &x0 = particlePositions(0, n);
         double &y0 = particlePositions(1, n);
@@ -335,7 +311,7 @@ void OfflatticeMonteCarloNoBoundary::onInsertParticle(const double x, const doub
     (void) y;
     (void) z;
 
-    m_localProbabilities.resize(solver().length(), solver().width(), nParticles());
+    m_localProbabilities.resize(solver().length(), solver().width(), nOfflatticeParticles());
 }
 
 void OfflatticeMonteCarloNoBoundary::onRemoveParticle(const uint n)

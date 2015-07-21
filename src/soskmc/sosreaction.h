@@ -11,11 +11,11 @@ class SOSSolver;
 class SOSReaction : public Reaction
 {
 public:
-    SOSReaction(const uint x, const uint y, SOSSolver &system) :
+    SOSReaction(const uint x, const uint y, SOSSolver &solver) :
         Reaction(),
         m_x(x),
         m_y(y),
-        m_solver(system)
+        m_solver(solver)
     {
 
     }
@@ -38,8 +38,8 @@ public:
     uint nNeighbors() const;
 
 private:
-    const uint m_x;
-    const uint m_y;
+    uint m_x;
+    uint m_y;
 
     SOSSolver &m_solver;
 

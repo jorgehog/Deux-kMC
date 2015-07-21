@@ -25,7 +25,7 @@ public:
 
     void insertParticle(const double x, const double y, const double z);
 
-    void initializeParticleMatrices(const uint nParticles);
+    void initializeParticleMatrices(const uint nOfflatticeParticles, const double zMin);
 
     const double &dt() const
     {
@@ -52,7 +52,7 @@ public:
         return m_particlePositions;
     }
 
-    const uint &nParticles() const
+    const uint &nOfflatticeParticles() const
     {
         return m_particlePositions.n_cols;
     }

@@ -27,7 +27,7 @@ TEST_F(SOSkMCTest, diffusion)
 
     SetUp_yo();
 
-    OfflatticeMonteCarloBoundary *diffusionEvent = static_cast<OfflatticeMonteCarloBoundary*>(m_diffusionEvent);
+//    OfflatticeMonteCarloBoundary *diffusionEvent = static_cast<OfflatticeMonteCarloBoundary*>(m_diffusionEvent);
 
     primeSolver(0);
 

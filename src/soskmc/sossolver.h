@@ -63,6 +63,11 @@ public:
         return m_mu;
     }
 
+    double concentration() const
+    {
+        return exp(gamma() - 2*alpha());
+    }
+
     const imat &heights() const
     {
         return m_heights;

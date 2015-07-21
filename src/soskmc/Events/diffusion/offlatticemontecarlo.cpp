@@ -35,7 +35,7 @@ void OfflatticeMonteCarlo::dump(const uint frameNumber) const
     surfacewriter.initializeNewFile(frameNumber);
 
 
-    for (uint n = 0; n < nParticles(); ++n)
+    for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
         const double &x = m_particlePositions(0, n);
         const double &y = m_particlePositions(1, n);
@@ -90,7 +90,7 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
     double x1, y1, z1;
     double x0, y0, z0;
 
-    for (uint n = 0; n < nParticles(); ++n)
+    for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
         x0 = m_particlePositions(0, n);
         y0 = m_particlePositions(1, n);
@@ -136,21 +136,46 @@ void OfflatticeMonteCarlo::removeParticle(const uint n)
 
 void OfflatticeMonteCarlo::insertParticle(const double x, const double y, const double z)
 {
-    m_particlePositions.resize(3, nParticles() + 1);
+    m_particlePositions.resize(3, nOfflatticeParticles() + 1);
 
-    m_particlePositions(0, nParticles() - 1) = x;
-    m_particlePositions(1, nParticles() - 1) = y;
-    m_particlePositions(2, nParticles() - 1) = z;
+    m_particlePositions(0, nOfflatticeParticles() - 1) = x;
+    m_particlePositions(1, nOfflatticeParticles() - 1) = y;
+    m_particlePositions(2, nOfflatticeParticles() - 1) = z;
 
-    m_F.resize(3, nParticles());
+    m_F.resize(3, nOfflatticeParticles());
 
     onInsertParticle(x, y, z);
 }
 
-void OfflatticeMonteCarlo::initializeParticleMatrices(const uint nParticles)
+void OfflatticeMonteCarlo::initializeParticleMatrices(const uint nParticles, const double zMin)
 {
     m_particlePositions.set_size(3, nParticles);
     m_F = zeros(3, nParticles);
+
+    const double &h = solver().confiningSurfaceEvent().height();
+
+    double x0;
+    double y0;
+    double z0;
+
+    uint n = 0;
+    while (n < nParticles)
+    {
+        do
+        {
+            x0 = rng.uniform()*(solver().length() - 1);
+            y0 = rng.uniform()*(solver().width() - 1);
+            z0 = zMin + rng.uniform()*(h - zMin);
+
+        } while(solver().isBlockedPosition(x0, y0, z0));
+
+        m_particlePositions(0, n) = x0;
+        m_particlePositions(1, n) = y0;
+        m_particlePositions(2, n) = z0;
+
+        n++;
+    }
+
 }
 
 
