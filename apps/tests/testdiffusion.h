@@ -15,7 +15,7 @@ TEST_F(SOSkMCTest, diffusion)
     const double alpha = 1.0;
     const double mu = 0;
     const double dt = 1.;
-    const double height = 20;
+    const double height = 20 + rng.uniform();
     const uint spacing = 3;
 
 
@@ -33,8 +33,20 @@ TEST_F(SOSkMCTest, diffusion)
 
     EXPECT_TRUE(diffusionEvent->checkIfEnoughRoom());
 
+    const int h0 = m_solver->height(L/2, W/2);
+    const int hmax = m_solver->heights().max();
+    const double dh = m_solver->confiningSurfaceEvent().height() - hmax;
+
+    for (int h = h0; h <= (int)(dh - 2*spacing); ++h)
+    {
+        m_solver->registerHeightChange(L/2, W/2, 1);
+        EXPECT_TRUE(diffusionEvent->checkIfEnoughRoom());
+    }
+
+    m_solver->registerHeightChange(L/2, W/2, 1);
+    EXPECT_FALSE(diffusionEvent->checkIfEnoughRoom());
+
+
     m_lattice->reConnect();
-
-
 
 }

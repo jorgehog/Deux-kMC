@@ -2,6 +2,7 @@
 
 #include <SOSkMC.h>
 #include <gtest/gtest.h>
+#include <sys/time.h>
 
 #define deletehaxx(name) if (name != NULL) delete name; name = NULL
 
@@ -26,7 +27,7 @@ protected:
     // and cleaning up each test, you can define the following methods:
     void SetUp()
     {
-
+        rng.initialize(time(NULL));
     }
 
     void SetUp_yo()
@@ -56,10 +57,10 @@ protected:
         // Code here will be called immediately after each test (right
         // before the destructor).
 
-        deletehaxx(m_solver);
         deletehaxx(m_pressureWallEvent);
-        deletehaxx(m_averageHeight);
         deletehaxx(m_diffusionEvent);
+        deletehaxx(m_averageHeight);
+        deletehaxx(m_solver);
         deletehaxx(m_lattice);
 
     }

@@ -13,3 +13,5 @@ HEADERS += \
     testdiffusion.h \
     kmctestfixture.h
 
+DEFINES += BADASSNOTHROW
+
