@@ -4,18 +4,26 @@
 
 #include "../kmcsolver/boundary/boundary.h"
 
+#include "sosdiffusionreaction.h"
+
 OfflatticeMonteCarloBoundary::OfflatticeMonteCarloBoundary(SOSSolver &solver,
                                                            const double dt,
                                                            const uint boundarySpacing) :
     OfflatticeMonteCarlo(solver, dt, "MCDiffBound"),
-    m_boundarySpacing(boundarySpacing)
+    m_boundarySpacing(boundarySpacing),
+    m_mutexSolver(solver)
 {
 
 }
 
 OfflatticeMonteCarloBoundary::~OfflatticeMonteCarloBoundary()
 {
+    for (SOSDiffusionReaction *reaction : m_diffusionReactions)
+    {
+        delete reaction;
+    }
 
+    m_diffusionReactions.clear();
 }
 
 bool OfflatticeMonteCarloBoundary::checkIfEnoughRoom() const
@@ -24,6 +32,22 @@ bool OfflatticeMonteCarloBoundary::checkIfEnoughRoom() const
     const double &confinedSurfaceHeight = solver().confiningSurfaceEvent().height();
 
     return (confinedSurfaceHeight - max >= 2*m_boundarySpacing);
+}
+
+void OfflatticeMonteCarloBoundary::removeDiffusionReactant(SOSDiffusionReaction *reaction)
+{
+    m_mutexSolver.removeReaction(reaction);
+
+    auto &r = m_diffusionReactions;
+    r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
+
+    delete reaction; //counters new in addDiffusionReactant
+}
+
+void OfflatticeMonteCarloBoundary::addDiffusionReactant(const uint x, const uint y, const int z)
+{
+    m_diffusionReactions.push_back(new SOSDiffusionReaction(m_mutexSolver, x, y, z));
+    m_mutexSolver.addReaction(m_diffusionReactions.back());
 }
 
 void OfflatticeMonteCarloBoundary::execute()
@@ -41,20 +65,21 @@ void OfflatticeMonteCarloBoundary::execute()
     writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     writer.initializeNewFile(cycle()/THRESH);
 
-    for (uint n = 0; n < nOfflatticeParticles(); ++n)
+    for(const SOSDiffusionReaction *reaction : m_diffusionReactions)
     {
-        uint x = 0;
-        uint y = 0;
-        int z = 0;
+        const uint &x = reaction->x();
+        const uint &y = reaction->y();
+        const int &z = reaction->z();
 
-        BADAssBool(!solver().isBlockedPosition(x, y, z));
+        BADAssBool(!solver().isBlockedPosition(x, y, z), "Illigal particle position");
 
-        writer << 0
+        writer << 3
                << x
                << y
                << z;
     }
 
+    writer.finalize();
 
 }
 
@@ -93,9 +118,10 @@ void OfflatticeMonteCarloBoundary::setupInitialConditions()
             y0 = rng.uniform()*solver().width();
             z0 = hMin + rng.uniform()*(zMin - hMin);
 
-        } while(solver().isBlockedPosition(x0, y0, z0));
+        } while(solver().isBlockedPosition(x0, y0, z0-1));
 
         cout << "placed at " << x0 << " " << y0 << " " << z0 << endl;
+        addDiffusionReactant(x0, y0, z0);
 
         n++;
     }
@@ -117,6 +143,23 @@ void OfflatticeMonteCarloBoundary::registerHeightChange(const uint x, const uint
     BADAssBool(checkIfEnoughRoom());
 
     //position particle on random surrounding site
+
+    if (delta == -1)
+    {
+        const uint randomSite = rng.uniform()*solver().numberOfSurroundingSolutionSites(x, y);
+
+        int dx, dy, dz;
+        solver().getSolutionSite(x, y, dx, dy, dz, randomSite);
+
+        const uint xNew = solver().boundary(0)->transformCoordinate((int)x + dx);
+        const uint yNew = solver().boundary(1)->transformCoordinate((int)y + dy);
+        const int zNew = solver().height(x, y) + dz;
+
+        addDiffusionReactant(xNew, yNew, zNew);
+        m_diffusionReactions.back()->calculateRate();
+    }
+
+    //delta == 1 case of deposition is treated from the deposition reactions execute function.
 }
 
 

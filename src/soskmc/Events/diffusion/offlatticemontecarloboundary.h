@@ -2,6 +2,8 @@
 
 #include "offlatticemontecarlo.h"
 
+class SOSDiffusionReaction;
+
 class OfflatticeMonteCarloBoundary : public OfflatticeMonteCarlo
 {
 public:
@@ -12,9 +14,17 @@ public:
 
     bool checkIfEnoughRoom() const;
 
+    void addDiffusionReactant(const uint x, const uint y, const int z);
+
+    void removeDiffusionReactant(SOSDiffusionReaction *reaction);
+
 private:
 
     const uint m_boundarySpacing;
+
+    vector<SOSDiffusionReaction*> m_diffusionReactions;
+
+    SOSSolver &m_mutexSolver;
 
     // Event interface
 public:

@@ -37,6 +37,16 @@ public:
 
     uint nNeighbors() const;
 
+    void setX(const uint x)
+    {
+        m_x = x;
+    }
+
+    void setY(const uint y)
+    {
+        m_y = y;
+    }
+
 private:
     uint m_x;
     uint m_y;

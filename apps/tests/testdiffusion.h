@@ -35,7 +35,7 @@ TEST_F(SOSkMCTest, diffusion)
     {
         for (uint y = 0; y < W; ++y)
         {
-            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->nSurroundingSolutionSites(x, y), 6);
+            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y), 6);
             m_solver->setHeight(x, y, 0);
         }
     }
@@ -48,7 +48,7 @@ TEST_F(SOSkMCTest, diffusion)
 
     //COMPLETELY FLAT
 
-    EXPECT_EQ(1, m_solver->nSurroundingSolutionSites(cx, cy));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(cx, cy));
 
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
 
@@ -58,7 +58,7 @@ TEST_F(SOSkMCTest, diffusion)
 
     m_solver->registerHeightChange(cx, cy, 1);
 
-    EXPECT_EQ(5, m_solver->nSurroundingSolutionSites(cx, cy));
+    EXPECT_EQ(5, m_solver->numberOfSurroundingSolutionSites(cx, cy));
 
     //0 = above => dr = (0, 0, 2)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
@@ -85,7 +85,7 @@ TEST_F(SOSkMCTest, diffusion)
     //increase bottom site to 1
     m_solver->registerHeightChange(cx-1, cy, 1);
 
-    EXPECT_EQ(4, m_solver->nSurroundingSolutionSites(cx, cy));
+    EXPECT_EQ(4, m_solver->numberOfSurroundingSolutionSites(cx, cy));
 
     //0 = above => dr = (0, 0, 2)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);

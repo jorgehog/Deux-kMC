@@ -23,6 +23,8 @@ private:
 
     int m_z;
 
+    void removeFromSimulation();
+
     // Reaction interface
 public:
     bool isAllowed() const;

@@ -14,4 +14,3 @@ HEADERS += \
     kmctestfixture.h
 
 DEFINES += BADASSNOTHROW
-

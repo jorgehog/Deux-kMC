@@ -67,7 +67,10 @@ void SOSDiffusionReaction::getRandomDiffusionPath(int &dx, int &dy, int &dz) con
     }
 }
 
-
+void SOSDiffusionReaction::removeFromSimulation()
+{
+    solver().removeReaction(this);
+}
 
 bool SOSDiffusionReaction::isAllowed() const
 {
@@ -86,15 +89,24 @@ void SOSDiffusionReaction::executeAndUpdate()
     if (zNew > roof)
     {
         //Derp boundary crossed... fix this
+        removeFromSimulation();
+        return;
     }
 
-    //Derp boundaries blocked
+    //Derp boundaries blocked, particle present (bunching)
     uint xNew = solver().boundary(0)->transformCoordinate(x() + dx);
-    uint yNew = solver().boundary(0)->transformCoordinate(x() + dy);
+    uint yNew = solver().boundary(1)->transformCoordinate(y() + dy);
 
     if (isSurfaceSite(xNew, yNew, zNew))
     {
+        solver().registerHeightChange(xNew, yNew, 1);
+        removeFromSimulation();
+    }
 
+    else
+    {
+        setX(xNew);
+        setY(yNew);
     }
 }
 

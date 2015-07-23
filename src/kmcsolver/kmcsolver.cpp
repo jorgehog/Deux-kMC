@@ -84,6 +84,11 @@ void KMCSolver::getCumsumAndTotalRate()
     double rate;
     Reaction *reaction;
 
+    if (m_cumsumRates.size() != numberOfReactions())
+    {
+        m_cumsumRates.resize(numberOfReactions());
+    }
+
     for (uint i = 0; i < numberOfReactions(); ++i)
     {
         reaction = getReaction(i);

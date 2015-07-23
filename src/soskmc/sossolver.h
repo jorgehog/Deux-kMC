@@ -107,7 +107,7 @@ public:
 
     uint calculateNNeighbors(const uint x, const uint y) const;
 
-    uint nSurroundingSolutionSites(const uint x, const uint y) const;
+    uint numberOfSurroundingSolutionSites(const uint x, const uint y) const;
 
     void getSolutionSite(const uint x, const uint y,
                          int &dx, int &dy, int &dz,

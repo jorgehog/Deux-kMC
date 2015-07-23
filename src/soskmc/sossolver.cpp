@@ -93,6 +93,7 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
 
     m_diffusionEvent->registerHeightChange(x, y, value);
 
+    //recalcuate rates for neighbor reactions.
     for (uint i = 0; i < n; ++i)
     {
         DissolutionDeposition *reaction = m_affectedReactions.at(i);
@@ -197,7 +198,7 @@ uint SOSSolver::calculateNNeighbors(const uint x, const uint y) const
 
 }
 
-uint SOSSolver::nSurroundingSolutionSites(const uint x, const uint y) const
+uint SOSSolver::numberOfSurroundingSolutionSites(const uint x, const uint y) const
 {
     return 6u - nNeighbors(x, y);
 }
@@ -213,7 +214,7 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
      *   3
      */
 
-    BADAss(siteNumber, <=, nSurroundingSolutionSites(x, y));
+    BADAss(siteNumber, <=, numberOfSurroundingSolutionSites(x, y));
 
     //#0 site is above the (x, y, h+1) site.
     if (siteNumber == 0)
