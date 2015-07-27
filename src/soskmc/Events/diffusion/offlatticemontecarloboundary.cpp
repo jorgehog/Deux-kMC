@@ -234,7 +234,6 @@ void OfflatticeMonteCarloBoundary::registerHeightChange(const uint x, const uint
         const int zNew = solver().height(x, y) + dz;
 
         addDiffusionReactant(xNew, yNew, zNew);
-        m_diffusionReactions.back()->calculateRate();
     }
 
     //delta == 1 case of deposition is treated from the deposition reactions execute function.
