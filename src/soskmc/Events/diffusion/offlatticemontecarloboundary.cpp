@@ -66,6 +66,22 @@ SOSDiffusionReaction *OfflatticeMonteCarloBoundary::diffusionReaction(const uint
     }
 }
 
+SOSDiffusionReaction *OfflatticeMonteCarloBoundary::diffusionReaction(const uint n) const
+{
+    return m_diffusionReactions.at(n);
+}
+
+void OfflatticeMonteCarloBoundary::clearDiffusionReactions()
+{
+    for (SOSDiffusionReaction *reaction : m_diffusionReactions)
+    {
+        m_mutexSolver.removeReaction(reaction);
+        delete reaction;
+    }
+
+    m_diffusionReactions.clear();
+}
+
 SOSDiffusionReaction *OfflatticeMonteCarloBoundary::addDiffusionReactant(const uint x, const uint y, const int z, bool setRate)
 {
     BADAssBool(!solver().isSurfaceSite(x, y, z));
@@ -174,6 +190,31 @@ double OfflatticeMonteCarloBoundary::depositionRate(const uint x, const uint y) 
     return 0;
 }
 
+void OfflatticeMonteCarloBoundary::executeDiffusionReaction(SOSDiffusionReaction *reaction,
+                                                         const uint x, const uint y, const int z)
+{
+    int roof = 100000;
+    if (z > roof)
+    {
+        //Derp boundary crossed... fix this
+        removeDiffusionReactant(reaction);
+        return;
+    }
+
+    if (solver().isSurfaceSite(x, y, z))
+    {
+        m_mutexSolver.registerHeightChange(x, y, 1);
+        removeDiffusionReactant(reaction);
+    }
+
+    else
+    {
+        reaction->setX(x);
+        reaction->setY(y);
+        reaction->setZ(z);
+    }
+}
+
 void OfflatticeMonteCarloBoundary::registerHeightChange(const uint x, const uint y, const int delta)
 {
     (void) (x+y+delta);
@@ -213,3 +254,4 @@ void OfflatticeMonteCarloBoundary::onRemoveParticle(const uint n)
 
     //update flux if on boundary
 }
+

@@ -15,7 +15,14 @@ public:
         return m_z;
     }
 
-    static void getRandomDiffusionPath(int &dx, int &dy, int &dz);
+    void setZ(const int z)
+    {
+        m_z = z;
+    }
+
+    uint numberOfFreePaths() const;
+
+    void getRandomDiffusionPath(int &dx, int &dy, int &dz);
 
     void executeReaction(const int dx, const int dy, const int dz);
 

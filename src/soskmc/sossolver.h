@@ -123,10 +123,21 @@ public:
 
     void findConnections(const uint x,
                          const uint y,
+                         const int h,
                          bool &connectedLeft,
                          bool &connectedRight,
                          bool &connectedBottom,
                          bool &connectedTop) const;
+
+    void findConnections(const uint x,
+                         const uint y,
+                         bool &connectedLeft,
+                         bool &connectedRight,
+                         bool &connectedBottom,
+                         bool &connectedTop) const
+    {
+        return findConnections(x, y, height(x, y), connectedLeft, connectedRight, connectedBottom, connectedTop);
+    }
 
     uint span() const;
 

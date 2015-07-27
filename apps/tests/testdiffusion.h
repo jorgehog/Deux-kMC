@@ -193,10 +193,12 @@ TEST_F(SOSkMCTest, surfaceSites)
     m_diffusionEvent = diffusionEvent;
 
     SetUp_yo();
+    rng.initialize(1000);
 
     //    OfflatticeMonteCarloBoundary *diffusionEvent = static_cast<OfflatticeMonteCarloBoundary*>(m_diffusionEvent);
 
     primeSolver(0);
+
 
     for (uint x = 0; x < L; ++x)
     {
@@ -204,17 +206,32 @@ TEST_F(SOSkMCTest, surfaceSites)
         {
             EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y), 6);
             m_solver->setHeight(x, y, 0);
-
-            diffusionEvent->addDiffusionReactant(x, y, 2);
         }
     }
+
+    diffusionEvent->clearDiffusionReactions();
+
+    EXPECT_EQ(0, diffusionEvent->numberOfDiffusionReactions());
+
+    uint c = 0;
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            SOSDiffusionReaction *r = diffusionEvent->addDiffusionReactant(x, y, 2);
+            EXPECT_EQ(x, r->x()); EXPECT_EQ(y, r->y()); EXPECT_EQ(2, r->z());
+
+            c++;
+            EXPECT_EQ(c, diffusionEvent->numberOfDiffusionReactions()) << "wrong number of diffusionreactions added: " << x << " " << y;
+        }
+    }
+
+    EXPECT_EQ(9, diffusionEvent->numberOfDiffusionReactions());
+
 
     /*  0        0        0
         0        0        0
         0        0        0  */
-
-    const uint cx = L/2;
-    const uint cy = W/2;
 
     for (uint x = 0; x < L; ++x)
     {
@@ -224,15 +241,89 @@ TEST_F(SOSkMCTest, surfaceSites)
         }
     }
 
+    SOSDiffusionReaction *r = diffusionEvent->diffusionReaction(1, 1, 2);
+    EXPECT_EQ(6, r->numberOfFreePaths());
+
     //Deposit 4 paticles (neighbors of center site)
-    diffusionEvent->diffusionReaction(0, 1, 1)->executeReaction(0, 0, -1);
-    diffusionEvent->diffusionReaction(2, 1, 1)->executeReaction(0, 0, -1);
-    diffusionEvent->diffusionReaction(1, 0, 1)->executeReaction(0, 0, -1);
-    diffusionEvent->diffusionReaction(1, 2, 1)->executeReaction(0, 0, -1);
+    diffusionEvent->diffusionReaction(0, 1, 2)->executeReaction(0, 0, -1);
+    diffusionEvent->diffusionReaction(2, 1, 2)->executeReaction(0, 0, -1);
+    diffusionEvent->diffusionReaction(1, 0, 2)->executeReaction(0, 0, -1);
+    diffusionEvent->diffusionReaction(1, 2, 2)->executeReaction(0, 0, -1);
+    EXPECT_EQ(6, r->numberOfFreePaths());
 
     EXPECT_EQ(1, m_solver->height(0, 1));
     EXPECT_EQ(1, m_solver->height(2, 1));
     EXPECT_EQ(1, m_solver->height(1, 0));
     EXPECT_EQ(1, m_solver->height(1, 2));
+
+    //Deposit 4 particles (not neighbors of center, to neighbors of center)
+    diffusionEvent->diffusionReaction(0, 0, 2)->executeReaction( 1, 0, 0);
+    EXPECT_EQ(5, r->numberOfFreePaths());
+
+    diffusionEvent->diffusionReaction(2, 2, 2)->executeReaction(-1, 0, 0);
+    EXPECT_EQ(4, r->numberOfFreePaths());
+
+    diffusionEvent->diffusionReaction(0, 2, 2)->executeReaction( 0,-1, 0);
+    EXPECT_EQ(3, r->numberOfFreePaths());
+
+    diffusionEvent->diffusionReaction(2, 0, 2)->executeReaction( 0, 1, 0);
+    EXPECT_EQ(2, r->numberOfFreePaths());
+
+    EXPECT_EQ(2, m_solver->height(0, 1));
+    EXPECT_EQ(2, m_solver->height(2, 1));
+    EXPECT_EQ(2, m_solver->height(1, 0));
+    EXPECT_EQ(2, m_solver->height(1, 2));
+
+    EXPECT_EQ(1, diffusionEvent->numberOfDiffusionReactions());
+
+    r->setZ((uint)height);
+    EXPECT_EQ(5, r->numberOfFreePaths());
+
+    r->setZ(2);
+    EXPECT_EQ(2, r->numberOfFreePaths());
+
+    uint upCount = 0;
+    uint downCount = 0;
+    const uint N = 1000000;
+
+    int dx, dy, dz;
+
+    for (uint i = 0; i < N; ++i)
+    {
+        r->getRandomDiffusionPath(dx, dy, dz);
+
+        EXPECT_EQ(0, dx);
+        EXPECT_EQ(0, dy);
+
+        if (dx != 0 || dy != 0)
+        {
+            break;
+        }
+
+        if (dz == 1)
+        {
+            upCount += 1;
+        }
+
+        else if (dz == -1)
+        {
+            downCount += 1;
+        }
+
+        else
+        {
+            EXPECT_EQ(0, 1);
+        }
+    }
+
+    double upProb = upCount/double(N);
+    double downProb = downCount/double(N);
+
+    EXPECT_NEAR(0.5, upProb, 1E-3);
+    EXPECT_NEAR(0.5, downProb, 1E-3);
+
+    r->executeReaction(0, 0, -1);
+
+    EXPECT_EQ(0, diffusionEvent->numberOfDiffusionReactions());
 
 }

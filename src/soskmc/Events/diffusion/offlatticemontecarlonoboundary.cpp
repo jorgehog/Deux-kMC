@@ -303,6 +303,17 @@ void OfflatticeMonteCarloNoBoundary::registerHeightChange(const uint x, const ui
     }
 }
 
+void OfflatticeMonteCarloNoBoundary::executeDiffusionReaction(SOSDiffusionReaction *reaction,
+                                                              const uint x, const uint y, const int z)
+{
+    (void) reaction;
+    (void) x;
+    (void) y;
+    (void) z;
+
+    BADAssBreak("Invalid diffusion scheme for diffusion reactions");
+}
+
 
 
 void OfflatticeMonteCarloNoBoundary::onInsertParticle(const double x, const double y, const double z)
@@ -318,3 +329,4 @@ void OfflatticeMonteCarloNoBoundary::onRemoveParticle(const uint n)
 {
     m_localProbabilities.shed_slice(n);
 }
+

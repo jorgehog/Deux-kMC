@@ -40,4 +40,13 @@ public:
     {
         //pass
     }
+
+    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z)
+    {
+        (void) reaction;
+        (void) x;
+        (void) y;
+        (void) z;
+
+    }
 };

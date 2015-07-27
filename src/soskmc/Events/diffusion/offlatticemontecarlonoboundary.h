@@ -41,17 +41,16 @@ public:
     // Diffusion interface
 public:
     void setupInitialConditions();
-
     double depositionRate(const uint x, const uint y) const
     {
         return depositionRate(x, y, m_currentTimeStep);
     }
-
     void registerHeightChange(const uint x, const uint y, const int delta);
-
+    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z);
 
     // OfflatticeMonteCarlo interface
 public:
     void onInsertParticle(const double x, const double y, const double z);
     void onRemoveParticle(const uint n);
+
 };

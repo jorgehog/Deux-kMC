@@ -309,6 +309,7 @@ int SOSSolver::rightSite(const uint site, const uint n) const
 
 void SOSSolver::findConnections(const uint x,
                                 const uint y,
+                                const int h,
                                 bool &connectedLeft,
                                 bool &connectedRight,
                                 bool &connectedBottom,
@@ -324,7 +325,6 @@ void SOSSolver::findConnections(const uint x,
     const int top = topSite(y);
     const int bottom = bottomSite(y);
 
-    const int &h = height(x, y);
 
     if (!boundary(0)->isBlocked(left))
     {
