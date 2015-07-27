@@ -24,12 +24,7 @@ SOSDiffusionReaction::~SOSDiffusionReaction()
 
 }
 
-bool SOSDiffusionReaction::isSurfaceSite(const uint x, const uint y, const int z) const
-{
-    return solver().height(x, y) == z - 1;
-}
-
-void SOSDiffusionReaction::getRandomDiffusionPath(int &dx, int &dy, int &dz) const
+void SOSDiffusionReaction::getRandomDiffusionPath(int &dx, int &dy, int &dz)
 {
     uint dim = rng.uniform()*3;
 
@@ -67,6 +62,35 @@ void SOSDiffusionReaction::getRandomDiffusionPath(int &dx, int &dy, int &dz) con
     }
 }
 
+void SOSDiffusionReaction::executeReaction(const int dx, const int dy, const int dz)
+{
+    int zNew = z() + dz;
+
+    int roof = 100000;
+    if (zNew > roof)
+    {
+        //Derp boundary crossed... fix this
+        removeFromSimulation();
+        return;
+    }
+
+    //Derp boundaries blocked, particle present (bunching)
+    uint xNew = solver().boundary(0)->transformCoordinate(x() + dx);
+    uint yNew = solver().boundary(1)->transformCoordinate(y() + dy);
+
+    if (solver().isSurfaceSite(xNew, yNew, zNew))
+    {
+        solver().registerHeightChange(xNew, yNew, 1);
+        removeFromSimulation();
+    }
+
+    else
+    {
+        setX(xNew);
+        setY(yNew);
+    }
+}
+
 void SOSDiffusionReaction::removeFromSimulation()
 {
     solver().removeReaction(this);
@@ -83,31 +107,7 @@ void SOSDiffusionReaction::executeAndUpdate()
 
     getRandomDiffusionPath(dx, dy, dz);
 
-    int zNew = z() + dz;
-
-    int roof = 100000;
-    if (zNew > roof)
-    {
-        //Derp boundary crossed... fix this
-        removeFromSimulation();
-        return;
-    }
-
-    //Derp boundaries blocked, particle present (bunching)
-    uint xNew = solver().boundary(0)->transformCoordinate(x() + dx);
-    uint yNew = solver().boundary(1)->transformCoordinate(y() + dy);
-
-    if (isSurfaceSite(xNew, yNew, zNew))
-    {
-        solver().registerHeightChange(xNew, yNew, 1);
-        removeFromSimulation();
-    }
-
-    else
-    {
-        setX(xNew);
-        setY(yNew);
-    }
+    executeReaction(dx, dy, dz);
 }
 
 double SOSDiffusionReaction::rateExpression()

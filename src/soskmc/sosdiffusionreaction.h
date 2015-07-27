@@ -10,14 +10,14 @@ public:
     SOSDiffusionReaction(SOSSolver &solver, const uint x0, const uint y0, const int z0);
     ~SOSDiffusionReaction();
 
-    bool isSurfaceSite(const uint x, const uint y, const int z) const;
-
     const int &z() const
     {
         return m_z;
     }
 
-    void getRandomDiffusionPath(int &dx, int &dy, int &dz) const;
+    static void getRandomDiffusionPath(int &dx, int &dy, int &dz);
+
+    void executeReaction(const int dx, const int dy, const int dz);
 
 private:
 

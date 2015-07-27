@@ -263,7 +263,7 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
         n++;
     }
 
-    if (!connectedTop)
+    if (!connectedBottom)
     {
         if (n == siteNumber)
         {
@@ -275,7 +275,7 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
         n++;
     }
 
-    if (!connectedBottom)
+    if (!connectedTop)
     {
         if (n == siteNumber)
         {
@@ -395,6 +395,11 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
 
     //DERP: collide in x-y plane
     return z < height(X, Y) + 0.5;
+}
+
+bool SOSSolver::isSurfaceSite(const uint x, const uint y, const int z) const
+{
+    return height(x, y) == z - 1;
 }
 
 void SOSSolver::setMu(const double mu)

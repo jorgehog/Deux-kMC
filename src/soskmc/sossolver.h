@@ -132,6 +132,8 @@ public:
 
     bool isBlockedPosition(const double x, const double y, const double z) const;
 
+    bool isSurfaceSite(const uint x, const uint y, const int z) const;
+
     DissolutionDeposition &surfaceReaction(const uint x, const uint y) const
     {
         return *m_siteReactions(x, y);

@@ -14,9 +14,11 @@ public:
 
     bool checkIfEnoughRoom() const;
 
-    void addDiffusionReactant(const uint x, const uint y, const int z);
+    SOSDiffusionReaction *addDiffusionReactant(const uint x, const uint y, const int z, bool setRate = true);
 
     void removeDiffusionReactant(SOSDiffusionReaction *reaction);
+
+    SOSDiffusionReaction *diffusionReaction(const uint x, const uint y, const int z) const;
 
 private:
 
