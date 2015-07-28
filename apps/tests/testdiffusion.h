@@ -36,7 +36,7 @@ TEST_F(SOSkMCTest, diffusion)
     {
         for (uint y = 0; y < W; ++y)
         {
-            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y), 6);
+            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y, m_solver->height(x, y)), 6);
             m_solver->setHeight(x, y, 0);
         }
     }
@@ -53,33 +53,33 @@ TEST_F(SOSkMCTest, diffusion)
 
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
 
-    EXPECT_EQ(0, dx); EXPECT_EQ(0, dy); EXPECT_EQ(2, dz);
+    EXPECT_EQ(0, dx); EXPECT_EQ(0, dy); EXPECT_EQ(1, dz);
 
     //NO NEIGHBORS
-
+    m_solver->registerHeightChange(cx, cy, 1);
     m_solver->registerHeightChange(cx, cy, 1);
 
     EXPECT_EQ(5, m_solver->numberOfSurroundingSolutionSites(cx, cy));
 
-    //0 = above => dr = (0, 0, 2)
+    //0 = above => dr = (0, 0, 1)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
-    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(2, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
 
-    //1 = left => dr = (-1, 0, 1)
+    //1 = left => dr = (-1, 0, 0)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 1);
-    EXPECT_EQ(-1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ(-1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(0, dz);
 
-    //2 = right => dr = (1, 0, 1)
+    //2 = right => dr = (1, 0, 0)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 2);
-    EXPECT_EQ( 1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ( 1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(0, dz);
 
-    //3 = bottom => dr = (0, -1, 1)
+    //3 = bottom => dr = (0, -1, 0)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 3);
-    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(0, dz);
 
-    //4 = top => dr = (0, 1, 1)
+    //4 = top => dr = (0, 1, 0)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 4);
-    EXPECT_EQ( 0, dx); EXPECT_EQ( 1, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 1, dy); EXPECT_EQ(0, dz);
 
 
     //ONE NEIGHBOR AT LEFT
@@ -88,23 +88,23 @@ TEST_F(SOSkMCTest, diffusion)
 
     EXPECT_EQ(4, m_solver->numberOfSurroundingSolutionSites(cx, cy));
 
-    //0 = above => dr = (0, 0, 2)
+    //0 = above => dr = (0, 0, 1)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
-    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(2, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
 
-    //1 = left => dr = (-1, 0, 1) BLOCKED
+    //1 = left => dr = (-1, 0, 0) BLOCKED
 
     //1 = right => dr = (1, 0, 1)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 1);
-    EXPECT_EQ( 1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ( 1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(0, dz);
 
     //2 = bottom => dr = (0, -1, 1)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 2);
-    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(0, dz);
 
     //3 = top => dr = (0, 1, 1)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 3);
-    EXPECT_EQ( 0, dx); EXPECT_EQ( 1, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 1, dy); EXPECT_EQ(0, dz);
 
 
 
@@ -117,17 +117,17 @@ TEST_F(SOSkMCTest, diffusion)
 
     //0 = above => dr = (0, 0, 2)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
-    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(2, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
 
     //1 = left => dr = (-1, 0, 1) BLOCKED
 
     //1 = right => dr = (1, 0, 1)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 1);
-    EXPECT_EQ( 1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ( 1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(0, dz);
 
     //2 = bottom => dr = (0, -1, 1)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 2);
-    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(0, dz);
 
     //3 = top => dr = (0, 1, 1) //BLOCKED
 
@@ -154,17 +154,17 @@ TEST_F(SOSkMCTest, diffusion)
 
     //0 = above => dr = (0, 0, 2)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
-    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(2, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
 
     //1 = left => dr = (-1, 0, 1)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 1);
-    EXPECT_EQ(-1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ(-1, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(0, dz);
 
     //2 = right => dr = (1, 0, 1) //BLOCKED
 
     //2 = bottom => dr = (0, -1, 1) //BLOCKED
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 2);
-    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(1, dz);
+    EXPECT_EQ( 0, dx); EXPECT_EQ(-1, dy); EXPECT_EQ(0, dz);
 
     //2 = top => dr = (0, 1, 1) //BLOCKED
 
@@ -193,7 +193,7 @@ TEST_F(SOSkMCTest, surfaceSites)
     m_diffusionEvent = diffusionEvent;
 
     SetUp_yo();
-    rng.initialize(1000);
+    //    rng.initialize(1000);
 
     //    OfflatticeMonteCarloBoundary *diffusionEvent = static_cast<OfflatticeMonteCarloBoundary*>(m_diffusionEvent);
 
@@ -204,7 +204,7 @@ TEST_F(SOSkMCTest, surfaceSites)
     {
         for (uint y = 0; y < W; ++y)
         {
-            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y), 6);
+            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y, m_solver->height(x, y)), 6);
             m_solver->setHeight(x, y, 0);
         }
     }
@@ -325,5 +325,141 @@ TEST_F(SOSkMCTest, surfaceSites)
     r->executeReaction(0, 0, -1);
 
     EXPECT_EQ(0, diffusionEvent->numberOfDiffusionReactions());
+
+}
+
+TEST_F(SOSkMCTest, dissolution)
+{
+    const uint L = 3;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double dt = 1.;
+    const double height = 20 + rng.uniform();
+    const uint spacing = 10;
+
+
+    Boundary* xBoundary = new Periodic(L);
+    Boundary* yBoundary = new Periodic(W);
+    m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    OfflatticeMonteCarloBoundary *diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
+    m_diffusionEvent = diffusionEvent;
+
+    SetUp_yo();
+    //    rng.initialize(1000);
+
+    primeSolver(0);
+
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y, m_solver->height(x, y)), 6);
+            m_solver->setHeight(x, y, 0);
+        }
+    }
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(x, y));
+        }
+    }
+
+    diffusionEvent->clearDiffusionReactions();
+
+    EXPECT_EQ(0, diffusionEvent->numberOfDiffusionReactions());
+
+    //dissolve a particle
+    m_solver->registerHeightChange(1, 1, -1);
+
+    //only dissolution path should be straight up
+    EXPECT_EQ(1, diffusionEvent->numberOfDiffusionReactions());
+    EXPECT_TRUE(NULL != diffusionEvent->diffusionReaction(1, 1, 1));
+
+    //Sites neighboring to center should have 1 paths now
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(0, 1));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(2, 1));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(1, 0));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(1, 2));
+
+    //those who do not should still have 1
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(0, 0));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(2, 2));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(0, 2));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(2, 0));
+
+    //dissolve again. Now we should have 2 paths for neighbors
+    m_solver->registerHeightChange(1, 1, -1);
+
+    //Sites neighboring to center should have 2 paths now
+    EXPECT_EQ(2, m_solver->numberOfSurroundingSolutionSites(0, 1));
+    EXPECT_EQ(2, m_solver->numberOfSurroundingSolutionSites(2, 1));
+    EXPECT_EQ(2, m_solver->numberOfSurroundingSolutionSites(1, 0));
+    EXPECT_EQ(2, m_solver->numberOfSurroundingSolutionSites(1, 2));
+
+    //those who do not should still have 1
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(0, 0));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(2, 2));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(0, 2));
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(2, 0));
+
+
+    const uint N = 1000000;
+
+    double nSideways = 0;
+    double nUp = 0;
+
+    int dx, dy, dz;
+    for (uint i = 0; i < N; ++i)
+    {
+        uint n = rng.uniform()*m_solver->numberOfSurroundingSolutionSites(0, 1);
+        m_solver->getSolutionSite(0, 1, dx, dy, dz, n);
+
+        EXPECT_EQ(1, abs(dx + dy + dz)) << dx << " y " << dy << " z " << dz;
+        EXPECT_EQ(0, dy); EXPECT_NE(-1, dx); EXPECT_NE(-1, dz);
+
+        if (dx == 1)
+        {
+            EXPECT_EQ(0, dz);
+
+            nSideways++;
+        }
+
+        else if (dz == 1)
+        {
+            EXPECT_EQ(0, dx);
+
+            nUp++;
+        }
+
+        else
+        {
+            EXPECT_TRUE(false);
+        }
+
+        SOSDiffusionReaction *r =  diffusionEvent->diffusionReaction(diffusionEvent->numberOfDiffusionReactions() - 1);
+        EXPECT_FALSE(m_solver->isSurfaceSite(r->x(), r->y(), r->z()));
+
+        if (HasFailure())
+        {
+            return;
+        }
+
+    }
+
+    double pSideways = nSideways/N;
+    double pUp = nUp/N;
+
+    EXPECT_NEAR(0.5, pSideways, 1e-2);
+    EXPECT_NEAR(0.5, pUp, 1e-2);
+
+    diffusionEvent->clearDiffusionReactions();
+
+    m_solver->registerHeightChange(0, 1, 1);
+
 
 }

@@ -84,8 +84,6 @@ void OfflatticeMonteCarloBoundary::clearDiffusionReactions()
 
 SOSDiffusionReaction *OfflatticeMonteCarloBoundary::addDiffusionReactant(const uint x, const uint y, const int z, bool setRate)
 {
-    BADAssBool(!solver().isSurfaceSite(x, y, z));
-
     SOSDiffusionReaction *reaction = new SOSDiffusionReaction(m_mutexSolver, x, y, z);
 
     m_diffusionReactions.push_back(reaction);
@@ -217,21 +215,27 @@ void OfflatticeMonteCarloBoundary::executeDiffusionReaction(SOSDiffusionReaction
 
 void OfflatticeMonteCarloBoundary::registerHeightChange(const uint x, const uint y, const int delta)
 {
-    (void) (x+y+delta);
     BADAssBool(checkIfEnoughRoom());
 
     //position particle on random surrounding site
-
+    //add one to solution site heights because at this stage height(x,y) is already updated
     if (delta == -1)
     {
-        const uint randomSite = rng.uniform()*solver().numberOfSurroundingSolutionSites(x, y);
+        const uint randomSite = rng.uniform()*solver().numberOfSurroundingSolutionSites(x, y, solver().height(x, y));
 
         int dx, dy, dz;
-        solver().getSolutionSite(x, y, dx, dy, dz, randomSite);
+        solver().getSolutionSite(x, y, solver().height(x, y), dx, dy, dz, randomSite);
 
         const uint xNew = solver().boundary(0)->transformCoordinate((int)x + dx);
         const uint yNew = solver().boundary(1)->transformCoordinate((int)y + dy);
-        const int zNew = solver().height(x, y) + dz;
+        const int zNew = solver().height(x, y) + dz + 1;
+
+        BADAssBool(!solver().isSurfaceSite(xNew, yNew, zNew), "adding diff reaction to surface.", [&] ()
+        {
+            int h = solver().height(x, y);
+            int hNew = solver().height(xNew, yNew);
+            BADAssSimpleDump(x, y, h, xNew, yNew, zNew, hNew);
+        });
 
         addDiffusionReactant(xNew, yNew, zNew);
     }

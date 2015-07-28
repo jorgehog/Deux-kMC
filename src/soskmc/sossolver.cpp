@@ -164,12 +164,12 @@ double SOSSolver::depositionRate(const uint x, const uint y) const
     return m_diffusionEvent->depositionRate(x, y);
 }
 
-uint SOSSolver::calculateNNeighbors(const uint x, const uint y) const
+uint SOSSolver::calculateNNeighbors(const uint x, const uint y, const int h) const
 {    
     bool connectedLeft, connectedRight,
             connectedTop, connectedBottom;
 
-    findConnections(x, y, connectedLeft, connectedRight,
+    findConnections(x, y, h, connectedLeft, connectedRight,
                     connectedBottom, connectedTop);
 
     uint n = 1;
@@ -198,13 +198,14 @@ uint SOSSolver::calculateNNeighbors(const uint x, const uint y) const
 
 }
 
-uint SOSSolver::numberOfSurroundingSolutionSites(const uint x, const uint y) const
+uint SOSSolver::numberOfSurroundingSolutionSites(const uint x, const uint y, const int h) const
 {
-    return 6u - nNeighbors(x, y);
+    return 6u - calculateNNeighbors(x, y, h);
 }
 
 
 void SOSSolver::getSolutionSite(const uint x, const uint y,
+                                const int height,
                                 int &dx, int &dy, int &dz,
                                 const uint siteNumber) const
 {
@@ -214,22 +215,22 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
      *   3
      */
 
-    BADAss(siteNumber, <=, numberOfSurroundingSolutionSites(x, y));
+    BADAss(siteNumber, <=, numberOfSurroundingSolutionSites(x, y, height));
 
-    //#0 site is above the (x, y, h+1) site.
+    //#0 site is above the (x, y, h) site.
     if (siteNumber == 0)
     {
         dx = 0;
         dy = 0;
-        dz = 2;
+        dz = 1;
 
         return;
     }
 
-    //all other sites are besides (x,y, h+1) and has zs = h+1
+    //all other sites are besides (x,y, h) and has zs = h
     else
     {
-        dz = 1;
+        dz = 0;
     }
 
     uint n = 1;
@@ -237,7 +238,7 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
     bool connectedLeft, connectedRight,
             connectedBottom, connectedTop;
 
-    findConnections(x, y, connectedLeft, connectedRight, connectedBottom, connectedTop);
+    findConnections(x, y, height, connectedLeft, connectedRight, connectedBottom, connectedTop);
 
     if (!connectedLeft)
     {

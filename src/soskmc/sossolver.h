@@ -105,13 +105,30 @@ public:
 
     double depositionRate(const uint x, const uint y) const;
 
-    uint calculateNNeighbors(const uint x, const uint y) const;
+    uint calculateNNeighbors(const uint x, const uint y, const int h) const;
 
-    uint numberOfSurroundingSolutionSites(const uint x, const uint y) const;
+    uint calculateNNeighbors(const uint x, const uint y) const
+    {
+        return calculateNNeighbors(x, y, height(x, y));
+    }
+
+    uint numberOfSurroundingSolutionSites(const uint x, const uint y, const int h) const;
+
+    uint numberOfSurroundingSolutionSites(const uint x, const uint y) const
+    {
+        return numberOfSurroundingSolutionSites(x, y, height(x, y) - 1);
+    }
+
+    void getSolutionSite(const uint x, const uint y, const int height,
+                         int &dx, int &dy, int &dz,
+                         const uint siteNumber) const;
 
     void getSolutionSite(const uint x, const uint y,
                          int &dx, int &dy, int &dz,
-                         const uint siteNumber) const;
+                         const uint siteNumber) const
+    {
+        getSolutionSite(x, y, height(x, y) - 1, dx, dy, dz, siteNumber);
+    }
 
     int topSite(const uint site, const uint n = 1) const;
 
