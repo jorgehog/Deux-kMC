@@ -100,10 +100,6 @@ void KMCSolver::getCumsumAndTotalRate()
 
             m_totalRate += rate;
         }
-        else
-        {
-            rate = 0;
-        }
 
         m_cumsumRates.at(i) = m_totalRate;
     }

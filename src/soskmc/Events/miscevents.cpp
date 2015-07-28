@@ -209,6 +209,7 @@ void NNeighbors::execute()
 
 void NNeighbors::reset()
 {
+    //derp this guy can be deleted.. check here if this is actually a surfacereaction.
     const SOSReaction *currentReaction = dynamic_cast<const SOSReaction*>(solver().selectedReaction());
 
     const uint &x = currentReaction->x();
