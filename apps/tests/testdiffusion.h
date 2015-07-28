@@ -24,8 +24,8 @@ TEST_F(SOSkMCTest, diffusion)
     Boundary* yBoundary = new Periodic(W);
     m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
-    m_diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
-
+    OfflatticeMonteCarloBoundary *diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
+    m_diffusionEvent = diffusionEvent;
     SetUp_yo();
 
     //    OfflatticeMonteCarloBoundary *diffusionEvent = static_cast<OfflatticeMonteCarloBoundary*>(m_diffusionEvent);
@@ -36,8 +36,19 @@ TEST_F(SOSkMCTest, diffusion)
     {
         for (uint y = 0; y < W; ++y)
         {
-            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y, m_solver->height(x, y)), 6);
             m_solver->setHeight(x, y, 0);
+        }
+    }
+
+    diffusionEvent->clearDiffusionReactions();
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            uint nn = m_solver->nNeighbors(x, y);
+            uint ns = m_solver->numberOfSurroundingSolutionSites(x, y);
+            EXPECT_EQ(6, nn + ns) << nn << " " << ns;
         }
     }
 
@@ -45,7 +56,6 @@ TEST_F(SOSkMCTest, diffusion)
     const uint cy = W/2;
 
     int dx, dy, dz;
-
 
     //COMPLETELY FLAT
 
@@ -60,7 +70,6 @@ TEST_F(SOSkMCTest, diffusion)
     m_solver->registerHeightChange(cx, cy, 1);
 
     EXPECT_EQ(5, m_solver->numberOfSurroundingSolutionSites(cx, cy));
-
     //0 = above => dr = (0, 0, 1)
     m_solver->getSolutionSite(cx, cy, dx, dy, dz, 0);
     EXPECT_EQ( 0, dx); EXPECT_EQ( 0, dy); EXPECT_EQ(1, dz);
@@ -149,6 +158,7 @@ TEST_F(SOSkMCTest, diffusion)
     EXPECT_EQ(2, m_solver->numberOfSurroundingSolutionSites(cx, cy));
 
     m_solver->registerHeightChange(cx-1, cy, -1);   //decrease left site to 1
+    diffusionEvent->clearDiffusionReactions();
     //1 2 2 0 2
     EXPECT_EQ(3, m_solver->numberOfSurroundingSolutionSites(cx, cy));
 
@@ -204,12 +214,19 @@ TEST_F(SOSkMCTest, surfaceSites)
     {
         for (uint y = 0; y < W; ++y)
         {
-            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y, m_solver->height(x, y)), 6);
             m_solver->setHeight(x, y, 0);
         }
     }
 
     diffusionEvent->clearDiffusionReactions();
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y, m_solver->height(x, y)), 6);
+        }
+    }
 
     EXPECT_EQ(0, diffusionEvent->numberOfDiffusionReactions());
 
@@ -242,7 +259,7 @@ TEST_F(SOSkMCTest, surfaceSites)
     }
 
     SOSDiffusionReaction *r = diffusionEvent->diffusionReaction(1, 1, 2);
-    EXPECT_EQ(6, r->numberOfFreePaths());
+    EXPECT_EQ(2, r->numberOfFreePaths());
 
     //Deposit 4 paticles (neighbors of center site)
     diffusionEvent->diffusionReaction(0, 1, 2)->executeReaction(0, 0, -1);
@@ -319,8 +336,8 @@ TEST_F(SOSkMCTest, surfaceSites)
     double upProb = upCount/double(N);
     double downProb = downCount/double(N);
 
-    EXPECT_NEAR(0.5, upProb, 1E-3);
-    EXPECT_NEAR(0.5, downProb, 1E-3);
+    EXPECT_NEAR(0.5, upProb, 1E-2);
+    EXPECT_NEAR(0.5, downProb, 1E-2);
 
     r->executeReaction(0, 0, -1);
 
@@ -356,10 +373,11 @@ TEST_F(SOSkMCTest, dissolution)
     {
         for (uint y = 0; y < W; ++y)
         {
-            EXPECT_EQ(m_solver->nNeighbors(x, y) + m_solver->numberOfSurroundingSolutionSites(x, y, m_solver->height(x, y)), 6);
             m_solver->setHeight(x, y, 0);
         }
     }
+
+    diffusionEvent->clearDiffusionReactions();
 
     for (uint x = 0; x < L; ++x)
     {
@@ -369,7 +387,6 @@ TEST_F(SOSkMCTest, dissolution)
         }
     }
 
-    diffusionEvent->clearDiffusionReactions();
 
     EXPECT_EQ(0, diffusionEvent->numberOfDiffusionReactions());
 
@@ -379,6 +396,7 @@ TEST_F(SOSkMCTest, dissolution)
     //only dissolution path should be straight up
     EXPECT_EQ(1, diffusionEvent->numberOfDiffusionReactions());
     EXPECT_TRUE(NULL != diffusionEvent->diffusionReaction(1, 1, 1));
+    diffusionEvent->clearDiffusionReactions();
 
     //Sites neighboring to center should have 1 paths now
     EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(0, 1));
@@ -394,6 +412,7 @@ TEST_F(SOSkMCTest, dissolution)
 
     //dissolve again. Now we should have 2 paths for neighbors
     m_solver->registerHeightChange(1, 1, -1);
+    diffusionEvent->clearDiffusionReactions();
 
     //Sites neighboring to center should have 2 paths now
     EXPECT_EQ(2, m_solver->numberOfSurroundingSolutionSites(0, 1));
@@ -441,9 +460,6 @@ TEST_F(SOSkMCTest, dissolution)
             EXPECT_TRUE(false);
         }
 
-        SOSDiffusionReaction *r =  diffusionEvent->diffusionReaction(diffusionEvent->numberOfDiffusionReactions() - 1);
-        EXPECT_FALSE(m_solver->isSurfaceSite(r->x(), r->y(), r->z()));
-
         if (HasFailure())
         {
             return;
@@ -457,9 +473,75 @@ TEST_F(SOSkMCTest, dissolution)
     EXPECT_NEAR(0.5, pSideways, 1e-2);
     EXPECT_NEAR(0.5, pUp, 1e-2);
 
+}
+
+
+TEST_F(SOSkMCTest, SOS_discrete_interface)
+{
+    const uint L = 3;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double dt = 1.;
+    const double height = 20 + rng.uniform();
+    const uint spacing = 10;
+
+
+    Boundary* xBoundary = new Periodic(L);
+    Boundary* yBoundary = new Periodic(W);
+    m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    OfflatticeMonteCarloBoundary *diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
+    m_diffusionEvent = diffusionEvent;
+
+    SetUp_yo();
+    //    rng.initialize(1000);
+
+    primeSolver(0);
+
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, 0);
+        }
+    }
+
     diffusionEvent->clearDiffusionReactions();
 
-    m_solver->registerHeightChange(0, 1, 1);
+    m_solver->registerHeightChange(1,1,1);           //one peak on a flat surface
+    diffusionEvent->addDiffusionReactant(1,1,3);     //a particle two lattice units away
+    diffusionEvent->addDiffusionReactant(2, 1, 2);   //a particle next to the gap between peak and first particle
+
+    diffusionEvent->diffusionReaction(2, 1, 2)->executeReaction(-1, 0, 0); //move the particle into the gap.
+
+    //this should turn all paticles into the SOS surface with a new peak of height 3
+    EXPECT_EQ(0, diffusionEvent->numberOfDiffusionReactions());
+    EXPECT_EQ(3, m_solver->height(1, 1));
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

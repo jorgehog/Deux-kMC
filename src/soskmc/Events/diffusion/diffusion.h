@@ -23,4 +23,6 @@ public:
 
     virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z) = 0;
 
+    virtual bool isBlockedPosition(const uint x, const uint y, const int z) const = 0;
+
 };

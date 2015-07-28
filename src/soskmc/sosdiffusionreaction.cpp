@@ -27,20 +27,22 @@ SOSDiffusionReaction::~SOSDiffusionReaction()
 
 uint SOSDiffusionReaction::numberOfFreePaths() const
 {
-    bool connectedLeft, connectedRight, connectedBottom, connectedTop;
-
-    solver().findConnections(x(), y(), z(),
-                             connectedLeft,
-                             connectedRight,
-                             connectedBottom,
-                             connectedTop);
-
     //We are always able to diffuse down since a diffusing particle never is on the surface.
     //Transitions to the surface will transform the particle to the SOS surface and remove it
     //from the diffusion instance.
     BADAssBool(!solver().isSurfaceSite(x(), y(), z()));
 
+    bool connectedLeft, connectedRight,
+            connectedTop, connectedBottom;
+
+    solver().findConnections(x(), y(), z(), connectedLeft, connectedRight,
+                    connectedBottom, connectedTop, false);
+
+    bool connectedAbove = solver().isBlockedPosition(x(), y(), z()+1) || solver().diffusionEvent().isBlockedPosition(x(), y(), z()+1);
+    bool connectedBelow = solver().diffusionEvent().isBlockedPosition(x(), y(), z()-1);
+
     uint n = 6;
+
     if (connectedLeft)
     {
         n--;
@@ -61,7 +63,12 @@ uint SOSDiffusionReaction::numberOfFreePaths() const
         n--;
     }
 
-    if (solver().isBlockedPosition(x(), y(), z() + 1))
+    if (connectedAbove)
+    {
+        n--;
+    }
+
+    if (connectedBelow)
     {
         n--;
     }
@@ -191,7 +198,7 @@ void SOSDiffusionReaction::removeFromSimulation()
 
 bool SOSDiffusionReaction::isAllowed() const
 {
-    return true;
+    return numberOfFreePaths() != 0;
 }
 
 void SOSDiffusionReaction::executeAndUpdate()

@@ -200,7 +200,49 @@ uint SOSSolver::calculateNNeighbors(const uint x, const uint y, const int h) con
 
 uint SOSSolver::numberOfSurroundingSolutionSites(const uint x, const uint y, const int h) const
 {
-    return 6u - calculateNNeighbors(x, y, h);
+    bool connectedLeft, connectedRight,
+            connectedTop, connectedBottom;
+    bool connectedLeft2, connectedRight2,
+            connectedTop2, connectedBottom2;
+
+    findConnections(x, y, h, connectedLeft, connectedRight,
+                    connectedBottom, connectedTop, false);
+    findConnections(x, y, h-1, connectedLeft2, connectedRight2,
+                    connectedBottom2, connectedTop2);
+
+    BADAssBool(!diffusionEvent().isBlockedPosition(x, y, h+1), "diffusing particle resting on top of SOS height");
+
+    bool connectedAbove = isBlockedPosition(x, y, h+1);
+
+    uint n = 5;
+
+    if (connectedLeft || connectedLeft2)
+    {
+        n--;
+    }
+
+    if (connectedRight || connectedRight2)
+    {
+        n--;
+    }
+
+    if (connectedBottom || connectedBottom2)
+    {
+        n--;
+    }
+
+    if (connectedTop || connectedTop2)
+    {
+        n--;
+    }
+
+    if (connectedAbove)
+    {
+        n--;
+    }
+
+    return n;
+
 }
 
 
@@ -236,11 +278,16 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
     uint n = 1;
 
     bool connectedLeft, connectedRight,
-            connectedBottom, connectedTop;
+            connectedTop, connectedBottom;
+    bool connectedLeft2, connectedRight2,
+            connectedTop2, connectedBottom2;
 
-    findConnections(x, y, height, connectedLeft, connectedRight, connectedBottom, connectedTop);
+    findConnections(x, y, height, connectedLeft, connectedRight,
+                    connectedBottom, connectedTop, false);
+    findConnections(x, y, height-1, connectedLeft2, connectedRight2,
+                    connectedBottom2, connectedTop2);
 
-    if (!connectedLeft)
+    if (!connectedLeft && !connectedLeft2)
     {
         if (n == siteNumber)
         {
@@ -252,7 +299,7 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
         n++;
     }
 
-    if (!connectedRight)
+    if (!connectedRight && !connectedRight2)
     {
         if (n == siteNumber)
         {
@@ -264,7 +311,7 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
         n++;
     }
 
-    if (!connectedBottom)
+    if (!connectedBottom && !connectedBottom2)
     {
         if (n == siteNumber)
         {
@@ -276,7 +323,7 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
         n++;
     }
 
-    if (!connectedTop)
+    if (!connectedTop && !connectedTop2)
     {
         if (n == siteNumber)
         {
@@ -314,7 +361,8 @@ void SOSSolver::findConnections(const uint x,
                                 bool &connectedLeft,
                                 bool &connectedRight,
                                 bool &connectedBottom,
-                                bool &connectedTop) const
+                                bool &connectedTop,
+                                bool onlySurface) const
 {
     connectedLeft = false;
     connectedRight = false;
@@ -326,29 +374,83 @@ void SOSSolver::findConnections(const uint x,
     const int top = topSite(y);
     const int bottom = bottomSite(y);
 
+    bool checkConnection;
 
+    checkConnection = true;
     if (!boundary(0)->isBlocked(left))
     {
-        const int &hLeft = m_heights(left, y);
-        connectedLeft = hLeft >= h;
+        if (!onlySurface)
+        {
+            if (diffusionEvent().isBlockedPosition(left, y, h))
+            {
+                connectedLeft = true;
+                checkConnection = false;
+            }
+        }
+
+        if (checkConnection)
+        {
+            const int &hLeft = m_heights(left, y);
+            connectedLeft = hLeft >= h;
+        }
     }
 
+    checkConnection = true;
     if (!boundary(0)->isBlocked(right))
     {
-        const int &hRight = m_heights(right, y);
-        connectedRight = hRight >= h;
+
+        if (!onlySurface)
+        {
+            if (diffusionEvent().isBlockedPosition(right, y, h))
+            {
+                connectedRight = true;
+                checkConnection = false;
+            }
+        }
+
+        if (checkConnection)
+        {
+            const int &hRight = m_heights(right, y);
+            connectedRight = hRight >= h;
+        }
     }
 
+    checkConnection = true;
     if (!boundary(1)->isBlocked(top))
     {
-        const int &hTop = m_heights(x, top);
-        connectedTop = hTop >= h;
+        if (!onlySurface)
+        {
+            if (diffusionEvent().isBlockedPosition(x, top, h))
+            {
+                connectedTop = true;
+                checkConnection = false;
+            }
+        }
+
+        if (checkConnection)
+        {
+            const int &hTop = m_heights(x, top);
+            connectedTop = hTop >= h;
+        }
     }
 
+    checkConnection = true;
     if (!boundary(1)->isBlocked(bottom))
     {
-        const int &hBottom = m_heights(x, bottom);
-        connectedBottom = hBottom >= h;
+        if (!onlySurface)
+        {
+            if (diffusionEvent().isBlockedPosition(x, bottom, h))
+            {
+                connectedBottom = true;
+                checkConnection = false;
+            }
+        }
+
+        if (checkConnection)
+        {
+            const int &hBottom = m_heights(x, bottom);
+            connectedBottom = hBottom >= h;
+        }
     }
 }
 

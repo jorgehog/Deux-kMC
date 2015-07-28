@@ -49,4 +49,13 @@ public:
         (void) z;
 
     }
+
+    bool isBlockedPosition(const uint x, const uint y, const int z) const
+    {
+        (void) x;
+        (void) y;
+        (void) z;
+
+        return false;
+    }
 };

@@ -116,7 +116,7 @@ public:
 
     uint numberOfSurroundingSolutionSites(const uint x, const uint y) const
     {
-        return numberOfSurroundingSolutionSites(x, y, height(x, y) - 1);
+        return numberOfSurroundingSolutionSites(x, y, height(x, y));
     }
 
     void getSolutionSite(const uint x, const uint y, const int height,
@@ -127,7 +127,7 @@ public:
                          int &dx, int &dy, int &dz,
                          const uint siteNumber) const
     {
-        getSolutionSite(x, y, height(x, y) - 1, dx, dy, dz, siteNumber);
+        getSolutionSite(x, y, height(x, y), dx, dy, dz, siteNumber);
     }
 
     int topSite(const uint site, const uint n = 1) const;
@@ -144,16 +144,23 @@ public:
                          bool &connectedLeft,
                          bool &connectedRight,
                          bool &connectedBottom,
-                         bool &connectedTop) const;
+                         bool &connectedTop,
+                         bool onlySurface = true) const;
 
     void findConnections(const uint x,
                          const uint y,
                          bool &connectedLeft,
                          bool &connectedRight,
                          bool &connectedBottom,
-                         bool &connectedTop) const
+                         bool &connectedTop,
+                         bool onlySurface = true) const
     {
-        return findConnections(x, y, height(x, y), connectedLeft, connectedRight, connectedBottom, connectedTop);
+        return findConnections(x, y, height(x, y),
+                               connectedLeft,
+                               connectedRight,
+                               connectedBottom,
+                               connectedTop,
+                               onlySurface);
     }
 
     uint span() const;

@@ -18,6 +18,8 @@ public:
 
     void removeDiffusionReactant(SOSDiffusionReaction *reaction);
 
+    void removeDiffusionReactant(const uint x, const uint y, const int z);
+
     SOSDiffusionReaction *diffusionReaction(const uint x, const uint y, const int z) const;
 
     SOSDiffusionReaction *diffusionReaction(const uint n) const;
@@ -49,6 +51,7 @@ public:
     double depositionRate(const uint x, const uint y) const;
     void registerHeightChange(const uint x, const uint y, const int delta);
     void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z);
+    bool isBlockedPosition(const uint x, const uint y, const int z) const;
 
     // OfflatticeMonteCarlo interface
 public:

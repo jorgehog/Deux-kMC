@@ -47,6 +47,11 @@ void OfflatticeMonteCarloBoundary::removeDiffusionReactant(SOSDiffusionReaction 
     delete reaction; //counters new in addDiffusionReactant
 }
 
+void OfflatticeMonteCarloBoundary::removeDiffusionReactant(const uint x, const uint y, const int z)
+{
+    removeDiffusionReactant(diffusionReaction(x, y, z));
+}
+
 SOSDiffusionReaction *OfflatticeMonteCarloBoundary::diffusionReaction(const uint x, const uint y, const int z) const
 {
     auto &r = m_diffusionReactions;
@@ -84,6 +89,8 @@ void OfflatticeMonteCarloBoundary::clearDiffusionReactions()
 
 SOSDiffusionReaction *OfflatticeMonteCarloBoundary::addDiffusionReactant(const uint x, const uint y, const int z, bool setRate)
 {
+    BADAssBool(!isBlockedPosition(x, y, z), "spot already taken");
+
     SOSDiffusionReaction *reaction = new SOSDiffusionReaction(m_mutexSolver, x, y, z);
 
     m_diffusionReactions.push_back(reaction);
@@ -170,7 +177,9 @@ void OfflatticeMonteCarloBoundary::setupInitialConditions()
             y0 = rng.uniform()*solver().width();
             z0 = hMin + rng.uniform()*(zMin - hMin);
 
-        } while(solver().isBlockedPosition(x0, y0, z0) || solver().isSurfaceSite(x0, y0, z0));
+        } while(solver().isBlockedPosition(x0, y0, z0) ||
+                solver().isSurfaceSite(x0, y0, z0) ||
+                isBlockedPosition(x0, y0, z0));
 
         addDiffusionReactant(x0, y0, z0, false);
 
@@ -203,6 +212,14 @@ void OfflatticeMonteCarloBoundary::executeDiffusionReaction(SOSDiffusionReaction
     {
         m_mutexSolver.registerHeightChange(x, y, 1);
         removeDiffusionReactant(reaction);
+
+        int zAbove = z+1;
+        while (isBlockedPosition(x, y, zAbove))
+        {
+            m_mutexSolver.registerHeightChange(x, y, 1);
+            removeDiffusionReactant(x, y, zAbove);
+            zAbove++;
+        }
     }
 
     else
@@ -213,6 +230,11 @@ void OfflatticeMonteCarloBoundary::executeDiffusionReaction(SOSDiffusionReaction
     }
 }
 
+bool OfflatticeMonteCarloBoundary::isBlockedPosition(const uint x, const uint y, const int z) const
+{
+    return diffusionReaction(x, y, z) != NULL;;
+}
+
 void OfflatticeMonteCarloBoundary::registerHeightChange(const uint x, const uint y, const int delta)
 {
     BADAssBool(checkIfEnoughRoom());
@@ -221,10 +243,10 @@ void OfflatticeMonteCarloBoundary::registerHeightChange(const uint x, const uint
     //add one to solution site heights because at this stage height(x,y) is already updated
     if (delta == -1)
     {
-        const uint randomSite = rng.uniform()*solver().numberOfSurroundingSolutionSites(x, y, solver().height(x, y));
+        const uint randomSite = rng.uniform()*solver().numberOfSurroundingSolutionSites(x, y, solver().height(x, y)+1);
 
         int dx, dy, dz;
-        solver().getSolutionSite(x, y, solver().height(x, y), dx, dy, dz, randomSite);
+        solver().getSolutionSite(x, y, solver().height(x, y)+1, dx, dy, dz, randomSite);
 
         const uint xNew = solver().boundary(0)->transformCoordinate((int)x + dx);
         const uint yNew = solver().boundary(1)->transformCoordinate((int)y + dy);

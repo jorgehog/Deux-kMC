@@ -314,6 +314,15 @@ void OfflatticeMonteCarloNoBoundary::executeDiffusionReaction(SOSDiffusionReacti
     BADAssBreak("Invalid diffusion scheme for diffusion reactions");
 }
 
+bool OfflatticeMonteCarloNoBoundary::isBlockedPosition(const uint x, const uint y, const int z) const
+{
+    (void) x;
+    (void) y;
+    (void) z;
+
+    return false;
+}
+
 
 
 void OfflatticeMonteCarloNoBoundary::onInsertParticle(const double x, const double y, const double z)
