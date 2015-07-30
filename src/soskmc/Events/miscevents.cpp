@@ -266,12 +266,7 @@ void RateChecker::reset()
     {
         Reaction *reaction = m_solver.getReaction(n);
 
-        if (!reaction->isAllowed())
-        {
-            BADAss(reaction->rate(), ==, 0);
-        }
-
-        else
+        if (reaction->isAllowed())
         {
             BADAss(reaction->rate(), !=, 0);
 

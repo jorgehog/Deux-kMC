@@ -225,35 +225,35 @@ double OfflatticeMonteCarloBoundary::depositionRate(const uint x, const uint y) 
 }
 
 void OfflatticeMonteCarloBoundary::executeDiffusionReaction(SOSDiffusionReaction *reaction,
-                                                         const uint x, const uint y, const int z)
+                                                            const uint x, const uint y, const int z)
 {
+
+    //set x, y, z even if we remove the reaction in case the reaction is used
+    //as the current reaction in the kmcsolver.
+    reaction->setX(x);
+    reaction->setY(y);
+    reaction->setZ(z);
+
     int roof = 100000;
     if (z > roof)
     {
         //Derp boundary crossed... fix this
-        removeDiffusionReactant(reaction);
+        removeDiffusionReactant(reaction, false);
         return;
     }
 
     if (solver().isSurfaceSite(x, y, z))
     {
         m_mutexSolver.registerHeightChange(x, y, 1);
-        removeDiffusionReactant(reaction);
+        removeDiffusionReactant(reaction, false);
 
         int zAbove = z+1;
         while (isBlockedPosition(x, y, zAbove))
         {
             m_mutexSolver.registerHeightChange(x, y, 1);
-            removeDiffusionReactant(x, y, zAbove);
+            removeDiffusionReactant(x, y, zAbove, false);
             zAbove++;
         }
-    }
-
-    else
-    {
-        reaction->setX(x);
-        reaction->setY(y);
-        reaction->setZ(z);
     }
 }
 
