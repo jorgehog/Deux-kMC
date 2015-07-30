@@ -215,6 +215,12 @@ void NNeighbors::reset()
     const uint &x = currentReaction->x();
     const uint &y = currentReaction->y();
 
+    //no change
+    if (m_nNeighbors(x, y) == solver().nNeighbors(x, y))
+    {
+        return;
+    }
+
     const uint left = solver().leftSite(x);
     const uint right = solver().rightSite(x);
     const uint bottom = solver().bottomSite(y);

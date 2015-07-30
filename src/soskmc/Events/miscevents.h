@@ -224,6 +224,7 @@ private:
 
     double m_localValue;
 
+    //need an additional neighbor matrix to store the old values.
     umat m_nNeighbors;
 
 };

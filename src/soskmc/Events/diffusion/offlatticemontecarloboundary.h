@@ -16,9 +16,9 @@ public:
 
     SOSDiffusionReaction *addDiffusionReactant(const uint x, const uint y, const int z, bool setRate = true);
 
-    void removeDiffusionReactant(SOSDiffusionReaction *reaction);
+    void removeDiffusionReactant(SOSDiffusionReaction *reaction, bool _delete = true);
 
-    void removeDiffusionReactant(const uint x, const uint y, const int z);
+    void removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete = true);
 
     SOSDiffusionReaction *diffusionReaction(const uint x, const uint y, const int z) const;
 
@@ -31,11 +31,15 @@ public:
         return m_diffusionReactions.size();
     }
 
+    void deleteQueuedReactions();
+
 private:
 
     const uint m_boundarySpacing;
 
     vector<SOSDiffusionReaction*> m_diffusionReactions;
+
+    vector<SOSDiffusionReaction*> m_deleteQueue;
 
     SOSSolver &m_mutexSolver;
 

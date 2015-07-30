@@ -18,6 +18,8 @@ OfflatticeMonteCarloBoundary::OfflatticeMonteCarloBoundary(SOSSolver &solver,
 
 OfflatticeMonteCarloBoundary::~OfflatticeMonteCarloBoundary()
 {
+    deleteQueuedReactions();
+
     for (SOSDiffusionReaction *reaction : m_diffusionReactions)
     {
         delete reaction;
@@ -37,19 +39,29 @@ bool OfflatticeMonteCarloBoundary::checkIfEnoughRoom() const
     return (confinedSurfaceHeight - max >= 2*m_boundarySpacing);
 }
 
-void OfflatticeMonteCarloBoundary::removeDiffusionReactant(SOSDiffusionReaction *reaction)
+void OfflatticeMonteCarloBoundary::removeDiffusionReactant(SOSDiffusionReaction *reaction, bool _delete)
 {
     m_mutexSolver.removeReaction(reaction);
 
     auto &r = m_diffusionReactions;
     r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
 
-    delete reaction; //counters new in addDiffusionReactant
+    if (_delete)
+    {
+        delete reaction; //counters new in addDiffusionReactant
+    }
+
+    else
+    {
+        //dangerous to delete a reaction if it is used somewhere else.
+        //Should use smart pointers really.
+        m_deleteQueue.push_back(reaction);
+    }
 }
 
-void OfflatticeMonteCarloBoundary::removeDiffusionReactant(const uint x, const uint y, const int z)
+void OfflatticeMonteCarloBoundary::removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete)
 {
-    removeDiffusionReactant(diffusionReaction(x, y, z));
+    removeDiffusionReactant(diffusionReaction(x, y, z), _delete);
 }
 
 SOSDiffusionReaction *OfflatticeMonteCarloBoundary::diffusionReaction(const uint x, const uint y, const int z) const
@@ -87,6 +99,16 @@ void OfflatticeMonteCarloBoundary::clearDiffusionReactions()
     m_diffusionReactions.clear();
 }
 
+void OfflatticeMonteCarloBoundary::deleteQueuedReactions()
+{
+    for (SOSDiffusionReaction *reaction : m_deleteQueue)
+    {
+        delete reaction;
+    }
+
+    m_deleteQueue.clear();
+}
+
 SOSDiffusionReaction *OfflatticeMonteCarloBoundary::addDiffusionReactant(const uint x, const uint y, const int z, bool setRate)
 {
     BADAssBool(!isBlockedPosition(x, y, z), "spot already taken");
@@ -106,6 +128,8 @@ SOSDiffusionReaction *OfflatticeMonteCarloBoundary::addDiffusionReactant(const u
 
 void OfflatticeMonteCarloBoundary::execute()
 {
+    deleteQueuedReactions();
+
     const uint THRESH = 1;
     if (cycle() % THRESH == 0)
     {
@@ -153,6 +177,9 @@ void OfflatticeMonteCarloBoundary::reset()
 void OfflatticeMonteCarloBoundary::setupInitialConditions()
 {
     const double zMin = solver().heights().max() + m_boundarySpacing;
+
+    BADAss(zMin, <, solver().confiningSurfaceEvent().height(), "not enough room for continuum solver.");
+
     const double V = solver().area()*(solver().confiningSurfaceEvent().height() - zMin);
     const uint N = V*solver().concentration();
 
