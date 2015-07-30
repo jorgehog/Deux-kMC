@@ -41,11 +41,19 @@ bool OfflatticeMonteCarloBoundary::checkIfEnoughRoom() const
 
 void OfflatticeMonteCarloBoundary::removeDiffusionReactant(SOSDiffusionReaction *reaction, bool _delete)
 {
+
     m_mutexSolver.removeReaction(reaction);
 
-    auto &r = m_diffusionReactions;
-    r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
+    auto comp = [&reaction] (const SOSDiffusionReaction *r)
+    {
+        return (reaction->x() == r->x()) && (reaction->y() == r->y()) && (reaction->z() == r->z());
+    };
 
+    auto &r = m_diffusionReactions;
+    BADAss(std::find_if(r.begin(), r.end(), comp), !=, r.end());
+    r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
+    BADAss(std::find_if(r.begin(), r.end(), comp), ==, r.end());
+    cout << "removed " << reaction->x() << " " << reaction->y() << " " << reaction->z() << endl;
     if (_delete)
     {
         delete reaction; //counters new in addDiffusionReactant
@@ -99,6 +107,33 @@ void OfflatticeMonteCarloBoundary::clearDiffusionReactions()
     m_diffusionReactions.clear();
 }
 
+void OfflatticeMonteCarloBoundary::dumpFull(const uint N)
+{
+
+    dump(N);
+
+    const double &h = solver().confiningSurfaceEvent().height();
+    const int zMin = solver().heights().min();
+
+    lammpswriter writer(4, "kmcdiff", "/tmp");
+    writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
+    writer.initializeNewFile(N);
+
+    for(const SOSDiffusionReaction *reaction : m_diffusionReactions)
+    {
+        const uint &x = reaction->x();
+        const uint &y = reaction->y();
+        const int &z = reaction->z();
+
+        writer << 3
+               << x
+               << y
+               << z;
+    }
+
+    writer.finalize();
+}
+
 void OfflatticeMonteCarloBoundary::deleteQueuedReactions()
 {
     for (SOSDiffusionReaction *reaction : m_deleteQueue)
@@ -130,19 +165,10 @@ void OfflatticeMonteCarloBoundary::execute()
 {
     deleteQueuedReactions();
 
-    const uint THRESH = 1;
-    if (cycle() % THRESH == 0)
-    {
-        dump(cycle()/THRESH);
-    }
+    dumpFull(cycle());
 
-    const double &h = solver().confiningSurfaceEvent().height();
-    const int zMin = solver().heights().min();
 
-    lammpswriter writer(4, "kmcdiff", "/tmp");
-    writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
-    writer.initializeNewFile(cycle()/THRESH);
-
+#ifndef NDEBUG
     for(const SOSDiffusionReaction *reaction : m_diffusionReactions)
     {
         const uint &x = reaction->x();
@@ -156,13 +182,36 @@ void OfflatticeMonteCarloBoundary::execute()
             BADAssSimpleDump(x, y, z, h, hconf);
         });
 
-        writer << 3
-               << x
-               << y
-               << z;
-    }
+        BADAssBool(!solver().isSurfaceSite(x, y, z), "Illigal particle position", [&] ()
+        {
+            const int h = solver().height(x, y);
+            const double hconf = solver().confiningSurfaceEvent().height();
+            BADAssSimpleDump(x, y, z, h, hconf);
+        });
 
-    writer.finalize();
+        BADAssBool(isBlockedPosition(x, y, z), "wrong particle position", [&] ()
+        {
+            const int h = solver().height(x, y);
+            const double hconf = solver().confiningSurfaceEvent().height();
+            BADAssSimpleDump(x, y, z, h, hconf);
+        });
+
+        for (const SOSDiffusionReaction *reaction2 : m_diffusionReactions)
+        {
+            if (reaction != reaction2)
+            {
+                bool equalX = reaction->x() == reaction2->x();
+                bool equalY = reaction->y() == reaction2->y();
+                bool equalZ = reaction->z() == reaction2->z();
+
+                if (equalX && equalY && equalZ)
+                {
+                    BADAssBreak("two reactions are on the same spot.");
+                }
+            }
+        }
+    }
+#endif
 
 }
 
@@ -252,8 +301,11 @@ void OfflatticeMonteCarloBoundary::executeDiffusionReaction(SOSDiffusionReaction
         {
             m_mutexSolver.registerHeightChange(x, y, 1);
             removeDiffusionReactant(x, y, zAbove, false);
+            cout << "removed " << x << " " << y << " " << zAbove << " new h = " << solver().height(x, y) << endl;
             zAbove++;
+            cout << "checking " << x << " " << y << " " << zAbove << endl;
         }
+
     }
 }
 

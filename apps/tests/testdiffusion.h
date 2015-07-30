@@ -307,7 +307,7 @@ TEST_F(SOSkMCTest, surfaceSites)
 
     for (uint i = 0; i < N; ++i)
     {
-        r->getRandomDiffusionPath(dx, dy, dz);
+        r->getDiffusionPath(r->numberOfFreePaths()*rng.uniform(), dx, dy, dz);
 
         EXPECT_EQ(0, dx);
         EXPECT_EQ(0, dy);
@@ -512,21 +512,153 @@ TEST_F(SOSkMCTest, SOS_discrete_interface)
 
     m_solver->registerHeightChange(1,1,1);           //one peak on a flat surface
     diffusionEvent->addDiffusionReactant(1,1,3);     //a particle two lattice units away
+    diffusionEvent->addDiffusionReactant(1, 1, 4);   //a particle three lattice units over peak
+    diffusionEvent->addDiffusionReactant(1, 1, 5);   //a particle four lattice units over peak
     diffusionEvent->addDiffusionReactant(2, 1, 2);   //a particle next to the gap between peak and first particle
+
+    EXPECT_EQ(4, diffusionEvent->numberOfDiffusionReactions());
+    EXPECT_EQ(1, m_solver->height(1, 1));
 
     diffusionEvent->diffusionReaction(2, 1, 2)->executeReaction(-1, 0, 0); //move the particle into the gap.
 
     //this should turn all paticles into the SOS surface with a new peak of height 3
     EXPECT_EQ(0, diffusionEvent->numberOfDiffusionReactions());
-    EXPECT_EQ(3, m_solver->height(1, 1));
+    EXPECT_EQ(5, m_solver->height(1, 1));
 
 
 }
 
 
 
+TEST_F(SOSkMCTest, SOS_allSolutionSites)
+{
+    const uint L = 3;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double dt = 1.;
+    const double height = 20 + rng.uniform();
+    const uint spacing = 10;
 
 
+
+    Boundary* xBoundary = new Periodic(L);
+    Boundary* yBoundary = new Periodic(W);
+    m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    OfflatticeMonteCarloBoundary *diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
+    m_diffusionEvent = diffusionEvent;
+
+    SetUp_yo();
+    //    rng.initialize(1000);
+
+    primeSolver(0);
+
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, 0);
+        }
+    }
+
+    diffusionEvent->clearDiffusionReactions();
+
+
+    vector<vector<int>> surroundings = {{1, 1, 4},
+                                        {1, 1, 6},
+                                        {0, 1, 5},
+                                        {2, 1, 5},
+                                        {1, 0, 5},
+                                        {1, 2, 5}};
+
+    uint i = 0;
+
+    const uint nNeighborsMax = 6;
+
+    uvec positions(nNeighborsMax);
+
+    //main loop over number of active particles.
+    for (uint N = 1; N < nNeighborsMax; ++N)
+    {
+
+        for (uint n = 0; n < N; ++n)
+        {
+            positions(n) = n;
+        }
+
+        bool finished = false;
+        uint lastIndex = N-1;
+        while (!finished)
+        {
+            SOSDiffusionReaction *r = diffusionEvent->addDiffusionReactant(1, 1, 5);
+
+            //this is the initial position after each move
+            for (uint n = 0; n < N; ++n)
+            {
+                diffusionEvent->addDiffusionReactant(surroundings.at(positions(n)).at(0),
+                                                     surroundings.at(positions(n)).at(1),
+                                                     surroundings.at(positions(n)).at(2));
+            }
+
+            diffusionEvent->dumpFull(i);
+            i++;
+            for (uint k = 0; k < N; ++k)
+            {
+                cout << positions(k) << " ";
+            }
+            cout << endl << "---" << endl;
+
+            EXPECT_EQ(nNeighborsMax - N, r->numberOfFreePaths());
+
+            int dx, dy, dz;
+            for (uint p = 0; p < r->numberOfFreePaths(); ++p)
+            {
+                r->getDiffusionPath(p, dx, dy, dz);
+                uint x = m_solver->boundary(0)->transformCoordinate((int)r->x() + dx);
+                uint y = m_solver->boundary(1)->transformCoordinate((int)r->y() + dy);
+                int z = r->z() + dz;
+
+                EXPECT_TRUE(diffusionEvent->diffusionReaction(x, y, z) == NULL);
+            }
+
+            if (positions(lastIndex) == nNeighborsMax - 1)
+            {
+
+                for (int n = N-1; n >= 0; --n)
+                {
+                    if (n == 0)
+                    {
+                        finished = true;
+                        break;
+                    }
+
+                    if (positions(n-1) != positions(n) - 1)
+                    {
+                        positions(n-1)++;
+                        break;
+                    }
+                }
+
+                if (!finished)
+                {
+                    positions(lastIndex) = positions(lastIndex-1) + 1;
+                }
+            }
+            else
+            {
+                positions(lastIndex)++;
+            }
+
+            diffusionEvent->clearDiffusionReactions();
+        }
+
+    }
+
+
+
+}
 
 
 

@@ -31,6 +31,8 @@ public:
         return m_diffusionReactions.size();
     }
 
+    void dumpFull(const uint N);
+
     void deleteQueuedReactions();
 
 private:

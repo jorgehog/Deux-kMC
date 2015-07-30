@@ -77,19 +77,8 @@ uint SOSDiffusionReaction::numberOfFreePaths() const
 
 }
 
-void SOSDiffusionReaction::getRandomDiffusionPath(int &dx, int &dy, int &dz)
+void SOSDiffusionReaction::getDiffusionPath(const uint path, int &dx, int &dy, int &dz)
 {
-    const uint nPaths = numberOfFreePaths();
-
-    if (nPaths == 0)
-    {
-        dx = 0;
-        dy = 0;
-        dz = 0;
-
-        return;
-    }
-
     bool connectedLeft, connectedRight, connectedBottom, connectedTop;
 
     solver().findConnections(x(), y(), z(),
@@ -97,8 +86,6 @@ void SOSDiffusionReaction::getRandomDiffusionPath(int &dx, int &dy, int &dz)
                              connectedRight,
                              connectedBottom,
                              connectedTop);
-
-    uint path = rng.uniform()*nPaths;
 
     BADAssBool(!solver().isSurfaceSite(x(), y(), z()));
 
@@ -205,7 +192,13 @@ void SOSDiffusionReaction::executeAndUpdate()
 {
     int dx, dy, dz;
 
-    getRandomDiffusionPath(dx, dy, dz);
+    const uint nPaths = numberOfFreePaths();
+
+    BADAss(nPaths, !=, 0);
+
+    uint path = rng.uniform()*nPaths;
+
+    getDiffusionPath(path, dx, dy, dz);
 
     executeReaction(dx, dy, dz);
 }

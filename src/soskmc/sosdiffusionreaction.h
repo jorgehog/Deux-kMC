@@ -22,7 +22,7 @@ public:
 
     uint numberOfFreePaths() const;
 
-    void getRandomDiffusionPath(int &dx, int &dy, int &dz);
+    void getDiffusionPath(const uint path, int &dx, int &dy, int &dz);
 
     void executeReaction(const int dx, const int dy, const int dz);
 
