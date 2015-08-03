@@ -225,7 +225,7 @@ void LatticeDiffusion::setupInitialConditions()
                 solver().isSurfaceSite(x0, y0, z0) ||
                 isBlockedPosition(x0, y0, z0));
 
-        addDiffusionReactant(x0, y0, z0, false);
+        addDiffusionReactant(x0, y0, z0);
 
         n++;
     }
