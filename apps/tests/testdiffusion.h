@@ -620,7 +620,12 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
                 uint y = m_solver->boundary(1)->transformCoordinate((int)r->y() + dy);
                 int z = r->z() + dz;
 
-                EXPECT_TRUE(diffusionEvent->diffusionReaction(x, y, z) == NULL);
+                //we expect that there are no particles along the free diffusion paths.
+                EXPECT_TRUE(diffusionEvent->diffusionReaction(x, y, z) == NULL) << "i= " <<i <<" path: " << p
+                                                                                << " dx dy dz "
+                                                                                << dx << " "
+                                                                                << dy << " "
+                                                                                << dz;
             }
 
             if (positions(lastIndex) == nNeighborsMax - 1)
@@ -652,6 +657,11 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
             }
 
             diffusionEvent->clearDiffusionReactions();
+
+            if (HasFailure())
+            {
+                return;
+            }
         }
 
     }

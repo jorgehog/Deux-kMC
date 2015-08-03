@@ -85,20 +85,21 @@ void SOSDiffusionReaction::getDiffusionPath(const uint path, int &dx, int &dy, i
                              connectedLeft,
                              connectedRight,
                              connectedBottom,
-                             connectedTop);
+                             connectedTop,
+                             false);
 
     BADAssBool(!solver().isSurfaceSite(x(), y(), z()));
 
-    //downwards is always possible
-    if (path == 0)
-    {
-        dx = 0;
-        dy = 0;
-        dz = -1;
-        return;
-    }
+//    //downwards is always possible (not true anymore)
+//    if (path == 0)
+//    {
+//        dx = 0;
+//        dy = 0;
+//        dz = -1;
+//        return;
+//    }
 
-    uint n = 1;
+    uint n = 0;
 
     if (!connectedLeft)
     {
@@ -156,8 +157,20 @@ void SOSDiffusionReaction::getDiffusionPath(const uint path, int &dx, int &dy, i
         n++;
     }
 
-    //this leaves up the only option
+    bool connectedBelow = solver().diffusionEvent().isBlockedPosition(x(), y(), z()-1);
 
+    if (!connectedBelow)
+    {
+        if (n == path)
+        {
+            dx = 0;
+            dy = 0;
+            dz = -1;
+            return;
+        }
+    }
+
+    //this leaves up the only option
     dx = 0;
     dy = 0;
     dz = 1;
