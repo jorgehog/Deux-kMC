@@ -87,7 +87,7 @@ protected:
     SOSSolver *m_solver = NULL;
     AverageHeight *m_averageHeight = NULL;
     ConfiningSurface *m_pressureWallEvent = NULL;
-    OfflatticeMonteCarlo *m_diffusionEvent = NULL;
+    Diffusion *m_diffusionEvent = NULL;
 
     Lattice *m_lattice = NULL;
 

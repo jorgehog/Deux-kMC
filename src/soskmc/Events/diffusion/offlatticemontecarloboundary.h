@@ -1,10 +1,11 @@
 #pragma once
 
 #include "offlatticemontecarlo.h"
+#include "latticediffusion.h"
 
 class SOSDiffusionReaction;
 
-class OfflatticeMonteCarloBoundary : public OfflatticeMonteCarlo
+class OfflatticeMonteCarloBoundary : public OfflatticeMonteCarlo, public LatticeDiffusion
 {
 public:
     OfflatticeMonteCarloBoundary(SOSSolver &solver,
@@ -14,50 +15,40 @@ public:
 
     bool checkIfEnoughRoom() const;
 
-    SOSDiffusionReaction *addDiffusionReactant(const uint x, const uint y, const int z, bool setRate = true);
-
-    void removeDiffusionReactant(SOSDiffusionReaction *reaction, bool _delete = true);
-
-    void removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete = true);
-
-    SOSDiffusionReaction *diffusionReaction(const uint x, const uint y, const int z) const;
-
-    SOSDiffusionReaction *diffusionReaction(const uint n) const;
-
-    void clearDiffusionReactions();
-
-    uint numberOfDiffusionReactions() const
-    {
-        return m_diffusionReactions.size();
-    }
-
-    void dumpFull(const uint N);
-
-    void deleteQueuedReactions();
 
 private:
 
     const uint m_boundarySpacing;
 
-    vector<SOSDiffusionReaction*> m_diffusionReactions;
-
-    vector<SOSDiffusionReaction*> m_deleteQueue;
-
-    SOSSolver &m_mutexSolver;
-
     // Event interface
 public:
     void execute();
-    void initialize();
-    void reset();
 
     // Diffusion interface
 public:
     void setupInitialConditions();
-    double depositionRate(const uint x, const uint y) const;
-    void registerHeightChange(const uint x, const uint y, const int delta);
-    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z);
-    bool isBlockedPosition(const uint x, const uint y, const int z) const;
+
+    double depositionRate(const uint x, const uint y) const
+    {
+        return LatticeDiffusion::depositionRate(x, y);
+    }
+
+    void registerHeightChange(const uint x, const uint y, const int delta)
+    {
+        LatticeDiffusion::registerHeightChange(x, y, delta);
+    }
+
+    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z)
+    {
+        LatticeDiffusion::executeDiffusionReaction(reaction, x, y, z);
+    }
+
+    bool isBlockedPosition(const uint x, const uint y, const int z) const
+    {
+        return LatticeDiffusion::isBlockedPosition(x, y, z);
+    }
+
+    void dump(const uint frameNumber) const;
 
     // OfflatticeMonteCarlo interface
 public:

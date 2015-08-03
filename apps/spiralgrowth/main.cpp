@@ -124,7 +124,8 @@ int main(int argv, char** argc)
 
     if (diffuse)
     {
-        diffusion = new OfflatticeMonteCarloBoundary(solver, dt);
+        (void) dt;
+        diffusion = new LatticeDiffusion(solver);
         diffusion->setDependency(confiningSurface);
     }
 

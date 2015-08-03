@@ -4,7 +4,8 @@
 
 OfflatticeMonteCarloNoBoundary::OfflatticeMonteCarloNoBoundary(SOSSolver &solver,
                                                                const double dt) :
-    OfflatticeMonteCarlo(solver, dt, "OfflatticeMC")
+    Diffusion(solver, "offlatticeMC"),
+    OfflatticeMonteCarlo(solver, dt)
 {
 
 }
@@ -178,11 +179,7 @@ void OfflatticeMonteCarloNoBoundary::execute()
 {
     m_currentTimeStep = calculateTimeStep(m_currentTimeStep);
 
-    const uint THRESH = 1;
-    if (cycle() % THRESH == 0)
-    {
-        dump(cycle()/THRESH);
-    }
+    dump(cycle());
 }
 
 void OfflatticeMonteCarloNoBoundary::reset()
@@ -321,6 +318,12 @@ bool OfflatticeMonteCarloNoBoundary::isBlockedPosition(const uint x, const uint 
     (void) z;
 
     return false;
+}
+
+void OfflatticeMonteCarloNoBoundary::dump(const uint frameNumber) const
+{
+    Diffusion::dump(frameNumber);
+    OfflatticeMonteCarlo::dump(frameNumber);
 }
 
 

@@ -193,7 +193,6 @@ void SOSDiffusionReaction::executeReaction(const int dx, const int dy, const int
 void SOSDiffusionReaction::removeFromSimulation()
 {
     solver().removeReaction(this);
-    //derp remove from offlatticelist..
 }
 
 bool SOSDiffusionReaction::isAllowed() const
@@ -218,6 +217,6 @@ void SOSDiffusionReaction::executeAndUpdate()
 
 double SOSDiffusionReaction::rateExpression()
 {
-    return 1/6.;
+    return 6.;
 }
 

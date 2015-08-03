@@ -2,12 +2,12 @@
 
 #include "diffusion.h"
 
-class OfflatticeMonteCarlo : public Diffusion
+class OfflatticeMonteCarlo : public virtual Diffusion
 {
 public:
     OfflatticeMonteCarlo(SOSSolver &solver,
                          const double dt,
-                         string type,
+                         string type = "",
                          string unit = "",
                          bool hasOutput = false,
                          bool storeValue = false);
@@ -17,7 +17,7 @@ public:
     virtual void onInsertParticle(const double x, const double y, const double z) = 0;
     virtual void onRemoveParticle(const uint n) = 0;
 
-    void dump(const uint frameNumber) const;
+    virtual void dump(const uint frameNumber) const;
 
     void diffuse(const double dt);
 

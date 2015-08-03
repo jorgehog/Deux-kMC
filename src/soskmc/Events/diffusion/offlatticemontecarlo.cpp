@@ -30,11 +30,6 @@ void OfflatticeMonteCarlo::dump(const uint frameNumber) const
     writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     writer.initializeNewFile(frameNumber);
 
-    lammpswriter surfacewriter(5, "surfaces", "/tmp");
-    surfacewriter.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
-    surfacewriter.initializeNewFile(frameNumber);
-
-
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
         const double &x = m_particlePositions(0, n);
@@ -49,35 +44,8 @@ void OfflatticeMonteCarlo::dump(const uint frameNumber) const
                << z;
     }
 
-    for (uint x = 0; x < solver().length(); ++x)
-    {
-        for (uint y = 0; y < solver().width(); ++y)
-        {
-            surfacewriter << 1
-                          << x
-                          << y
-                          << h
-                          << 5;
-
-            for (int zSurface = zMin; zSurface <= solver().height(x, y) - 1; ++zSurface)
-            {
-                surfacewriter << 2
-                              << x
-                              << y
-                              << zSurface
-                              << 6;
-            }
-
-            surfacewriter << 2
-                          << x
-                          << y
-                          << solver().height(x, y)
-                          << solver().nNeighbors(x, y);
-        }
-    }
-
     writer.finalize();
-    surfacewriter.finalize();
+
 }
 
 void OfflatticeMonteCarlo::diffuse(const double dt)

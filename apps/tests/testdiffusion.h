@@ -15,16 +15,14 @@ TEST_F(SOSkMCTest, diffusion)
     const uint W = 3;
     const double alpha = 1.0;
     const double mu = 0;
-    const double dt = 1.;
     const double height = 20 + rng.uniform();
-    const uint spacing = 10;
 
 
     Boundary* xBoundary = new Periodic(L);
     Boundary* yBoundary = new Periodic(W);
     m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
-    OfflatticeMonteCarloBoundary *diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
     SetUp_yo();
 
@@ -190,16 +188,14 @@ TEST_F(SOSkMCTest, surfaceSites)
     const uint W = 3;
     const double alpha = 1.0;
     const double mu = 0;
-    const double dt = 1.;
     const double height = 20 + rng.uniform();
-    const uint spacing = 10;
 
 
     Boundary* xBoundary = new Periodic(L);
     Boundary* yBoundary = new Periodic(W);
     m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
-    OfflatticeMonteCarloBoundary *diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
 
     SetUp_yo();
@@ -351,16 +347,14 @@ TEST_F(SOSkMCTest, dissolution)
     const uint W = 3;
     const double alpha = 1.0;
     const double mu = 0;
-    const double dt = 1.;
     const double height = 20 + rng.uniform();
-    const uint spacing = 10;
 
 
     Boundary* xBoundary = new Periodic(L);
     Boundary* yBoundary = new Periodic(W);
     m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
-    OfflatticeMonteCarloBoundary *diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
 
     SetUp_yo();
@@ -482,16 +476,14 @@ TEST_F(SOSkMCTest, SOS_discrete_interface)
     const uint W = 3;
     const double alpha = 1.0;
     const double mu = 0;
-    const double dt = 1.;
     const double height = 20 + rng.uniform();
-    const uint spacing = 10;
 
 
     Boundary* xBoundary = new Periodic(L);
     Boundary* yBoundary = new Periodic(W);
     m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
-    OfflatticeMonteCarloBoundary *diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
 
     SetUp_yo();
@@ -536,9 +528,7 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
     const uint W = 3;
     const double alpha = 1.0;
     const double mu = 0;
-    const double dt = 1.;
     const double height = 20 + rng.uniform();
-    const uint spacing = 10;
 
 
 
@@ -546,7 +536,7 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
     Boundary* yBoundary = new Periodic(W);
     m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
-    OfflatticeMonteCarloBoundary *diffusionEvent = new OfflatticeMonteCarloBoundary(*m_solver, dt, spacing);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
 
     SetUp_yo();
@@ -602,7 +592,7 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
                                                      surroundings.at(positions(n)).at(2));
             }
 
-            diffusionEvent->dumpFull(i);
+            diffusionEvent->dump(i);
             i++;
             for (uint k = 0; k < N; ++k)
             {
