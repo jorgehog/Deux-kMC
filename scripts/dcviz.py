@@ -1691,7 +1691,7 @@ class GrowthSpeed3(DCVizPlotter):
 
         labelfigs = [self.subfigure, self.subfigure2, self.subfigure4]
         labels = ["a", "b", "c"]
-        locs = [(0.4, 0.725),
+        locs = [(0.4, 0.8),
                 (0.075, 0.4),
                 (0.075, 0.775)]
 
