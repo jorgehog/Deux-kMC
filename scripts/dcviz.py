@@ -87,7 +87,7 @@ class SteadyState(DCVizPlotter):
             _, unloaded_rms = zip(*(sorted(unloaded_rms, key=lambda x: x[0])))
 
             self.subfigure2.plot(exp(mu_shift_values) - 1, unloaded_rms,
-                                 label=r"$E_0=0.00$",
+                                 label=r"$%s=0.00$" % E0_tex,
                                  marker="s",
                                  markeredgecolor="k",
                                  linestyle="--",
@@ -186,7 +186,7 @@ class SteadyState(DCVizPlotter):
 
                     n_sfig = self.alpha_values.index(alpha)
                     sfigs[n_sfig].plot(exp(mu_shift_values) - 1, rms_values,
-                                                               label=r"$E_0=%.2f$" % E0,
+                                                               label=r"$%s=%.2f$" % (E0_tex, E0),
                                                                marker=self.shapes[FFS[n_sfig]],
                                                                markeredgecolor="k",
                                                                linestyle="--",
