@@ -7,7 +7,6 @@ class FixedRDLSurface : public FixedSurface, public RDLSurface
 {
 public:
     FixedRDLSurface(SOSSolver &solver,
-                    const double E0,
                     const double s0,
                     const double ld,
                     const double height);
@@ -34,8 +33,6 @@ public:
 
     void registerHeightChange(const uint x, const uint y, std::vector<DissolutionDeposition *> affectedReactions, const uint n)
     {
-        (void) affectedReactions;
-        (void) n;
 
         RDLSurface::recalculateRDLEnergy(x, y);
 

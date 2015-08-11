@@ -12,6 +12,7 @@ SOSSolver::SOSSolver(const uint length,
                      const Boundary *xBoundary,
                      const Boundary *yBoundary) :
     KMCSolver({xBoundary, yBoundary}),
+    m_heights_set(false),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_length(length),
     m_width(width),
@@ -107,8 +108,19 @@ void SOSSolver::setNNeighbors(const uint x, const uint y)
     m_nNeighbors(x, y) = calculateNNeighbors(x, y);
 }
 
-void SOSSolver::setHeight(const uint x, const uint y, const int value)
+void SOSSolver::setHeight(const uint x, const uint y, const int value, const bool iteratively)
 {
+    if (!m_heights_set)
+    {
+        m_heights_set = true;
+    }
+
+    if (!iteratively)
+    {
+        m_heights(x, y) = value;
+        return;
+    }
+
     //extremely slow implementation
 
     int dh = value - height(x, y);
@@ -125,6 +137,17 @@ void SOSSolver::setHeight(const uint x, const uint y, const int value)
         registerHeightChange(x, y, direction);
     }
 
+}
+
+void SOSSolver::setHeights(const imat &heights, const bool iteratively)
+{
+    for (uint x = 0; x < length(); ++x)
+    {
+        for (uint y = 0; y < width(); ++y)
+        {
+            setHeight(x, y, heights(x, y), iteratively);
+        }
+    }
 }
 
 
@@ -156,6 +179,11 @@ double SOSSolver::confinementEnergy(const uint x, const uint y) const
 
 double SOSSolver::depositionRate(const uint x, const uint y) const
 {
+    if (height(x, y) + 1 > confiningSurfaceEvent().height())
+    {
+        return 0;
+    }
+
     if (!m_diffusionEvent->hasStarted())
     {
         return 1;
@@ -527,25 +555,29 @@ void SOSSolver::setMu(const double mu)
 
 void SOSSolver::initializeSolver()
 {
-    m_heights.zeros();
-
-    int left;
-    int bottom;
-
-
-    for (uint x = 0; x < m_length; ++x)
+    if (!m_heights_set)
     {
-        for (uint y = 0; y < m_width; ++y)
+
+        m_heights.zeros();
+
+        int left;
+        int bottom;
+
+
+        for (uint x = 0; x < m_length; ++x)
         {
-            left = leftSite(x);
-            bottom = bottomSite(y);
-
-            if (boundary(0)->isBlocked(left) || boundary(1)->isBlocked(bottom))
+            for (uint y = 0; y < m_width; ++y)
             {
-                continue;
-            }
+                left = leftSite(x);
+                bottom = bottomSite(y);
 
-            m_heights(x, y) = (m_heights(left, y) + m_heights(x, bottom))/2 + round(-1 + 2*rng.uniform());
+                if (boundary(0)->isBlocked(left) || boundary(1)->isBlocked(bottom))
+                {
+                    continue;
+                }
+
+                m_heights(x, y) = (m_heights(left, y) + m_heights(x, bottom))/2 + round(-1 + 2*rng.uniform());
+            }
         }
     }
 

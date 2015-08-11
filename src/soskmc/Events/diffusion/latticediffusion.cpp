@@ -32,10 +32,12 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 
     m_mutexSolver.removeReaction(reaction);
 
+#ifndef NDEBUG
     auto comp = [&reaction] (const SOSDiffusionReaction *r)
     {
         return (reaction->x() == r->x()) && (reaction->y() == r->y()) && (reaction->z() == r->z());
     };
+#endif
 
     auto &r = m_diffusionReactions;
     BADAss(std::find_if(r.begin(), r.end(), comp), !=, r.end());

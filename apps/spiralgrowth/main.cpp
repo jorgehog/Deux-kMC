@@ -10,6 +10,8 @@
 
 using namespace ignis;
 
+void initializeSurface(SOSSolver &solver, const string type);
+
 int main(int argv, char** argc)
 {
 
@@ -109,7 +111,7 @@ int main(int argv, char** argc)
     }
     else if (confinementInt == 3)
     {
-        confiningSurface = new FixedRDLSurface(solver, E0, sigma0, lD, confiningSurfaceHeight);
+        confiningSurface = new FixedRDLSurface(solver, sigma0, lD, confiningSurfaceHeight);
     }
     else if (confinementInt == 4)
     {
@@ -171,8 +173,8 @@ int main(int argv, char** argc)
 
     var.setDependency(size);
 
-    DumpHeights3D dumpHeights3D(solver, path);
-    DumpHeightSlice dumpHeightSlice(solver, 0, 0, path, nCyclesPerOutput);
+//    DumpHeights3D dumpHeights3D(solver, path);
+//    DumpHeightSlice dumpHeightSlice(solver, 0, 0, path, nCyclesPerOutput);
 
     NNeighbors nNeighbors(solver);
 
@@ -191,12 +193,7 @@ int main(int argv, char** argc)
     lattice.addEvent(confiningSurface);
     lattice.addEvent(diffusion);
 
-    const bool dumpHeights = false;
-    if (dumpHeights)
-    {
-        lattice.addEvent(dumpHeights3D);
-        lattice.addEvent(dumpHeightSlice);
-    }
+    initializeSurface(solver, "fracture");
 
     //---End explicit implementation
     //---Running simulation
@@ -273,3 +270,25 @@ int main(int argv, char** argc)
     return 0;
 }
 
+void initializeSurface(SOSSolver &solver, const string type)
+{
+    if (type == "fracture")
+    {
+        int noise;
+        double value = 0;
+
+        int TwoThirdsWay = (2*solver.confiningSurfaceEvent().height())/3;
+
+        double delta = TwoThirdsWay/double(solver.length());
+
+        for (uint x = 0; x < solver.length(); ++x)
+        {
+            value = value + delta;
+            for (uint y = 0; y < solver.width(); ++y)
+            {
+                noise = -1 + 3*rng.uniform();
+                solver.setHeight(x, y, value + noise, false);
+            }
+        }
+    }
+}

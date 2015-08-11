@@ -14,7 +14,13 @@ public:
 public:
     void execute()
     {
-        //pass
+        const uint TRESH = 10000;
+
+        if (cycle() % TRESH == 0)
+        {
+            Diffusion::dump(cycle()/TRESH);
+        }
+
     }
 
     // Diffusion interface

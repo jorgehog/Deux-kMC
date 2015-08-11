@@ -26,7 +26,9 @@ public:
 
     void setNNeighbors(const uint x, const uint y);
 
-    void setHeight(const uint x, const uint y, const int value);
+    void setHeight(const uint x, const uint y, const int value, const bool iteratively = true);
+
+    void setHeights(const imat &heights, const bool iteratively = true);
 
     const uint &length() const
     {
@@ -178,6 +180,8 @@ public:
 
 private:
 
+    bool m_heights_set;
+
     const uint m_dim;
 
     ConfiningSurface *m_confiningSurfaceEvent;
@@ -195,6 +199,7 @@ private:
     field<DissolutionDeposition*> m_siteReactions;
 
     std::vector<DissolutionDeposition*> m_affectedReactions;
+
 
     // KMCSolver interface
 private:
