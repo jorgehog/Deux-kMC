@@ -12,7 +12,7 @@
 //--gtest_filter=SOSkMCTest.boundaries
 TEST_F(SOSkMCTest, boundaries)
 {
-    rng.initialize(1230303);
+//    rng.initialize(1230303);
 
     const uint L = 3;
     const uint W = 3;
