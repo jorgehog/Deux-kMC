@@ -183,9 +183,8 @@ void SOSDiffusionReaction::executeReaction(const int dx, const int dy, const int
 {
     int zNew = z() + dz;
 
-    //Derp boundaries blocked, particle present (bunching)
-    uint xNew = solver().boundary(0)->transformCoordinate(x() + dx);
-    uint yNew = solver().boundary(1)->transformCoordinate(y() + dy);
+    const uint xNew = solver().boundaryTransform(x(), dx, 0);
+    const uint yNew = solver().boundaryTransform(y(), dy, 1);
 
     solver().diffusionEvent().executeDiffusionReaction(this, xNew, yNew, zNew);
 }

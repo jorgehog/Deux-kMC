@@ -17,10 +17,7 @@ TEST_F(SOSkMCTest, diffusion)
     const double mu = 0;
     const double height = 20 + rng.uniform();
 
-
-    Boundary* xBoundary = new Periodic(L);
-    Boundary* yBoundary = new Periodic(W);
-    m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 0, 0}, L, W));
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
@@ -190,10 +187,7 @@ TEST_F(SOSkMCTest, surfaceSites)
     const double mu = 0;
     const double height = 20 + rng.uniform();
 
-
-    Boundary* xBoundary = new Periodic(L);
-    Boundary* yBoundary = new Periodic(W);
-    m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 0, 0}, L, W));
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
@@ -349,10 +343,7 @@ TEST_F(SOSkMCTest, dissolution)
     const double mu = 0;
     const double height = 20 + rng.uniform();
 
-
-    Boundary* xBoundary = new Periodic(L);
-    Boundary* yBoundary = new Periodic(W);
-    m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 0, 0}, L, W));
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
@@ -478,10 +469,7 @@ TEST_F(SOSkMCTest, SOS_discrete_interface)
     const double mu = 0;
     const double height = 20 + rng.uniform();
 
-
-    Boundary* xBoundary = new Periodic(L);
-    Boundary* yBoundary = new Periodic(W);
-    m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 0, 0}, L, W));
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
@@ -530,11 +518,7 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
     const double mu = 0;
     const double height = 20 + rng.uniform();
 
-
-
-    Boundary* xBoundary = new Periodic(L);
-    Boundary* yBoundary = new Periodic(W);
-    m_solver = new SOSSolver(L, W, alpha, mu, xBoundary, yBoundary);
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 0, 0}, L, W));
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
@@ -606,8 +590,8 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
             for (uint p = 0; p < r->numberOfFreePaths(); ++p)
             {
                 r->getDiffusionPath(p, dx, dy, dz);
-                uint x = m_solver->boundary(0)->transformCoordinate((int)r->x() + dx);
-                uint y = m_solver->boundary(1)->transformCoordinate((int)r->y() + dy);
+                uint x = m_solver->boundaryTransform(r->x(), dx, 0);
+                uint y = m_solver->boundaryTransform(r->y(), dy, 1);
                 int z = r->z() + dz;
 
                 //we expect that there are no particles along the free diffusion paths.

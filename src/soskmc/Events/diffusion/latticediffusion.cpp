@@ -286,8 +286,8 @@ void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const in
         int dx, dy, dz;
         solver().getSolutionSite(x, y, solver().height(x, y)+1, dx, dy, dz, randomSite);
 
-        const uint xNew = solver().boundary(0)->transformCoordinate((int)x + dx);
-        const uint yNew = solver().boundary(1)->transformCoordinate((int)y + dy);
+        const uint xNew = solver().boundaryTransform(x, dx, 0);
+        const uint yNew = solver().boundaryTransform(y, dy, 1);
         const int zNew = solver().height(x, y) + dz + 1;
 
         BADAssBool(!solver().isSurfaceSite(xNew, yNew, zNew), "adding diff reaction to surface.", [&] ()

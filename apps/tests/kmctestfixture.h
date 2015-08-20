@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include <sys/time.h>
 
+#include "../apputils.h"
+
 #define deletehaxx(name) if (name != NULL) delete name; name = NULL
 
 // The fixture for testing class kMCTest.

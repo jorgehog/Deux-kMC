@@ -8,7 +8,7 @@
 using namespace kMC;
 
 
-KMCSolver::KMCSolver(vector<const Boundary *> boundaries) :
+KMCSolver::KMCSolver(vector<vector<const Boundary *>> boundaries) :
     ignis::LatticeEvent("KMCSolver")
 {
     m_boundaries = boundaries;

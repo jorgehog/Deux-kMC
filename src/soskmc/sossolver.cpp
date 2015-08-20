@@ -9,9 +9,8 @@ SOSSolver::SOSSolver(const uint length,
                      const uint width,
                      const double alpha,
                      const double mu,
-                     const Boundary *xBoundary,
-                     const Boundary *yBoundary) :
-    KMCSolver({xBoundary, yBoundary}),
+                     vector<vector<const Boundary*>> boundaries) :
+    KMCSolver(boundaries),
     m_heights_set(false),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_length(length),
@@ -62,28 +61,28 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
     m_affectedReactions.at(n) = &surfaceReaction(x, y);
     n++;
 
-    if (!boundary(0)->isBlocked(left))
+    if (!boundary(0, 1)->isBlocked(left))
     {
         setNNeighbors(left, y);
         m_affectedReactions.at(n) = &surfaceReaction(left, y);
         n++;
     }
 
-    if (!boundary(0)->isBlocked(right))
+    if (!boundary(0, 0)->isBlocked(right))
     {
         setNNeighbors(right, y);
         m_affectedReactions.at(n) = &surfaceReaction(right, y);
         n++;
     }
 
-    if (!boundary(1)->isBlocked(top))
+    if (!boundary(1, 1)->isBlocked(top))
     {
         setNNeighbors(x, top);
         m_affectedReactions.at(n) = &surfaceReaction(x, top);
         n++;
     }
 
-    if (!boundary(1)->isBlocked(bottom))
+    if (!boundary(1, 0)->isBlocked(bottom))
     {
         setNNeighbors(x, bottom);
         m_affectedReactions.at(n) = &surfaceReaction(x, bottom);
@@ -365,22 +364,22 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
 
 int SOSSolver::topSite(const uint site, const uint n) const
 {
-    return boundary(1)->transformCoordinate(site + n);
+    return boundary(1, 1)->transformCoordinate(site + n);
 }
 
 int SOSSolver::bottomSite(const uint site, const uint n) const
 {
-    return boundary(1)->transformCoordinate((int)site - (int)n);
+    return boundary(1, 0)->transformCoordinate((int)site - (int)n);
 }
 
 int SOSSolver::leftSite(const uint site, const uint n) const
 {
-    return boundary(0)->transformCoordinate((int)site - (int)n);
+    return boundary(0, 1)->transformCoordinate((int)site - (int)n);
 }
 
 int SOSSolver::rightSite(const uint site, const uint n) const
 {
-    return boundary(0)->transformCoordinate(site + n);
+    return boundary(0, 0)->transformCoordinate(site + n);
 }
 
 void SOSSolver::findConnections(const uint x,
@@ -405,7 +404,7 @@ void SOSSolver::findConnections(const uint x,
     bool checkConnection;
 
     checkConnection = true;
-    if (!boundary(0)->isBlocked(left))
+    if (!boundary(0, 1)->isBlocked(left))
     {
         if (!onlySurface)
         {
@@ -424,7 +423,7 @@ void SOSSolver::findConnections(const uint x,
     }
 
     checkConnection = true;
-    if (!boundary(0)->isBlocked(right))
+    if (!boundary(0, 0)->isBlocked(right))
     {
 
         if (!onlySurface)
@@ -444,7 +443,7 @@ void SOSSolver::findConnections(const uint x,
     }
 
     checkConnection = true;
-    if (!boundary(1)->isBlocked(top))
+    if (!boundary(1, 1)->isBlocked(top))
     {
         if (!onlySurface)
         {
@@ -463,7 +462,7 @@ void SOSSolver::findConnections(const uint x,
     }
 
     checkConnection = true;
-    if (!boundary(1)->isBlocked(bottom))
+    if (!boundary(1, 0)->isBlocked(bottom))
     {
         if (!onlySurface)
         {
@@ -494,6 +493,26 @@ uint SOSSolver::span() const
     {
         return 5*(m_heights.max() - min);
     }
+}
+
+uint SOSSolver::xBoundaryOrientation(const uint x) const
+{
+    return boundaryOrientation(x, length());
+}
+
+uint SOSSolver::yBoundaryOrientation(const uint y) const
+{
+    return boundaryOrientation(y, width());
+}
+
+uint SOSSolver::boundaryOrientation(const uint x, const uint lx) const
+{
+    return x >= lx/2 ? 0 : 1;
+}
+
+uint SOSSolver::boundaryTransform(const uint x, const int dx, const uint dim) const
+{
+    return boundary(dim, yBoundaryOrientation(x))->transformCoordinate((int)x + dx);
 }
 
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
@@ -571,7 +590,7 @@ void SOSSolver::initializeSolver()
                 left = leftSite(x);
                 bottom = bottomSite(y);
 
-                if (boundary(0)->isBlocked(left) || boundary(1)->isBlocked(bottom))
+                if (boundary(0, 1)->isBlocked(left) || boundary(1, 0)->isBlocked(bottom))
                 {
                     continue;
                 }

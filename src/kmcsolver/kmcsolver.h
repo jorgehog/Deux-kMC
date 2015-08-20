@@ -15,7 +15,7 @@ class Boundary;
 class KMCSolver : public ignis::LatticeEvent
 {
 public:
-    KMCSolver(vector<const Boundary*> boundaries);
+    KMCSolver(vector<vector<const Boundary *> > boundaries);
     virtual ~KMCSolver();
 
     const double &currentTimeStep() const
@@ -33,9 +33,9 @@ public:
         return m_selectedReaction;
     }
 
-    const Boundary *boundary(const uint i) const
+    const Boundary *boundary(const uint i, const uint j) const
     {
-        return m_boundaries.at(i);
+        return m_boundaries.at(i).at(j);
     }
 
     void initializeReactions();
@@ -64,7 +64,7 @@ public:
 private:
     vector<Reaction*> m_reactions;
 
-    vector<const Boundary*> m_boundaries;
+    vector<vector<const Boundary*>> m_boundaries;
 
     Reaction *m_selectedReaction;
 

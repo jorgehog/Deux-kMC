@@ -3,19 +3,24 @@
 using namespace kMC;
 
 
-Edge::Edge(const uint span) :
-    Boundary(),
-    m_span(span)
+Edge::Edge(const int location,
+           const orientations orientation) :
+    FiniteSize(),
+    m_location(location),
+    m_orientation(orientation)
 {
 
-}
-
-int Edge::transformCoordinate(const int xi) const
-{
-    return xi;
 }
 
 bool Edge::isBlocked(const int xi) const
 {
-    return xi < 0 || xi >= signed(m_span);
+    if (m_orientation == orientations::FIRST)
+    {
+        return xi < m_location;
+    }
+
+    else
+    {
+        return xi >= m_location;
+    }
 }

@@ -26,7 +26,7 @@ double SurfaceSize::relativeHeightSum(const uint x, const uint y) const
     const uint right = solver().rightSite(x);
     const uint top = solver().topSite(y);
 
-    if (solver().boundary(0)->isBlocked(right) || solver().boundary(1)->isBlocked(top))
+    if (solver().boundary(0, 1)->isBlocked(right) || solver().boundary(1, 1)->isBlocked(top))
     {
         return 0;
     }
@@ -83,12 +83,12 @@ void SurfaceSize::reset()
 
     updateRelativeHeight(x, y);
 
-    if (!solver().boundary(0)->isBlocked(left))
+    if (!solver().boundary(0, 0)->isBlocked(left))
     {
         updateRelativeHeight(left, y);
     }
 
-    if (!solver().boundary(1)->isBlocked(bottom))
+    if (!solver().boundary(1, 0)->isBlocked(bottom))
     {
         updateRelativeHeight(x, bottom);
     }
@@ -228,25 +228,26 @@ void NNeighbors::reset()
 
     updateNNeighbors(x, y);
 
-    if (!solver().boundary(0)->isBlocked(left))
+    if (!solver().boundary(0, 0)->isBlocked(left))
     {
         updateNNeighbors(left, y);
     }
 
-    if (!solver().boundary(0)->isBlocked(right))
+    if (!solver().boundary(0, 1)->isBlocked(right))
     {
         updateNNeighbors(right, y);
     }
 
-    if (!solver().boundary(1)->isBlocked(top))
+    if (!solver().boundary(1, 0)->isBlocked(bottom))
     {
         updateNNeighbors(x, bottom);
     }
 
-    if (!solver().boundary(1)->isBlocked(bottom))
+    if (!solver().boundary(1, 1)->isBlocked(top))
     {
         updateNNeighbors(x, top);
     }
+
 
 }
 

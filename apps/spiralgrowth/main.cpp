@@ -47,9 +47,11 @@ int main(int argv, char** argc)
     const double &alpha = getSetting<double>(root, "alpha");
     const double &gamma = getSetting<double>(root, "gamma");
 
-    const Setting &boundaries = getSetting(root, "boundaries");
-    const uint xBoundaryID = boundaries[0];
-    const uint yBoundaryID = boundaries[1];
+    const Setting &boundarySettings = getSetting(root, "boundaries");
+    const uint rightBoundaryID = boundarySettings[0][0];
+    const uint leftBoundaryID = boundarySettings[0][1];
+    const uint bottomBoundaryID = boundarySettings[1][0];
+    const uint topBoundaryID = boundarySettings[1][1];
 
     const uint &confinementInt = getSetting<uint>(root, "confinement");
 
@@ -60,7 +62,7 @@ int main(int argv, char** argc)
 
     const uint &diffuseInt = getSetting<uint>(root, "diffuse");
     const bool diffuse = diffuseInt == 1;
-//    const double &D = getSetting<double>(root, "D");
+    //    const double &D = getSetting<double>(root, "D");
     const double D = 1./6*exp(2*alpha-gamma);
     const double &dt = getSetting<double>(root, "dt");
 
@@ -88,10 +90,13 @@ int main(int argv, char** argc)
     ConfiningSurface *confiningSurface;
     Diffusion *diffusion;
 
-    Boundary* xBoundary = getBoundaryFromID(xBoundaryID, L);
-    Boundary* yBoundary = getBoundaryFromID(yBoundaryID, W);
+    auto boundaries = getBoundariesFromIDs({rightBoundaryID,
+                                            leftBoundaryID,
+                                            bottomBoundaryID,
+                                            topBoundaryID},
+                                           L, W);
 
-    SOSSolver solver(L, W, alpha, gamma, xBoundary, yBoundary);
+    SOSSolver solver(L, W, alpha, gamma, boundaries);
 
     AverageHeight averageHeight(solver);
 
@@ -173,8 +178,8 @@ int main(int argv, char** argc)
 
     var.setDependency(size);
 
-//    DumpHeights3D dumpHeights3D(solver, path);
-//    DumpHeightSlice dumpHeightSlice(solver, 0, 0, path, nCyclesPerOutput);
+    //    DumpHeights3D dumpHeights3D(solver, path);
+    //    DumpHeightSlice dumpHeightSlice(solver, 0, 0, path, nCyclesPerOutput);
 
     NNeighbors nNeighbors(solver);
 
@@ -193,7 +198,8 @@ int main(int argv, char** argc)
     lattice.addEvent(confiningSurface);
     lattice.addEvent(diffusion);
 
-    initializeSurface(solver, "fracture");
+    //    initializeSurface(solver, "fracture");
+    initializeSurface(solver, "none");
 
     //---End explicit implementation
     //---Running simulation
@@ -224,8 +230,10 @@ int main(int argv, char** argc)
     simRoot.addData("alpha", alpha);
     simRoot.addData("gamma", gamma);
 
-    simRoot.addData("xBoundaryID", xBoundaryID);
-    simRoot.addData("yBoundaryID", yBoundaryID);
+    simRoot.addData("rightBoundaryID", rightBoundaryID);
+    simRoot.addData("leftBoundaryID", leftBoundaryID);
+    simRoot.addData("bottomBoundaryID", bottomBoundaryID);
+    simRoot.addData("topBoundaryID", topBoundaryID);
 
     simRoot.addData("confinement", confinementInt);
     simRoot.addData("sigma0", sigma0);
@@ -262,8 +270,14 @@ int main(int argv, char** argc)
 
     //---End data dump
 
-    delete xBoundary;
-    delete yBoundary;
+    for (auto & dimBoundary : boundaries)
+    {
+        for (auto & boundary : dimBoundary)
+        {
+            delete boundary;
+        }
+    }
+
     delete diffusion;
     delete confiningSurface;
 
@@ -290,5 +304,10 @@ void initializeSurface(SOSSolver &solver, const string type)
                 solver.setHeight(x, y, value + noise, false);
             }
         }
+    }
+
+    else if (type == "none")
+    {
+        return;
     }
 }

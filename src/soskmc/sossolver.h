@@ -17,8 +17,7 @@ public:
               const uint width,
               const double alpha,
               const double gamma,
-              const Boundary* xBoundary,
-              const Boundary* yBoundary);
+              vector<vector<const Boundary *> > boundaries);
 
     virtual ~SOSSolver();
 
@@ -166,6 +165,14 @@ public:
     }
 
     uint span() const;
+
+    uint xBoundaryOrientation(const uint x) const;
+
+    uint yBoundaryOrientation(const uint y) const;
+
+    uint boundaryOrientation(const uint x, const uint lx) const;
+
+    uint boundaryTransform(const uint x, const int dx, const uint dim) const;
 
     bool isBlockedPosition(const double x, const double y, const double z) const;
 

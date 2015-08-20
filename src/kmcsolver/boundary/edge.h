@@ -1,23 +1,23 @@
 #pragma once
 
-#include "boundary.h"
+#include "finitesize.h"
 
 namespace kMC
 {
 
-class Edge : public Boundary
+class Edge : public FiniteSize
 {
 public:
 
-    Edge(const uint span);
-
-    int transformCoordinate(const int xi) const;
+    Edge(const int location,
+         const orientations orientation);
 
     bool isBlocked(const int xi) const;
 
 private:
 
-    const uint m_span;
+    const int m_location;
+    const orientations m_orientation;
 
 };
 

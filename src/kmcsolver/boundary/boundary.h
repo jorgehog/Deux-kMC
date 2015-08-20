@@ -19,6 +19,12 @@ public:
 
     virtual bool isBlocked(const int xi) const = 0;
 
+    enum class orientations
+    {
+        FIRST,
+        LAST
+    };
+
 };
 
 }
