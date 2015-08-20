@@ -207,6 +207,9 @@ const Boundary *getBoundaryFromID(const uint ID, const uint span, const int orie
         return new Edge(span, orientation);
 
         break;
+    case 2:
+        return new Open();
+        break;
     default:
         cerr << "invalid boundary: " << ID << endl;
         return NULL;

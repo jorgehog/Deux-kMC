@@ -7,6 +7,8 @@
 
 #include "testdiffusion.h"
 
+#include "testboundaries.h"
+
 namespace {
 
 // Tests that the uniform RNG does what it is supposed to.
