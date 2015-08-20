@@ -11,7 +11,13 @@ class Boundary
 {
 public:
 
-    Boundary();
+    enum class orientations
+    {
+        FIRST,
+        LAST
+    };
+
+    Boundary(const Boundary::orientations orientation);
 
     virtual ~Boundary() {}
 
@@ -19,11 +25,8 @@ public:
 
     virtual bool isBlocked(const int xi) const = 0;
 
-    enum class orientations
-    {
-        FIRST,
-        LAST
-    };
+
+    const Boundary::orientations m_orientation;
 
 };
 

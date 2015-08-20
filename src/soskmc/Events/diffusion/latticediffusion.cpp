@@ -133,6 +133,13 @@ void LatticeDiffusion::dump(const uint frameNumber) const
 
 SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const uint y, const int z, bool setRate)
 {
+
+    if (solver().isOutsideBox(x, y))
+    {
+        //derp fix concentration stuff
+        return NULL;
+    }
+
     BADAssBool(!isBlockedPosition(x, y, z), "spot already taken");
 
     SOSDiffusionReaction *reaction = new SOSDiffusionReaction(m_mutexSolver, x, y, z);
@@ -238,6 +245,14 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
                                                             const uint x, const uint y, const int z)
 {
 
+    //particle has transitioned outside the regime.
+    if (solver().isOutsideBox(x, y))
+    {
+        //derp fix concentration stuff
+        removeDiffusionReactant(reaction, false);
+    }
+
+
     //set x, y, z even if we remove the reaction in case the reaction is used
     //as the current reaction in the kmcsolver.
     reaction->setX(x);
@@ -247,7 +262,6 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
     int roof = 100000;
     if (z > roof)
     {
-        //Derp boundary crossed... fix this
         removeDiffusionReactant(reaction, false);
         return;
     }
@@ -268,6 +282,7 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
         }
 
     }
+
 }
 
 bool LatticeDiffusion::isBlockedPosition(const uint x, const uint y, const int z) const

@@ -2,7 +2,8 @@
 
 using namespace kMC;
 
-Boundary::Boundary()
+Boundary::Boundary(const Boundary::orientations orientation) :
+    m_orientation(orientation)
 {
 
 }

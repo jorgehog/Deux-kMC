@@ -8,7 +8,7 @@ namespace kMC
 class FiniteSize : public Boundary
 {
 public:
-    FiniteSize();
+    FiniteSize(const Boundary::orientations orientation);
     ~FiniteSize();
 
     // Boundary interface

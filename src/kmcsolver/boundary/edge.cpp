@@ -5,9 +5,8 @@ using namespace kMC;
 
 Edge::Edge(const int location,
            const orientations orientation) :
-    FiniteSize(),
-    m_location(location),
-    m_orientation(orientation)
+    FiniteSize(orientation),
+    m_location(location)
 {
 
 }

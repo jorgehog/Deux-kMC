@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../kmcsolver/kmcsolver.h"
+#include "../kmcsolver/boundary/boundary.h"
 #include <armadillo>
 
 using namespace kMC;
@@ -164,6 +165,8 @@ public:
                                onlySurface);
     }
 
+    bool findSingleConnection(const int neighbor, const uint dim, const uint orientation, const uint x, const int h, bool onlySurface) const;
+
     uint span() const;
 
     uint xBoundaryOrientation(const uint x) const;
@@ -174,7 +177,13 @@ public:
 
     uint boundaryTransform(const uint x, const int dx, const uint dim) const;
 
+    void addConcentrationBoundary(const uint dim, const Boundary::orientations orientation);
+
     bool isBlockedPosition(const double x, const double y, const double z) const;
+
+    bool isOutsideBoxSingle(const int x, const uint dim) const;
+
+    bool isOutsideBox(const int x, const int y) const;
 
     bool isSurfaceSite(const uint x, const uint y, const int z) const;
 

@@ -2,8 +2,8 @@
 
 using namespace kMC;
 
-Periodic::Periodic(const uint span) :
-    Boundary(),
+Periodic::Periodic(const uint span, const Boundary::orientations orientation) :
+    Boundary(orientation),
     m_span(span)
 {
 

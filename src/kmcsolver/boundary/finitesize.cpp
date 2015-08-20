@@ -2,7 +2,8 @@
 
 using namespace kMC;
 
-FiniteSize::FiniteSize()
+FiniteSize::FiniteSize(const orientations orientation) :
+    Boundary(orientation)
 {
 
 }

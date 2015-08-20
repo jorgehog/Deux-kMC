@@ -17,7 +17,6 @@ public:
 private:
 
     const int m_location;
-    const orientations m_orientation;
 
 };
 

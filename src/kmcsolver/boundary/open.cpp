@@ -2,7 +2,8 @@
 
 using namespace kMC;
 
-Open::Open()
+Open::Open(const orientations orientation) :
+    FiniteSize(orientation)
 {
 
 }

@@ -10,7 +10,7 @@ class Periodic : public Boundary
 {
 public:
 
-    Periodic(const uint span);
+    Periodic(const uint span, const orientations orientation);
 
     ~Periodic() {}
 

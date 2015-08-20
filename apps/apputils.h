@@ -185,30 +185,17 @@ private:
 
 };
 
-const Boundary *getBoundaryFromID(const uint ID, const uint span, const int orientationInt = -1)
+const Boundary *getBoundaryFromID(const uint ID, const uint span, Boundary::orientations orientation)
 {
     switch (ID) {
     case 0:
-        return new Periodic(span);
+        return new Periodic(span, orientation);
         break;
     case 1:
-        Boundary::orientations orientation;
-
-        if (orientationInt == 0)
-        {
-            orientation = Boundary::orientations::FIRST;
-        }
-
-        else
-        {
-            orientation = Boundary::orientations::LAST;
-        }
-
-        return new Edge(span, orientation);
-
+        return new Edge(orientation == Boundary::orientations::FIRST ? 0 : span, orientation);
         break;
     case 2:
-        return new Open();
+        return new Open(orientation);
         break;
     default:
         cerr << "invalid boundary: " << ID << endl;
@@ -220,12 +207,12 @@ const Boundary *getBoundaryFromID(const uint ID, const uint span, const int orie
 
 vector<vector<const Boundary*>> getBoundariesFromIDs(const vector<uint> IDs, const uint L, const uint W)
 {
-    const Boundary* rightBoundary = getBoundaryFromID(IDs.at(0), L);
-    const Boundary* leftBoundary = getBoundaryFromID(IDs.at(1), L);
-    const Boundary* bottomBoundary = getBoundaryFromID(IDs.at(2), W);
-    const Boundary* topBoundary = getBoundaryFromID(IDs.at(3), W);
+    const Boundary* leftBoundary = getBoundaryFromID(IDs.at(0), L, Boundary::orientations::FIRST);
+    const Boundary* rightBoundary = getBoundaryFromID(IDs.at(1), L, Boundary::orientations::LAST);
+    const Boundary* bottomBoundary = getBoundaryFromID(IDs.at(2), W, Boundary::orientations::FIRST);
+    const Boundary* topBoundary = getBoundaryFromID(IDs.at(3), W, Boundary::orientations::LAST);
 
-    return {{rightBoundary, leftBoundary},
+    return {{leftBoundary, rightBoundary},
         {bottomBoundary, topBoundary}};
 }
 

@@ -8,7 +8,7 @@ namespace kMC
 class Open : public FiniteSize
 {
 public:
-    Open();
+    Open(const Boundary::orientations orientation);
     ~Open();
 
     // Boundary interface
