@@ -152,3 +152,8 @@ void OfflatticeMonteCarlo::initialize()
     m_accepted = 0;
     m_trials = 0;
 }
+
+void OfflatticeMonteCarlo::insertDiffusingParticle(const double x, const double y, const double z)
+{
+    insertParticle(x, y, z);
+}

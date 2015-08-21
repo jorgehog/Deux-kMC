@@ -55,5 +55,9 @@ public:
     void onInsertParticle(const double x, const double y, const double z);
     void onRemoveParticle(const uint n);
 
+
+    // Diffusion interface
+public:
+    void insertDiffusingParticle(const double x, const double y, const double z);
 };
 

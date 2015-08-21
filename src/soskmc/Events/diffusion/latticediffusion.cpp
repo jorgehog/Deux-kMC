@@ -136,7 +136,6 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
 
     if (solver().isOutsideBox(x, y))
     {
-        //derp fix concentration stuff
         return NULL;
     }
 
@@ -248,7 +247,6 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
     //particle has transitioned outside the regime.
     if (solver().isOutsideBox(x, y))
     {
-        //derp fix concentration stuff
         removeDiffusionReactant(reaction, false);
     }
 
@@ -258,13 +256,6 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
     reaction->setX(x);
     reaction->setY(y);
     reaction->setZ(z);
-
-    int roof = 100000;
-    if (z > roof)
-    {
-        removeDiffusionReactant(reaction, false);
-        return;
-    }
 
     if (solver().isSurfaceSite(x, y, z))
     {
@@ -276,11 +267,8 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
         {
             m_mutexSolver.registerHeightChange(x, y, 1);
             removeDiffusionReactant(x, y, zAbove, false);
-//            cout << "removed " << x << " " << y << " " << zAbove << " new h = " << solver().height(x, y) << endl;
             zAbove++;
-//            cout << "checking " << x << " " << y << " " << zAbove << endl;
         }
-
     }
 
 }
@@ -288,6 +276,11 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
 bool LatticeDiffusion::isBlockedPosition(const uint x, const uint y, const int z) const
 {
     return diffusionReaction(x, y, z) != NULL;;
+}
+
+void LatticeDiffusion::insertDiffusingParticle(const double x, const double y, const double z)
+{
+    addDiffusionReactant(x, y, z, true);
 }
 
 void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const int delta)

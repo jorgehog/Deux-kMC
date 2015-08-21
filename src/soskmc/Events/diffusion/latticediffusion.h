@@ -27,8 +27,6 @@ public:
 
     void deleteQueuedReactions();
 
-    virtual void dump(const uint frameNumber) const;
-
 private:
 
     vector<SOSDiffusionReaction*> m_diffusionReactions;
@@ -42,13 +40,16 @@ private:
 public:
     void execute();
 
+
     // Diffusion interface
 public:
+    virtual void dump(const uint frameNumber) const;
     void setupInitialConditions();
     double depositionRate(const uint x, const uint y) const;
     void registerHeightChange(const uint x, const uint y, const int delta);
     void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z);
     bool isBlockedPosition(const uint x, const uint y, const int z) const;
+    void insertDiffusingParticle(const double x, const double y, const double z);
 
 };
 

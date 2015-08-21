@@ -103,3 +103,20 @@ void OfflatticeMonteCarloBoundary::onRemoveParticle(const uint n)
 }
 
 
+
+
+void OfflatticeMonteCarloBoundary::insertDiffusingParticle(const double x, const double y, const double z)
+{
+    if (z > m_boundarySpacing)
+    {
+        OfflatticeMonteCarlo::insertDiffusingParticle(x, y, z);
+    }
+
+    else
+    {
+        LatticeDiffusion::insertDiffusingParticle(x, y, z);
+    }
+}
+
+
+

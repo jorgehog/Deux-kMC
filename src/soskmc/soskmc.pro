@@ -22,7 +22,8 @@ SOURCES += \
     sosreaction.cpp \
     sosdiffusionreaction.cpp \
     dissolutiondeposition.cpp \
-    Events/diffusion/latticediffusion.cpp
+    Events/diffusion/latticediffusion.cpp \
+    concentrationboundaryreaction.cpp
 
 HEADERS += \
     Events/solidonsolidevent.h \
@@ -43,7 +44,8 @@ HEADERS += \
     sosreaction.h \
     sosdiffusionreaction.h \
     dissolutiondeposition.h \
-    Events/diffusion/latticediffusion.h
+    Events/diffusion/latticediffusion.h \
+    concentrationboundaryreaction.h
 
 LIBS += -lkMC
 

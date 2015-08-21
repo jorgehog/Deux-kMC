@@ -17,8 +17,6 @@ public:
     virtual void onInsertParticle(const double x, const double y, const double z) = 0;
     virtual void onRemoveParticle(const uint n) = 0;
 
-    virtual void dump(const uint frameNumber) const;
-
     void diffuse(const double dt);
 
     void removeParticle(const uint n);
@@ -81,9 +79,15 @@ private:
     long double m_trials;
 
 
-
     // Event interface
 public:
     void initialize();
+
+
+    // Diffusion interface
+public:
+    virtual void dump(const uint frameNumber) const;
+    void insertDiffusingParticle(const double x, const double y, const double z);
+
 };
 

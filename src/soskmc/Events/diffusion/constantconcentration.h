@@ -64,4 +64,13 @@ public:
 
         return false;
     }
+
+    void insertDiffusingParticle(const double x, const double y, const double z)
+    {
+        (void) x;
+        (void) y;
+        (void) z;
+
+        //pass
+    }
 };

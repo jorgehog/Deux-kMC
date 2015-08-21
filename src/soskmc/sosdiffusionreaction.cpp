@@ -90,15 +90,6 @@ void SOSDiffusionReaction::getDiffusionPath(const uint path, int &dx, int &dy, i
 
     BADAssBool(!solver().isSurfaceSite(x(), y(), z()));
 
-//    //downwards is always possible (not true anymore)
-//    if (path == 0)
-//    {
-//        dx = 0;
-//        dy = 0;
-//        dz = -1;
-//        return;
-//    }
-
     uint n = 0;
 
     if (!connectedLeft)
@@ -216,6 +207,6 @@ void SOSDiffusionReaction::executeAndUpdate()
 
 double SOSDiffusionReaction::rateExpression()
 {
-    return 6.;
+    return 1.;
 }
 

@@ -27,4 +27,6 @@ public:
 
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const = 0;
 
+    virtual void insertDiffusingParticle(const double x, const double y, const double z) = 0;
+
 };
