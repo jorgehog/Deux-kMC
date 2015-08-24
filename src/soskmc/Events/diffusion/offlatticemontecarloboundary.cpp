@@ -81,6 +81,11 @@ void OfflatticeMonteCarloBoundary::setupInitialConditions()
 
 }
 
+void OfflatticeMonteCarloBoundary::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
+{
+    //STUFF
+}
+
 void OfflatticeMonteCarloBoundary::dump(const uint frameNumber) const
 {
     Diffusion::dump(frameNumber);
@@ -100,22 +105,6 @@ void OfflatticeMonteCarloBoundary::onRemoveParticle(const uint n)
     (void) n;
 
     //update flux if on boundary
-}
-
-
-
-
-void OfflatticeMonteCarloBoundary::insertDiffusingParticle(const double x, const double y, const double z)
-{
-    if (z > m_boundarySpacing)
-    {
-        OfflatticeMonteCarlo::insertDiffusingParticle(x, y, z);
-    }
-
-    else
-    {
-        LatticeDiffusion::insertDiffusingParticle(x, y, z);
-    }
 }
 
 

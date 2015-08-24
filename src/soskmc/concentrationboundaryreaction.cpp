@@ -4,7 +4,7 @@
 #include "Events/confiningsurface/confiningsurface.h"
 
 
-concentrationBoundaryReaction::concentrationBoundaryReaction(const uint dim, const uint orientation, SOSSolver &solver) :
+ConcentrationBoundaryReaction::ConcentrationBoundaryReaction(const uint dim, const uint orientation, SOSSolver &solver) :
     Reaction(),
     m_dim(dim),
     m_orientation(orientation),
@@ -15,60 +15,148 @@ concentrationBoundaryReaction::concentrationBoundaryReaction(const uint dim, con
     //location = 0 if orientation = 0 for both dims. If location = 1 we are at the end of the respective dim.
 }
 
-concentrationBoundaryReaction::~concentrationBoundaryReaction()
+ConcentrationBoundaryReaction::~ConcentrationBoundaryReaction()
 {
 
 }
 
-double concentrationBoundaryReaction::freeBoundaryArea() const
+double ConcentrationBoundaryReaction::freeBoundaryArea() const
 {
-    double surfaceHeight = solver().confiningSurfaceEvent().height();
-    int surfaceHeightInt = (int)surfaceHeight;
-
-    double area = span()*(surfaceHeight - surfaceHeightInt);
-
-    for (uint xi = 0; xi < span(); ++xi)
-    {
-        for (int z = base(xi); z < surfaceHeightInt; ++z)
-        {
-            if (!AXTRANS(solver().diffusionEvent().isBlockedPosition, xi, z))
-            {
-                area += 1;
-            }
-        }
-    }
-
-    return area;
+    return topFilling()*span() + freeBoundarySites();
 }
 
-double concentrationBoundaryReaction::dh(const uint n) const
+double ConcentrationBoundaryReaction::dh(const uint n) const
 {
     const double &surfaceHeight = solver().confiningSurfaceEvent().height();
 
-    return surfaceHeight - base(n);
+    return surfaceHeight - heightAtBoundary(n);
 }
 
-const int &concentrationBoundaryReaction::base(const uint n) const
+const int &ConcentrationBoundaryReaction::heightAtBoundary(const uint n) const
 {
     return AXTRANS(solver().height, n);
 }
 
-bool concentrationBoundaryReaction::isAllowed() const
+void ConcentrationBoundaryReaction::getFreeBoundarSite(const uint n, uint &xi, int &z) const
+{
+    BADAss(n, <, freeBoundarySites(), "invalid site");
+
+    //unoptimized
+    double surfaceHeight = solver().confiningSurfaceEvent().height();
+    int surfaceHeightInt = (int)surfaceHeight;
+
+    bool blocked;
+    uint nCount = 0;
+    for (xi = 0; xi < span(); ++xi)
+    {
+        for (z = heightAtBoundary(xi) + 1; z < surfaceHeightInt - 1; ++z)
+        {
+            if (dim() == 0)
+            {
+                blocked = solver().diffusionEvent().isBlockedPosition(xi, location(), z);
+            }
+
+            else
+            {
+                blocked = solver().diffusionEvent().isBlockedPosition(location(), xi, z);
+            }
+
+            if (!blocked)
+            {
+                if (nCount == n)
+                {
+                    return;
+                }
+
+                nCount++;
+            }
+        }
+    }
+}
+
+double ConcentrationBoundaryReaction::topFilling() const
+{
+    double surfaceHeight = solver().confiningSurfaceEvent().height();
+    int surfaceHeightInt = (int)surfaceHeight;
+
+    return (surfaceHeight - surfaceHeightInt);
+
+}
+
+uint ConcentrationBoundaryReaction::freeBoundarySites(bool spam) const
+{
+    const double surfaceHeight = solver().confiningSurfaceEvent().height();
+    const int surfaceHeightInt = (int)surfaceHeight;
+
+    bool blocked;
+
+    uint nSites = 0;
+
+    for (uint xi = 0; xi < span(); ++xi)
+    {
+        for (int z = heightAtBoundary(xi) + 1; z < surfaceHeightInt - 1; ++z)
+        {
+
+            if (dim() == 0)
+            {
+                blocked = solver().diffusionEvent().isBlockedPosition(xi, location(), z);
+            }
+
+            else
+            {
+                blocked = solver().diffusionEvent().isBlockedPosition(location(), xi, z);
+            }
+
+            if (!blocked)
+            {
+                if (spam)
+                {
+                    cout << "(" << xi << " " << z << ") ";
+                }
+                nSites += 1;
+            }
+        }
+    }
+
+    if (spam)
+    {
+        cout << "\n\n\n" << endl;
+    }
+
+    return nSites;
+}
+
+bool ConcentrationBoundaryReaction::pointIsOnBoundary(const uint x, const uint y) const
+{
+    if (dim() == 0)
+    {
+        return y == location();
+    }
+
+    else
+    {
+        return x == location();
+    }
+}
+
+double ConcentrationBoundaryReaction::_rateExpression() const
+{
+    return freeBoundaryArea()/(1-exp(solver().gamma() - 2*solver().alpha()));
+}
+
+bool ConcentrationBoundaryReaction::isAllowed() const
 {
     return freeBoundaryArea() != 0;
 }
 
-void concentrationBoundaryReaction::executeAndUpdate()
+void ConcentrationBoundaryReaction::executeAndUpdate()
 {
-    //choose z randomly across boundary. Subtract Nb and find correct z.
+    solver().diffusionEvent().executeConcentrationBoundaryReaction(this);
 
-    uint x = 0;
-    uint y = 0;
-    int z = 0;
-    solver().diffusionEvent().insertDiffusingParticle(x, y, z);
+    calculateRate();
 }
 
-double concentrationBoundaryReaction::rateExpression()
+double ConcentrationBoundaryReaction::rateExpression()
 {
-    return freeBoundaryArea()/(1-exp(solver().gamma() - 2*solver().alpha()));
+    return _rateExpression();
 }

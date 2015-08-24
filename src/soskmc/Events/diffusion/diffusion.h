@@ -3,6 +3,7 @@
 #include "../solidonsolidevent.h"
 
 class SOSDiffusionReaction;
+class ConcentrationBoundaryReaction;
 
 class Diffusion : public SolidOnSolidEvent
 {
@@ -23,10 +24,10 @@ public:
 
     virtual void registerHeightChange(const uint x, const uint y, const int delta) = 0;
 
-    virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z) = 0;
+    virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z) = 0;
+
+    virtual void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction) = 0;
 
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const = 0;
-
-    virtual void insertDiffusingParticle(const double x, const double y, const double z) = 0;
 
 };

@@ -5,17 +5,25 @@
 
 #define AXTRANS(callable, n, ...) dim() == 0 ? callable(n, location(), ##__VA_ARGS__) : callable(location(), n, ##__VA_ARGS__)
 
-class concentrationBoundaryReaction : public kMC::Reaction
+class ConcentrationBoundaryReaction : public kMC::Reaction
 {
 public:
-    concentrationBoundaryReaction(const uint dim, const uint orientation, SOSSolver &solver);
-    ~concentrationBoundaryReaction();
+    ConcentrationBoundaryReaction(const uint dim, const uint orientation, SOSSolver &solver);
+    ~ConcentrationBoundaryReaction();
 
     double freeBoundaryArea() const;
 
     double dh(const uint n) const;
 
-    const int &base(const uint n) const;
+    const int &heightAtBoundary(const uint n) const; //!height at boundary site n
+
+    void getFreeBoundarSite(const uint n, uint &xi, int &z) const;
+
+    double topFilling() const;
+
+    uint freeBoundarySites(bool spam = false) const;
+
+    bool pointIsOnBoundary(const uint x, const uint y) const;
 
     const uint &dim() const
     {
@@ -42,19 +50,8 @@ public:
         return m_span;
     }
 
-    template<class Callable, class InputType>
-    auto axisTransform(Callable &&callable, InputType && input) const -> decltype(callable(input, input))
-    {
-        if (dim() == 0)
-        {
-            return callable(std::forward<InputType>(input), location());
-        }
+    double _rateExpression() const;
 
-        else
-        {
-            return callable(location(), std::forward<InputType>(input));
-        }
-    }
 
 private:
     const uint m_dim;

@@ -9,8 +9,10 @@
 
 #include "../../src/soskmc/sosdiffusionreaction.h"
 
+#include "../../src/soskmc/concentrationboundaryreaction.h"
+
 //--gtest_filter=SOSkMCTest.boundaries
-TEST_F(SOSkMCTest, boundaries)
+TEST_F(SOSkMCTest, boundaries_blocked)
 {
 //    rng.initialize(1230303);
 
@@ -100,3 +102,159 @@ TEST_F(SOSkMCTest, boundaries)
     EXPECT_EQ(m_solver->nNeighbors(1, 0), 5);
     EXPECT_EQ(m_solver->nNeighbors(1, 2), 4);
 }
+
+//--gtest_filter=SOSkMCTest.boundaries_concentration
+TEST_F(SOSkMCTest, boundaries_concentration)
+{
+    const uint L = 10;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 10.23123;
+    const int iheight = (int)height;
+
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 1, 2}, L, W));
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent;
+    SetUp_yo();
+
+    primeSolver(0);
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, 0);
+        }
+    }
+
+    diffusionEvent->clearDiffusionReactions();
+
+    ConcentrationBoundaryReaction r(1, 0, *m_solver);
+
+    double origArea = W*(height-2);
+    EXPECT_EQ(origArea, r.freeBoundaryArea());
+
+    uint yloc = 1;
+    int zloc = 5;
+    SOSDiffusionReaction *dr = diffusionEvent->addDiffusionReactant(0, yloc, zloc);
+
+    EXPECT_EQ(origArea-1, r.freeBoundaryArea());
+
+    uint n = 0;
+    int shift = 0;
+    uint yFree;
+    int zFree;
+    for (uint y = 0; y < W; ++y)
+    {
+        for (int z = m_solver->height(0, y) + 1; z < iheight - 1; ++z)
+        {
+            if (y == yloc && z == zloc)
+            {
+                shift = 1;
+            }
+
+            r.getFreeBoundarSite(n, yFree, zFree);
+
+            if (shift == 0)
+            {
+                EXPECT_EQ(y, yFree);
+                EXPECT_EQ(z, zFree);
+            }
+
+            else
+            {
+
+                if (z == iheight - 2)
+                {
+                    EXPECT_EQ(y+1, yFree);
+                    EXPECT_EQ(m_solver->height(0, y+1) + 1, zFree);
+                }
+
+                else
+                {
+                    EXPECT_EQ(y, yFree);
+                    EXPECT_EQ(z+1, zFree);
+                }
+            }
+
+
+            n++;
+
+            if (n == r.freeBoundarySites())
+            {
+                break;
+            }
+
+            if (HasFailure())
+            {
+                return;
+            }
+        }
+    }
+
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            for (int z = m_solver->height(x, y)+1; z < iheight - 1; ++z)
+            {
+                if (x == 0)
+                {
+                    EXPECT_TRUE(r.pointIsOnBoundary(x, y));
+                }
+
+                else
+                {
+                    EXPECT_FALSE(r.pointIsOnBoundary(x, y));
+                }
+            }
+        }
+    }
+
+    r.calculateRate();
+    double rate = r.rate();
+    for (uint y = 0; y < W; ++y)
+    {
+        for (int z = m_solver->height(0, y)+2; z < iheight-1; ++z)
+        {
+            diffusionEvent->executeDiffusionReaction(dr, 0, y, z);
+        }
+
+        EXPECT_NEAR(rate, r.rateExpression(), 1E-3);
+    }
+
+    diffusionEvent->clearDiffusionReactions();
+
+    n = 0;
+    uint max = W*(iheight-2);
+    for (uint y = 0; y < W; ++y)
+    {
+        for (int z = m_solver->height(0, y)+2; z < iheight-1; ++z)
+        {
+            diffusionEvent->addDiffusionReactant(0, y, z);
+        }
+
+        EXPECT_EQ(max-n, r.freeBoundaryArea());
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

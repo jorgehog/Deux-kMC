@@ -172,10 +172,10 @@ void SOSDiffusionReaction::getDiffusionPath(const uint path, int &dx, int &dy, i
 
 void SOSDiffusionReaction::executeReaction(const int dx, const int dy, const int dz)
 {
-    int zNew = z() + dz;
+    const int zNew = z() + dz;
 
-    const uint xNew = solver().boundaryTransform(x(), dx, 0);
-    const uint yNew = solver().boundaryTransform(y(), dy, 1);
+    const int xNew = solver().boundaryTransform(x(), dx, 0);
+    const int yNew = solver().boundaryTransform(y(), dy, 1);
 
     solver().diffusionEvent().executeDiffusionReaction(this, xNew, yNew, zNew);
 }

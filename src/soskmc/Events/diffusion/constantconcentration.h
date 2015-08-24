@@ -47,13 +47,18 @@ public:
         //pass
     }
 
-    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z)
+    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
     {
         (void) reaction;
         (void) x;
         (void) y;
         (void) z;
 
+    }
+
+    void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
+    {
+        (void) reaction;
     }
 
     bool isBlockedPosition(const uint x, const uint y, const int z) const
@@ -65,12 +70,4 @@ public:
         return false;
     }
 
-    void insertDiffusingParticle(const double x, const double y, const double z)
-    {
-        (void) x;
-        (void) y;
-        (void) z;
-
-        //pass
-    }
 };

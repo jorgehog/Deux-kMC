@@ -301,7 +301,7 @@ void OfflatticeMonteCarloNoBoundary::registerHeightChange(const uint x, const ui
 }
 
 void OfflatticeMonteCarloNoBoundary::executeDiffusionReaction(SOSDiffusionReaction *reaction,
-                                                              const uint x, const uint y, const int z)
+                                                              const int x, const int y, const int z)
 {
     (void) reaction;
     (void) x;
@@ -309,6 +309,11 @@ void OfflatticeMonteCarloNoBoundary::executeDiffusionReaction(SOSDiffusionReacti
     (void) z;
 
     BADAssBreak("Invalid diffusion scheme for diffusion reactions");
+}
+
+void OfflatticeMonteCarloNoBoundary::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
+{
+    //STUFF
 }
 
 bool OfflatticeMonteCarloNoBoundary::isBlockedPosition(const uint x, const uint y, const int z) const

@@ -4,15 +4,24 @@
 #include "../kmcsolver/boundary/boundary.h"
 #include <armadillo>
 
+#include <unordered_set>
+#include <boost/functional/hash.hpp>
+
 using namespace kMC;
 using namespace arma;
+using std::pair;
+using std::unordered_set;
 
 class DissolutionDeposition;
+class ConcentrationBoundaryReaction;
 class ConfiningSurface;
 class Diffusion;
 
 class SOSSolver : public KMCSolver
 {
+    typedef pair<uint, uint> pair_type;
+    typedef unordered_set<pair_type, boost::hash<pair_type>> set_type;
+
 public:
     SOSSolver(const uint length,
               const uint width,
@@ -175,7 +184,7 @@ public:
 
     uint boundaryOrientation(const uint x, const uint lx) const;
 
-    uint boundaryTransform(const uint x, const int dx, const uint dim) const;
+    int boundaryTransform(const uint x, const int dx, const uint dim) const;
 
     void addConcentrationBoundary(const uint dim, const Boundary::orientations orientation);
 
@@ -193,6 +202,18 @@ public:
     }
 
     void setMu(const double gamma);
+
+    const set_type &changedSurfaceSites() const
+    {
+        return m_changedSurfaceSites;
+    }
+
+    void updateConcentrationBoundaryIfOnBoundary(const uint x, const uint y);
+
+    const vector<ConcentrationBoundaryReaction*> &concentrationBoundaryReactions() const
+    {
+        return m_concentrationBoundaryReactions;
+    }
 
 private:
 
@@ -214,11 +235,19 @@ private:
 
     field<DissolutionDeposition*> m_siteReactions;
 
+    vector<ConcentrationBoundaryReaction*> m_concentrationBoundaryReactions;
+
     std::vector<DissolutionDeposition*> m_affectedReactions;
 
+    set_type m_changedSurfaceSites;
 
     // KMCSolver interface
 private:
     void initializeSolver();
 
+
+    // Event interface
+public:
+    void execute();
+    void initialize();
 };

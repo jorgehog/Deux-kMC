@@ -87,7 +87,6 @@ public:
     // Diffusion interface
 public:
     virtual void dump(const uint frameNumber) const;
-    void insertDiffusingParticle(const double x, const double y, const double z);
 
 };
 

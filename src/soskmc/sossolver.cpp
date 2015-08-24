@@ -1,5 +1,6 @@
 #include "sossolver.h"
 #include "dissolutiondeposition.h"
+#include "concentrationboundaryreaction.h"
 #include "Events/confiningsurface/confiningsurface.h"
 #include "Events/diffusion/constantconcentration.h"
 #include "../kmcsolver/boundary/boundary.h"
@@ -43,7 +44,13 @@ SOSSolver::~SOSSolver()
         }
     }
 
+    for (ConcentrationBoundaryReaction *r : m_concentrationBoundaryReactions)
+    {
+        delete r;
+    }
+
     m_siteReactions.clear();
+    m_concentrationBoundaryReactions.clear();
 }
 
 void SOSSolver::registerHeightChange(const uint x, const uint y, const int value)
@@ -51,6 +58,9 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
     BADAssBool(!isOutsideBox(x, y));
 
     m_heights(x, y) += value;
+
+    m_changedSurfaceSites.insert(pair<uint, uint>(x, y));
+
 
     const uint left = leftSite(x);
     const uint right = rightSite(x);
@@ -101,6 +111,8 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
         DissolutionDeposition *reaction = m_affectedReactions.at(i);
         reaction->calculateRate();
     }
+
+    updateConcentrationBoundaryIfOnBoundary(x, y);
 
 }
 
@@ -595,14 +607,29 @@ uint SOSSolver::boundaryOrientation(const uint x, const uint lx) const
     return x >= lx/2 ? 1 : 0;
 }
 
-uint SOSSolver::boundaryTransform(const uint x, const int dx, const uint dim) const
+int SOSSolver::boundaryTransform(const uint x, const int dx, const uint dim) const
 {
     return boundary(dim, yBoundaryOrientation(x))->transformCoordinate((int)x + dx);
 }
 
 void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orientations orientation)
 {
+    uint orientationInt;
+    if (orientation == Boundary::orientations::FIRST)
+    {
+        orientationInt = 0;
+    }
 
+    else
+    {
+        orientationInt = 1;
+    }
+
+    ConcentrationBoundaryReaction *concReaction = new ConcentrationBoundaryReaction(dim, orientationInt, *this);
+
+    m_concentrationBoundaryReactions.push_back(concReaction);
+
+    addReaction(concReaction);
 }
 
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
@@ -697,9 +724,27 @@ void SOSSolver::setMu(const double mu)
 
 }
 
-void SOSSolver::initializeSolver()
+void SOSSolver::updateConcentrationBoundaryIfOnBoundary(const uint x, const uint y)
 {
+    for (ConcentrationBoundaryReaction *r : m_concentrationBoundaryReactions)
+    {
+        if (r->pointIsOnBoundary(x, y))
+        {
+            r->calculateRate();
+        }
+    }
+}
 
+void SOSSolver::execute()
+{
+    KMCSolver::execute();
+
+    m_changedSurfaceSites.clear();
+}
+
+
+void SOSSolver::initialize()
+{
     if (!m_heights_set)
     {
 
@@ -736,5 +781,7 @@ void SOSSolver::initializeSolver()
 
     m_confiningSurfaceEvent->setupInitialConditions();
     m_diffusionEvent->setupInitialConditions();
+
+    KMCSolver::initialize();
 
 }

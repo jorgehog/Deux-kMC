@@ -26,7 +26,7 @@ double SurfaceSize::relativeHeightSum(const uint x, const uint y) const
     const uint right = solver().rightSite(x);
     const uint top = solver().topSite(y);
 
-    if (solver().boundary(0, 1)->isBlocked(right) || solver().boundary(1, 1)->isBlocked(top))
+    if (solver().isOutsideBoxSingle(right, 0) || solver().isOutsideBoxSingle(top, 1))
     {
         return 0;
     }
@@ -73,24 +73,26 @@ void SurfaceSize::execute()
 
 void SurfaceSize::reset()
 {
-    const SOSReaction *currentReaction = dynamic_cast<const SOSReaction*>(solver().selectedReaction());
-
-    const int &x = currentReaction->x();
-    const int &y = currentReaction->y();
-
-    const int left = solver().leftSite(x);
-    const int bottom = solver().bottomSite(y);
-
-    updateRelativeHeight(x, y);
-
-    if (!solver().boundary(0, 0)->isBlocked(left))
+    for (const auto &xy : solver().changedSurfaceSites())
     {
-        updateRelativeHeight(left, y);
-    }
+        const uint &x = xy.first;
+        const uint &y = xy.second;
 
-    if (!solver().boundary(1, 0)->isBlocked(bottom))
-    {
-        updateRelativeHeight(x, bottom);
+        const int left = solver().leftSite(x);
+        const int bottom = solver().bottomSite(y);
+
+        updateRelativeHeight(x, y);
+
+        if (!solver().boundary(0, 0)->isBlocked(left))
+        {
+            updateRelativeHeight(left, y);
+        }
+
+        if (!solver().boundary(1, 0)->isBlocked(bottom))
+        {
+            updateRelativeHeight(x, bottom);
+        }
+
     }
 
 }
@@ -209,49 +211,47 @@ void NNeighbors::execute()
 
 void NNeighbors::reset()
 {
-    //derp this guy can be deleted.. check here if this is actually a surfacereaction.
-    const SOSReaction *currentReaction = dynamic_cast<const SOSReaction*>(solver().selectedReaction());
 
-    const uint &x = currentReaction->x();
-    const uint &y = currentReaction->y();
-
-    //no change
-    if (m_nNeighbors(x, y) == solver().nNeighbors(x, y))
+    for (const auto &xy : solver().changedSurfaceSites())
     {
-        return;
+        const uint &x = xy.first;
+        const uint &y = xy.second;
+
+        //no change
+        if (m_nNeighbors(x, y) == solver().nNeighbors(x, y))
+        {
+            continue;
+        }
+
+        const uint left = solver().leftSite(x);
+        const uint right = solver().rightSite(x);
+        const uint bottom = solver().bottomSite(y);
+        const uint top = solver().topSite(y);
+
+        updateNNeighbors(x, y);
+
+        if (!solver().isOutsideBoxSingle(left, 0))
+        {
+            updateNNeighbors(left, y);
+        }
+
+        if (!solver().isOutsideBoxSingle(right, 0))
+        {
+            updateNNeighbors(right, y);
+        }
+
+        if (!solver().isOutsideBoxSingle(bottom, 1))
+        {
+            updateNNeighbors(x, bottom);
+        }
+
+        if (!solver().isOutsideBoxSingle(top, 1))
+        {
+            updateNNeighbors(x, top);
+        }
+
     }
-
-    const uint left = solver().leftSite(x);
-    const uint right = solver().rightSite(x);
-    const uint bottom = solver().bottomSite(y);
-    const uint top = solver().topSite(y);
-
-    updateNNeighbors(x, y);
-
-    if (!solver().boundary(0, 0)->isBlocked(left))
-    {
-        updateNNeighbors(left, y);
-    }
-
-    if (!solver().boundary(0, 1)->isBlocked(right))
-    {
-        updateNNeighbors(right, y);
-    }
-
-    if (!solver().boundary(1, 0)->isBlocked(bottom))
-    {
-        updateNNeighbors(x, bottom);
-    }
-
-    if (!solver().boundary(1, 1)->isBlocked(top))
-    {
-        updateNNeighbors(x, top);
-    }
-
-
 }
-
-
 
 
 RateChecker::RateChecker(const KMCSolver &solver) :

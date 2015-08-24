@@ -46,7 +46,8 @@ public:
         return depositionRate(x, y, m_currentTimeStep);
     }
     void registerHeightChange(const uint x, const uint y, const int delta);
-    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z);
+    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
+    void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
     bool isBlockedPosition(const uint x, const uint y, const int z) const;
     void dump(const uint frameNumber) const;
 

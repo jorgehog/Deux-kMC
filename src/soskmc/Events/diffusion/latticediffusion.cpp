@@ -6,6 +6,8 @@
 
 #include "sosdiffusionreaction.h"
 
+#include "concentrationboundaryreaction.h"
+
 
 LatticeDiffusion::LatticeDiffusion(SOSSolver &solver) :
     Diffusion(solver, "latticeDiffusion"),
@@ -31,6 +33,8 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 {
 
     m_mutexSolver.removeReaction(reaction);
+
+    m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
 
 #ifndef NDEBUG
     auto comp = [&reaction] (const SOSDiffusionReaction *r)
@@ -146,6 +150,8 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
     m_diffusionReactions.push_back(reaction);
     m_mutexSolver.addReaction(reaction);
 
+    m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(x, y);
+
     if (setRate)
     {
         reaction->calculateRate();
@@ -241,46 +247,90 @@ void LatticeDiffusion::setupInitialConditions()
 
 
 void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
-                                                            const uint x, const uint y, const int z)
+                                                            const int x, const int y, const int z)
 {
+
+    //Somehow in this function, a particle is removed for (0,1,18) between 257 and 304...
+    //update of (0,2,11) to (0,2,12) works as it should
+    const ConcentrationBoundaryReaction *r = m_mutexSolver.concentrationBoundaryReactions().back();
+
+    cout << "---" << endl;
+    uint freePrev = r->freeBoundarySites(true);
+
+    const uint xOld = reaction->x();
+    const uint yOld = reaction->y();
 
     //particle has transitioned outside the regime.
     if (solver().isOutsideBox(x, y))
     {
         removeDiffusionReactant(reaction, false);
+
+        return;
     }
 
+    const uint ux = (uint)x;
+    const uint uy = (uint)y;
 
-    //set x, y, z even if we remove the reaction in case the reaction is used
-    //as the current reaction in the kmcsolver.
-    reaction->setX(x);
-    reaction->setY(y);
+    reaction->setX(ux);
+    reaction->setY(uy);
     reaction->setZ(z);
 
-    if (solver().isSurfaceSite(x, y, z))
+    if (solver().isSurfaceSite(ux, uy, z))
     {
-        m_mutexSolver.registerHeightChange(x, y, 1);
+        m_mutexSolver.registerHeightChange(ux, uy, 1);
         removeDiffusionReactant(reaction, false);
 
         int zAbove = z+1;
-        while (isBlockedPosition(x, y, zAbove))
+        while (isBlockedPosition(ux, uy, zAbove))
         {
-            m_mutexSolver.registerHeightChange(x, y, 1);
-            removeDiffusionReactant(x, y, zAbove, false);
+            m_mutexSolver.registerHeightChange(ux, uy, 1);
+            removeDiffusionReactant(ux, uy, zAbove, false);
             zAbove++;
         }
+
+        cout << "SARF" << endl;
+    }
+    else
+    {
+        cout << "nsarf" << endl;
     }
 
+    if (!(xOld == ux && yOld == uy))
+    {
+        m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
+        m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(ux, uy);
+    }
+    else
+    {
+        BADAssEqual(r->freeBoundarySites(true), freePrev);
+    }
+}
+
+void LatticeDiffusion::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
+{
+    const uint n =reaction->freeBoundarySites();
+    const uint nChosen = rng.uniform()*n;
+
+    uint xi;
+    int z;
+    reaction->getFreeBoundarSite(nChosen, xi, z);
+
+    return;
+
+    if (reaction->dim() == 0)
+    {
+        addDiffusionReactant(xi, reaction->location(), z);
+    }
+
+    else
+    {
+        addDiffusionReactant(reaction->location(), xi, z);
+    }
 }
 
 bool LatticeDiffusion::isBlockedPosition(const uint x, const uint y, const int z) const
 {
-    return diffusionReaction(x, y, z) != NULL;;
-}
-
-void LatticeDiffusion::insertDiffusingParticle(const double x, const double y, const double z)
-{
-    addDiffusionReactant(x, y, z, true);
+    return diffusionReaction(x, y, z) != NULL;
 }
 
 void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const int delta)

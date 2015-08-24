@@ -38,10 +38,12 @@ public:
         LatticeDiffusion::registerHeightChange(x, y, delta);
     }
 
-    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z)
+    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
     {
         LatticeDiffusion::executeDiffusionReaction(reaction, x, y, z);
     }
+
+    void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
 
     bool isBlockedPosition(const uint x, const uint y, const int z) const
     {
@@ -55,9 +57,5 @@ public:
     void onInsertParticle(const double x, const double y, const double z);
     void onRemoveParticle(const uint n);
 
-
-    // Diffusion interface
-public:
-    void insertDiffusingParticle(const double x, const double y, const double z);
 };
 

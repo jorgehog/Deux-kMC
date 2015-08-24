@@ -121,8 +121,6 @@ void KMCSolver::initialize()
     m_currentTime = 0;
     m_nextRandomLogNumber = getRandomLogNumber();
 
-    initializeSolver();
-
     initializeReactions();
 
     updateTime();

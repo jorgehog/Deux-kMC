@@ -47,9 +47,9 @@ public:
     void setupInitialConditions();
     double depositionRate(const uint x, const uint y) const;
     void registerHeightChange(const uint x, const uint y, const int delta);
-    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z);
+    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
+    void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
     bool isBlockedPosition(const uint x, const uint y, const int z) const;
-    void insertDiffusingParticle(const double x, const double y, const double z);
 
 };
 
