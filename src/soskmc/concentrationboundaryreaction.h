@@ -3,8 +3,6 @@
 #include "sossolver.h"
 #include "../kmcsolver/reaction.h"
 
-#define AXTRANS(callable, n, ...) dim() == 0 ? callable(n, location(), ##__VA_ARGS__) : callable(location(), n, ##__VA_ARGS__)
-
 class ConcentrationBoundaryReaction : public kMC::Reaction
 {
 public:
@@ -21,7 +19,7 @@ public:
 
     double topFilling() const;
 
-    uint freeBoundarySites(bool spam = false) const;
+    uint freeBoundarySites() const;
 
     bool pointIsOnBoundary(const uint x, const uint y) const;
 

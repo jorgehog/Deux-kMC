@@ -34,7 +34,15 @@ double ConcentrationBoundaryReaction::dh(const uint n) const
 
 const int &ConcentrationBoundaryReaction::heightAtBoundary(const uint n) const
 {
-    return AXTRANS(solver().height, n);
+    if (dim() == 0)
+    {
+        return solver().height(n, location());
+    }
+
+    else
+    {
+        return solver().height(location(), n);
+    }
 }
 
 void ConcentrationBoundaryReaction::getFreeBoundarSite(const uint n, uint &xi, int &z) const
@@ -49,7 +57,7 @@ void ConcentrationBoundaryReaction::getFreeBoundarSite(const uint n, uint &xi, i
     uint nCount = 0;
     for (xi = 0; xi < span(); ++xi)
     {
-        for (z = heightAtBoundary(xi) + 1; z < surfaceHeightInt - 1; ++z)
+        for (z = heightAtBoundary(xi) + 1; z < surfaceHeightInt; ++z)
         {
             if (dim() == 0)
             {
@@ -83,10 +91,10 @@ double ConcentrationBoundaryReaction::topFilling() const
 
 }
 
-uint ConcentrationBoundaryReaction::freeBoundarySites(bool spam) const
+uint ConcentrationBoundaryReaction::freeBoundarySites() const
 {
     const double surfaceHeight = solver().confiningSurfaceEvent().height();
-    const int surfaceHeightInt = (int)surfaceHeight;
+    const int surfaceHeightInt = (const int)surfaceHeight;
 
     bool blocked;
 
@@ -94,7 +102,7 @@ uint ConcentrationBoundaryReaction::freeBoundarySites(bool spam) const
 
     for (uint xi = 0; xi < span(); ++xi)
     {
-        for (int z = heightAtBoundary(xi) + 1; z < surfaceHeightInt - 1; ++z)
+        for (int z = heightAtBoundary(xi) + 1; z < surfaceHeightInt; ++z)
         {
 
             if (dim() == 0)
@@ -109,18 +117,9 @@ uint ConcentrationBoundaryReaction::freeBoundarySites(bool spam) const
 
             if (!blocked)
             {
-                if (spam)
-                {
-                    cout << "(" << xi << " " << z << ") ";
-                }
                 nSites += 1;
             }
         }
-    }
-
-    if (spam)
-    {
-        cout << "\n\n\n" << endl;
     }
 
     return nSites;

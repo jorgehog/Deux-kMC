@@ -20,7 +20,7 @@ public:
 
     void clearDiffusionReactions();
 
-    uint numberOfDiffusionReactions() const
+    uint  numberOfDiffusionReactions() const
     {
         return m_diffusionReactions.size();
     }

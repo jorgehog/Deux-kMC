@@ -207,6 +207,6 @@ void SOSDiffusionReaction::executeAndUpdate()
 
 double SOSDiffusionReaction::rateExpression()
 {
-    return 1.;
+    return 6.;
 }
 

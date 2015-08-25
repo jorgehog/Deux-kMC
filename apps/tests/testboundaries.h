@@ -133,7 +133,7 @@ TEST_F(SOSkMCTest, boundaries_concentration)
 
     ConcentrationBoundaryReaction r(1, 0, *m_solver);
 
-    double origArea = W*(height-2);
+    double origArea = W*(height-1);
     EXPECT_EQ(origArea, r.freeBoundaryArea());
 
     uint yloc = 1;
@@ -148,7 +148,7 @@ TEST_F(SOSkMCTest, boundaries_concentration)
     int zFree;
     for (uint y = 0; y < W; ++y)
     {
-        for (int z = m_solver->height(0, y) + 1; z < iheight - 1; ++z)
+        for (int z = m_solver->height(0, y) + 1; z < iheight; ++z)
         {
             if (y == yloc && z == zloc)
             {
@@ -166,7 +166,7 @@ TEST_F(SOSkMCTest, boundaries_concentration)
             else
             {
 
-                if (z == iheight - 2)
+                if (z == iheight - 1)
                 {
                     EXPECT_EQ(y+1, yFree);
                     EXPECT_EQ(m_solver->height(0, y+1) + 1, zFree);
@@ -229,15 +229,16 @@ TEST_F(SOSkMCTest, boundaries_concentration)
     diffusionEvent->clearDiffusionReactions();
 
     n = 0;
-    uint max = W*(iheight-2);
+    uint max = W*(iheight-1);
     for (uint y = 0; y < W; ++y)
     {
-        for (int z = m_solver->height(0, y)+2; z < iheight-1; ++z)
+        for (int z = m_solver->height(0, y)+2; z < iheight; ++z)
         {
             diffusionEvent->addDiffusionReactant(0, y, z);
+            n++;
         }
 
-        EXPECT_EQ(max-n, r.freeBoundaryArea());
+        EXPECT_EQ(max-n, r.freeBoundarySites());
     }
 
 }

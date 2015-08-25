@@ -250,12 +250,6 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
                                                             const int x, const int y, const int z)
 {
 
-    //Somehow in this function, a particle is removed for (0,1,18) between 257 and 304...
-    //update of (0,2,11) to (0,2,12) works as it should
-    const ConcentrationBoundaryReaction *r = m_mutexSolver.concentrationBoundaryReactions().back();
-
-    cout << "---" << endl;
-    uint freePrev = r->freeBoundarySites(true);
 
     const uint xOld = reaction->x();
     const uint yOld = reaction->y();
@@ -288,11 +282,6 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
             zAbove++;
         }
 
-        cout << "SARF" << endl;
-    }
-    else
-    {
-        cout << "nsarf" << endl;
     }
 
     if (!(xOld == ux && yOld == uy))
@@ -300,10 +289,7 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
         m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
         m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(ux, uy);
     }
-    else
-    {
-        BADAssEqual(r->freeBoundarySites(true), freePrev);
-    }
+
 }
 
 void LatticeDiffusion::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
