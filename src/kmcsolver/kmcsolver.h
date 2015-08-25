@@ -1,10 +1,14 @@
 #pragma once
 
-#include <ignis/include/ignis.h>
-
 #include "kmcassets.h"
 
 #include "RNG/rng.h"
+
+#include <ignis/include/ignis.h>
+
+#include <unordered_set>
+
+using std::unordered_set;
 
 namespace kMC
 {
@@ -61,8 +65,15 @@ public:
         return m_reactions.size();
     }
 
+    void registerAffectedReaction(Reaction *reaction)
+    {
+        m_affectedReactions.insert(reaction);
+    }
+
 private:
     vector<Reaction*> m_reactions;
+
+    unordered_set<Reaction*> m_affectedReactions;
 
     vector<vector<const Boundary*>> m_boundaries;
 

@@ -19,6 +19,7 @@ KMCSolver::~KMCSolver()
 {
     //KMCSolver is not responsible for deletion
     m_reactions.clear();
+    m_affectedReactions.clear();
     m_boundaries.clear();
 }
 
@@ -79,6 +80,13 @@ double KMCSolver::getRandomLogNumber() const
 
 void KMCSolver::getCumsumAndTotalRate()
 {
+    for (Reaction *r : m_affectedReactions)
+    {
+        r->calculateRate();
+    }
+
+    m_affectedReactions.clear();
+
     m_totalRate = 0;
 
     double rate;
@@ -96,7 +104,17 @@ void KMCSolver::getCumsumAndTotalRate()
         if (reaction->isAllowed())
         {
             rate = reaction->rate();
-            BADAssClose(reaction->rate(), reaction->rateExpression(), 1E-5);
+            BADAssClose(reaction->rate(),
+                        reaction->rateExpression(),
+                        1E-5,
+                        "Reaction rate inconsistency.",
+                        [&] ()
+            {
+                double r1 = reaction->rate();
+                double r2 = reaction->rateExpression();
+
+                BADAssSimpleDump(r1, r2);
+            });
 
             m_totalRate += rate;
         }
@@ -132,6 +150,15 @@ void KMCSolver::execute()
     double R = rng.uniform()*m_totalRate;
 
     uint choice = binarySearchForInterval(R, m_cumsumRates);
+
+    //this makes sure that reactions with 0 rate is not selected.
+    if (choice != 0)
+    {
+        while (m_cumsumRates.at(choice) == m_cumsumRates.at(choice-1))
+        {
+            choice--;
+        }
+    }
 
     m_selectedReaction = getReaction(choice);
 

@@ -24,6 +24,8 @@ public:
 
 private:
 
+    SOSSolver &m_mutexSolver;
+
     double m_currentTimeStep;
 
     static constexpr double m_eps = 0.00001;

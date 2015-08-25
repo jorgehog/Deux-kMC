@@ -5,7 +5,8 @@
 OfflatticeMonteCarloNoBoundary::OfflatticeMonteCarloNoBoundary(SOSSolver &solver,
                                                                const double dt) :
     Diffusion(solver, "offlatticeMC"),
-    OfflatticeMonteCarlo(solver, dt)
+    OfflatticeMonteCarlo(solver, dt),
+    m_mutexSolver(solver)
 {
 
 }
@@ -294,7 +295,7 @@ void OfflatticeMonteCarloNoBoundary::registerHeightChange(const uint x, const ui
     {
         for (uint _y = 0; _y < solver().width(); ++_y)
         {
-            r = &solver().surfaceReaction(_x, _y);
+            r = &m_mutexSolver.surfaceReaction(_x, _y);
             r->setDepositionRate(r->calculateDepositionRate());
         }
     }

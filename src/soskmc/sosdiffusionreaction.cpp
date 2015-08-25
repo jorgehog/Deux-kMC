@@ -25,7 +25,7 @@ SOSDiffusionReaction::~SOSDiffusionReaction()
 
 }
 
-uint SOSDiffusionReaction::numberOfFreePaths() const
+uint SOSDiffusionReaction::calculateNumberOfFreePaths() const
 {
     //We are always able to diffuse down since a diffusing particle never is on the surface.
     //Transitions to the surface will transform the particle to the SOS surface and remove it
@@ -187,16 +187,16 @@ void SOSDiffusionReaction::removeFromSimulation()
 
 bool SOSDiffusionReaction::isAllowed() const
 {
-    return numberOfFreePaths() != 0;
+    return calculateNumberOfFreePaths() != 0;
 }
 
 void SOSDiffusionReaction::executeAndUpdate()
 {
     int dx, dy, dz;
 
-    const uint nPaths = numberOfFreePaths();
+    const uint nPaths = calculateNumberOfFreePaths();
 
-    BADAss(nPaths, !=, 0);
+    BADAss(nPaths, !=, 0u);
 
     uint path = rng.uniform()*nPaths;
 
@@ -207,6 +207,6 @@ void SOSDiffusionReaction::executeAndUpdate()
 
 double SOSDiffusionReaction::rateExpression()
 {
-    return 2*solver().dim();
+    return calculateNumberOfFreePaths();
 }
 

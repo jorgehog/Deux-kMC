@@ -199,7 +199,7 @@ const Boundary *getBoundaryFromID(const uint ID, const uint span, Boundary::orie
         break;
     default:
         cerr << "invalid boundary: " << ID << endl;
-        return NULL;
+        return nullptr;
         break;
     }
 

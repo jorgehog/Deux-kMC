@@ -29,6 +29,10 @@ public:
 
     void attachToSurface(const uint x, const uint y, const int z, SOSDiffusionReaction *reaction);
 
+    void registerAffectedAround(const uint x, const uint y, const int z);
+
+    void registerAffectedAroundSingle(const int neighbor, const uint xi, const uint dim, const int z);
+
 private:
 
     vector<SOSDiffusionReaction*> m_diffusionReactions;

@@ -196,7 +196,12 @@ public:
 
     bool isSurfaceSite(const uint x, const uint y, const int z) const;
 
-    DissolutionDeposition &surfaceReaction(const uint x, const uint y) const
+    DissolutionDeposition &surfaceReaction(const uint x, const uint y)
+    {
+        return *m_siteReactions(x, y);
+    }
+
+    const DissolutionDeposition &surfaceReaction(const uint x, const uint y) const
     {
         return *m_siteReactions(x, y);
     }
@@ -237,7 +242,7 @@ private:
 
     vector<ConcentrationBoundaryReaction*> m_concentrationBoundaryReactions;
 
-    std::vector<DissolutionDeposition*> m_affectedReactions;
+    std::vector<DissolutionDeposition*> m_affectedSurfaceReactions;
 
     set_type m_changedSurfaceSites;
 

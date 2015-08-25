@@ -63,6 +63,8 @@ public:
 
 private:
 
+    SOSSolver &m_mutexSolver;
+
     double m_heightChange;
     double m_expFac;
 

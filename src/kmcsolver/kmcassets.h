@@ -5,6 +5,7 @@
 #include <armadillo>
 
 using std::vector;
+using arma::vec;
 
 namespace kMC
 {
@@ -12,7 +13,7 @@ namespace kMC
 inline uint binarySearchForInterval(const double target, const double* intervals, uint size)
 {
 
-    BADAss(size, !=, 0, "Number of intervals cannot be zero.");
+    BADAss(size, !=, 0u, "Number of intervals cannot be zero.");
 
     uint imax = size - 1;
     uint MAX = imax;

@@ -4,6 +4,8 @@
 
 #include "../kmcsolver/boundary/boundary.h"
 
+#include "dissolutiondeposition.h"
+
 #include "sosdiffusionreaction.h"
 
 #include "concentrationboundaryreaction.h"
@@ -38,6 +40,7 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
     r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
 
     m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
+    registerAffectedAround(reaction->x(), reaction->y(), reaction->z());
 
     if (_delete)
     {
@@ -50,6 +53,7 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
         //Should use smart pointers really.
         m_deleteQueue.push_back(reaction);
     }
+
 }
 
 void LatticeDiffusion::removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete)
@@ -67,7 +71,7 @@ SOSDiffusionReaction *LatticeDiffusion::diffusionReaction(const uint x, const ui
 
     if (res == r.end())
     {
-        return NULL;
+        return nullptr;
     }
 
     else
@@ -119,6 +123,71 @@ void LatticeDiffusion::attachToSurface(const uint x,
         removeDiffusionReactant(x, y, zAbove, false);
         zAbove++;
     }
+}
+
+void LatticeDiffusion::registerAffectedAround(const uint x, const uint y, const int z)
+{
+    const int left = solver().leftSite(x);
+    const int right = solver().rightSite(x);
+    const int top = solver().topSite(y);
+    const int bottom = solver().bottomSite(y);
+
+    registerAffectedAroundSingle(left, y, 0, z);
+    registerAffectedAroundSingle(right, y, 0, z);
+    registerAffectedAroundSingle(top, x, 1, z);
+    registerAffectedAroundSingle(bottom, x, 1, z);
+
+    SOSDiffusionReaction *r;
+
+    if ((r = diffusionReaction(x, y, z - 1)) != nullptr)
+    {
+        m_mutexSolver.registerAffectedReaction(r);
+    }
+
+    if ((r = diffusionReaction(x, y, z + 1)) != nullptr)
+    {
+        m_mutexSolver.registerAffectedReaction(r);
+    }
+}
+
+void LatticeDiffusion::registerAffectedAroundSingle(const int neighbor, const uint xi, const uint dim, const int z)
+{
+    if (solver().isOutsideBoxSingle(neighbor, dim))
+    {
+        return;
+    }
+
+    int hNeighbor;
+    SOSDiffusionReaction *r;
+
+    if (dim == 0)
+    {
+        hNeighbor = solver().height(neighbor, xi);
+        if (z == hNeighbor || z == hNeighbor + 1)
+        {
+            m_mutexSolver.registerAffectedReaction(&m_mutexSolver.surfaceReaction(neighbor, xi));
+        }
+
+        if ((r = diffusionReaction(neighbor, xi, z)) != nullptr)
+        {
+            m_mutexSolver.registerAffectedReaction(r);
+        }
+    }
+
+    else
+    {
+        hNeighbor = solver().height(xi, neighbor);
+        if (z == hNeighbor || z == hNeighbor + 1)
+        {
+            m_mutexSolver.registerAffectedReaction(&m_mutexSolver.surfaceReaction(xi, neighbor));
+        }
+
+        if ((r = diffusionReaction(xi, neighbor, z)) != nullptr)
+        {
+            m_mutexSolver.registerAffectedReaction(r);
+        }
+    }
+
 }
 
 void LatticeDiffusion::dump(const uint frameNumber) const
@@ -175,6 +244,8 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
         reaction->calculateRate();
     }
 
+    registerAffectedAround(x, y, z);
+
     return reaction;
 }
 
@@ -182,8 +253,12 @@ void LatticeDiffusion::execute()
 {
     deleteQueuedReactions();
 
-    Diffusion::dump(cycle());
-    dump(cycle());
+    uint dumpTreshold = 1000;
+    if (cycle() % dumpTreshold == 0)
+    {
+        Diffusion::dump(cycle()/dumpTreshold);
+        dump(cycle());
+    }
 
 #ifndef NDEBUG
     for(const SOSDiffusionReaction *reaction : m_diffusionReactions)
@@ -265,15 +340,12 @@ void LatticeDiffusion::setupInitialConditions()
 
 
 void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
-                                                            const int x, const int y, const int z)
+                                                const int x, const int y, const int z)
 {
-    if (cycle() == 19)
-    {
-        cout << "halt" << endl;
-    }
-
     const uint xOld = reaction->x();
     const uint yOld = reaction->y();
+
+    registerAffectedAround(xOld, yOld, reaction->z());
 
     //particle has transitioned outside the regime.
     if (solver().isOutsideBox(x, y))
@@ -285,6 +357,8 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
 
     const uint ux = (uint)x;
     const uint uy = (uint)y;
+
+    registerAffectedAround(ux, uy, z);
 
     reaction->setX(ux);
     reaction->setY(uy);
@@ -326,7 +400,7 @@ void LatticeDiffusion::executeConcentrationBoundaryReaction(ConcentrationBoundar
 
 bool LatticeDiffusion::isBlockedPosition(const uint x, const uint y, const int z) const
 {
-    return diffusionReaction(x, y, z) != NULL;
+    return diffusionReaction(x, y, z) != nullptr;
 }
 
 void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const int delta)
@@ -337,6 +411,8 @@ void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const in
     {
         const uint nSites = solver().numberOfSurroundingSolutionSites(x, y, solver().height(x, y)+1);
         const uint randomSite = rng.uniform()*nSites;
+
+        BADAss(nSites, !=, 0u);
 
         int dx, dy, dz;
         solver().getSolutionSite(x, y, solver().height(x, y)+1, dx, dy, dz, randomSite);
@@ -353,6 +429,8 @@ void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const in
         });
 
         addDiffusionReactant(xNew, yNew, zNew);
+
+        registerAffectedAround(x, y, solver().height(x, y) + 1);
     }
 
     //this can occur if the surface is changed so that it connects to a particle in the solution.
@@ -361,11 +439,14 @@ void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const in
         const int zSurface = solver().height(x, y) + 1;
         SOSDiffusionReaction *r = diffusionReaction(x, y, zSurface);
 
+        registerAffectedAround(x, y, solver().height(x, y));
+
         if (r != NULL)
         {
             attachToSurface(x, y, zSurface, r);
         }
     }
+
 }
 
 double LatticeDiffusion::depositionRate(const uint x, const uint y) const
@@ -376,4 +457,3 @@ double LatticeDiffusion::depositionRate(const uint x, const uint y) const
     //Deposition is modelled as a diffusion reaction and is not explicitly treated.
     return 0;
 }
-

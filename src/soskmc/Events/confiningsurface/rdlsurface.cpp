@@ -6,6 +6,7 @@ RDLSurface::RDLSurface(SOSSolver &solver,
                        const double s0,
                        const double lD) :
     ConfiningSurface(solver, "RDLSurface", "l0", true, true),
+    m_mutexSolver(solver),
     m_lD(lD),
     m_s0(s0),
     m_E0(E0),
@@ -264,7 +265,7 @@ void RDLSurface::registerHeightChange(const uint x, const uint y, std::vector<Di
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            DissolutionDeposition &reaction = solver().surfaceReaction(x, y);
+            DissolutionDeposition &reaction = m_mutexSolver.surfaceReaction(x, y);
 
             if (std::find(start, end, &reaction) == end)
             {

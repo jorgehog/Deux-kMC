@@ -21,7 +21,7 @@ SOSSolver::SOSSolver(const uint length,
     m_heights(length, width, fill::zeros),
     m_nNeighbors(length, width),
     m_siteReactions(length, width),
-    m_affectedReactions(5)
+    m_affectedSurfaceReactions(5)
 
 {
     for (uint x = 0; x < length; ++x)
@@ -70,46 +70,45 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
     uint n = 0;
 
     setNNeighbors(x, y);
-    m_affectedReactions.at(n) = &surfaceReaction(x, y);
+    m_affectedSurfaceReactions.at(n) = &surfaceReaction(x, y);
     n++;
 
     if (!isOutsideBoxSingle(left, 0))
     {
         setNNeighbors(left, y);
-        m_affectedReactions.at(n) = &surfaceReaction(left, y);
+        m_affectedSurfaceReactions.at(n) = &surfaceReaction(left, y);
         n++;
     }
 
     if (!isOutsideBoxSingle(right, 0))
     {
         setNNeighbors(right, y);
-        m_affectedReactions.at(n) = &surfaceReaction(right, y);
+        m_affectedSurfaceReactions.at(n) = &surfaceReaction(right, y);
         n++;
     }
 
     if (!isOutsideBoxSingle(top, 1))
     {
         setNNeighbors(x, top);
-        m_affectedReactions.at(n) = &surfaceReaction(x, top);
+        m_affectedSurfaceReactions.at(n) = &surfaceReaction(x, top);
         n++;
     }
 
     if (!isOutsideBoxSingle(bottom, 1))
     {
         setNNeighbors(x, bottom);
-        m_affectedReactions.at(n) = &surfaceReaction(x, bottom);
+        m_affectedSurfaceReactions.at(n) = &surfaceReaction(x, bottom);
         n++;
     }
 
-    m_confiningSurfaceEvent->registerHeightChange(x, y, m_affectedReactions, n);
+    m_confiningSurfaceEvent->registerHeightChange(x, y, m_affectedSurfaceReactions, n);
 
     m_diffusionEvent->registerHeightChange(x, y, value);
 
     //recalcuate rates for neighbor reactions.
     for (uint i = 0; i < n; ++i)
     {
-        DissolutionDeposition *reaction = m_affectedReactions.at(i);
-        reaction->calculateRate();
+        registerAffectedReaction(m_affectedSurfaceReactions.at(i));
     }
 
     updateConcentrationBoundaryIfOnBoundary(x, y);
@@ -178,8 +177,8 @@ void SOSSolver::setDiffusionEvent(Diffusion &diffusionEvent)
 
 double SOSSolver::volume() const
 {
-    //sum (h_l - h_i) - 1
-    return (m_confiningSurfaceEvent->height() - 1)*area() - arma::accu(m_heights);
+    //sum (h_l - h_i)
+    return m_confiningSurfaceEvent->height()*area() - arma::accu(m_heights);
 }
 
 double SOSSolver::confinementEnergy(const uint x, const uint y) const
@@ -194,6 +193,7 @@ double SOSSolver::confinementEnergy(const uint x, const uint y) const
 
 double SOSSolver::depositionRate(const uint x, const uint y) const
 {
+    //derp when wall moves away, this reaction should have its rate changed back. Very rare?
     if (height(x, y) + 1 > confiningSurfaceEvent().height())
     {
         return 0;

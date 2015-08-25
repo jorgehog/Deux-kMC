@@ -9,6 +9,8 @@
 
 #include "../../src/soskmc/sosdiffusionreaction.h"
 
+#include "../../src/soskmc/dissolutiondeposition.h"
+
 TEST_F(SOSkMCTest, diffusion)
 {
     const uint L = 3;
@@ -250,14 +252,14 @@ TEST_F(SOSkMCTest, surfaceSites)
     }
 
     SOSDiffusionReaction *r = diffusionEvent->diffusionReaction(1, 1, 2);
-    EXPECT_EQ(2, r->numberOfFreePaths());
+    EXPECT_EQ(2, r->calculateNumberOfFreePaths());
 
     //Deposit 4 paticles (neighbors of center site)
     diffusionEvent->diffusionReaction(0, 1, 2)->executeReaction(0, 0, -1);
     diffusionEvent->diffusionReaction(2, 1, 2)->executeReaction(0, 0, -1);
     diffusionEvent->diffusionReaction(1, 0, 2)->executeReaction(0, 0, -1);
     diffusionEvent->diffusionReaction(1, 2, 2)->executeReaction(0, 0, -1);
-    EXPECT_EQ(6, r->numberOfFreePaths());
+    EXPECT_EQ(6, r->calculateNumberOfFreePaths());
 
     EXPECT_EQ(1, m_solver->height(0, 1));
     EXPECT_EQ(1, m_solver->height(2, 1));
@@ -266,16 +268,16 @@ TEST_F(SOSkMCTest, surfaceSites)
 
     //Deposit 4 particles (not neighbors of center, to neighbors of center)
     diffusionEvent->diffusionReaction(0, 0, 2)->executeReaction( 1, 0, 0);
-    EXPECT_EQ(5, r->numberOfFreePaths());
+    EXPECT_EQ(5, r->calculateNumberOfFreePaths());
 
     diffusionEvent->diffusionReaction(2, 2, 2)->executeReaction(-1, 0, 0);
-    EXPECT_EQ(4, r->numberOfFreePaths());
+    EXPECT_EQ(4, r->calculateNumberOfFreePaths());
 
     diffusionEvent->diffusionReaction(0, 2, 2)->executeReaction( 0,-1, 0);
-    EXPECT_EQ(3, r->numberOfFreePaths());
+    EXPECT_EQ(3, r->calculateNumberOfFreePaths());
 
     diffusionEvent->diffusionReaction(2, 0, 2)->executeReaction( 0, 1, 0);
-    EXPECT_EQ(2, r->numberOfFreePaths());
+    EXPECT_EQ(2, r->calculateNumberOfFreePaths());
 
     EXPECT_EQ(2, m_solver->height(0, 1));
     EXPECT_EQ(2, m_solver->height(2, 1));
@@ -285,10 +287,10 @@ TEST_F(SOSkMCTest, surfaceSites)
     EXPECT_EQ(1, diffusionEvent->numberOfDiffusionReactions());
 
     r->setZ((uint)height);
-    EXPECT_EQ(5, r->numberOfFreePaths());
+    EXPECT_EQ(5, r->calculateNumberOfFreePaths());
 
     r->setZ(2);
-    EXPECT_EQ(2, r->numberOfFreePaths());
+    EXPECT_EQ(2, r->calculateNumberOfFreePaths());
 
     uint upCount = 0;
     uint downCount = 0;
@@ -298,7 +300,7 @@ TEST_F(SOSkMCTest, surfaceSites)
 
     for (uint i = 0; i < N; ++i)
     {
-        r->getDiffusionPath(r->numberOfFreePaths()*rng.uniform(), dx, dy, dz);
+        r->getDiffusionPath(r->calculateNumberOfFreePaths()*rng.uniform(), dx, dy, dz);
 
         EXPECT_EQ(0, dx);
         EXPECT_EQ(0, dy);
@@ -381,7 +383,7 @@ TEST_F(SOSkMCTest, dissolution)
 
     //only dissolution path should be straight up
     EXPECT_EQ(1, diffusionEvent->numberOfDiffusionReactions());
-    EXPECT_TRUE(NULL != diffusionEvent->diffusionReaction(1, 1, 1));
+    EXPECT_TRUE(nullptr!= diffusionEvent->diffusionReaction(1, 1, 1));
     diffusionEvent->clearDiffusionReactions();
 
     //Sites neighboring to center should have 1 paths now
@@ -585,10 +587,10 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
             }
             cout << endl << "---" << endl;
 
-            EXPECT_EQ(nNeighborsMax - N, r->numberOfFreePaths());
+            EXPECT_EQ(nNeighborsMax - N, r->calculateNumberOfFreePaths());
 
             int dx, dy, dz;
-            for (uint p = 0; p < r->numberOfFreePaths(); ++p)
+            for (uint p = 0; p < r->calculateNumberOfFreePaths(); ++p)
             {
                 r->getDiffusionPath(p, dx, dy, dz);
                 uint x = m_solver->boundaryTransform(r->x(), dx, 0);
@@ -596,11 +598,11 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
                 int z = r->z() + dz;
 
                 //we expect that there are no particles along the free diffusion paths.
-                EXPECT_TRUE(diffusionEvent->diffusionReaction(x, y, z) == NULL) << "i= " <<i <<" path: " << p
-                                                                                << " dx dy dz "
-                                                                                << dx << " "
-                                                                                << dy << " "
-                                                                                << dz;
+                EXPECT_TRUE(diffusionEvent->diffusionReaction(x, y, z) == nullptr) << "i= " <<i <<" path: " << p
+                                                                                   << " dx dy dz "
+                                                                                   << dx << " "
+                                                                                   << dy << " "
+                                                                                   << dz;
             }
 
             if (positions(lastIndex) == nNeighborsMax - 1)
@@ -725,7 +727,7 @@ TEST_F(SOSkMCTest, SOS_diff_mixedboundary)
     m_diffusionEvent = diffusionEvent;
 
     SetUp_yo();
-        rng.initialize(1001230);
+    rng.initialize(1001230);
 
     primeSolver(0);
 
@@ -755,6 +757,46 @@ TEST_F(SOSkMCTest, SOS_diff_mixedboundary)
 
 
 
+TEST_F(SOSkMCTest, SOS_diff_closewall_trapped)
+{
+    const uint L = 10;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 7;
+
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({2, 1, 0, 0}, L, W));
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent;
+
+    SetUp_yo();
+
+    primeSolver(0);
+
+    diffusionEvent->clearDiffusionReactions();
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
+        }
+    }
+
+    m_solver->setHeight(5, 1, 6);
+    m_solver->setHeight(6, 1, 5);
+    m_solver->setHeight(5, 2, 5);
+
+    diffusionEvent->addDiffusionReactant(5, 0, 6);
+    diffusionEvent->addDiffusionReactant(4, 1, 5);
+    diffusionEvent->addDiffusionReactant(5, 2, 6);
+
+    EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(5, 1));
+    EXPECT_FALSE(m_solver->surfaceReaction(5, 1).rateExpression() == 0);
+
+}
 
 
 

@@ -30,7 +30,7 @@ int main(int argv, char** argc)
 
     if (seedType == 0)
     {
-        seed = time(NULL);
+        seed = time(nullptr);
     }
     else
     {
@@ -139,6 +139,8 @@ int main(int argv, char** argc)
 
     else
     {
+        cout << "remember to fix rates!!!!" << endl;
+        exit(1);
         diffusion = new ConstantConcentration(solver);
     }
 
@@ -226,7 +228,7 @@ int main(int argv, char** argc)
     sizeDesc << L << "x" << W;
     H5Wrapper::Member &sizeRoot = h5root.addMember(sizeDesc.str());
 
-    H5Wrapper::Member &simRoot = sizeRoot.addMember(time(NULL));
+    H5Wrapper::Member &simRoot = sizeRoot.addMember(time(nullptr));
 
     simRoot.addData("alpha", alpha);
     simRoot.addData("gamma", gamma);

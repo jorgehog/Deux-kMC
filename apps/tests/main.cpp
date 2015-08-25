@@ -68,7 +68,7 @@ TEST(MiscTests, nRNG)
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    rng.initialize(time(NULL));
+    rng.initialize(time(nullptr));
 
     return RUN_ALL_TESTS();
 }

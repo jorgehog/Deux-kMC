@@ -2,6 +2,8 @@
 
 #include "sosreaction.h"
 
+#include <BADAss/badass.h>
+
 using namespace kMC;
 
 class SOSDiffusionReaction : public SOSReaction
@@ -20,7 +22,13 @@ public:
         m_z = z;
     }
 
-    uint numberOfFreePaths() const;
+    uint calculateNumberOfFreePaths() const;
+
+    const uint &numberOfFreePaths() const
+    {
+        BADAssEqual(m_numberOfFreePaths, calculateNumberOfFreePaths());
+        return m_numberOfFreePaths;
+    }
 
     void getDiffusionPath(const uint path, int &dx, int &dy, int &dz);
 
@@ -29,6 +37,8 @@ public:
 private:
 
     int m_z;
+
+    uint m_numberOfFreePaths;
 
     void removeFromSimulation();
 

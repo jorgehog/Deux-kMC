@@ -6,7 +6,7 @@
 
 #include "../apputils.h"
 
-#define deletehaxx(name) if (name != NULL) delete name; name = NULL
+#define deletehaxx(name) if (name != nullptr) delete name; name = nullptr
 
 // The fixture for testing class kMCTest.
 class SOSkMCTest : public ::testing::Test
@@ -29,7 +29,7 @@ protected:
     // and cleaning up each test, you can define the following methods:
     void SetUp()
     {
-        rng.initialize(time(NULL));
+        rng.initialize(time(nullptr));
     }
 
     void SetUp_yo()
@@ -86,11 +86,11 @@ protected:
         m_lattice->removeEvent(&primer);
     }
 
-    SOSSolver *m_solver = NULL;
-    AverageHeight *m_averageHeight = NULL;
-    ConfiningSurface *m_pressureWallEvent = NULL;
-    Diffusion *m_diffusionEvent = NULL;
+    SOSSolver *m_solver = nullptr;
+    AverageHeight *m_averageHeight = nullptr;
+    ConfiningSurface *m_pressureWallEvent = nullptr;
+    Diffusion *m_diffusionEvent = nullptr;
 
-    Lattice *m_lattice = NULL;
+    Lattice *m_lattice = nullptr;
 
 };

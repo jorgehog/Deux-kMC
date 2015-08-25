@@ -269,8 +269,6 @@ void RateChecker::reset()
 
         if (reaction->isAllowed())
         {
-            BADAss(reaction->rate(), !=, 0);
-
             BADAssClose(reaction->rate(), reaction->rateExpression(), 1E-5, "error in rate updating.", [&] ()
             {
                 BADAssSimpleDump(reaction->rate(), reaction->rateExpression());
