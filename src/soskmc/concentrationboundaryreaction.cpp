@@ -9,7 +9,7 @@ ConcentrationBoundaryReaction::ConcentrationBoundaryReaction(const uint dim, con
     m_dim(dim),
     m_orientation(orientation),
     m_location(orientation == 0 ? 0 : (dim == 0 ? solver.length() : solver.width())),
-    m_span(dim == 0 ? solver.length() : solver.width()),
+    m_span(dim == 0 ? solver.width() : solver.length()),
     m_solver(solver)
 {
     //location = 0 if orientation = 0 for both dims. If location = 1 we are at the end of the respective dim.
@@ -36,12 +36,12 @@ const int &ConcentrationBoundaryReaction::heightAtBoundary(const uint n) const
 {
     if (dim() == 0)
     {
-        return solver().height(n, location());
+        return solver().height(location(), n);
     }
 
     else
     {
-        return solver().height(location(), n);
+        return solver().height(n, location());
     }
 }
 
@@ -61,12 +61,12 @@ void ConcentrationBoundaryReaction::getFreeBoundarSite(const uint n, uint &xi, i
         {
             if (dim() == 0)
             {
-                blocked = solver().diffusionEvent().isBlockedPosition(xi, location(), z);
+                blocked = solver().diffusionEvent().isBlockedPosition(location(), xi, z);
             }
 
             else
             {
-                blocked = solver().diffusionEvent().isBlockedPosition(location(), xi, z);
+                blocked = solver().diffusionEvent().isBlockedPosition(xi, location(), z);
             }
 
             if (!blocked)
@@ -107,12 +107,12 @@ uint ConcentrationBoundaryReaction::freeBoundarySites() const
 
             if (dim() == 0)
             {
-                blocked = solver().diffusionEvent().isBlockedPosition(xi, location(), z);
+                blocked = solver().diffusionEvent().isBlockedPosition(location(), xi, z);
             }
 
             else
             {
-                blocked = solver().diffusionEvent().isBlockedPosition(location(), xi, z);
+                blocked = solver().diffusionEvent().isBlockedPosition(xi, location(), z);
             }
 
             if (!blocked)
@@ -129,12 +129,12 @@ bool ConcentrationBoundaryReaction::pointIsOnBoundary(const uint x, const uint y
 {
     if (dim() == 0)
     {
-        return y == location();
+        return x == location();
     }
 
     else
     {
-        return x == location();
+        return y == location();
     }
 }
 

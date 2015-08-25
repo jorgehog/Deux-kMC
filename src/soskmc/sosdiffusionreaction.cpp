@@ -207,6 +207,6 @@ void SOSDiffusionReaction::executeAndUpdate()
 
 double SOSDiffusionReaction::rateExpression()
 {
-    return 6.;
+    return 2*solver().dim();
 }
 

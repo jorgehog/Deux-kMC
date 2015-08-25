@@ -35,10 +35,9 @@ TEST_F(SOSkMCTest, boundaries_blocked)
         for (uint y = 0; y < W; ++y)
         {
             m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
         }
     }
-
-    diffusionEvent->clearDiffusionReactions();
 
     vector<bool> isBlocked = {false, true, false};
 
@@ -126,12 +125,11 @@ TEST_F(SOSkMCTest, boundaries_concentration)
         for (uint y = 0; y < W; ++y)
         {
             m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
         }
     }
 
-    diffusionEvent->clearDiffusionReactions();
-
-    ConcentrationBoundaryReaction r(1, 0, *m_solver);
+    ConcentrationBoundaryReaction r(0, 0, *m_solver);
 
     double origArea = W*(height-1);
     EXPECT_EQ(origArea, r.freeBoundaryArea());

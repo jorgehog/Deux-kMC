@@ -27,15 +27,16 @@ TEST_F(SOSkMCTest, diffusion)
 
     primeSolver(0);
 
+    diffusionEvent->clearDiffusionReactions();
+
     for (uint x = 0; x < L; ++x)
     {
         for (uint y = 0; y < W; ++y)
         {
             m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
         }
     }
-
-    diffusionEvent->clearDiffusionReactions();
 
     for (uint x = 0; x < L; ++x)
     {
@@ -199,16 +200,16 @@ TEST_F(SOSkMCTest, surfaceSites)
 
     primeSolver(0);
 
+    diffusionEvent->clearDiffusionReactions();
 
     for (uint x = 0; x < L; ++x)
     {
         for (uint y = 0; y < W; ++y)
         {
             m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
         }
     }
-
-    diffusionEvent->clearDiffusionReactions();
 
     for (uint x = 0; x < L; ++x)
     {
@@ -353,16 +354,16 @@ TEST_F(SOSkMCTest, dissolution)
 
     primeSolver(0);
 
+    diffusionEvent->clearDiffusionReactions();
 
     for (uint x = 0; x < L; ++x)
     {
         for (uint y = 0; y < W; ++y)
         {
             m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
         }
     }
-
-    diffusionEvent->clearDiffusionReactions();
 
     for (uint x = 0; x < L; ++x)
     {
@@ -479,16 +480,16 @@ TEST_F(SOSkMCTest, SOS_discrete_interface)
 
     primeSolver(0);
 
+    diffusionEvent->clearDiffusionReactions();
 
     for (uint x = 0; x < L; ++x)
     {
         for (uint y = 0; y < W; ++y)
         {
             m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
         }
     }
-
-    diffusionEvent->clearDiffusionReactions();
 
     m_solver->registerHeightChange(1,1,1);           //one peak on a flat surface
     diffusionEvent->addDiffusionReactant(1,1,3);     //a particle two lattice units away
@@ -528,16 +529,16 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
 
     primeSolver(0);
 
+    diffusionEvent->clearDiffusionReactions();
 
     for (uint x = 0; x < L; ++x)
     {
         for (uint y = 0; y < W; ++y)
         {
             m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
         }
     }
-
-    diffusionEvent->clearDiffusionReactions();
 
 
     vector<vector<int>> surroundings = {{1, 1, 4},
@@ -647,8 +648,110 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
 
 
 
+TEST_F(SOSkMCTest, SOS_diff_closeconf)
+{
+    const uint L = 3;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 4;
+    const int iheight = (const int) height;
+
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 0, 0}, L, W));
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent;
+
+    SetUp_yo();
+    //    rng.initialize(1000);
+
+    primeSolver(0);
+
+    diffusionEvent->clearDiffusionReactions();
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
+        }
+    }
+
+    m_solver->setHeight(1, 1, iheight - 1);
+
+    EXPECT_EQ(m_solver->numberOfSurroundingSolutionSites(1, 1), 4);
+
+    m_solver->setHeight(1, 0, iheight - 1);
+    m_solver->setHeight(1, 2, iheight - 1);
+    m_solver->setHeight(0, 1, iheight - 1);
+    m_solver->setHeight(2, 1, iheight - 1);
+
+    EXPECT_EQ(m_solver->numberOfSurroundingSolutionSites(1, 1), 0);
+
+    m_solver->setHeight(1, 0, 0);
+    diffusionEvent->clearDiffusionReactions();
+    m_solver->setHeight(1, 2, 0);
+    diffusionEvent->clearDiffusionReactions();
+    m_solver->setHeight(0, 1, 0);
+    diffusionEvent->clearDiffusionReactions();
+    m_solver->setHeight(2, 1, 0);
+    diffusionEvent->clearDiffusionReactions();
+
+    diffusionEvent->addDiffusionReactant(1, 0, iheight - 1);
+    diffusionEvent->addDiffusionReactant(1, 2, iheight - 1);
+    diffusionEvent->addDiffusionReactant(0, 1, iheight - 1);
+    diffusionEvent->addDiffusionReactant(2, 1, iheight - 1);
+
+    EXPECT_EQ(m_solver->numberOfSurroundingSolutionSites(1, 1), 0);
+
+}
 
 
+
+
+TEST_F(SOSkMCTest, SOS_diff_mixedboundary)
+{
+    const uint L = 3;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 4;
+    const int iheight = (const int) height;
+
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({2, 1, 0, 0}, L, W));
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent;
+
+    SetUp_yo();
+        rng.initialize(1001230);
+
+    primeSolver(0);
+
+    diffusionEvent->clearDiffusionReactions();
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
+        }
+    }
+
+    m_solver->setHeight(0, 2, iheight - 1);
+    diffusionEvent->addDiffusionReactant(0, 1, iheight - 1);
+    diffusionEvent->addDiffusionReactant(0, 0, iheight - 1);
+
+    diffusionEvent->Diffusion::dump(0);
+    diffusionEvent->dump(0);
+
+    EXPECT_EQ(2, m_solver->numberOfSurroundingSolutionSites(0, 2));
+
+
+
+}
 
 
 

@@ -83,12 +83,12 @@ void SurfaceSize::reset()
 
         updateRelativeHeight(x, y);
 
-        if (!solver().boundary(0, 0)->isBlocked(left))
+        if (!solver().isOutsideBoxSingle(left, 0))
         {
             updateRelativeHeight(left, y);
         }
 
-        if (!solver().boundary(1, 0)->isBlocked(bottom))
+        if (!solver().isOutsideBoxSingle(bottom, 1))
         {
             updateRelativeHeight(x, bottom);
         }

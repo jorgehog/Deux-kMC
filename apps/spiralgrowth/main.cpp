@@ -97,7 +97,7 @@ int main(int argv, char** argc)
                                            L, W);
 
     SOSSolver solver(L, W, alpha, gamma, boundaries);
-    solver.addConcentrationBoundary(1, Boundary::orientations::FIRST);
+    solver.addConcentrationBoundary(0, Boundary::orientations::FIRST);
 
     AverageHeight averageHeight(solver);
 

@@ -34,20 +34,11 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 
     m_mutexSolver.removeReaction(reaction);
 
+    auto &r = m_diffusionReactions;
+    r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
+
     m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
 
-#ifndef NDEBUG
-    auto comp = [&reaction] (const SOSDiffusionReaction *r)
-    {
-        return (reaction->x() == r->x()) && (reaction->y() == r->y()) && (reaction->z() == r->z());
-    };
-#endif
-
-    auto &r = m_diffusionReactions;
-    BADAss(std::find_if(r.begin(), r.end(), comp), !=, r.end());
-    r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
-    BADAss(std::find_if(r.begin(), r.end(), comp), ==, r.end());
-//    cout << "removed " << reaction->x() << " " << reaction->y() << " " << reaction->z() << endl;
     if (_delete)
     {
         delete reaction; //counters new in addDiffusionReactant
@@ -111,6 +102,25 @@ void LatticeDiffusion::deleteQueuedReactions()
     m_deleteQueue.clear();
 }
 
+void LatticeDiffusion::attachToSurface(const uint x,
+                                       const uint y,
+                                       const int z,
+                                       SOSDiffusionReaction *reaction)
+{
+    BADAssBool(solver().isSurfaceSite(x, y, z));
+
+    m_mutexSolver.registerHeightChange(x, y, 1);
+    removeDiffusionReactant(reaction, false);
+
+    int zAbove = z+1;
+    while (isBlockedPosition(x, y, zAbove))
+    {
+        m_mutexSolver.registerHeightChange(x, y, 1);
+        removeDiffusionReactant(x, y, zAbove, false);
+        zAbove++;
+    }
+}
+
 void LatticeDiffusion::dump(const uint frameNumber) const
 {
     const double &h = solver().confiningSurfaceEvent().height();
@@ -137,13 +147,21 @@ void LatticeDiffusion::dump(const uint frameNumber) const
 
 SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const uint y, const int z, bool setRate)
 {
-
+    //we do not add the particle if it is outside the box
     if (solver().isOutsideBox(x, y))
     {
-        return NULL;
+        return nullptr;
+    }
+
+    //if we add the particle to the surface, the particle becomes part of the surface
+    if (solver().isSurfaceSite(x, y, z))
+    {
+        m_mutexSolver.registerHeightChange(x, y, 1);
+        return nullptr;
     }
 
     BADAssBool(!isBlockedPosition(x, y, z), "spot already taken");
+    BADAssBool(!solver().isBlockedPosition(x, y, z), "spot inside surfaces");
 
     SOSDiffusionReaction *reaction = new SOSDiffusionReaction(m_mutexSolver, x, y, z);
 
@@ -249,7 +267,10 @@ void LatticeDiffusion::setupInitialConditions()
 void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
                                                             const int x, const int y, const int z)
 {
-
+    if (cycle() == 19)
+    {
+        cout << "halt" << endl;
+    }
 
     const uint xOld = reaction->x();
     const uint yOld = reaction->y();
@@ -271,17 +292,7 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
 
     if (solver().isSurfaceSite(ux, uy, z))
     {
-        m_mutexSolver.registerHeightChange(ux, uy, 1);
-        removeDiffusionReactant(reaction, false);
-
-        int zAbove = z+1;
-        while (isBlockedPosition(ux, uy, zAbove))
-        {
-            m_mutexSolver.registerHeightChange(ux, uy, 1);
-            removeDiffusionReactant(ux, uy, zAbove, false);
-            zAbove++;
-        }
-
+        attachToSurface(ux, uy, z, reaction);
     }
 
     if (!(xOld == ux && yOld == uy))
@@ -289,6 +300,7 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
         m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
         m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(ux, uy);
     }
+
 
 }
 
@@ -301,16 +313,14 @@ void LatticeDiffusion::executeConcentrationBoundaryReaction(ConcentrationBoundar
     int z;
     reaction->getFreeBoundarSite(nChosen, xi, z);
 
-    return;
-
     if (reaction->dim() == 0)
     {
-        addDiffusionReactant(xi, reaction->location(), z);
+        addDiffusionReactant(reaction->location(), xi, z);
     }
 
     else
     {
-        addDiffusionReactant(reaction->location(), xi, z);
+        addDiffusionReactant(xi, reaction->location(), z);
     }
 }
 
@@ -325,7 +335,8 @@ void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const in
     //add one to solution site heights because at this stage height(x,y) is already updated
     if (delta == -1)
     {
-        const uint randomSite = rng.uniform()*solver().numberOfSurroundingSolutionSites(x, y, solver().height(x, y)+1);
+        const uint nSites = solver().numberOfSurroundingSolutionSites(x, y, solver().height(x, y)+1);
+        const uint randomSite = rng.uniform()*nSites;
 
         int dx, dy, dz;
         solver().getSolutionSite(x, y, solver().height(x, y)+1, dx, dy, dz, randomSite);
@@ -344,7 +355,17 @@ void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const in
         addDiffusionReactant(xNew, yNew, zNew);
     }
 
-    //delta == 1 case of deposition is treated from the deposition reactions execute function.
+    //this can occur if the surface is changed so that it connects to a particle in the solution.
+    else
+    {
+        const int zSurface = solver().height(x, y) + 1;
+        SOSDiffusionReaction *r = diffusionReaction(x, y, zSurface);
+
+        if (r != NULL)
+        {
+            attachToSurface(x, y, zSurface, r);
+        }
+    }
 }
 
 double LatticeDiffusion::depositionRate(const uint x, const uint y) const

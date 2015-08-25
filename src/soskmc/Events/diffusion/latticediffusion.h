@@ -27,6 +27,8 @@ public:
 
     void deleteQueuedReactions();
 
+    void attachToSurface(const uint x, const uint y, const int z, SOSDiffusionReaction *reaction);
+
 private:
 
     vector<SOSDiffusionReaction*> m_diffusionReactions;
