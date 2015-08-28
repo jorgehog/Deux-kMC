@@ -53,6 +53,8 @@ int main(int argv, char** argc)
     const uint bottomBoundaryID = boundarySettings[1][0];
     const uint topBoundaryID = boundarySettings[1][1];
 
+    const uint &concentrationBoundary = getSetting<uint>(root, "concentrationBoundary");
+
     const uint &confinementInt = getSetting<uint>(root, "confinement");
 
     const double &confiningSurfaceHeight = getSetting<double>(root, "confiningSurfaceHeight");
@@ -97,7 +99,11 @@ int main(int argv, char** argc)
                                            L, W);
 
     SOSSolver solver(L, W, alpha, gamma, boundaries);
-    solver.addConcentrationBoundary(0, Boundary::orientations::FIRST);
+
+    if (concentrationBoundary == 1)
+    {
+        solver.addConcentrationBoundary(0, Boundary::orientations::FIRST);
+    }
 
     AverageHeight averageHeight(solver);
 
@@ -139,8 +145,6 @@ int main(int argv, char** argc)
 
     else
     {
-        cout << "remember to fix rates!!!!" << endl;
-        exit(1);
         diffusion = new ConstantConcentration(solver);
     }
 
@@ -237,6 +241,8 @@ int main(int argv, char** argc)
     simRoot.addData("leftBoundaryID", leftBoundaryID);
     simRoot.addData("bottomBoundaryID", bottomBoundaryID);
     simRoot.addData("topBoundaryID", topBoundaryID);
+
+    simRoot.addData("concentrationBoundary", concentrationBoundary);
 
     simRoot.addData("confinement", confinementInt);
     simRoot.addData("sigma0", sigma0);

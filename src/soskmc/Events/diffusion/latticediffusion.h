@@ -52,6 +52,7 @@ public:
     virtual void dump(const uint frameNumber) const;
     void setupInitialConditions();
     double depositionRate(const uint x, const uint y) const;
+    uint dissolutionPaths(const uint x, const uint y) const;
     void registerHeightChange(const uint x, const uint y, const int delta);
     void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
     void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);

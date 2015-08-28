@@ -114,8 +114,6 @@ public:
 
     double confinementEnergy(const uint x, const uint y) const;
 
-    double depositionRate(const uint x, const uint y) const;
-
     uint calculateNNeighbors(const uint x, const uint y, const int h) const;
 
     uint calculateNNeighbors(const uint x, const uint y) const

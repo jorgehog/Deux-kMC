@@ -457,3 +457,8 @@ double LatticeDiffusion::depositionRate(const uint x, const uint y) const
     //Deposition is modelled as a diffusion reaction and is not explicitly treated.
     return 0;
 }
+
+uint LatticeDiffusion::dissolutionPaths(const uint x, const uint y) const
+{
+    return solver().numberOfSurroundingSolutionSites(x, y);
+}

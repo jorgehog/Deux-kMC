@@ -1,5 +1,7 @@
 #include "rdlsurface.h"
+
 #include "../../dissolutiondeposition.h"
+#include "../../concentrationboundaryreaction.h"
 
 RDLSurface::RDLSurface(SOSSolver &solver,
                        const double E0,
@@ -272,6 +274,11 @@ void RDLSurface::registerHeightChange(const uint x, const uint y, std::vector<Di
                 updateRatesFor(reaction);
             }
         }
+    }
+
+    for (ConcentrationBoundaryReaction *br : solver().concentrationBoundaryReactions())
+    {
+        br->changeRate(br->rate() + br->_rateExpression(m_heightChange*br->span()));
     }
 }
 

@@ -1,26 +1,34 @@
 #include "dissolutiondeposition.h"
 
 #include "sossolver.h"
-#include "Events/diffusion/diffusion.h"
 
+#include "Events/diffusion/diffusion.h"
+#include "Events/diffusion/constantconcentration.h"
+
+#include "Events/confiningsurface/confiningsurface.h"
 
 double DissolutionDeposition::calculateDissolutionRate() const
 {
-    //rate is zero if blocked by diffusing particles.
-    if (solver().numberOfSurroundingSolutionSites(x(), y()) == 0)
-    {
-        return 0.0;
-    }
-
     const double &Ew = solver().confinementEnergy(x(), y());
     const double E = (int)nNeighbors() + (int)solver().surfaceDim() - 5 + Ew;
 
-    return solver().numberOfSurroundingSolutionSites(x(), y())*std::exp(-solver().alpha()*E - solver().gamma());
+    return solver().diffusionEvent().dissolutionPaths(x(), y())*std::exp(-solver().alpha()*E - solver().gamma());
 }
 
 double DissolutionDeposition::calculateDepositionRate() const
 {
-    return solver().depositionRate(x(), y());
+    //derp when wall moves away, this reaction should have its rate changed back. Very rare?
+    if (solver().height(x(), y()) + 1 > solver().confiningSurfaceEvent().height())
+    {
+        return 0;
+    }
+
+    if (!solver().diffusionEvent().hasStarted())
+    {
+        return ConstantConcentration::constantDepositionRate();
+    }
+
+    return solver().diffusionEvent().depositionRate(x(), y());
 }
 
 bool DissolutionDeposition::isAllowed() const

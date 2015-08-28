@@ -138,9 +138,9 @@ bool ConcentrationBoundaryReaction::pointIsOnBoundary(const uint x, const uint y
     }
 }
 
-double ConcentrationBoundaryReaction::_rateExpression() const
+double ConcentrationBoundaryReaction::_rateExpression(const double freeArea) const
 {
-    return freeBoundaryArea()/(1-exp(solver().gamma() - 2*solver().alpha()));
+    return freeArea/(1-exp(solver().gamma() - 2*solver().alpha()));
 }
 
 bool ConcentrationBoundaryReaction::isAllowed() const
@@ -157,5 +157,5 @@ void ConcentrationBoundaryReaction::executeAndUpdate()
 
 double ConcentrationBoundaryReaction::rateExpression()
 {
-    return _rateExpression();
+    return _rateExpression(freeBoundaryArea());
 }

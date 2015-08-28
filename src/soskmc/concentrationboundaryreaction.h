@@ -48,7 +48,7 @@ public:
         return m_span;
     }
 
-    double _rateExpression() const;
+    double _rateExpression(const double area) const;
 
 
 private:

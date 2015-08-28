@@ -9,6 +9,10 @@ public:
 
     ~ConstantConcentration();
 
+    static double constantDepositionRate()
+    {
+        return 1.0;
+    }
 
     // Event interface
 public:
@@ -30,7 +34,15 @@ public:
         (void) x;
         (void) y;
 
-        return 1.0;
+        return constantDepositionRate();
+    }
+
+    uint dissolutionPaths(const uint x, const uint y) const
+    {
+        (void) x;
+        (void) y;
+
+        return 1u;
     }
 
     void registerHeightChange(const uint x, const uint y, const int delta)

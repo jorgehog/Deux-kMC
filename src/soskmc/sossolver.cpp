@@ -191,22 +191,6 @@ double SOSSolver::confinementEnergy(const uint x, const uint y) const
     return m_confiningSurfaceEvent->confinementEnergy(x, y);
 }
 
-double SOSSolver::depositionRate(const uint x, const uint y) const
-{
-    //derp when wall moves away, this reaction should have its rate changed back. Very rare?
-    if (height(x, y) + 1 > confiningSurfaceEvent().height())
-    {
-        return 0;
-    }
-
-    if (!m_diffusionEvent->hasStarted())
-    {
-        return 1;
-    }
-
-    return m_diffusionEvent->depositionRate(x, y);
-}
-
 uint SOSSolver::calculateNNeighbors(const uint x, const uint y, const int h) const
 {    
     bool connectedLeft, connectedRight,

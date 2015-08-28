@@ -87,6 +87,7 @@ public:
     // Diffusion interface
 public:
     virtual void dump(const uint frameNumber) const;
+    uint dissolutionPaths(const uint x, const uint y) const;
 
 };
 

@@ -48,6 +48,14 @@ void OfflatticeMonteCarlo::dump(const uint frameNumber) const
 
 }
 
+uint OfflatticeMonteCarlo::dissolutionPaths(const uint x, const uint y) const
+{
+    (void) x;
+    (void) y;
+
+    return 1u;
+}
+
 void OfflatticeMonteCarlo::diffuse(const double dt)
 {
     if (dt < 0 || fabs(dt) < 1E-15)

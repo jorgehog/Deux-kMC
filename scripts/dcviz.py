@@ -52,6 +52,8 @@ class SteadyState(DCVizPlotter):
 
     unloaded = False
 
+    transparent = True
+
     def plot(self, data):
 
         clip = 1.1
@@ -309,8 +311,8 @@ class SteadyState(DCVizPlotter):
 
 
         self.subfigure4.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
-        self.subfigure1.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=3, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(-0.01, 1.6))
-
+        lg = self.subfigure1.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=3, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(-0.01, 1.6))
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
 
 
@@ -1211,6 +1213,8 @@ class GrowthSpeed3(DCVizPlotter):
     plot_values = [0.5, 1.0]
     shapes = ["s", "^", "v", 'o']
 
+    transparent = True
+
     def plot_and_slopify(self, E0, alpha,r0, omega, mu_shifts, mu, v):
         mu0 = (mu - mu_shifts).mean()
         c_over_c0 = exp(mu0 + mu_shifts)
@@ -1532,7 +1536,8 @@ class GrowthSpeed3(DCVizPlotter):
 
         self.subfigure5.plot(alpha_values, -S_tot, "r-^", label="Avg all param")
 
-        self.subfigure5.legend(numpoints=1, handlelength=1.2, borderaxespad=0.3, )
+        lg = self.subfigure5.legend(numpoints=1, handlelength=1.2, borderaxespad=0.3, )
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
         for l, r0 in enumerate(r0_values[1+l_incr:]):
             self.subfigure6.plot(s0_values[1:], alpha_cutz[l+1, 1:], label="r0 = %g" % r0)
@@ -1550,7 +1555,8 @@ class GrowthSpeed3(DCVizPlotter):
 
         for l, r0 in enumerate(r0_values[1+l_incr:]):
             self.subfigure8.plot(s0_values[1:], alpha_slopes[l+1, 1:], label="r0=%g" % r0)
-        self.subfigure8.legend()
+        lg = self.subfigure8.legend()
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         self.subfigure8.set_xlabel(r"$\sigma_0$")
         self.subfigure8.set_ylabel("alpha E0 prefac")
 
@@ -1570,14 +1576,16 @@ class GrowthSpeed3(DCVizPlotter):
 
         self.subfigure.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
         self.subfigure.set_ylabel(r"$\dot{H} = \Delta \langle h\rangle / \Delta t$")
-        self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2, borderaxespad=0.3 )
+        lg = self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2, borderaxespad=0.3 )
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         self.subfigure.set_xlim(-1, 3)
         self.subfigure.axes.xaxis.set_ticks([-1, 0, 1, 2, 3])
         self.subfigure.axes.xaxis.set_major_formatter(FormatStrFormatter(r"$%g$"))
         self.subfigure.set_ylim(-3, 12)
         self.subfigure.axes.yaxis.set_ticks([-2, 0, 2, 4, 6, 8, 10])
 
-        self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=2, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3)
+        lg = self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=2, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3)
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         self.subfigure2.axes.set_yscale('log')
         self.subfigure2.set_xlim(-0.05, 1.05)
         self.subfigure2.set_ylim(0.6, 23)
@@ -1640,7 +1648,8 @@ class GrowthSpeed3(DCVizPlotter):
 
         print "cov", CV/NN
         # self.subfigure10.plot(alpha_values, p0_mat)
-        self.subfigure10.legend()
+        lg = self.subfigure10.legend()
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         self.subfigure10.set_xlabel("E0")
         self.subfigure10.set_ylabel("logk")
 
@@ -1721,6 +1730,8 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
 
     hugifyFonts = True
 
+    transparent = True
+
     def adjust(self):
 
         for map in self.adjust_maps.values():
@@ -1796,7 +1807,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
                                       yerr=mu_errors,
                                       fmt=shapes[n_plots],
                                       fillstyle='none',
-                                      label=r"$E_0=%1.2f$" % (E0s[n]),
+                                      label=r"$%s=%1.2f$" % (E0_tex, E0s[n]),
                                       markersize=7,
                                       markeredgewidth=1.5,
                                       linewidth=1,
@@ -1849,7 +1860,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
         majorFormatter = FormatStrFormatter(r'$%.1f$')
         self.E0slopes.axes.yaxis.set_major_formatter(majorFormatter)
 
-        self.E0slopes.set_xlabel(r"$E_0 \propto F_0/L$")
+        self.E0slopes.set_xlabel(r"$%s \propto F_0/L$" % E0_tex)
         self.E0slopes.set_ylabel(r"$\gamma_\mathrm{eq}/\alpha$")
 
         self.gammaslopes.text(fig_4_x, fig_4_y, r"$\mathrm{(a)}$", verticalalignment="center", horizontalalignment="left", transform=self.gammaslopes.axes.transAxes, fontsize=fig_4_fs)
@@ -1964,8 +1975,8 @@ class SOS_pressure_sizes(DCVizPlotter):
         ax.set_ylabel(r"$\langle E \rangle /E_bL$", labelpad=15)
         ax.yaxis.set_ticks([])
         ax.yaxis.set_ticklabels([])
-        self.subfigure.legend(loc="upper left", numpoints=1, handlelength=0.5, ncol=3, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(0, 1.55))
-
+        lg = self.subfigure.legend(loc="upper left", numpoints=1, handlelength=0.5, ncol=3, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(0, 1.55))
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         # self.subfigure2.set_xlabel(r"$1/\alpha$")
         self.subfigure2.set_xlim(xmin, xmax)
         self.subfigure2.set_ylabel(r"$\sigma (s_{\uparrow\downarrow}) / L$")
@@ -2031,6 +2042,8 @@ class SOSanalyze(DCVizPlotter):
 
     fig_size = [8, 4]
 
+    transparent = True
+
     def adjust(self):
         for map in self.adjust_maps.values():
             map["top"] = 0.95
@@ -2085,10 +2098,11 @@ class SOSanalyze(DCVizPlotter):
                               markersize=7,
                               markeredgewidth=1.5)
 
-        self.mean_figure.legend(loc="lower right", numpoints=1, handlelength=0.8, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
+        lg = self.mean_figure.legend(loc="lower right", numpoints=1, handlelength=0.8, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
         self.mean_figure.set_xlabel(r"$\lambda_D$")
-        self.mean_figure.set_ylabel(r"$\gamma_\mathrm{eq}/\alpha E_0$")
+        self.mean_figure.set_ylabel(r"$\alpha %s/\gamma_\mathrm{eq}$" % E0_tex)
         self.mean_figure.set_xbound(0)
         # self.mean_figure.set_ybound(-0.45)
         # self.mean_figure.axes.set_yticks([0, 1, 2, 3, 4])

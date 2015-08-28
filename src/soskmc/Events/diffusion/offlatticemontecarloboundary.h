@@ -33,6 +33,11 @@ public:
         return LatticeDiffusion::depositionRate(x, y);
     }
 
+    uint dissolutionPaths(const uint x, const uint y) const
+    {
+        return OfflatticeMonteCarlo::dissolutionPaths(x, y);
+    }
+
     void registerHeightChange(const uint x, const uint y, const int delta)
     {
         LatticeDiffusion::registerHeightChange(x, y, delta);
