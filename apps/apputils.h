@@ -187,15 +187,20 @@ private:
 
 const Boundary *getBoundaryFromID(const uint ID, const uint span, Boundary::orientations orientation)
 {
+    uint location = orientation == Boundary::orientations::FIRST ? 0 : (span - 1);
+
     switch (ID) {
     case 0:
         return new Periodic(span, orientation);
         break;
     case 1:
-        return new Edge(orientation == Boundary::orientations::FIRST ? 0 : span, orientation);
+        return new Edge(location, orientation);
         break;
     case 2:
         return new Open(orientation);
+        break;
+    case 3:
+        return new Reflecting(location, orientation);
         break;
     default:
         cerr << "invalid boundary: " << ID << endl;

@@ -8,3 +8,4 @@
 #include "../src/kmcsolver/boundary/periodic.h"
 #include "../src/kmcsolver/boundary/edge.h"
 #include "../src/kmcsolver/boundary/open.h"
+#include "../src/kmcsolver/boundary/reflecting.h"

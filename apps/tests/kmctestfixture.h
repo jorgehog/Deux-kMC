@@ -86,6 +86,11 @@ protected:
         m_lattice->removeEvent(&primer);
     }
 
+    SOSSolver &solver()
+    {
+        return *m_solver;
+    }
+
     SOSSolver *m_solver = nullptr;
     AverageHeight *m_averageHeight = nullptr;
     ConfiningSurface *m_pressureWallEvent = nullptr;

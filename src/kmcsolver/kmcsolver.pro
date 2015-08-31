@@ -13,7 +13,8 @@ HEADERS = RNG/kmcrng.h \
     boundary/edge.cpp \
     boundary/periodic.cpp \
     boundary/finitesize.h \
-    boundary/open.h
+    boundary/open.h \
+    boundary/reflecting.h
 
 SOURCES += \
     RNG/rng.cpp \
@@ -23,7 +24,8 @@ SOURCES += \
     boundary/edge.cpp \
     boundary/periodic.cpp \
     boundary/finitesize.cpp \
-    boundary/open.cpp
+    boundary/open.cpp \
+    boundary/reflecting.cpp
 
 RNG_ZIG
 {

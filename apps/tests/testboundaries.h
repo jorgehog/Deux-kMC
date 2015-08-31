@@ -242,6 +242,55 @@ TEST_F(SOSkMCTest, boundaries_concentration)
 }
 
 
+//--gtest_filter=SOSkMCTest.boundaries_reflect
+TEST_F(SOSkMCTest, boundaries_reflect)
+{
+    const uint L = 3;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 10;
+
+    const uint bType = 3;
+
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({bType, bType, bType, bType}, L, W));
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent;
+    SetUp_yo();
+
+    primeSolver(0);
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, 0);
+            diffusionEvent->clearDiffusionReactions();
+        }
+    }
+
+    EXPECT_EQ(2, solver().rightSite(2));
+    EXPECT_EQ(0, solver().leftSite(0));
+    EXPECT_EQ(2, solver().topSite(2));
+    EXPECT_EQ(0, solver().bottomSite(0));
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            EXPECT_EQ(5, m_solver->calculateNNeighbors(x, y)) << x << " " << y;
+        }
+    }
+
+    SOSDiffusionReaction *r = diffusionEvent->addDiffusionReactant(2, 2, 8);
+
+    EXPECT_EQ(4, r->calculateNumberOfFreePaths());
+
+    solver().registerHeightChange(0, 0, 2);
+    EXPECT_EQ(3, solver().numberOfSurroundingSolutionSites(0, 0));
+
+}
 
 
 

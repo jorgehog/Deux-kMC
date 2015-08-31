@@ -12,7 +12,7 @@ public:
 
     Periodic(const uint span, const orientations orientation);
 
-    ~Periodic() {}
+    ~Periodic();
 
     int transformCoordinate(const int xi) const;
 

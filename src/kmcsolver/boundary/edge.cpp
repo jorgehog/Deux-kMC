@@ -20,6 +20,6 @@ bool Edge::isBlocked(const int xi) const
 
     else
     {
-        return xi >= m_location;
+        return xi > m_location;
     }
 }

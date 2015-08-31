@@ -9,6 +9,11 @@ Periodic::Periodic(const uint span, const Boundary::orientations orientation) :
 
 }
 
+Periodic::~Periodic()
+{
+
+}
+
 int Periodic::transformCoordinate(const int xi) const
 {
     return (xi + m_span)%m_span;
