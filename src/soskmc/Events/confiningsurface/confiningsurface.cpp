@@ -5,7 +5,7 @@ ConfiningSurface::ConfiningSurface(SOSSolver &solver,
                                    string unit,
                                    bool hasOutput,
                                    bool storeValue) :
-    SolidOnSolidEvent(solver, type, unit, hasOutput, storeValue),
+    SOSEvent(solver, type, unit, hasOutput, storeValue),
     m_height(0)
 {
     solver.setConfiningSurfaceEvent(*this);

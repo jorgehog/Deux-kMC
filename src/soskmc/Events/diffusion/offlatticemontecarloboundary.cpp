@@ -89,7 +89,7 @@ void OfflatticeMonteCarloBoundary::executeConcentrationBoundaryReaction(Concentr
 void OfflatticeMonteCarloBoundary::dump(const uint frameNumber) const
 {
     Diffusion::dump(frameNumber);
-    LatticeDiffusion::dump(frameNumber);
+    LatticeDiffusion::dumpDiffusingParticles(frameNumber);
     OfflatticeMonteCarlo::dump(frameNumber);
 }
 

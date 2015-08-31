@@ -3,11 +3,8 @@
 #include "../confiningsurface/confiningsurface.h"
 
 Diffusion::Diffusion(SOSSolver &solver,
-                     string type,
-                     string unit,
-                     bool hasOutput,
-                     bool storeValue) :
-    SolidOnSolidEvent(solver, type, unit, hasOutput, storeValue)
+                     string type, string unit, bool hasOutput, bool storeValue) :
+    SOSEvent(solver, type, unit, hasOutput, storeValue)
 {
     solver.setDiffusionEvent(*this);
 }

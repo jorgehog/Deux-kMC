@@ -1,10 +1,10 @@
 #pragma once
 
-#include "solidonsolidevent.h"
+#include "sosevent.h"
 
 class EqMu;
 
-class Equilibriater : public SolidOnSolidEvent
+class Equilibriater : public SOSEvent
 {
 public:
 

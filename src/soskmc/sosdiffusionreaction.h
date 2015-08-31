@@ -24,6 +24,8 @@ public:
 
     uint calculateNumberOfFreePaths() const;
 
+    void setNumberOfFreePaths();
+
     const uint &numberOfFreePaths() const
     {
         BADAssEqual(m_numberOfFreePaths, calculateNumberOfFreePaths());
@@ -46,6 +48,7 @@ private:
 public:
     bool isAllowed() const;
     void executeAndUpdate();
+    void affectedUpdateRule();
     double rateExpression();
 };
 

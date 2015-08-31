@@ -19,6 +19,13 @@ public:
 
     virtual double rateExpression() = 0;
 
+    //the reaction can be affected even if it is not
+    //directly involved in the executed reaction
+    virtual void affectedUpdateRule()
+    {
+        calculateRate();
+    }
+
     void calculateRate()
     {
         m_rate = rateExpression();

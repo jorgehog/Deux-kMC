@@ -20,6 +20,8 @@ public:
 
     }
 
+    virtual ~SOSReaction();
+
     SOSSolver &solver() const
     {
         return m_solver;

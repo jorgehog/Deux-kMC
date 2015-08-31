@@ -36,7 +36,7 @@ uint SOSDiffusionReaction::calculateNumberOfFreePaths() const
             connectedTop, connectedBottom;
 
     solver().findConnections(x(), y(), z(), connectedLeft, connectedRight,
-                    connectedBottom, connectedTop, false);
+                             connectedBottom, connectedTop, false);
 
     bool connectedAbove = solver().isBlockedPosition(x(), y(), z()+1) || solver().diffusionEvent().isBlockedPosition(x(), y(), z()+1);
     bool connectedBelow = solver().diffusionEvent().isBlockedPosition(x(), y(), z()-1);
@@ -75,6 +75,11 @@ uint SOSDiffusionReaction::calculateNumberOfFreePaths() const
 
     return n;
 
+}
+
+void SOSDiffusionReaction::setNumberOfFreePaths()
+{
+    m_numberOfFreePaths = calculateNumberOfFreePaths();
 }
 
 void SOSDiffusionReaction::getDiffusionPath(const uint path, int &dx, int &dy, int &dz)
@@ -172,10 +177,9 @@ void SOSDiffusionReaction::getDiffusionPath(const uint path, int &dx, int &dy, i
 
 void SOSDiffusionReaction::executeReaction(const int dx, const int dy, const int dz)
 {
-    const int zNew = z() + dz;
-
     const int xNew = solver().boundaryTransform(x(), dx, 0);
     const int yNew = solver().boundaryTransform(y(), dy, 1);
+    const int zNew = z() + dz;
 
     solver().diffusionEvent().executeDiffusionReaction(this, xNew, yNew, zNew);
 }
@@ -187,14 +191,14 @@ void SOSDiffusionReaction::removeFromSimulation()
 
 bool SOSDiffusionReaction::isAllowed() const
 {
-    return calculateNumberOfFreePaths() != 0;
+    return numberOfFreePaths() != 0;
 }
 
 void SOSDiffusionReaction::executeAndUpdate()
 {
     int dx, dy, dz;
 
-    const uint nPaths = calculateNumberOfFreePaths();
+    const uint nPaths = numberOfFreePaths();
 
     BADAss(nPaths, !=, 0u);
 
@@ -205,8 +209,14 @@ void SOSDiffusionReaction::executeAndUpdate()
     executeReaction(dx, dy, dz);
 }
 
+void SOSDiffusionReaction::affectedUpdateRule()
+{
+    m_numberOfFreePaths = calculateNumberOfFreePaths();
+    Reaction::affectedUpdateRule();
+}
+
 double SOSDiffusionReaction::rateExpression()
 {
-    return calculateNumberOfFreePaths();
+    return numberOfFreePaths();
 }
 

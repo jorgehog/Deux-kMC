@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../solidonsolidevent.h"
+#include "../sosevent.h"
 
 class DissolutionDeposition;
 
-class ConfiningSurface : public SolidOnSolidEvent
+class ConfiningSurface : public SOSEvent
 {
 public:
     ConfiningSurface(SOSSolver &solver,

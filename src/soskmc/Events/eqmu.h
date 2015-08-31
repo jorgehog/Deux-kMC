@@ -1,14 +1,14 @@
 #pragma once
 
-#include "solidonsolidevent.h"
+#include "sosevent.h"
 
 
-class EqMu : public SolidOnSolidEvent
+class EqMu : public SOSEvent
 {
 public:
 
     EqMu(const SOSSolver &solver) :
-        SolidOnSolidEvent(solver, "EqMu", "", true, true),
+        SOSEvent(solver, "EqMu", "", true, true),
         m_accuNeighbours(0),
         m_accuDissolutionRate(0),
         m_totalTime(0)

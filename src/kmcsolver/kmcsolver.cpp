@@ -31,6 +31,8 @@ void KMCSolver::setCurrentTimeStep(double currentTimeStep)
 
 void KMCSolver::initializeReactions()
 {
+    updateAffectedReactions();
+
     m_totalRate = 0;
     m_cumsumRates.resize(numberOfReactions());
 
@@ -57,6 +59,16 @@ void KMCSolver::initializeReactions()
     }
 }
 
+void KMCSolver::updateAffectedReactions()
+{
+    for (Reaction *r : m_affectedReactions)
+    {
+        r->affectedUpdateRule();
+    }
+
+    m_affectedReactions.clear();
+}
+
 void KMCSolver::addReaction(Reaction *reaction)
 {
     m_reactions.push_back(reaction);
@@ -80,12 +92,7 @@ double KMCSolver::getRandomLogNumber() const
 
 void KMCSolver::getCumsumAndTotalRate()
 {
-    for (Reaction *r : m_affectedReactions)
-    {
-        r->calculateRate();
-    }
-
-    m_affectedReactions.clear();
+    updateAffectedReactions();
 
     m_totalRate = 0;
 

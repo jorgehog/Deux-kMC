@@ -223,7 +223,6 @@ private:
     bool m_heights_set;
 
     const uint m_dim;
-
     ConfiningSurface *m_confiningSurfaceEvent;
     Diffusion *m_diffusionEvent;
 

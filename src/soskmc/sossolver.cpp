@@ -102,7 +102,6 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
     }
 
     m_confiningSurfaceEvent->registerHeightChange(x, y, m_affectedSurfaceReactions, n);
-
     m_diffusionEvent->registerHeightChange(x, y, value);
 
     //recalcuate rates for neighbor reactions.

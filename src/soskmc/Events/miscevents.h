@@ -1,12 +1,12 @@
 #pragma once
 
-#include "solidonsolidevent.h"
+#include "sosevent.h"
 
-class Time : public SolidOnSolidEvent
+class Time : public SOSEvent
 {
 public:
     Time(const SOSSolver &solver) :
-        SolidOnSolidEvent(solver, "Time", "", false, true)
+        SOSEvent(solver, "Time", "", false, true)
     {
 
     }
@@ -17,12 +17,12 @@ public:
     }
 };
 
-class GrowthSpeed : public SolidOnSolidEvent
+class GrowthSpeed : public SOSEvent
 {
 public:
 
     GrowthSpeed(const SOSSolver &solver) :
-        SolidOnSolidEvent(solver, "GrowthSpeed", "", true)
+        SOSEvent(solver, "GrowthSpeed", "", true)
     {
 
     }
@@ -37,12 +37,12 @@ private:
     double m_h0;
 };
 
-class SurfaceSize : public SolidOnSolidEvent
+class SurfaceSize : public SOSEvent
 {
 public:
 
     SurfaceSize(const SOSSolver &solver) :
-        SolidOnSolidEvent(solver, "SurfaceSize", "l0", true, true),
+        SOSEvent(solver, "SurfaceSize", "l0", true, true),
         m_relativeHeightSums(solver.length(), solver.width())
     {
 
@@ -81,12 +81,12 @@ private:
 
 };
 
-class SurfaceVariance : public SolidOnSolidEvent
+class SurfaceVariance : public SOSEvent
 {
 public:
 
     SurfaceVariance(const SOSSolver &solver) :
-        SolidOnSolidEvent(solver, "SurfaceVariance", "", true, true)
+        SOSEvent(solver, "SurfaceVariance", "", true, true)
     {
 
     }
@@ -106,11 +106,11 @@ private:
     double m_T0;
 };
 
-class HeightRMS : public SolidOnSolidEvent
+class HeightRMS : public SOSEvent
 {
 public:
     HeightRMS(const SOSSolver &solver) :
-        SolidOnSolidEvent(solver, "HeightRMS", "", true, true)
+        SOSEvent(solver, "HeightRMS", "", true, true)
     {
 
     }
@@ -119,12 +119,12 @@ public:
 };
 
 
-class AverageHeight : public SolidOnSolidEvent
+class AverageHeight : public SOSEvent
 {
 public:
 
     AverageHeight(const SOSSolver &solver) :
-        SolidOnSolidEvent(solver, "AverageHeight", "l0", true, true)
+        SOSEvent(solver, "AverageHeight", "l0", true, true)
     {
 
     }
@@ -137,7 +137,7 @@ public:
 };
 
 
-class DumpHeightSlice : public SolidOnSolidEvent
+class DumpHeightSlice : public SOSEvent
 {
 public:
     DumpHeightSlice(const SOSSolver &solver,
@@ -145,7 +145,7 @@ public:
                     const uint axis=0,
                     const string path = "/tmp",
                     const uint nCyclesperOutput = 1000) :
-        SolidOnSolidEvent(solver, "DumpHeightSlice"),
+        SOSEvent(solver, "DumpHeightSlice"),
         m_slicePosition(slicePosition),
         m_axis(axis),
         m_path(path),
@@ -170,13 +170,13 @@ private:
 
 };
 
-class DumpHeights3D : public SolidOnSolidEvent
+class DumpHeights3D : public SOSEvent
 {
 public:
 
     DumpHeights3D(const SOSSolver &solver,
                   const string path = "/tmp") :
-        SolidOnSolidEvent(solver, "DumpHeights3D"),
+        SOSEvent(solver, "DumpHeights3D"),
         m_writer(4, "SOS", path)
     {
 
@@ -199,12 +199,12 @@ private:
 };
 
 
-class NNeighbors : public SolidOnSolidEvent
+class NNeighbors : public SOSEvent
 {
 public:
 
     NNeighbors(const SOSSolver &solver) :
-        SolidOnSolidEvent(solver, "nNeighbors", "", true, true),
+        SOSEvent(solver, "nNeighbors", "", true, true),
         m_nNeighbors(solver.length(), solver.width())
     {
 

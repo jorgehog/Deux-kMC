@@ -7,7 +7,7 @@ Equilibriater::Equilibriater(SOSSolver &mutexSolver,
                              EqMu &eqMuEvent,
                              const uint nSamplesMuEq,
                              const uint nSamplesMu) :
-    SolidOnSolidEvent(mutexSolver,
+    SOSEvent(mutexSolver,
                       "ConcEquilibriator",
                       "",
                       true,

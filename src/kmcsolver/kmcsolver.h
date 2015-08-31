@@ -44,6 +44,8 @@ public:
 
     void initializeReactions();
 
+    void updateAffectedReactions();
+
     Reaction *getReaction(const uint n) const
     {
         return m_reactions.at(n);
@@ -68,6 +70,11 @@ public:
     void registerAffectedReaction(Reaction *reaction)
     {
         m_affectedReactions.insert(reaction);
+    }
+
+    const unordered_set<Reaction*>  &affectedReactions() const
+    {
+        return m_affectedReactions;
     }
 
 private:

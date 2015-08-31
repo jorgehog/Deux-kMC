@@ -17,3 +17,5 @@
 #include "../src/soskmc/Events/eqmu.h"
 #include "../src/soskmc/Events/equilibriater.h"
 #include "../src/soskmc/Events/miscevents.h"
+
+#include "../src/soskmc/Events/dumpsystem.h"

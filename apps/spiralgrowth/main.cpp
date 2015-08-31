@@ -85,12 +85,15 @@ int main(int argv, char** argc)
     const bool storeIgnisData = storeIgnisDataInt == 1;
     const uint &ignisDataInterval = getSetting<uint>(root, "ignisDataInterval");
     const bool ignisOutput = getSetting<uint>(root, "ignisOutput") == 1;
+    const bool dumpParticles = getSetting<uint>(root, "dumpParticles") == 1;
+    const uint &dumpInterval = getSetting<uint>(root, "dumpInterval");
 
     //---End default config loading
     //---Start ignis environment and solver creation
 
     ConfiningSurface *confiningSurface;
     Diffusion *diffusion;
+    DumpSystem *systemDumper;
 
     auto boundaries = getBoundariesFromIDs({rightBoundaryID,
                                             leftBoundaryID,
@@ -148,7 +151,6 @@ int main(int argv, char** argc)
         diffusion = new ConstantConcentration(solver);
     }
 
-
     EqMu eqMu(solver);
     Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
 
@@ -169,6 +171,11 @@ int main(int argv, char** argc)
                                     path,
                                     ignisDataInterval);
 
+    if (dumpParticles)
+    {
+        systemDumper = new DumpSystem(solver, dumpInterval);
+        lattice.addEvent(systemDumper);
+    }
 
     //---Start Explicit Implementations
 
@@ -289,6 +296,11 @@ int main(int argv, char** argc)
 
     delete diffusion;
     delete confiningSurface;
+
+    if (dumpParticles)
+    {
+        delete systemDumper;
+    }
 
     return 0;
 }

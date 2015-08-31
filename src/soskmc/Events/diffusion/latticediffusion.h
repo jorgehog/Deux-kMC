@@ -33,6 +33,8 @@ public:
 
     void registerAffectedAroundSingle(const int neighbor, const uint xi, const uint dim, const int z);
 
+    void dumpDiffusingParticles(const uint frameNumber) const;
+
 private:
 
     vector<SOSDiffusionReaction*> m_diffusionReactions;
@@ -45,7 +47,7 @@ private:
     // Event interface
 public:
     void execute();
-
+    void reset();
 
     // Diffusion interface
 public:

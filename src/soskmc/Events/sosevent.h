@@ -6,10 +6,10 @@
 
 using namespace ignis;
 
-class SolidOnSolidEvent : public LatticeEvent
+class SOSEvent : public LatticeEvent
 {
 public:
-    SolidOnSolidEvent(const SOSSolver &solver,
+    SOSEvent(const SOSSolver &solver,
                       string type = "Event",
                       string unit = "",
                       bool hasOutput=false,
@@ -21,7 +21,7 @@ public:
         setDependency(solver);
     }
 
-    virtual ~SolidOnSolidEvent() {}
+    virtual ~SOSEvent() {}
 
     const SOSSolver &solver() const
     {

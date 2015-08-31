@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../solidonsolidevent.h"
+#include "../sosevent.h"
 
 class SOSDiffusionReaction;
 class ConcentrationBoundaryReaction;
 
-class Diffusion : public SolidOnSolidEvent
+class Diffusion : public SOSEvent
 {
 public:
     Diffusion(SOSSolver &solver,

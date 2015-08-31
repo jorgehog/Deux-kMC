@@ -11,6 +11,53 @@
 
 #include "../../src/soskmc/dissolutiondeposition.h"
 
+class Dummy : public Reaction
+{
+
+    // Reaction interface
+public:
+    bool isAllowed() const {return true;}
+    void executeAndUpdate() {}
+    double rateExpression() {return 1.0;}
+};
+
+TEST_F(SOSkMCTest, affected_set)
+{
+    const uint L = 3;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 20 + rng.uniform();
+
+    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 0, 0}, L, W));
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent; SetUp_yo();
+
+    Dummy r;
+
+    m_solver->registerAffectedReaction(&r);
+
+    EXPECT_EQ(1, solver().affectedReactions().size());
+
+    m_solver->registerAffectedReaction(&r);
+
+    EXPECT_EQ(1, solver().affectedReactions().size());
+
+    Dummy r2;
+
+    m_solver->registerAffectedReaction(&r2);
+
+    EXPECT_EQ(2, solver().affectedReactions().size());
+
+    m_solver->registerAffectedReaction(&r2);
+
+    EXPECT_EQ(2, solver().affectedReactions().size());
+
+
+
+}
+
 TEST_F(SOSkMCTest, diffusion)
 {
     const uint L = 3;

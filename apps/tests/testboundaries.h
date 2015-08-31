@@ -242,7 +242,7 @@ TEST_F(SOSkMCTest, boundaries_concentration)
 }
 
 
-//--gtest_filter=SOSkMCTest.boundaries_reflect
+//--gtest_filter=SOSkMCTest.diffusion
 TEST_F(SOSkMCTest, boundaries_reflect)
 {
     const uint L = 3;

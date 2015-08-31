@@ -14,19 +14,6 @@ public:
         return 1.0;
     }
 
-    // Event interface
-public:
-    void execute()
-    {
-        const uint TRESH = 10000;
-
-        if (cycle() % TRESH == 0)
-        {
-            Diffusion::dump(cycle()/TRESH);
-        }
-
-    }
-
     // Diffusion interface
 public:
     double depositionRate(const uint x, const uint y) const
@@ -82,4 +69,8 @@ public:
         return false;
     }
 
+
+    // Event interface
+public:
+    void execute() {}
 };

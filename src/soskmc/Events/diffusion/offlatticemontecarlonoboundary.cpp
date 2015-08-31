@@ -179,8 +179,6 @@ double OfflatticeMonteCarloNoBoundary::calculateLocalProbability(const uint x,
 void OfflatticeMonteCarloNoBoundary::execute()
 {
     m_currentTimeStep = calculateTimeStep(m_currentTimeStep);
-
-    dump(cycle());
 }
 
 void OfflatticeMonteCarloNoBoundary::reset()
