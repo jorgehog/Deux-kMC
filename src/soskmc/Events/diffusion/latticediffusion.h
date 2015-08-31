@@ -5,13 +5,49 @@
 #include <unordered_map>
 using std::unordered_map;
 
+//http://stackoverflow.com/questions/22572396/using-multiple-keys-with-map-unordered-map-multidimensional
+struct indices
+{
+    indices(const int x, const int y, const int z) :
+        m_x(x),
+        m_y(y),
+        m_z(z)
+    {
+
+    }
+
+    indices(const SOSDiffusionReaction *r);
+
+    const int m_x;
+    const int m_y;
+    const int m_z;
+
+    bool operator==(indices const& other) const
+    {
+        return std::tie(m_x, m_y, m_z) ==
+               std::tie(other.m_x, other.m_y, other.m_z);
+    }
+};
+
+//http://stackoverflow.com/questions/8157937/how-to-specialize-stdhashkeyoperator-for-user-defined-type-in-unordered
+namespace std {
+  template <> struct hash<indices>
+  {
+    size_t operator()(const indices & i) const
+    {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, i.m_x);
+        boost::hash_combine(seed, i.m_y);
+        boost::hash_combine(seed, i.m_z);
+
+        return seed;
+    }
+  };
+}
+
 class LatticeDiffusion : public virtual Diffusion
 {
 public:
-
-    typedef unordered_map<int, SOSDiffusionReaction*> zmap_type;
-    typedef unordered_map<uint, zmap_type> zymap_type;
-    typedef unordered_map<uint, zymap_type> map_type;
 
     LatticeDiffusion(SOSSolver &solver);
     ~LatticeDiffusion();
@@ -22,13 +58,14 @@ public:
 
     void removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete = true);
 
+    //cannot be const for quick lookup
     SOSDiffusionReaction *diffusionReaction(const uint x, const uint y, const int z) const;
 
     void clearDiffusionReactions();
 
-    uint  numberOfDiffusionReactions() const
+    uint numberOfDiffusionReactions() const
     {
-        return m_diffusionReactions.size();
+        return m_diffusionReactionsMap.size();
     }
 
     void deleteQueuedReactions();
@@ -45,9 +82,9 @@ public:
 
 private:
 
-    vector<SOSDiffusionReaction*> m_diffusionReactions;
+    vector<SOSDiffusionReaction*> dep_m_diffusionReactions;
 
-    map_type m_diffusionReactionsMap;
+    unordered_map<indices, SOSDiffusionReaction*> m_diffusionReactionsMap;
 
     vector<SOSDiffusionReaction*> m_deleteQueue;
 

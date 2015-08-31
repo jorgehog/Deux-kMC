@@ -10,6 +10,8 @@
 
 #include "concentrationboundaryreaction.h"
 
+#include <utility>
+
 
 LatticeDiffusion::LatticeDiffusion(SOSSolver &solver) :
     Diffusion(solver, "latticeDiffusion"),
@@ -22,22 +24,28 @@ LatticeDiffusion::~LatticeDiffusion()
 {
     deleteQueuedReactions();
 
-    for (SOSDiffusionReaction *reaction : m_diffusionReactions)
+    for (auto &m : m_diffusionReactionsMap)
     {
-        delete reaction;
+        delete m.second;
     }
 
-    m_diffusionReactions.clear();
+    //    for (SOSDiffusionReaction *reaction : m_diffusionReactionsMap)
+    //    {
+    //        delete reaction;
+    //    }
+
+    m_diffusionReactionsMap.clear();
 }
 
 
 void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, bool _delete)
 {
+    m_diffusionReactionsMap.erase(indices(reaction));
 
     m_mutexSolver.removeReaction(reaction);
 
-    auto &r = m_diffusionReactions;
-    r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
+    //    auto &r = m_diffusionReactions;
+    //    r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
 
     m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
 
@@ -59,38 +67,54 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 
 void LatticeDiffusion::removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete)
 {
-    m_diffusionReactionsMap[x][y].erase(z);
     removeDiffusionReactant(diffusionReaction(x, y, z), _delete);
 }
 
 SOSDiffusionReaction *LatticeDiffusion::diffusionReaction(const uint x, const uint y, const int z) const
 {
-    for (SOSDiffusionReaction *reaction : m_diffusionReactions)
+    const auto &res = m_diffusionReactionsMap.find(indices(x, y, z));
+
+    if (res != m_diffusionReactionsMap.end())
     {
-        if ((x == reaction->x()) && (y == reaction->y()) && (z == reaction->z()))
-        {
-            return reaction;
-        }
+        return res->second;
     }
 
-    return nullptr;
+    else
+    {
+        return nullptr;
+    }
+
+    //    for (SOSDiffusionReaction *reaction : m_diffusionReactions)
+    //    {
+    //        if ((x == reaction->x()) && (y == reaction->y()) && (z == reaction->z()))
+    //        {
+    //            return reaction;
+    //        }
+    //    }
+
+    //    return nullptr;
 }
 
 void LatticeDiffusion::clearDiffusionReactions()
 {
-    for (SOSDiffusionReaction *reaction : m_diffusionReactions)
+    SOSDiffusionReaction *reaction;
+
+    for (auto &m : m_diffusionReactionsMap)
     {
+        reaction = m.second;
         m_mutexSolver.removeReaction(reaction);
         delete reaction;
     }
 
-    m_diffusionReactions.clear();
+    m_diffusionReactionsMap.clear();
 }
 
 void LatticeDiffusion::deleteQueuedReactions()
 {
+
     for (SOSDiffusionReaction *reaction : m_deleteQueue)
     {
+        BADAssEqual(nullptr, diffusionReaction(reaction->x(), reaction->y(), reaction->z()));
         delete reaction;
     }
 
@@ -162,7 +186,8 @@ void LatticeDiffusion::registerAffectedAroundSingle(const int neighbor, const ui
             m_mutexSolver.registerAffectedReaction(&m_mutexSolver.surfaceReaction(neighbor, xi));
         }
 
-        if ((r = diffusionReaction(neighbor, xi, z)) != nullptr)
+        r = diffusionReaction(neighbor, xi, z);
+        if (r != nullptr)
         {
             m_mutexSolver.registerAffectedReaction(r);
         }
@@ -176,7 +201,8 @@ void LatticeDiffusion::registerAffectedAroundSingle(const int neighbor, const ui
             m_mutexSolver.registerAffectedReaction(&m_mutexSolver.surfaceReaction(xi, neighbor));
         }
 
-        if ((r = diffusionReaction(xi, neighbor, z)) != nullptr)
+        r = diffusionReaction(xi, neighbor, z);
+        if (r != nullptr)
         {
             m_mutexSolver.registerAffectedReaction(r);
         }
@@ -193,8 +219,11 @@ void LatticeDiffusion::dumpDiffusingParticles(const uint frameNumber) const
     writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     writer.initializeNewFile(frameNumber);
 
-    for(const SOSDiffusionReaction *reaction : m_diffusionReactions)
+    SOSDiffusionReaction *reaction;
+    for (auto &m : m_diffusionReactionsMap)
     {
+        reaction = m.second;
+
         const uint &x = reaction->x();
         const uint &y = reaction->y();
         const int &z = reaction->z();
@@ -210,8 +239,8 @@ void LatticeDiffusion::dumpDiffusingParticles(const uint frameNumber) const
 
 void LatticeDiffusion::moveReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z)
 {
-    m_diffusionReactionsMap[reaction->x()][reaction->y()].erase(reaction->z());
-    m_diffusionReactionsMap[x][y][z] = reaction;
+    m_diffusionReactionsMap.erase(indices(reaction));
+    m_diffusionReactionsMap[indices(x, y, z)] = reaction;
 
     reaction->setX(x);
     reaction->setY(y);
@@ -245,8 +274,10 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
 
     SOSDiffusionReaction *reaction = new SOSDiffusionReaction(m_mutexSolver, x, y, z);
 
-    m_diffusionReactions.push_back(reaction);
-    m_diffusionReactionsMap[x][y][z] = reaction;
+    //    m_diffusionReactions.push_back(reaction);
+    m_diffusionReactionsMap[indices(x, y, z)] = reaction;
+//    m_diffusionReactionsMap.insert(std::make_pair(indices(x, y, z), reaction));
+
 
     m_mutexSolver.addReaction(reaction);
 
@@ -269,8 +300,11 @@ void LatticeDiffusion::execute()
     deleteQueuedReactions();
 
 #ifndef NDEBUG
-    for(const SOSDiffusionReaction *reaction : m_diffusionReactions)
+    SOSDiffusionReaction *reaction;
+    for (auto &m : m_diffusionReactionsMap)
     {
+        reaction = m.second;
+
         const uint &x = reaction->x();
         const uint &y = reaction->y();
         const int &z = reaction->z();
@@ -296,8 +330,10 @@ void LatticeDiffusion::execute()
             BADAssSimpleDump(x, y, z, h, hconf);
         });
 
-        for (const SOSDiffusionReaction *reaction2 : m_diffusionReactions)
+        SOSDiffusionReaction *reaction2;
+        for (auto &m2 : m_diffusionReactionsMap)
         {
+            reaction2 = m2.second;
             if (reaction != reaction2)
             {
                 bool equalX = reaction->x() == reaction2->x();
@@ -317,10 +353,10 @@ void LatticeDiffusion::execute()
 
 void LatticeDiffusion::reset()
 {
-    for (SOSDiffusionReaction *r : m_diffusionReactions)
-    {
-        BADAssEqual(m_diffusionReactionsMap[r->x()][r->y()][r->z()], r);
-    }
+    //    for (SOSDiffusionReaction *r : m_diffusionReactions)
+    //    {
+    //        BADAssEqual(m_diffusionReactionsMap[r->x()][r->y()][r->z()], r);
+    //    }
 }
 
 
@@ -476,4 +512,13 @@ double LatticeDiffusion::depositionRate(const uint x, const uint y) const
 uint LatticeDiffusion::dissolutionPaths(const uint x, const uint y) const
 {
     return solver().numberOfSurroundingSolutionSites(x, y);
+}
+
+
+indices::indices(const SOSDiffusionReaction *r) :
+    m_x(r->x()),
+    m_y(r->y()),
+    m_z(r->z())
+{
+
 }
