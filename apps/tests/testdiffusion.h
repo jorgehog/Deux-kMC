@@ -21,6 +21,11 @@ public:
     double rateExpression() {return 1.0;}
 };
 
+TEST_F(SOSkMCTest, diff_reac_map)
+{
+
+}
+
 TEST_F(SOSkMCTest, affected_set)
 {
     const uint L = 3;

@@ -2,9 +2,17 @@
 
 #include "diffusion.h"
 
+#include <unordered_map>
+using std::unordered_map;
+
 class LatticeDiffusion : public virtual Diffusion
 {
 public:
+
+    typedef unordered_map<int, SOSDiffusionReaction*> zmap_type;
+    typedef unordered_map<uint, zmap_type> zymap_type;
+    typedef unordered_map<uint, zymap_type> map_type;
+
     LatticeDiffusion(SOSSolver &solver);
     ~LatticeDiffusion();
 
@@ -15,8 +23,6 @@ public:
     void removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete = true);
 
     SOSDiffusionReaction *diffusionReaction(const uint x, const uint y, const int z) const;
-
-    SOSDiffusionReaction *diffusionReaction(const uint n) const;
 
     void clearDiffusionReactions();
 
@@ -35,9 +41,13 @@ public:
 
     void dumpDiffusingParticles(const uint frameNumber) const;
 
+    void moveReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z);
+
 private:
 
     vector<SOSDiffusionReaction*> m_diffusionReactions;
+
+    map_type m_diffusionReactionsMap;
 
     vector<SOSDiffusionReaction*> m_deleteQueue;
 

@@ -93,7 +93,6 @@ int main(int argv, char** argc)
 
     ConfiningSurface *confiningSurface;
     Diffusion *diffusion;
-    DumpSystem *systemDumper;
 
     auto boundaries = getBoundariesFromIDs({rightBoundaryID,
                                             leftBoundaryID,
@@ -171,9 +170,9 @@ int main(int argv, char** argc)
                                     path,
                                     ignisDataInterval);
 
+    DumpSystem systemDumper(solver, dumpInterval);
     if (dumpParticles)
     {
-        systemDumper = new DumpSystem(solver, dumpInterval);
         lattice.addEvent(systemDumper);
     }
 
@@ -296,11 +295,6 @@ int main(int argv, char** argc)
 
     delete diffusion;
     delete confiningSurface;
-
-    if (dumpParticles)
-    {
-        delete systemDumper;
-    }
 
     return 0;
 }

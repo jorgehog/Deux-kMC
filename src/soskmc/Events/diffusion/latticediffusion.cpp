@@ -59,6 +59,7 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 
 void LatticeDiffusion::removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete)
 {
+    m_diffusionReactionsMap[x][y].erase(z);
     removeDiffusionReactant(diffusionReaction(x, y, z), _delete);
 }
 
@@ -73,11 +74,6 @@ SOSDiffusionReaction *LatticeDiffusion::diffusionReaction(const uint x, const ui
     }
 
     return nullptr;
-}
-
-SOSDiffusionReaction *LatticeDiffusion::diffusionReaction(const uint n) const
-{
-    return m_diffusionReactions.at(n);
 }
 
 void LatticeDiffusion::clearDiffusionReactions()
@@ -212,6 +208,16 @@ void LatticeDiffusion::dumpDiffusingParticles(const uint frameNumber) const
     writer.finalize();
 }
 
+void LatticeDiffusion::moveReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z)
+{
+    m_diffusionReactionsMap[reaction->x()][reaction->y()].erase(reaction->z());
+    m_diffusionReactionsMap[x][y][z] = reaction;
+
+    reaction->setX(x);
+    reaction->setY(y);
+    reaction->setZ(z);
+}
+
 void LatticeDiffusion::dump(const uint frameNumber) const
 {
     Diffusion::dump(frameNumber);
@@ -240,6 +246,7 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
     SOSDiffusionReaction *reaction = new SOSDiffusionReaction(m_mutexSolver, x, y, z);
 
     m_diffusionReactions.push_back(reaction);
+    m_diffusionReactionsMap[x][y][z] = reaction;
 
     m_mutexSolver.addReaction(reaction);
 
@@ -310,7 +317,10 @@ void LatticeDiffusion::execute()
 
 void LatticeDiffusion::reset()
 {
-
+    for (SOSDiffusionReaction *r : m_diffusionReactions)
+    {
+        BADAssEqual(m_diffusionReactionsMap[r->x()][r->y()][r->z()], r);
+    }
 }
 
 
@@ -366,9 +376,7 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
 
     registerAffectedAround(ux, uy, z);
 
-    reaction->setX(ux);
-    reaction->setY(uy);
-    reaction->setZ(z);
+    moveReaction(reaction, ux, uy, z);
 
     if (solver().isSurfaceSite(ux, uy, z))
     {
