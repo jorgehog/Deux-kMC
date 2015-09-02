@@ -9,6 +9,8 @@
 
 #include "testboundaries.h"
 
+#include "testcontinuumdiffusion.h"
+
 namespace {
 
 // Tests that the uniform RNG does what it is supposed to.

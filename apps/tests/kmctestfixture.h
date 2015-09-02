@@ -27,7 +27,7 @@ protected:
 
     // If the constructor and destructor are not enough for setting up
     // and cleaning up each test, you can define the following methods:
-    void SetUp()
+    virtual void SetUp()
     {
         rng.initialize(time(nullptr));
     }

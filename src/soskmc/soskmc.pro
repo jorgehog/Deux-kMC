@@ -24,7 +24,8 @@ SOURCES += \
     concentrationboundaryreaction.cpp \
     Events/dumpsystem.cpp \
     Events/diffusion/fixedpointtimestepping.cpp \
-    Events/diffusion/multiscale.cpp
+    Events/diffusion/multiscale.cpp \
+    Events/diffusion/firstpassagecontinuum.cpp
 
 HEADERS += \
     Events/equilibriater.h \
@@ -47,7 +48,8 @@ HEADERS += \
     Events/dumpsystem.h \
     Events/sosevent.h \
     Events/diffusion/fixedpointtimestepping.h \
-    Events/diffusion/multiscale.h
+    Events/diffusion/multiscale.h \
+    Events/diffusion/firstpassagecontinuum.h
 
 LIBS += -lkMC
 

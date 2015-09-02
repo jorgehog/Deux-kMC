@@ -59,7 +59,7 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
 
     m_heights(x, y) += value;
 
-    m_changedSurfaceSites.insert(pair<uint, uint>(x, y));
+    m_changedSurfaceSites.insert(make_pair(x, y));
 
 
     const uint left = leftSite(x);
@@ -111,7 +111,6 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
     }
 
     updateConcentrationBoundaryIfOnBoundary(x, y);
-
 }
 
 void SOSSolver::setNNeighbors(const uint x, const uint y)
@@ -645,7 +644,7 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
 
     bool isOutSideBox_y = (y < 0) || (y > width());
 
-    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 0.5);
+    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 1);
 
     if (isOutSideBox_x || isOutSideBox_y || isOutSideBox_z)
     {
@@ -666,7 +665,7 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
     }
 
     //DERP: collide in x-y plane
-    return z < height(X, Y) + 0.5;
+    return z < height(X, Y) + 1;
 }
 
 bool SOSSolver::isOutsideBoxSingle(const int x, const uint dim) const

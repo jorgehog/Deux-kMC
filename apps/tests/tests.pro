@@ -12,6 +12,7 @@ OTHER_FILES += \
 HEADERS += \
     testdiffusion.h \
     kmctestfixture.h \
-    testboundaries.h
+    testboundaries.h \
+    testcontinuumdiffusion.h
 
 #DEFINES += BADASSNOTHROW

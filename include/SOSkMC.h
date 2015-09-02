@@ -12,6 +12,7 @@
 #include "../src/soskmc/Events/diffusion/constantconcentration.h"
 #include "../src/soskmc/Events/diffusion/latticediffusion.h"
 #include "../src/soskmc/Events/diffusion/fixedpointtimestepping.h"
+#include "../src/soskmc/Events/diffusion/firstpassagecontinuum.h"
 #include "../src/soskmc/Events/diffusion/multiscale.h"
 
 #include "../src/soskmc/Events/eqmu.h"

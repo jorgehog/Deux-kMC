@@ -24,6 +24,10 @@ public:
 
     void initializeParticleMatrices(const uint nOfflatticeParticles, const double zMin);
 
+    void scan(const uint n, const uint dim, const int direction, const double dr = 0.1, const double maxStep = 3.0);
+
+    void scanForDisplacement(const uint n, uint &dim, double &delta);
+
     const double &maxdt() const
     {
         return m_maxdt;
@@ -59,12 +63,16 @@ public:
         m_particlePositions(i, j) = value;
     }
 
-    const double &localRates(const uint x, const uint y, const uint n)
+    const double &localRates(const uint x, const uint y, const uint n) const
     {
         return m_localRates(x, y, n);
     }
 
     void dumpDiffusingParticles(const uint frameNumber) const;
+
+    void clearDiffusingParticles();
+
+    void calculateLocalRates();
 
 protected:
 
@@ -74,6 +82,9 @@ protected:
     }
 
 private:
+
+    SOSSolver &m_mutexSolver;
+
     const double m_maxdt;
 
     mat m_particlePositions;
@@ -83,6 +94,8 @@ private:
     long double m_accepted;
     long double m_trials;
 
+    vec::fixed<6> m_scanDeltas;
+    vec::fixed<3> m_scanOriginalPositions;
 
     // Event interface
 public:

@@ -171,6 +171,12 @@ int main(int argv, char** argc)
     Lattice lattice;
     lattice.addEvent(solver);
 
+    DumpSystem systemDumper(solver, dumpInterval);
+    if (dumpParticles)
+    {
+        lattice.addEvent(systemDumper);
+    }
+
 #ifndef NDEBUG
     RateChecker checker(solver);
     lattice.addEvent(checker);
@@ -184,12 +190,6 @@ int main(int argv, char** argc)
                                     "ignisSOS.ign",
                                     path,
                                     ignisDataInterval);
-
-    DumpSystem systemDumper(solver, dumpInterval);
-    if (dumpParticles)
-    {
-        lattice.addEvent(systemDumper);
-    }
 
     //---Start Explicit Implementations
 

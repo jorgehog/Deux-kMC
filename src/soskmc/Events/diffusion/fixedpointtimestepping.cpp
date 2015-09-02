@@ -46,7 +46,8 @@ double FixedPointTimeStepping::calculateTimeStep(const double initialCondition, 
         {
             for (uint y = 0; y < solver().width(); ++y)
             {
-                _depositionRate = depositionRate(x, y, timeStep);
+                m_currentTimeStep = timeStep;
+                _depositionRate = depositionRate(x, y);
                 totalDepositionRate += _depositionRate;
             }
         }
@@ -107,25 +108,10 @@ double FixedPointTimeStepping::calculateTimeStep(const double initialCondition, 
     return timeStep;
 }
 
-double FixedPointTimeStepping::depositionRate(const uint x, const uint y, double timeStep) const
-{
-    double P = 0;
-
-    for (uint n = 0; n < nOfflatticeParticles(); ++n)
-    {
-
-        const double Pn = calculateLocalRate(x, y, n, timeStep);
-
-        P += Pn;
-    }
-
-    return P/(solver().concentration()*timeStep);
-}
-
 double FixedPointTimeStepping::calculateLocalRate(const uint x,
-                                                                 const uint y,
-                                                                 const uint n,
-                                                                 const double timeStep) const
+                                                  const uint y,
+                                                  const uint n,
+                                                  const double timeStep) const
 {
 
     const int z = solver().height(x, y) + 1;
@@ -137,7 +123,7 @@ double FixedPointTimeStepping::calculateLocalRate(const uint x,
     const double dzSquared = pow((double)z - particlePositions(2, n), 2);
 
     const double dr2 = dxSquared + dySquared + dzSquared;
-    //    const double r = sqrt(dr2);
+    const double r = sqrt(dr2);
 
     BADAss(dr2, !=, 0, "lols", [&] () {
         cout << particlePositions() << endl;
@@ -151,12 +137,12 @@ double FixedPointTimeStepping::calculateLocalRate(const uint x,
     }
 
     //This takes into account that the particle can deposit at any time between t and t + dt, not only at t + dt.
-    //    const double N = 4*m_D*r;
+    const double N = 4*D()*r;
     //    const double N = r;
     //    const double N = 1;
-    //    return std::erfc(r/sqrt(sigmaSquared))/N;
+    return std::erfc(r/sqrt(sigmaSquared))/N/timeStep;
 
-    return exp(-dr2/(2*sigmaSquared))/sqrt(2*datum::pi*sigmaSquared);
+    //    return exp(-dr2/(2*sigmaSquared))/sqrt(2*datum::pi*sigmaSquared);
 }
 
 
@@ -171,11 +157,6 @@ void FixedPointTimeStepping::setupInitialConditions()
 
     m_currentTimeStep = calculateTimeStep(1.0, true);
 
-}
-
-double FixedPointTimeStepping::depositionRate(const uint x, const uint y) const
-{
-    return depositionRate(x, y, m_currentTimeStep);
 }
 
 void FixedPointTimeStepping::registerHeightChange(const uint x, const uint y, const int delta)
