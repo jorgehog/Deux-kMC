@@ -351,15 +351,6 @@ void LatticeDiffusion::execute()
 
 }
 
-void LatticeDiffusion::reset()
-{
-    //    for (SOSDiffusionReaction *r : m_diffusionReactions)
-    //    {
-    //        BADAssEqual(m_diffusionReactionsMap[r->x()][r->y()][r->z()], r);
-    //    }
-}
-
-
 void LatticeDiffusion::setupInitialConditions()
 {
     const double hMax = solver().confiningSurfaceEvent().height();

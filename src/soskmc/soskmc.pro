@@ -15,8 +15,6 @@ SOURCES += \
     Events/diffusion/diffusion.cpp \
     Events/diffusion/constantconcentration.cpp \
     Events/confiningsurface/noconfinement.cpp \
-    Events/diffusion/offlatticemontecarloboundary.cpp \
-    Events/diffusion/offlatticemontecarlonoboundary.cpp \
     Events/diffusion/offlatticemontecarlo.cpp \
     sossolver.cpp \
     sosreaction.cpp \
@@ -24,7 +22,9 @@ SOURCES += \
     dissolutiondeposition.cpp \
     Events/diffusion/latticediffusion.cpp \
     concentrationboundaryreaction.cpp \
-    Events/dumpsystem.cpp
+    Events/dumpsystem.cpp \
+    Events/diffusion/fixedpointtimestepping.cpp \
+    Events/diffusion/multiscale.cpp
 
 HEADERS += \
     Events/equilibriater.h \
@@ -37,8 +37,6 @@ HEADERS += \
     Events/diffusion/diffusion.h \
     Events/diffusion/constantconcentration.h \
     Events/confiningsurface/noconfinement.h \
-    Events/diffusion/offlatticemontecarloboundary.h \
-    Events/diffusion/offlatticemontecarlonoboundary.h \
     Events/diffusion/offlatticemontecarlo.h \
     sossolver.h \
     sosreaction.h \
@@ -47,7 +45,9 @@ HEADERS += \
     Events/diffusion/latticediffusion.h \
     concentrationboundaryreaction.h \
     Events/dumpsystem.h \
-    Events/sosevent.h
+    Events/sosevent.h \
+    Events/diffusion/fixedpointtimestepping.h \
+    Events/diffusion/multiscale.h
 
 LIBS += -lkMC
 

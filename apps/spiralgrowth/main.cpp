@@ -63,10 +63,8 @@ int main(int argv, char** argc)
     const double &sigma0 = getSetting<double>(root, "sigma0");
 
     const uint &diffuseInt = getSetting<uint>(root, "diffuse");
-    const bool diffuse = diffuseInt == 1;
-    //    const double &D = getSetting<double>(root, "D");
-    const double D = 1./6*exp(2*alpha-gamma);
-    const double &dt = getSetting<double>(root, "dt");
+    const double &maxdt = getSetting<double>(root, "maxdt");
+    const double &depRatePower = getSetting<double>(root, "n");
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
     const bool equilibriate = equilibriateInt == 1;
@@ -109,11 +107,12 @@ int main(int argv, char** argc)
 
     AverageHeight averageHeight(solver);
 
+    // Selecting confinement model
     if (confinementInt == 1)
     {
         confiningSurface = new NoConfinement(solver);
 
-        if (diffuse)
+        if (diffuseInt != 1)
         {
             cout << "Diffusion without confinement is not implemented." << endl;
             return 1;
@@ -137,18 +136,34 @@ int main(int argv, char** argc)
         cout << "Invalid confinement: " << confinementInt << endl;
         return 1;
     }
+    //
 
-    if (diffuse)
-    {
-        (void) dt;
-        diffusion = new LatticeDiffusion(solver);
-        diffusion->setDependency(confiningSurface);
-    }
-
-    else
+    //selection diffusion model
+    if (diffuseInt == 1)
     {
         diffusion = new ConstantConcentration(solver);
     }
+    else if (diffuseInt == 2)
+    {
+        diffusion = new LatticeDiffusion(solver);
+        diffusion->setDependency(confiningSurface);
+    }
+    else if (diffuseInt == 3)
+    {
+        diffusion = new FixedPointTimeStepping(solver, maxdt);
+    }
+    else if (diffuseInt == 4)
+    {
+        diffusion = nullptr;
+        return 1;
+        //mmc 1/r^n
+    }
+    else
+    {
+        cout << "Invalid diffusion: " << diffuseInt << endl;
+        return 1;
+    }
+    //
 
     EqMu eqMu(solver);
     Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
@@ -251,12 +266,14 @@ int main(int argv, char** argc)
     simRoot.addData("concentrationBoundary", concentrationBoundary);
 
     simRoot.addData("confinement", confinementInt);
+    simRoot.addData("confiningSurfaceHeight", confiningSurfaceHeight);
     simRoot.addData("sigma0", sigma0);
     simRoot.addData("r0", lD);
     simRoot.addData("E0", E0);
 
     simRoot.addData("diffuse", diffuseInt);
-    simRoot.addData("D", D);
+    simRoot.addData("maxdt", maxdt);
+    simRoot.addData("depRatePower", depRatePower);
 
     simRoot.addData("useConcEquil", equilibriateInt);
     simRoot.addData("reset", resetInt);

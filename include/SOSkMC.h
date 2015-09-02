@@ -11,8 +11,8 @@
 
 #include "../src/soskmc/Events/diffusion/constantconcentration.h"
 #include "../src/soskmc/Events/diffusion/latticediffusion.h"
-#include "../src/soskmc/Events/diffusion/offlatticemontecarlonoboundary.h"
-#include "../src/soskmc/Events/diffusion/offlatticemontecarloboundary.h"
+#include "../src/soskmc/Events/diffusion/fixedpointtimestepping.h"
+#include "../src/soskmc/Events/diffusion/multiscale.h"
 
 #include "../src/soskmc/Events/eqmu.h"
 #include "../src/soskmc/Events/equilibriater.h"

@@ -94,7 +94,6 @@ private:
     // Event interface
 public:
     void execute();
-    void reset();
 
     // Diffusion interface
 public:

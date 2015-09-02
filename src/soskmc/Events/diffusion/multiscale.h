@@ -9,7 +9,7 @@ class OfflatticeMonteCarloBoundary : public OfflatticeMonteCarlo, public Lattice
 {
 public:
     OfflatticeMonteCarloBoundary(SOSSolver &solver,
-                                 const double dt,
+                                 const double maxdt,
                                  const uint boundarySpacing = 3);
     ~OfflatticeMonteCarloBoundary();
 
@@ -23,6 +23,10 @@ private:
     // Event interface
 public:
     void execute();
+    void reset()
+    {
+        OfflatticeMonteCarlo::reset();
+    }
 
     // Diffusion interface
 public:

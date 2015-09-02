@@ -6,7 +6,7 @@ class OfflatticeMonteCarlo : public virtual Diffusion
 {
 public:
     OfflatticeMonteCarlo(SOSSolver &solver,
-                         const double dt,
+                         const double maxdt,
                          string type = "",
                          string unit = "",
                          bool hasOutput = false,
@@ -14,8 +14,7 @@ public:
 
     virtual ~OfflatticeMonteCarlo();
 
-    virtual void onInsertParticle(const double x, const double y, const double z) = 0;
-    virtual void onRemoveParticle(const uint n) = 0;
+    virtual double calculateLocalRate(const uint x, const uint y, const uint n) const = 0;
 
     void diffuse(const double dt);
 
@@ -25,14 +24,14 @@ public:
 
     void initializeParticleMatrices(const uint nOfflatticeParticles, const double zMin);
 
-    const double &dt() const
+    const double &maxdt() const
     {
-        return m_dt;
+        return m_maxdt;
     }
 
-    const double &D() const
+    static constexpr double D()
     {
-        return m_D;
+        return 1.0;
     }
 
     double acceptanceRatio() const
@@ -60,6 +59,13 @@ public:
         m_particlePositions(i, j) = value;
     }
 
+    const double &localRates(const uint x, const uint y, const uint n)
+    {
+        return m_localRates(x, y, n);
+    }
+
+    void dumpDiffusingParticles(const uint frameNumber) const;
+
 protected:
 
     double &particlePositions(const uint i, const uint j)
@@ -68,12 +74,11 @@ protected:
     }
 
 private:
-
-    const double m_D;
-    const double m_dt;
+    const double m_maxdt;
 
     mat m_particlePositions;
     mat m_F;
+    cube m_localRates;
 
     long double m_accepted;
     long double m_trials;
@@ -82,12 +87,19 @@ private:
     // Event interface
 public:
     void initialize();
+    void reset();
 
 
     // Diffusion interface
 public:
+    void setupInitialConditions();
     virtual void dump(const uint frameNumber) const;
     uint dissolutionPaths(const uint x, const uint y) const;
-
+    virtual void registerHeightChange(const uint x, const uint y, const int delta);
+    virtual double depositionRate(const uint x, const uint y) const;
+    virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
+    virtual void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
+    virtual bool isBlockedPosition(const uint x, const uint y, const int z) const;
 };
+
 

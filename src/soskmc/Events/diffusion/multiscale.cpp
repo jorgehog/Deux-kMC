@@ -1,4 +1,4 @@
-#include "offlatticemontecarloboundary.h"
+#include "multiscale.h"
 
 #include "../confiningsurface/confiningsurface.h"
 
@@ -35,7 +35,7 @@ bool OfflatticeMonteCarloBoundary::checkIfEnoughRoom() const
 
 void OfflatticeMonteCarloBoundary::execute()
 {
-    dump(cycle());
+
 }
 
 
@@ -90,12 +90,14 @@ void OfflatticeMonteCarloBoundary::dump(const uint frameNumber) const
 {
     Diffusion::dump(frameNumber);
     LatticeDiffusion::dumpDiffusingParticles(frameNumber);
-    OfflatticeMonteCarlo::dump(frameNumber);
+    OfflatticeMonteCarlo::dumpDiffusingParticles(frameNumber);
 }
 
 void OfflatticeMonteCarloBoundary::onInsertParticle(const double x, const double y, const double z)
 {
-    (void) (x + y + z);
+    (void) x;
+    (void) y;
+    (void) z;
 
     //update flux if on boundary
 }
