@@ -28,7 +28,7 @@ TEST_F(SOSkMCTest, boundaries_blocked)
     m_diffusionEvent = diffusionEvent;
     SetUp_yo();
 
-    primeSolver(0);
+    primeSolver();
 
     for (uint x = 0; x < L; ++x)
     {
@@ -118,7 +118,7 @@ TEST_F(SOSkMCTest, boundaries_concentration)
     m_diffusionEvent = diffusionEvent;
     SetUp_yo();
 
-    primeSolver(0);
+    primeSolver();
 
     for (uint x = 0; x < L; ++x)
     {
@@ -259,7 +259,7 @@ TEST_F(SOSkMCTest, boundaries_reflect)
     m_diffusionEvent = diffusionEvent;
     SetUp_yo();
 
-    primeSolver(0);
+    primeSolver();
 
     for (uint x = 0; x < L; ++x)
     {

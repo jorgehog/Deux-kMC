@@ -24,7 +24,7 @@ public:
 
     void initializeParticleMatrices(const uint nOfflatticeParticles, const double zMin);
 
-    void scan(const uint n, const uint dim, const int direction, const double dr = 0.1, const double maxStep = 3.0);
+    void scan(const uint n, const uint dim, const double dr, const uint maxSteps = 100);
 
     void scanForDisplacement(const uint n, uint &dim, double &delta);
 

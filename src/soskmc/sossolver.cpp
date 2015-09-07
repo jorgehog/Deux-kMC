@@ -651,8 +651,8 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
         return true;
     }
 
-    uint X = uint(x);
-    uint Y = uint(y);
+    uint X = uint(round(x));
+    uint Y = uint(round(y));
 
     if (X == length())
     {

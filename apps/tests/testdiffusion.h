@@ -79,7 +79,7 @@ TEST_F(SOSkMCTest, diffusion)
 
     //    OfflatticeMonteCarloBoundary *diffusionEvent = static_cast<OfflatticeMonteCarloBoundary*>(m_diffusionEvent);
 
-    primeSolver(0);
+    primeSolver();
 
     diffusionEvent->clearDiffusionReactions();
 
@@ -252,7 +252,7 @@ TEST_F(SOSkMCTest, surfaceSites)
 
     //    OfflatticeMonteCarloBoundary *diffusionEvent = static_cast<OfflatticeMonteCarloBoundary*>(m_diffusionEvent);
 
-    primeSolver(0);
+    primeSolver();
 
     diffusionEvent->clearDiffusionReactions();
 
@@ -406,7 +406,7 @@ TEST_F(SOSkMCTest, dissolution)
     SetUp_yo();
     //    rng.initialize(1000);
 
-    primeSolver(0);
+    primeSolver();
 
     diffusionEvent->clearDiffusionReactions();
 
@@ -532,7 +532,7 @@ TEST_F(SOSkMCTest, SOS_discrete_interface)
     SetUp_yo();
     //    rng.initialize(1000);
 
-    primeSolver(0);
+    primeSolver();
 
     diffusionEvent->clearDiffusionReactions();
 
@@ -581,7 +581,7 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
     SetUp_yo();
     //    rng.initialize(1000);
 
-    primeSolver(0);
+    primeSolver();
 
     diffusionEvent->clearDiffusionReactions();
 
@@ -719,7 +719,7 @@ TEST_F(SOSkMCTest, SOS_diff_closeconf)
     SetUp_yo();
     //    rng.initialize(1000);
 
-    primeSolver(0);
+    primeSolver();
 
     diffusionEvent->clearDiffusionReactions();
 
@@ -781,7 +781,7 @@ TEST_F(SOSkMCTest, SOS_diff_mixedboundary)
     SetUp_yo();
     rng.initialize(1001230);
 
-    primeSolver(0);
+    primeSolver();
 
     diffusionEvent->clearDiffusionReactions();
 
@@ -824,7 +824,7 @@ TEST_F(SOSkMCTest, SOS_diff_closewall_trapped)
 
     SetUp_yo();
 
-    primeSolver(0);
+    primeSolver();
 
     diffusionEvent->clearDiffusionReactions();
 

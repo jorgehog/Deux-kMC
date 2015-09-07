@@ -76,7 +76,7 @@ public:
 
     double concentration() const
     {
-        return exp(gamma() - 2*alpha());
+        return exp(gamma() - dim()*alpha());
     }
 
     const imat &heights() const

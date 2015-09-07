@@ -69,19 +69,16 @@ protected:
 
     // Objects declared here can be used by all tests in the test case for Foo.
 
-    void primeSolver(const uint N)
+    void primeSolver()
     {
-        BasicEvent<uint> primer("kmc primer", [&] (BasicEvent<uint> *event)
+        BasicInitializeEvent<uint> primer("kmc primer", [&] (BasicInitializeEvent<uint> *event)
         {
-            if (event->cycle() == N)
-            {
                 event->stopLoop();
-            }
         });
 
         m_lattice->addEvent(primer);
 
-        m_lattice->eventLoop(2*N + 10);
+        m_lattice->eventLoop(1);
 
         m_lattice->removeEvent(&primer);
     }

@@ -100,6 +100,14 @@ int main(int argv, char** argc)
 
     SOSSolver solver(L, W, alpha, gamma, boundaries);
 
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            solver.setHeight(x, y, 0, false);
+        }
+    }
+
     if (concentrationBoundary == 1)
     {
         solver.addConcentrationBoundary(0, Boundary::orientations::FIRST);
