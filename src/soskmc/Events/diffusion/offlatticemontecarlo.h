@@ -26,7 +26,7 @@ public:
 
     void scan(const uint n, const uint dim, const double dr, const uint maxSteps = 100);
 
-    void scanForDisplacement(const uint n, uint &dim, double &delta);
+    void scanForDisplacement(const uint n, uint &dim, double &delta, const double stepSize = 0.05);
 
     const double &maxdt() const
     {
@@ -95,6 +95,7 @@ private:
     long double m_trials;
 
     vec::fixed<6> m_scanDeltas;
+    vec::fixed<6> m_scanAbsDeltas;
     vec::fixed<3> m_scanOriginalPositions;
 
     // Event interface

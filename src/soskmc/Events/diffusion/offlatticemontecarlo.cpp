@@ -328,7 +328,7 @@ void OfflatticeMonteCarlo::scan(const uint n, const uint dim, const double dr, c
     }
 }
 
-void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &delta)
+void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &delta, const double stepSize)
 {
     m_scanOriginalPositions(0) = m_particlePositions(0, n);
     m_scanOriginalPositions(1) = m_particlePositions(1, n);
@@ -339,23 +339,19 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
     {
         for (int direction = -1; direction <= 1; direction += 2)
         {
-            scan(n, dim, direction*0.1);
-            m_scanDeltas(c) = m_scanOriginalPositions(dim) - particlePositions(dim, n);
+            scan(n, dim, direction*stepSize);
+            m_scanDeltas(c) = particlePositions(dim, n) - m_scanOriginalPositions(dim);
+            m_scanAbsDeltas(c) = fabs(m_scanDeltas(c));
             particlePositions(dim, n) = m_scanOriginalPositions(dim);
             c++;
         }
     }
 
-    uint maxLoc;
+    uint minLoc;
 
-    delta = m_scanDeltas.min(maxLoc);
-    dim = maxLoc/2;
-
-    m_particlePositions(dim) += delta;
-    BADAssBool(!solver().isBlockedPosition(m_particlePositions(0),
-                                           m_particlePositions(1),
-                                           m_particlePositions(2)));
-    m_particlePositions(dim) -= delta;
+    m_scanAbsDeltas.min(minLoc);
+    delta = m_scanDeltas(minLoc);
+    dim = minLoc/2;
 
 }
 

@@ -107,6 +107,32 @@ TEST_F(CDiffTest, scan)
 }
 
 
+TEST_F(CDiffTest, fullscan)
+{
+    const uint n = 0;
+
+    m_solver->setHeight(1, 1, 1, false);
+
+    m_cdiffusionEvent->insertParticle(1, 1, 1.8);
+
+    uint dim;
+    double delta;
+    m_cdiffusionEvent->scanForDisplacement(n, dim, delta);
+
+    EXPECT_EQ(2, dim);
+    EXPECT_NEAR(0.2, delta, 1E-2);
+
+    m_cdiffusionEvent->clearDiffusingParticles();
+
+    m_cdiffusionEvent->insertParticle(1, 0.9, 1);
+
+    m_cdiffusionEvent->scanForDisplacement(n, dim, delta, 0.01);
+
+    EXPECT_EQ(1, dim);
+    EXPECT_NEAR(-0.4, delta, 1E-2);
+
+}
+
 
 
 
