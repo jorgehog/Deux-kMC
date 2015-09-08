@@ -65,6 +65,7 @@ int main(int argv, char** argc)
     const uint &diffuseInt = getSetting<uint>(root, "diffuse");
     const double &maxdt = getSetting<double>(root, "maxdt");
     const double &depRatePower = getSetting<double>(root, "n");
+    const double &depRateConstant = getSetting<double>(root, "c");
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
     const bool equilibriate = equilibriateInt == 1;
@@ -162,9 +163,21 @@ int main(int argv, char** argc)
     }
     else if (diffuseInt == 4)
     {
-        diffusion = nullptr;
-        return 1;
-        //mmc 1/r^n
+        diffusion = new FirstPassageContinuum(solver, maxdt,
+                                              [depRateConstant, depRatePower]
+                                              (const FirstPassageContinuum *_this,
+                                              const uint x, const uint y, const uint n)
+        {
+            const int z = _this->solver().height(x, y) + 1;
+
+            const double dx2 = pow((double)x - _this->particlePositions(0, n), 2);
+            const double dy2 = pow((double)y - _this->particlePositions(1, n), 2);
+            const double dz2 = pow((double)z - _this->particlePositions(2, n), 2);
+
+            const double dr2 = dx2 + dy2 + dz2;
+
+            return depRateConstant/pow(dr2, depRatePower/2);
+        });
     }
     else
     {
@@ -282,6 +295,7 @@ int main(int argv, char** argc)
     simRoot.addData("diffuse", diffuseInt);
     simRoot.addData("maxdt", maxdt);
     simRoot.addData("depRatePower", depRatePower);
+    simRoot.addData("depRateConstant", depRateConstant);
 
     simRoot.addData("useConcEquil", equilibriateInt);
     simRoot.addData("reset", resetInt);
