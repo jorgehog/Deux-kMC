@@ -18,6 +18,8 @@ public:
 
     void diffuse(const double dt);
 
+    void diffuseFull(const double dtFull);
+
     void removeParticle(const uint n);
 
     void insertParticle(const double x, const double y, const double z);
@@ -41,6 +43,16 @@ public:
     double acceptanceRatio() const
     {
         return m_accepted/m_trials;
+    }
+
+    const long double &trials() const
+    {
+        return m_trials;
+    }
+
+    const long double &accepted() const
+    {
+        return m_accepted;
     }
 
     const double &particlePositions(const uint i, const uint j) const

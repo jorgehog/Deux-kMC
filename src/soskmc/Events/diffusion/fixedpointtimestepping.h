@@ -7,7 +7,7 @@ class FixedPointTimeStepping : public OfflatticeMonteCarlo
 public:
     FixedPointTimeStepping(SOSSolver &solver, const double maxdt);
 
-    double calculateTimeStep(const double initialCondition, bool calculateDissolutionRate = false);
+    void calculateTimeStep(bool calculateDissolutionRate = false);
 
     double calculateLocalRate(const uint x, const uint y, const uint n, const double timeStep) const;
 

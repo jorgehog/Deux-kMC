@@ -11,10 +11,8 @@ FixedPointTimeStepping::FixedPointTimeStepping(SOSSolver &solver, const double m
 
 }
 
-double FixedPointTimeStepping::calculateTimeStep(const double initialCondition, bool calculateDissolutionRate)
+void FixedPointTimeStepping::calculateTimeStep(bool calculateDissolutionRate)
 {
-    double timeStep = initialCondition;
-
     double totalDissolutionRate = 0;
 
     for (uint x = 0; x < solver().length(); ++x)
@@ -46,7 +44,6 @@ double FixedPointTimeStepping::calculateTimeStep(const double initialCondition, 
         {
             for (uint y = 0; y < solver().width(); ++y)
             {
-                m_currentTimeStep = timeStep;
                 _depositionRate = depositionRate(x, y);
                 totalDepositionRate += _depositionRate;
             }
@@ -59,17 +56,17 @@ double FixedPointTimeStepping::calculateTimeStep(const double initialCondition, 
 
         i++;
 
-        eps = fabs(timeStep - newTimeStep);
+        eps = fabs(m_currentTimeStep - newTimeStep);
 
-        timeStep = newTimeStep;
+        m_currentTimeStep = newTimeStep;
 
         //checks the new time step against previous time steps
         //if it is identical, then the iteration failed.
         for (const double &prevTimeStep : prevTimeSteps)
         {
-            if (fabs(prevTimeStep - timeStep) < 1E-15)
+            if (fabs(prevTimeStep - m_currentTimeStep) < 1E-15)
             {
-                cout << "Fixed point iteration failed." << prevTimeStep << " " << timeStep << endl;
+                cout << "Fixed point iteration failed." << prevTimeStep << " " << m_currentTimeStep << endl;
 
                 for (const double &prevTimeStep2 : prevTimeSteps)
                 {
@@ -77,7 +74,7 @@ double FixedPointTimeStepping::calculateTimeStep(const double initialCondition, 
                 }
                 cout << endl;
                 sleep(2);
-                return solver().nextRandomLogNumber()/totalDissolutionRate;
+                return;
             }
         }
 
@@ -89,7 +86,7 @@ double FixedPointTimeStepping::calculateTimeStep(const double initialCondition, 
             {
                 prevTimeSteps.at(j) = prevTimeSteps.at(j + 1);
             }
-            prevTimeSteps.back() = timeStep;
+            prevTimeSteps.back() = m_currentTimeStep;
         }
 
         //every 100 iteration cycles we check against one extra time step
@@ -97,15 +94,15 @@ double FixedPointTimeStepping::calculateTimeStep(const double initialCondition, 
         //and not only let's say a-b-c-b-c-b-c..
         if (i % 20 == 0)
         {
-            prevTimeSteps.push_back(timeStep);
+            prevTimeSteps.push_back(m_currentTimeStep);
         }
+
+        calculateLocalRates();
 
     } while (eps > m_eps);
 
 
-    cout << "  " << eps << " " << timeStep/initialCondition << " --- " << totalDepositionRate << " " << totalDissolutionRate << " " << totalDepositionRate/totalDissolutionRate << endl;
-
-    return timeStep;
+    cout << "  " << eps << " --- " << totalDepositionRate << " " << totalDissolutionRate << " " << totalDepositionRate/totalDissolutionRate << endl;
 }
 
 double FixedPointTimeStepping::calculateLocalRate(const uint x,
@@ -148,14 +145,15 @@ double FixedPointTimeStepping::calculateLocalRate(const uint x,
 
 void FixedPointTimeStepping::execute()
 {
-    m_currentTimeStep = calculateTimeStep(m_currentTimeStep);
+    calculateTimeStep();
 }
 
 void FixedPointTimeStepping::setupInitialConditions()
 {
     OfflatticeMonteCarlo::setupInitialConditions();
 
-    m_currentTimeStep = calculateTimeStep(1.0, true);
+    m_currentTimeStep = 1.0;
+    calculateTimeStep(true);
 
 }
 
@@ -163,7 +161,7 @@ void FixedPointTimeStepping::registerHeightChange(const uint x, const uint y, co
 {
     OfflatticeMonteCarlo::registerHeightChange(x, y, delta);
 
-    m_currentTimeStep = calculateTimeStep(m_currentTimeStep);
+    calculateTimeStep();
 
     DissolutionDeposition *r;
     for (uint _x = 0; _x < solver().length(); ++_x)

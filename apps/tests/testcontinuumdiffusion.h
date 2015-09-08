@@ -22,17 +22,15 @@ public:
         double maxdt = 0.01;
         auto rf = [] (const FirstPassageContinuum *_this, const uint x, const uint y, const uint n)
         {
-            return 1.0/_this->nOfflatticeParticles();
+            const int z = _this->solver().height(x, y) + 1;
 
-            const int z = _this->solver().height(x, y);
-
-            const double dx2 = pow(x - _this->particlePositions(0, n), 2);
-            const double dy2 = pow(y - _this->particlePositions(1, n), 2);
-            const double dz2 = pow(z - _this->particlePositions(2, n), 2);
+            const double dx2 = pow((double)x - _this->particlePositions(0, n), 2);
+            const double dy2 = pow((double)y - _this->particlePositions(1, n), 2);
+            const double dz2 = pow((double)z - _this->particlePositions(2, n), 2);
 
             const double dr2 = dx2 + dy2 + dz2;
 
-            return 1./dr2;
+            return 1/dr2;
         };
 
         m_solver = new SOSSolver(m_L, m_W, m_alpha, m_mu, getBoundariesFromIDs({0, 0, 0, 0}, m_L, m_W));
@@ -134,9 +132,62 @@ TEST_F(CDiffTest, fullscan)
 }
 
 
+TEST_F(CDiffTest, dissolutionDeposition)
+{
+    EXPECT_EQ(0, m_cdiffusionEvent->nOfflatticeParticles());
 
+    m_solver->registerHeightChange(1, 1, -1);
 
+    EXPECT_EQ(1, m_cdiffusionEvent->nOfflatticeParticles());
 
+    EXPECT_NEAR(1, m_cdiffusionEvent->localRates(1, 1, 0), 1E-3);
+
+    m_solver->registerHeightChange(1, 1, 1);
+
+    EXPECT_EQ(0, m_cdiffusionEvent->nOfflatticeParticles());
+}
+
+TEST_F(CDiffTest, diffusion)
+{
+    for (uint x = 0; x < m_L; ++x)
+    {
+        for (uint y = 0; y < m_W; ++y)
+        {
+            solver().registerHeightChange(x, y, -1);
+
+            EXPECT_NEAR(1, m_cdiffusionEvent->localRates(x, y, m_cdiffusionEvent->nOfflatticeParticles()-1), 1E-3);
+
+            if (HasFailure())
+            {
+                break;
+            }
+        }
+    }
+
+    EXPECT_EQ(solver().area(), m_cdiffusionEvent->nOfflatticeParticles());
+
+    double T = 100.0;
+    m_cdiffusionEvent->diffuseFull(T);
+
+    EXPECT_NEAR(1, m_cdiffusionEvent->acceptanceRatio(), 1E-3);
+
+    const uint N = T/m_cdiffusionEvent->maxdt();
+
+    EXPECT_NEAR(N*solver().area(), m_cdiffusionEvent->trials(), 1E-3);
+
+    for (uint x = 0; x < m_L; ++x)
+    {
+        for (uint y = 0; y < m_W; ++y)
+        {
+            for (uint n = 0; n < m_cdiffusionEvent->nOfflatticeParticles(); ++n)
+            {
+                EXPECT_NEAR(m_cdiffusionEvent->calculateLocalRate(x, y, n),
+                            m_cdiffusionEvent->localRates(x, y, n), 1E-3);
+            }
+        }
+    }
+
+}
 
 
 
