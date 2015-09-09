@@ -12,7 +12,7 @@ public:
     Edge(const int location,
          const orientations orientation);
 
-    bool isBlocked(const int xi) const;
+    bool isBlocked(const double xi) const;
 
 private:
 

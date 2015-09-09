@@ -580,24 +580,31 @@ uint SOSSolver::span() const
     }
 }
 
-uint SOSSolver::xBoundaryOrientation(const uint x) const
+uint SOSSolver::boundaryOrientation(const double x, const uint dim) const
 {
-    return boundaryOrientation(x, length());
-}
+    const uint lx = dim == 0 ? length() : width();
 
-uint SOSSolver::yBoundaryOrientation(const uint y) const
-{
-    return boundaryOrientation(y, width());
-}
-
-uint SOSSolver::boundaryOrientation(const uint x, const uint lx) const
-{
     return x >= lx/2 ? 1 : 0;
 }
 
-int SOSSolver::boundaryTransform(const uint x, const int dx, const uint dim) const
+double SOSSolver::boundaryTransform(const double x, const uint dim) const
 {
-    return boundary(dim, yBoundaryOrientation(x))->transformCoordinate((int)x + dx);
+    if (dim == 2)
+    {
+        return x;
+    }
+
+    return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(x);
+}
+
+double SOSSolver::boundaryTransform(const double x, const double dx, const uint dim) const
+{
+    if (dim == 2)
+    {
+        return x + dx;
+    }
+
+    return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(x + dx);
 }
 
 void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orientations orientation)
@@ -640,11 +647,11 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
 {
     //DERP: Check periodicity
 
-    bool isOutSideBox_x = (x < 0) || (x > length());
+    bool isOutSideBox_x = (x < 0) || (x >= length() - 0.5);
 
-    bool isOutSideBox_y = (y < 0) || (y > width());
+    bool isOutSideBox_y = (y < 0) || (y >= width() - 0.5);
 
-    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 1);
+    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 0.5);
 
     if (isOutSideBox_x || isOutSideBox_y || isOutSideBox_z)
     {
@@ -665,7 +672,7 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
     }
 
     //DERP: collide in x-y plane
-    return z < height(X, Y) + 1;
+    return z < height(X, Y) + 0.5;
 }
 
 bool SOSSolver::isOutsideBoxSingle(const int x, const uint dim) const
@@ -737,6 +744,59 @@ void SOSSolver::updateConcentrationBoundaryIfOnBoundary(const uint x, const uint
             r->calculateRate();
         }
     }
+}
+
+double SOSSolver::closestSquareDistance(const uint x, const uint y, const int z,
+                                        const double xp, const double yp, const double zp) const
+{
+    //zero image
+    double minDistance = absSquareDistance(x, y, z, xp, yp, zp);
+
+    //x images zero y
+    for (const double &xImage : boundary(0, boundaryOrientation(xp, 0))->imagesOf(xp))
+    {
+        double distance = absSquareDistance(x, y, z, xImage, yp, zp);
+
+        if (distance < minDistance)
+        {
+            minDistance = distance;
+        }
+    }
+
+    //y images zero x
+    for (const double &yImage : boundary(1, boundaryOrientation(yp, 1))->imagesOf(yp))
+    {
+        double distance = absSquareDistance(x, y, z, xp, yImage, zp);
+
+        if (distance < minDistance)
+        {
+            minDistance = distance;
+        }
+    }
+
+    //x and y images
+    for (const double &xImage : boundary(0, boundaryOrientation(xp, 0))->imagesOf(xp))
+    {
+        for (const double &yImage : boundary(1, boundaryOrientation(yp, 1))->imagesOf(yp))
+        {
+            double distance = absSquareDistance(x, y, z, xImage, yImage, zp);
+
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+            }
+        }
+    }
+
+    return minDistance;
+
+
+}
+
+double SOSSolver::absSquareDistance(const uint x, const uint y, const int z,
+                                    const double xp, const double yp, const double zp) const
+{
+    return pow((double)x - xp, 2.) + pow((double)y - yp, 2.) + pow((double)z - zp, 2.);
 }
 
 void SOSSolver::execute()

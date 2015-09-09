@@ -9,9 +9,9 @@ HEADERS = RNG/kmcrng.h \
     kmcsolver.h \
     kmcassets.h \
     reaction.h \
-    boundary/boundary.cpp \
-    boundary/edge.cpp \
-    boundary/periodic.cpp \
+    boundary/boundary.h \
+    boundary/edge.h \
+    boundary/periodic.h \
     boundary/finitesize.h \
     boundary/open.h \
     boundary/reflecting.h

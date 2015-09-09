@@ -176,13 +176,11 @@ public:
 
     uint span() const;
 
-    uint xBoundaryOrientation(const uint x) const;
+    uint boundaryOrientation(const double x, const uint dim) const;
 
-    uint yBoundaryOrientation(const uint y) const;
+    double boundaryTransform(const double x, const uint dim) const;
 
-    uint boundaryOrientation(const uint x, const uint lx) const;
-
-    int boundaryTransform(const uint x, const int dx, const uint dim) const;
+    double boundaryTransform(const double x, const double dx, const uint dim) const;
 
     void addConcentrationBoundary(const uint dim, const Boundary::orientations orientation);
 
@@ -217,6 +215,12 @@ public:
     {
         return m_concentrationBoundaryReactions;
     }
+
+    double closestSquareDistance(const uint x, const uint y, const int z,
+                                 const double xp, const double yp, const double zp) const;
+
+    double absSquareDistance(const uint x, const uint y, const int z,
+                             const double xp, const double yp, const double zp) const;
 
 private:
 

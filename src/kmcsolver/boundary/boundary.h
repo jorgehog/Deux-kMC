@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sys/types.h>
+#include <vector>
 
 namespace kMC
 {
@@ -21,9 +22,11 @@ public:
 
     virtual ~Boundary() {}
 
-    virtual int transformCoordinate(const int xi) const = 0;
+    virtual double transformCoordinate(const double xi) const = 0;
 
-    virtual bool isBlocked(const int xi) const = 0;
+    virtual bool isBlocked(const double xi) const = 0;
+
+    virtual std::vector<double> imagesOf(const double xi) const = 0;
 
 
     const Boundary::orientations m_orientation;

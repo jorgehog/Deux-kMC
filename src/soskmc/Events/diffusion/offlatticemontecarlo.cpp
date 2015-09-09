@@ -32,8 +32,12 @@ void OfflatticeMonteCarlo::dump(const uint frameNumber) const
 
 uint OfflatticeMonteCarlo::dissolutionPaths(const uint x, const uint y) const
 {
-    (void) x;
-    (void) y;
+    bool lockedIn = solver().nNeighbors(x, y) == 5;
+    bool closedTop = (solver().confiningSurfaceEvent().height() - solver().height(x, y)) <= 1;
+    if ( lockedIn && closedTop )
+    {
+        return 0u;
+    }
 
     return 1u;
 }
@@ -82,11 +86,12 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x, const uint y, cons
             dy = sin(theta)*sin(phi);
             dz = cos(theta);
 
-            x1 = (double)x + dx;
-            y1 = (double)y + dy;
-            z1 = (double)z + dz;
+            x1 = solver().boundaryTransform(x, dx, 0);
+            y1 = solver().boundaryTransform(y, dy, 1);
+            z1 = z + dz;
 
             BADAssClose(1, dx*dx + dy*dy + dz*dz, 1E-3);
+
 
         } while (solver().isBlockedPosition(x1, y1, z1));
 
@@ -159,6 +164,11 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x, const uint y, cons
 
 double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
 {
+    if (solver().isBlockedPosition(x, y, solver().height(x, y) + 1))
+    {
+        return 0.0;
+    }
+
     double R = 0;
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
@@ -239,8 +249,8 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
 
         do
         {
-            x1 = x0 + sqrt(2*D()*dt)*rng.normal() + D()*m_F(0, n)*dt;
-            y1 = y0 + sqrt(2*D()*dt)*rng.normal() + D()*m_F(1, n)*dt;
+            x1 = solver().boundaryTransform(x0, sqrt(2*D()*dt)*rng.normal() + D()*m_F(0, n)*dt, 0);
+            y1 = solver().boundaryTransform(y0, sqrt(2*D()*dt)*rng.normal() + D()*m_F(1, n)*dt, 1);
             z1 = z0 + sqrt(2*D()*dt)*rng.normal() + D()*m_F(2, n)*dt;
 
             if (solver().surfaceDim() == 1)
@@ -323,8 +333,8 @@ void OfflatticeMonteCarlo::initializeParticleMatrices(const uint nParticles, con
     {
         do
         {
-            x0 = rng.uniform()*(solver().length() - 1);
-            y0 = rng.uniform()*(solver().width() - 1);
+            x0 = solver().boundaryTransform(rng.uniform()*(solver().length() - 0.5), 0);
+            y0 = solver().boundaryTransform(rng.uniform()*(solver().width() - 0.5), 1);
             z0 = zMin + rng.uniform()*(h - zMin);
 
         } while(solver().isBlockedPosition(x0, y0, z0));
@@ -350,7 +360,7 @@ void OfflatticeMonteCarlo::scan(const uint n, const uint dim, const double dr, c
 
     while (solver().isBlockedPosition(x0, y0, z0) && c < maxSteps)
     {
-        particlePositions(dim, n) += dr;
+        particlePositions(dim, n) = solver().boundaryTransform(particlePositions(dim, n), dr, dim);
 
         c++;
     }

@@ -24,11 +24,10 @@ public:
         {
             const int z = _this->solver().height(x, y) + 1;
 
-            const double dx2 = pow((double)x - _this->particlePositions(0, n), 2);
-            const double dy2 = pow((double)y - _this->particlePositions(1, n), 2);
-            const double dz2 = pow((double)z - _this->particlePositions(2, n), 2);
-
-            const double dr2 = dx2 + dy2 + dz2;
+            const double dr2 = _this->solver().closestSquareDistance(x, y, z,
+                                                                     _this->particlePositions(0, n),
+                                                                     _this->particlePositions(1, n),
+                                                                     _this->particlePositions(2, n));
 
             return 1/dr2;
         };
@@ -76,29 +75,25 @@ TEST_F(CDiffTest, scan)
 
     EXPECT_TRUE(solver().isBlockedPosition(x0, y0, z0));
 
-    const double x0Scan = x0;
-    const double y0Scan = y0;
-    const double z0Scan = z0 + 1;
-
     m_cdiffusionEvent->scan(n, 2, 0.01);
 
     EXPECT_FALSE(solver().isBlockedPosition(x0, y0, z0)) << m_cdiffusionEvent->particlePositions();
 
-    EXPECT_NEAR(x0, x0Scan, 1E-3);
-    EXPECT_NEAR(y0, y0Scan, 1E-3);
-    EXPECT_NEAR(z0, z0Scan, 1E-3);
+    EXPECT_NEAR(1, x0, 1E-2);
+    EXPECT_NEAR(1, y0, 1E-2);
+    EXPECT_NEAR(0.5, z0, 1E-2);
 
     solver().setHeight(1,1,1,false);
 
     EXPECT_TRUE(solver().isBlockedPosition(x0, y0, z0));
 
-    m_cdiffusionEvent->scan(n, 0, -0.01);
+    m_cdiffusionEvent->scan(n, 0, -0.01, 10000);
 
     EXPECT_FALSE(solver().isBlockedPosition(x0, y0, z0)) << m_cdiffusionEvent->particlePositions();
 
-    EXPECT_NEAR(0.5, x0, 1E-3);
-    EXPECT_NEAR(y0, y0Scan, 1E-3);
-    EXPECT_NEAR(z0, z0Scan, 1E-3);
+    EXPECT_NEAR(0.5, x0, 1E-2);
+    EXPECT_NEAR(1, y0, 1E-2);
+    EXPECT_NEAR(0.5, z0, 1E-2);
 
 
 
@@ -111,7 +106,7 @@ TEST_F(CDiffTest, fullscan)
 
     m_solver->setHeight(1, 1, 1, false);
 
-    m_cdiffusionEvent->insertParticle(1, 1, 1.8);
+    m_cdiffusionEvent->insertParticle(1, 1, 1.3);
 
     uint dim;
     double delta;
@@ -159,7 +154,7 @@ TEST_F(CDiffTest, diffusion)
 
             if (HasFailure())
             {
-                break;
+                return;
             }
         }
     }

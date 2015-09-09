@@ -13,7 +13,8 @@ public:
 
     // Boundary interface
 public:
-    int transformCoordinate(const int xi) const;
+    double transformCoordinate(const double xi) const;
+    std::vector<double> imagesOf(const double xi) const;
 };
 
 }

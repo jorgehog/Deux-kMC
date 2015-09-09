@@ -423,8 +423,13 @@ TEST_F(SOSkMCTest, dissolution)
     {
         for (uint y = 0; y < W; ++y)
         {
-            EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(x, y));
+            EXPECT_EQ(1, m_solver->numberOfSurroundingSolutionSites(x, y)) << x << " " << y;
         }
+    }
+
+    if (HasFailure())
+    {
+        return;
     }
 
 

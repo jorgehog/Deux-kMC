@@ -170,11 +170,10 @@ int main(int argv, char** argc)
         {
             const int z = _this->solver().height(x, y) + 1;
 
-            const double dx2 = pow((double)x - _this->particlePositions(0, n), 2);
-            const double dy2 = pow((double)y - _this->particlePositions(1, n), 2);
-            const double dz2 = pow((double)z - _this->particlePositions(2, n), 2);
-
-            const double dr2 = dx2 + dy2 + dz2;
+            const double dr2 = _this->solver().closestSquareDistance(x, y, z,
+                                                                     _this->particlePositions(0, n),
+                                                                     _this->particlePositions(1, n),
+                                                                     _this->particlePositions(2, n));
 
             return depRateConstant/pow(dr2, depRatePower/2);
         });

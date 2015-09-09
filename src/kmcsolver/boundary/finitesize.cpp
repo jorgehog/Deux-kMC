@@ -13,7 +13,12 @@ FiniteSize::~FiniteSize()
 
 }
 
-int FiniteSize::transformCoordinate(const int xi) const
+double FiniteSize::transformCoordinate(const double xi) const
 {
     return xi;
+}
+
+std::vector<double> FiniteSize::imagesOf(const double xi) const
+{
+    return {};
 }

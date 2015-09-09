@@ -15,7 +15,7 @@ Open::~Open()
 
 
 
-bool Open::isBlocked(const int xi) const
+bool Open::isBlocked(const double xi) const
 {
     (void) xi;
 

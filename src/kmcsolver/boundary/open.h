@@ -13,7 +13,7 @@ public:
 
     // Boundary interface
 public:
-    bool isBlocked(const int xi) const;
+    bool isBlocked(const double xi) const;
 };
 
 }

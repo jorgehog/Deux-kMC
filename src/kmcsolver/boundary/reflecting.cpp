@@ -16,7 +16,7 @@ Reflecting::~Reflecting()
 
 
 
-int kMC::Reflecting::transformCoordinate(const int xi) const
+double Reflecting::transformCoordinate(const double xi) const
 {
     bool isBelow = (xi < m_location) && (m_orientation == orientations::FIRST);
     bool isAbove = (xi > m_location) && (m_orientation == orientations::LAST);
@@ -37,9 +37,23 @@ int kMC::Reflecting::transformCoordinate(const int xi) const
     }
 }
 
-bool kMC::Reflecting::isBlocked(const int xi) const
+bool Reflecting::isBlocked(const double xi) const
 {
     (void) xi;
 
     return false;
+}
+
+std::vector<double> Reflecting::imagesOf(const double xi) const
+{
+    if (m_orientation == orientations::FIRST)
+    {
+        return {2*m_location - xi - 1};
+    }
+
+    else
+    {
+        return {2*m_location - xi + 1};
+    }
+
 }

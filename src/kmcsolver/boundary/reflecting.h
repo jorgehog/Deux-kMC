@@ -16,8 +16,9 @@ private:
 
     // Boundary interface
 public:
-    int transformCoordinate(const int xi) const;
-    bool isBlocked(const int xi) const;
+    double transformCoordinate(const double xi) const;
+    bool isBlocked(const double xi) const;
+    std::vector<double> imagesOf(const double xi) const;
 };
 
 }
