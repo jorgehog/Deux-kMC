@@ -645,11 +645,12 @@ void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orienta
 
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
 {
-    //DERP: Check periodicity
 
-    bool isOutSideBox_x = (x < 0) || (x >= length() - 0.5);
+    //check vs length and not length - 1 or - 0.5 because of transformation issues.
+    //so i.e. for periodicity,
+    bool isOutSideBox_x = (x < 0) || (x >= length());
 
-    bool isOutSideBox_y = (y < 0) || (y >= width() - 0.5);
+    bool isOutSideBox_y = (y < 0) || (y >= width());
 
     bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 0.5);
 

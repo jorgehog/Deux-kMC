@@ -14,7 +14,6 @@ void initializeSurface(SOSSolver &solver, const string type);
 
 int main(int argv, char** argc)
 {
-
     //---Start default config loading
 
     string cfgName = getCfgName(argv, argc);
