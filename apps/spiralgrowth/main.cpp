@@ -52,6 +52,10 @@ int main(int argv, char** argc)
     const uint bottomBoundaryID = boundarySettings[1][0];
     const uint topBoundaryID = boundarySettings[1][1];
 
+    const uint cutoff = getSetting<uint>(root, "cutoff");
+
+    const int boundaryHeight = getSetting<int>(root, "boundaryHeight");
+
     const uint &concentrationBoundary = getSetting<uint>(root, "concentrationBoundary");
 
     const uint &confinementInt = getSetting<uint>(root, "confinement");
@@ -89,16 +93,16 @@ int main(int argv, char** argc)
     //---End default config loading
     //---Start ignis environment and solver creation
 
+    SOSSolver solver(L, W, alpha, gamma);
+
     ConfiningSurface *confiningSurface;
     Diffusion *diffusion;
 
-    auto boundaries = getBoundariesFromIDs({rightBoundaryID,
-                                            leftBoundaryID,
-                                            bottomBoundaryID,
-                                            topBoundaryID},
-                                           L, W);
-
-    SOSSolver solver(L, W, alpha, gamma, boundaries);
+    setBoundariesFromIDs(&solver, {rightBoundaryID,
+                                   leftBoundaryID,
+                                   bottomBoundaryID,
+                                   topBoundaryID},
+                         L, W, boundaryHeight, cutoff);
 
     for (uint x = 0; x < L; ++x)
     {
@@ -120,7 +124,7 @@ int main(int argv, char** argc)
     {
         confiningSurface = new NoConfinement(solver);
 
-        if (diffuseInt != 1)
+        if (diffuseInt != 1 && diffuseInt != 5)
         {
             cout << "Diffusion without confinement is not implemented." << endl;
             return 1;
@@ -175,6 +179,14 @@ int main(int argv, char** argc)
                                                                      _this->particlePositions(2, n));
 
             return depRateConstant/pow(dr2, depRatePower/2);
+        });
+    }
+    else if (diffuseInt == 5)
+    {
+        diffusion = new ConcentrationProfile(solver, [&L, &gamma] (const uint x, const uint y)
+        {
+            (void) y;
+            return 1-x/(L-1.);
         });
     }
     else
@@ -282,6 +294,10 @@ int main(int argv, char** argc)
     simRoot.addData("bottomBoundaryID", bottomBoundaryID);
     simRoot.addData("topBoundaryID", topBoundaryID);
 
+    simRoot.addData("cutoff", cutoff);
+
+    simRoot.addData("boundaryHeight", boundaryHeight);
+
     simRoot.addData("concentrationBoundary", concentrationBoundary);
 
     simRoot.addData("confinement", confinementInt);
@@ -322,13 +338,14 @@ int main(int argv, char** argc)
 
     //---End data dump
 
-    for (auto & dimBoundary : boundaries)
-    {
-        for (auto & boundary : dimBoundary)
-        {
-            delete boundary;
-        }
-    }
+    //derp
+    //    for (auto & dimBoundary : boundaries)
+    //    {
+    //        for (auto & boundary : dimBoundary)
+    //        {
+    //            delete boundary;
+    //        }
+    //    }
 
     delete diffusion;
     delete confiningSurface;

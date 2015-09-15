@@ -8,10 +8,10 @@
 using namespace kMC;
 
 
-KMCSolver::KMCSolver(vector<vector<const Boundary *>> boundaries) :
+KMCSolver::KMCSolver() :
     ignis::LatticeEvent("KMCSolver")
 {
-    m_boundaries = boundaries;
+
 }
 
 
@@ -143,6 +143,8 @@ void KMCSolver::updateTime()
 
 void KMCSolver::initialize()
 {
+    BADAssBool(!m_boundaries.empty(), "boundaries are not set.");
+
     m_currentTime = 0;
     m_nextRandomLogNumber = getRandomLogNumber();
 

@@ -3,7 +3,7 @@
 using namespace kMC;
 
 FiniteSize::FiniteSize(const orientations orientation) :
-    Boundary(orientation)
+    Boundary1D(orientation)
 {
 
 }
@@ -20,5 +20,7 @@ double FiniteSize::transformCoordinate(const double xi) const
 
 std::vector<double> FiniteSize::imagesOf(const double xi) const
 {
+    (void) xi;
+
     return {};
 }

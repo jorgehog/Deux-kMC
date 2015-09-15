@@ -20,3 +20,5 @@
 #include "../src/soskmc/Events/miscevents.h"
 
 #include "../src/soskmc/Events/dumpsystem.h"
+
+#include "../src/soskmc/averageheightboundary.h"

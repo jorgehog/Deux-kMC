@@ -4,14 +4,13 @@
 #include "Events/confiningsurface/confiningsurface.h"
 #include "Events/diffusion/constantconcentration.h"
 #include "../kmcsolver/boundary/boundary.h"
-
+#include "heightconnecter.h"
 
 SOSSolver::SOSSolver(const uint length,
                      const uint width,
                      const double alpha,
-                     const double mu,
-                     vector<vector<const Boundary*>> boundaries) :
-    KMCSolver(boundaries),
+                     const double mu) :
+    KMCSolver(),
     m_heights_set(false),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_length(length),
@@ -59,17 +58,19 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
 
     m_heights(x, y) += value;
 
-    m_changedSurfaceSites.insert(make_pair(x, y));
+    registerChangedSite(x, y);
 
+    m_averageHeight += value/double(area());
 
-    const uint left = leftSite(x);
-    const uint right = rightSite(x);
-    const uint bottom = bottomSite(y);
-    const uint top = topSite(y);
+    BADAssClose(averageHeight(), accu(heights())/double(area()), 1E-3);
+
+    const uint left = leftSite(x, y, m_heights(x, y));
+    const uint right = rightSite(x, y, m_heights(x, y));
+    const uint bottom = bottomSite(x, y, m_heights(x, y));
+    const uint top = topSite(x, y, m_heights(x, y));
 
     uint n = 0;
 
-    setNNeighbors(x, y);
     m_affectedSurfaceReactions.at(n) = &surfaceReaction(x, y);
     n++;
 
@@ -101,16 +102,25 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
         n++;
     }
 
-    m_confiningSurfaceEvent->registerHeightChange(x, y, m_affectedSurfaceReactions, n);
-    m_diffusionEvent->registerHeightChange(x, y, value);
+    for (HeightConnecter *heightConnecter : m_heightConnecters)
+    {
+        heightConnecter->registerHeightChange(x, y, value, m_affectedSurfaceReactions, n);
+    }
 
     //recalcuate rates for neighbor reactions.
-    for (uint i = 0; i < n; ++i)
+    for (uint i = 1; i < n; ++i)
     {
         registerAffectedReaction(m_affectedSurfaceReactions.at(i));
     }
 
     updateConcentrationBoundaryIfOnBoundary(x, y);
+}
+
+void SOSSolver::registerChangedSite(const uint x, const uint y)
+{
+    m_changedSurfaceSites.insert(make_pair(x, y));
+    setNNeighbors(x, y);
+    registerAffectedReaction(&surfaceReaction(x, y));
 }
 
 void SOSSolver::setNNeighbors(const uint x, const uint y)
@@ -166,11 +176,13 @@ void SOSSolver::setHeights(const imat &heights, const bool iteratively)
 void SOSSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
 {
     m_confiningSurfaceEvent = &confiningSurfaceEvent;
+    registerHeightConnecter(&confiningSurfaceEvent);
 }
 
 void SOSSolver::setDiffusionEvent(Diffusion &diffusionEvent)
 {
     m_diffusionEvent = &diffusionEvent;
+    registerHeightConnecter(&diffusionEvent);
 }
 
 double SOSSolver::volume() const
@@ -364,24 +376,24 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
 
 }
 
-int SOSSolver::topSite(const uint site, const uint n) const
+int SOSSolver::topSite(const uint x, const uint y, const int z, const uint n) const
 {
-    return boundary(1, 1)->transformCoordinate(site + n);
+    return boundary(1, 1)->transformCoordinate(y + n, x, z);
 }
 
-int SOSSolver::bottomSite(const uint site, const uint n) const
+int SOSSolver::bottomSite(const uint x, const uint y, const int z, const uint n) const
 {
-    return boundary(1, 0)->transformCoordinate((int)site - (int)n);
+    return boundary(1, 0)->transformCoordinate((int)y - (int)n, x, z);
 }
 
-int SOSSolver::leftSite(const uint site, const uint n) const
+int SOSSolver::leftSite(const uint x, const uint y, const int z, const uint n) const
 {
-    return boundary(0, 0)->transformCoordinate((int)site - (int)n);
+    return boundary(0, 0)->transformCoordinate((int)x - (int)n, y, z);
 }
 
-int SOSSolver::rightSite(const uint site, const uint n) const
+int SOSSolver::rightSite(const uint x, const uint y, const int z, const uint n) const
 {
-    return boundary(0, 1)->transformCoordinate(site + n);
+    return boundary(0, 1)->transformCoordinate(x + n, y, z);
 }
 
 void SOSSolver::findConnections(const uint x,
@@ -394,10 +406,10 @@ void SOSSolver::findConnections(const uint x,
                                 bool onlySurface) const
 {
 
-    const int left = leftSite(x);
-    const int right = rightSite(x);
-    const int top = topSite(y);
-    const int bottom = bottomSite(y);
+    const int left = leftSite(x, y, h);
+    const int right = rightSite(x, y, h);
+    const int top = topSite(x, y, h);
+    const int bottom = bottomSite(x, y, h);
 
     connectedLeft = findSingleConnection(left, 0, 0, y, h, onlySurface);
     connectedRight = findSingleConnection(right, 0, 1, y, h, onlySurface);
@@ -515,9 +527,11 @@ bool SOSSolver::findSingleConnection(const int xNeighbor,
                                      const int h,
                                      bool onlySurface) const
 {
+
     bool connected = false;
     bool checkConnection = !isOutsideBoxSingle(xNeighbor, dim);
-    if (!boundary(dim, orientation)->isBlocked(xNeighbor))
+
+    if (!boundary(dim, orientation)->isBlocked(xNeighbor, y, h))
     {
         if (!onlySurface)
         {
@@ -587,24 +601,43 @@ uint SOSSolver::boundaryOrientation(const double x, const uint dim) const
     return x >= lx/2 ? 1 : 0;
 }
 
-double SOSSolver::boundaryTransform(const double x, const uint dim) const
+double SOSSolver::boundaryTransform(const double x, const double y, const double z, const uint dim) const
 {
-    if (dim == 2)
+    if (dim == 0)
     {
-        return x;
+        return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(x, y, z);
     }
 
-    return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(x);
+    else if (dim == 1)
+    {
+        return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(y, x, z);
+    }
+
+    else
+    {
+        return z;
+    }
+
 }
 
-double SOSSolver::boundaryTransform(const double x, const double dx, const uint dim) const
+double SOSSolver::boundaryTransform(const double x, const double y, const double z, const double dxi, const uint dim) const
 {
-    if (dim == 2)
+
+    if (dim == 0)
     {
-        return x + dx;
+        return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(x + dxi, y, z);
     }
 
-    return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(x + dx);
+    else if (dim == 1)
+    {
+        return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(y + dxi, x, z);
+    }
+
+    else
+    {
+        return z + dxi;
+    }
+
 }
 
 void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orientations orientation)
@@ -626,9 +659,28 @@ void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orienta
 
 
     int outSide = concReaction->location() + (2*orientationInt - 1);
-    int outSideTrans = b->transformCoordinate(outSide);
+    int outSideTrans;
+    bool blocked;
 
-    if (b->isBlocked(outSideTrans))
+    if (dim == 0)
+    {
+        outSideTrans = b->transformCoordinate(outSide, 0, height(outSide, 0));
+        blocked = b->isBlocked(outSideTrans, 0, height(outSideTrans, 0));
+    }
+
+    else if (dim == 1)
+    {
+        outSideTrans = b->transformCoordinate(outSide, 0, height(0, outSide));
+        blocked = b->isBlocked(outSideTrans, 0, height(0, outSideTrans));
+    }
+
+    else
+    {
+        throw std::logic_error("invalid dimension");
+    }
+
+
+    if (blocked)
     {
         throw std::logic_error("Concentration boundaries must not be blocked.");
     }
@@ -754,7 +806,7 @@ double SOSSolver::closestSquareDistance(const uint x, const uint y, const int z,
     double minDistance = absSquareDistance(x, y, z, xp, yp, zp);
 
     //x images zero y
-    for (const double &xImage : boundary(0, boundaryOrientation(xp, 0))->imagesOf(xp))
+    for (const double &xImage : boundary(0, boundaryOrientation(xp, 0))->imagesOf(xp, yp, zp))
     {
         double distance = absSquareDistance(x, y, z, xImage, yp, zp);
 
@@ -765,7 +817,7 @@ double SOSSolver::closestSquareDistance(const uint x, const uint y, const int z,
     }
 
     //y images zero x
-    for (const double &yImage : boundary(1, boundaryOrientation(yp, 1))->imagesOf(yp))
+    for (const double &yImage : boundary(1, boundaryOrientation(yp, 1))->imagesOf(yp, xp, zp))
     {
         double distance = absSquareDistance(x, y, z, xp, yImage, zp);
 
@@ -776,9 +828,9 @@ double SOSSolver::closestSquareDistance(const uint x, const uint y, const int z,
     }
 
     //x and y images
-    for (const double &xImage : boundary(0, boundaryOrientation(xp, 0))->imagesOf(xp))
+    for (const double &xImage : boundary(0, boundaryOrientation(xp, 0))->imagesOf(xp, yp, zp))
     {
-        for (const double &yImage : boundary(1, boundaryOrientation(yp, 1))->imagesOf(yp))
+        for (const double &yImage : boundary(1, boundaryOrientation(yp, 1))->imagesOf(yp, xp, zp))
         {
             double distance = absSquareDistance(x, y, z, xImage, yImage, zp);
 
@@ -818,13 +870,14 @@ void SOSSolver::initialize()
         int left;
         int bottom;
 
+        m_averageHeight = 0;
 
         for (uint x = 0; x < m_length; ++x)
         {
             for (uint y = 0; y < m_width; ++y)
             {
-                left = leftSite(x);
-                bottom = bottomSite(y);
+                left = leftSite(x, y, m_heights(x, y));
+                bottom = bottomSite(x, y, m_heights(x, y));
 
                 if (isOutsideBoxSingle(left, 0) || isOutsideBoxSingle(bottom, 1))
                 {
@@ -836,6 +889,8 @@ void SOSSolver::initialize()
         }
     }
 
+    m_averageHeight = arma::accu(m_heights)/double(area());
+
     for (uint x = 0; x < m_length; ++x)
     {
         for (uint y = 0; y < m_width; ++y)
@@ -844,8 +899,10 @@ void SOSSolver::initialize()
         }
     }
 
-    m_confiningSurfaceEvent->setupInitialConditions();
-    m_diffusionEvent->setupInitialConditions();
+    for (HeightConnecter *connecter : m_heightConnecters)
+    {
+        connecter->setupInitialConditions();
+    }
 
     KMCSolver::initialize();
 

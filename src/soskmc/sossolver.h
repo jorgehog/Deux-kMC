@@ -16,6 +16,7 @@ class DissolutionDeposition;
 class ConcentrationBoundaryReaction;
 class ConfiningSurface;
 class Diffusion;
+class HeightConnecter;
 
 class SOSSolver : public KMCSolver
 {
@@ -26,12 +27,13 @@ public:
     SOSSolver(const uint length,
               const uint width,
               const double alpha,
-              const double gamma,
-              vector<vector<const Boundary *> > boundaries);
+              const double gamma);
 
     virtual ~SOSSolver();
 
     void registerHeightChange(const uint x, const uint y, const int value);
+
+    void registerChangedSite(const uint x, const uint y);
 
     void setNNeighbors(const uint x, const uint y);
 
@@ -139,13 +141,14 @@ public:
         getSolutionSite(x, y, height(x, y), dx, dy, dz, siteNumber);
     }
 
-    int topSite(const uint site, const uint n = 1) const;
+    int topSite(const uint x, const uint y, const int z, const uint n = 1) const;
 
-    int bottomSite(const uint site, const uint n = 1) const;
+    int bottomSite(const uint x, const uint y, const int z, const uint n = 1) const;
 
-    int leftSite(const uint site, const uint n = 1) const;
+    int leftSite(const uint x, const uint y, const int z, const uint n = 1) const;
 
-    int rightSite(const uint site, const uint n = 1) const;
+    int rightSite(const uint x, const uint y, const int z, const uint n = 1) const;
+
 
     void findConnections(const uint x,
                          const uint y,
@@ -178,9 +181,9 @@ public:
 
     uint boundaryOrientation(const double x, const uint dim) const;
 
-    double boundaryTransform(const double x, const uint dim) const;
+    double boundaryTransform(const double x, const double y, const double z, const uint dim) const;
 
-    double boundaryTransform(const double x, const double dx, const uint dim) const;
+    double boundaryTransform(const double x, const double y, const double z, const double dxi, const uint dim) const;
 
     void addConcentrationBoundary(const uint dim, const Boundary::orientations orientation);
 
@@ -222,6 +225,16 @@ public:
     double absSquareDistance(const uint x, const uint y, const int z,
                              const double xp, const double yp, const double zp) const;
 
+    const double &averageHeight() const
+    {
+        return m_averageHeight;
+    }
+
+    void registerHeightConnecter(HeightConnecter *connecter)
+    {
+        m_heightConnecters.push_back(connecter);
+    }
+
 private:
 
     bool m_heights_set;
@@ -239,6 +252,8 @@ private:
     imat m_heights;
     umat m_nNeighbors;
 
+    double m_averageHeight;
+
     field<DissolutionDeposition*> m_siteReactions;
 
     vector<ConcentrationBoundaryReaction*> m_concentrationBoundaryReactions;
@@ -246,6 +261,8 @@ private:
     std::vector<DissolutionDeposition*> m_affectedSurfaceReactions;
 
     set_type m_changedSurfaceSites;
+
+    std::vector<HeightConnecter *> m_heightConnecters;
 
     // KMCSolver interface
 private:

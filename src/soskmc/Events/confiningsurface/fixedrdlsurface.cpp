@@ -15,4 +15,3 @@ FixedRDLSurface::~FixedRDLSurface()
 {
 
 }
-

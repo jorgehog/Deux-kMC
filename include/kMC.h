@@ -9,3 +9,4 @@
 #include "../src/kmcsolver/boundary/edge.h"
 #include "../src/kmcsolver/boundary/open.h"
 #include "../src/kmcsolver/boundary/reflecting.h"
+#include "../src/kmcsolver/boundary/constantheight.h"

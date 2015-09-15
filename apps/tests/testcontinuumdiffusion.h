@@ -32,7 +32,8 @@ public:
             return 1/dr2;
         };
 
-        m_solver = new SOSSolver(m_L, m_W, m_alpha, m_mu, getBoundariesFromIDs({0, 0, 0, 0}, m_L, m_W));
+        m_solver = new SOSSolver(m_L, m_W, m_alpha, m_mu);
+        setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, m_L, m_W);
         m_pressureWallEvent = new FixedSurface(*m_solver, m_height);
         m_cdiffusionEvent = new FirstPassageContinuum(*m_solver, maxdt, rf);
 

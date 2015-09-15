@@ -26,17 +26,20 @@ public:
 
     // ConfiningSurface interface
 public:
-    void setupInitialConditions()
+
+    bool hasSurface() const
     {
-        RDLSurface::recalculateAllRDLEnergies();
+        return true;
     }
 
-    void registerHeightChange(const uint x, const uint y, std::vector<DissolutionDeposition *> affectedReactions, const uint n)
+    void registerHeightChange(const uint x, const uint y, const int value,
+                              std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                              const uint n)
     {
 
         RDLSurface::recalculateRDLEnergy(x, y);
 
-        FixedSurface::registerHeightChange(x, y, affectedReactions, n);
+        FixedSurface::registerHeightChange(x, y, value, affectedSurfaceReactions, n);
     }
 
     double confinementEnergy(const uint x, const uint y)
@@ -54,4 +57,13 @@ public:
     {
         return RDLSurface::acceptDiffusionMove(x0, y0, z0, x1, y1, z1);
     }
+
+
+    // HeightConnecter interface
+public:
+    void setupInitialConditions()
+    {
+        RDLSurface::recalculateAllRDLEnergies();
+    }
+
 };

@@ -1,10 +1,11 @@
 #pragma once
 
 #include "../sosevent.h"
+#include "../../heightconnecter.h"
 
 class DissolutionDeposition;
 
-class ConfiningSurface : public SOSEvent
+class ConfiningSurface : public SOSEvent, public HeightConnecter
 {
 public:
     ConfiningSurface(SOSSolver &solver,
@@ -15,12 +16,7 @@ public:
 
     virtual ~ConfiningSurface();
 
-    virtual void setupInitialConditions() = 0;
-
-    virtual void registerHeightChange(const uint x,
-                                      const uint y,
-                                      std::vector<DissolutionDeposition *> affectedReactions,
-                                      const uint n) = 0;
+    virtual bool hasSurface() const = 0;
 
     virtual double confinementEnergy(const uint x, const uint y) = 0;
 

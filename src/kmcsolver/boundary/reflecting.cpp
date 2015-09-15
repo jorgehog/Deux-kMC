@@ -3,7 +3,7 @@
 using namespace kMC;
 
 Reflecting::Reflecting(const int location, const Boundary::orientations orientation) :
-    Boundary(orientation),
+    Boundary1D(orientation),
     m_location(location)
 {
 

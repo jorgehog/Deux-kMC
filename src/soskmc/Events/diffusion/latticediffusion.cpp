@@ -142,10 +142,10 @@ void LatticeDiffusion::attachToSurface(const uint x,
 
 void LatticeDiffusion::registerAffectedAround(const uint x, const uint y, const int z)
 {
-    const int left = solver().leftSite(x);
-    const int right = solver().rightSite(x);
-    const int top = solver().topSite(y);
-    const int bottom = solver().bottomSite(y);
+    const int left = solver().leftSite(x, y, z);
+    const int right = solver().rightSite(x, y, z);
+    const int top = solver().topSite(x, y, z);
+    const int bottom = solver().bottomSite(x, y, z);
 
     registerAffectedAroundSingle(left, y, 0, z);
     registerAffectedAroundSingle(right, y, 0, z);
@@ -218,6 +218,11 @@ void LatticeDiffusion::dumpDiffusingParticles(const uint frameNumber) const
     lammpswriter writer(4, "kmcdiff", "/tmp");
     writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     writer.initializeNewFile(frameNumber);
+
+    if (m_diffusionReactionsMap.empty())
+    {
+        writer << 3 << 0 << 0 << solver().height(0, 0);
+    }
 
     SOSDiffusionReaction *reaction;
     for (auto &m : m_diffusionReactionsMap)
@@ -445,13 +450,22 @@ bool LatticeDiffusion::isBlockedPosition(const uint x, const uint y, const int z
     return diffusionReaction(x, y, z) != nullptr;
 }
 
-void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const int delta)
+void LatticeDiffusion::registerHeightChange(const uint x,
+                                            const uint y,
+                                            const int value,
+                                            std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                                            const uint n)
 {
+    (void) affectedSurfaceReactions;
+    (void) n;
+
     //position particle on random surrounding site
     //add one to solution site heights because at this stage height(x,y) is already updated
-    if (delta == -1)
+    if (value == -1)
     {
-        const uint nSites = solver().numberOfSurroundingSolutionSites(x, y, solver().height(x, y)+1);
+        const int h = solver().height(x, y)+1;
+
+        const uint nSites = solver().numberOfSurroundingSolutionSites(x, y, h);
         const uint randomSite = rng.uniform()*nSites;
 
         BADAss(nSites, !=, 0u);
@@ -459,20 +473,20 @@ void LatticeDiffusion::registerHeightChange(const uint x, const uint y, const in
         int dx, dy, dz;
         solver().getSolutionSite(x, y, solver().height(x, y)+1, dx, dy, dz, randomSite);
 
-        const uint xNew = solver().boundaryTransform(x, dx, 0);
-        const uint yNew = solver().boundaryTransform(y, dy, 1);
-        const int zNew = solver().height(x, y) + dz + 1;
+        const uint xNew = solver().boundaryTransform(x, y, h, dx, 0);
+        const uint yNew = solver().boundaryTransform(x, y, h, dy, 1);
+        const int zNew = h + dz;
 
         BADAssBool(!solver().isSurfaceSite(xNew, yNew, zNew), "adding diff reaction to surface.", [&] ()
         {
-            int h = solver().height(x, y);
+            int hp = solver().height(x, y);
             int hNew = solver().height(xNew, yNew);
-            BADAssSimpleDump(x, y, h, xNew, yNew, zNew, hNew);
+            BADAssSimpleDump(x, y, hp, xNew, yNew, zNew, hNew);
         });
 
         addDiffusionReactant(xNew, yNew, zNew);
 
-        registerAffectedAround(x, y, solver().height(x, y) + 1);
+        registerAffectedAround(x, y, h);
     }
 
     //this can occur if the surface is changed so that it connects to a particle in the solution.

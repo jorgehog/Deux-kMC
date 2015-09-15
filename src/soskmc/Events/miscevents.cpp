@@ -23,8 +23,10 @@ void SurfaceSize::initialize()
 
 double SurfaceSize::relativeHeightSum(const uint x, const uint y) const
 {
-    const uint right = solver().rightSite(x);
-    const uint top = solver().topSite(y);
+    const int &h = solver().height(x, y);
+
+    const uint right = solver().rightSite(x, y, h);
+    const uint top = solver().topSite(x, y, h);
 
     if (solver().isOutsideBoxSingle(right, 0) || solver().isOutsideBoxSingle(top, 1))
     {
@@ -78,8 +80,10 @@ void SurfaceSize::reset()
         const uint &x = xy.first;
         const uint &y = xy.second;
 
-        const int left = solver().leftSite(x);
-        const int bottom = solver().bottomSite(y);
+        const int &h = solver().height(x, y);
+
+        const int left = solver().leftSite(x, y, h);
+        const int bottom = solver().bottomSite(x, y, h);
 
         updateRelativeHeight(x, y);
 
@@ -160,7 +164,8 @@ void AverageHeight::execute()
 
 double AverageHeight::getValue() const
 {
-    return accu(solver().heights())/(double)solver().area();
+    BADAssClose(solver().averageHeight(), accu(solver().heights())/double(solver().area()), 1E-3);
+    return solver().averageHeight();
 }
 
 
@@ -216,6 +221,7 @@ void NNeighbors::reset()
     {
         const uint &x = xy.first;
         const uint &y = xy.second;
+        const int &h = solver().height(x, y);
 
         //no change
         if (m_nNeighbors(x, y) == solver().nNeighbors(x, y))
@@ -223,10 +229,10 @@ void NNeighbors::reset()
             continue;
         }
 
-        const uint left = solver().leftSite(x);
-        const uint right = solver().rightSite(x);
-        const uint bottom = solver().bottomSite(y);
-        const uint top = solver().topSite(y);
+        const uint left = solver().leftSite(x, y, h);
+        const uint right = solver().rightSite(x, y, h);
+        const uint bottom = solver().bottomSite(x, y, h);
+        const uint top = solver().topSite(x, y, h);
 
         updateNNeighbors(x, y);
 

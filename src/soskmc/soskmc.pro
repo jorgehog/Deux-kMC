@@ -25,7 +25,10 @@ SOURCES += \
     Events/dumpsystem.cpp \
     Events/diffusion/fixedpointtimestepping.cpp \
     Events/diffusion/multiscale.cpp \
-    Events/diffusion/firstpassagecontinuum.cpp
+    Events/diffusion/firstpassagecontinuum.cpp \
+    Events/diffusion/concentrationprofile.cpp \
+    heightconnecter.cpp \
+    averageheightboundary.cpp
 
 HEADERS += \
     Events/equilibriater.h \
@@ -49,7 +52,11 @@ HEADERS += \
     Events/sosevent.h \
     Events/diffusion/fixedpointtimestepping.h \
     Events/diffusion/multiscale.h \
-    Events/diffusion/firstpassagecontinuum.h
+    Events/diffusion/firstpassagecontinuum.h \
+    Events/diffusion/concentrationprofile.h \
+    heightconnecter.h \
+    sosboundary.h \
+    averageheightboundary.h
 
 LIBS += -lkMC
 

@@ -22,7 +22,8 @@ TEST_F(SOSkMCTest, boundaries_blocked)
     const double mu = 0;
     const double height = 20 + rng.uniform();
 
-    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 1, 2}, L, W));
+    m_solver = new SOSSolver(L, W, alpha, mu);
+    setBoundariesFromIDs(m_solver, {0, 0, 1, 2}, L, W);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
@@ -48,30 +49,30 @@ TEST_F(SOSkMCTest, boundaries_blocked)
 
     for (uint x0ID = 0; x0ID < isBlocked.size(); ++x0ID)
     {
-        x0 = getBoundaryFromID(x0ID, L, Boundary::orientations::FIRST);
+        x0 = getBoundaryFromID(m_solver, x0ID, 0, L, W, Boundary::orientations::FIRST);
 
         for (uint x1ID = 0; x1ID < isBlocked.size(); ++x1ID)
         {
-            x1 = getBoundaryFromID(x1ID, L, Boundary::orientations::LAST);
+            x1 = getBoundaryFromID(m_solver, x1ID, 0, L, W, Boundary::orientations::LAST);
 
             for (uint y0ID = 0; y0ID < isBlocked.size(); ++y0ID)
             {
-                y0 = getBoundaryFromID(y0ID, W, Boundary::orientations::FIRST);
+                y0 = getBoundaryFromID(m_solver, y0ID, 1, W, L, Boundary::orientations::FIRST);
 
                 for (uint y1ID = 0; y1ID < isBlocked.size(); ++y1ID)
                 {
-                    y1 = getBoundaryFromID(y1ID, W, Boundary::orientations::LAST);
+                    y1 = getBoundaryFromID(m_solver, y1ID, 1, W, L, Boundary::orientations::LAST);
 
-                    EXPECT_EQ(x0->isBlocked(-1), isBlocked.at(x0ID));
-                    EXPECT_EQ(x1->isBlocked(L), isBlocked.at(x1ID));
-                    EXPECT_EQ(y0->isBlocked(-1), isBlocked.at(y0ID));
-                    EXPECT_EQ(y1->isBlocked(W), isBlocked.at(y1ID));
+                    EXPECT_EQ(x0->isBlocked(-1, 0, 0), isBlocked.at(x0ID));
+                    EXPECT_EQ(x1->isBlocked(L, 0, 0), isBlocked.at(x1ID));
+                    EXPECT_EQ(y0->isBlocked(-1, 0, 0), isBlocked.at(y0ID));
+                    EXPECT_EQ(y1->isBlocked(W, 0, 0), isBlocked.at(y1ID));
 
                     //towards center is never blocked
-                    EXPECT_FALSE(x0->isBlocked(1));
-                    EXPECT_FALSE(x1->isBlocked(1));
-                    EXPECT_FALSE(y0->isBlocked(1));
-                    EXPECT_FALSE(y1->isBlocked(1));
+                    EXPECT_FALSE(x0->isBlocked(1, 1, 1));
+                    EXPECT_FALSE(x1->isBlocked(1, 1, 1));
+                    EXPECT_FALSE(y0->isBlocked(1, 1, 1));
+                    EXPECT_FALSE(y1->isBlocked(1, 1, 1));
 
                     if (HasFailure())
                     {
@@ -112,7 +113,8 @@ TEST_F(SOSkMCTest, boundaries_concentration)
     const double height = 10.23123;
     const int iheight = (int)height;
 
-    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({0, 0, 1, 2}, L, W));
+    m_solver = new SOSSolver(L, W, alpha, mu);
+    setBoundariesFromIDs(m_solver, {0, 0, 1, 2}, L, W);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
@@ -253,7 +255,8 @@ TEST_F(SOSkMCTest, boundaries_reflect)
 
     const uint bType = 3;
 
-    m_solver = new SOSSolver(L, W, alpha, mu, getBoundariesFromIDs({bType, bType, bType, bType}, L, W));
+    m_solver = new SOSSolver(L, W, alpha, mu);
+    setBoundariesFromIDs(m_solver, {bType, bType, bType, bType}, L, W);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
@@ -270,10 +273,10 @@ TEST_F(SOSkMCTest, boundaries_reflect)
         }
     }
 
-    EXPECT_EQ(2, solver().rightSite(2));
-    EXPECT_EQ(0, solver().leftSite(0));
-    EXPECT_EQ(2, solver().topSite(2));
-    EXPECT_EQ(0, solver().bottomSite(0));
+    EXPECT_EQ(2, solver().rightSite(2, 1, 0));
+    EXPECT_EQ(0, solver().leftSite(0, 1, 0));
+    EXPECT_EQ(2, solver().topSite(1, 2, 0));
+    EXPECT_EQ(0, solver().bottomSite(1, 0, 0));
 
     for (uint x = 0; x < L; ++x)
     {
@@ -292,6 +295,58 @@ TEST_F(SOSkMCTest, boundaries_reflect)
 
 }
 
+
+TEST_F(SOSkMCTest, boundaries_constant_height)
+{
+    const uint L = 3;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 0;
+
+    const uint bType = 4;
+
+    m_solver = new SOSSolver(L, W, alpha, mu);
+    setBoundariesFromIDs(m_solver, {bType, bType, bType, bType}, L, W, height);
+    m_pressureWallEvent = new NoConfinement(*m_solver);
+    m_diffusionEvent = new ConstantConcentration(*m_solver);
+    SetUp_yo();
+
+    primeSolver();
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, 0);
+        }
+    }
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            EXPECT_EQ(5, solver().nNeighbors(x, y));
+        }
+    }
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->registerHeightChange(x, y, 1);
+        }
+    }
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            EXPECT_EQ(3 + x%(L-1) + y%(W-1), solver().nNeighbors(x, y));
+        }
+    }
+
+}
 
 
 

@@ -38,6 +38,11 @@ void OfflatticeMonteCarloBoundary::execute()
 
 }
 
+void OfflatticeMonteCarloBoundary::executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
+{
+
+}
+
 
 void OfflatticeMonteCarloBoundary::setupInitialConditions()
 {
@@ -49,35 +54,6 @@ void OfflatticeMonteCarloBoundary::setupInitialConditions()
     const uint N = V*solver().concentration();
 
     initializeParticleMatrices(N, zMin);
-
-    //derp
-//    const double latticeVolume = solver().volume() - V;
-
-//    const uint nLatticeParticles = latticeVolume*solver().concentration();
-
-//    const int hMin = solver().heights().min();
-
-//    uint x0;
-//    uint y0;
-//    uint z0;
-
-//    uint n = 0;
-//    while (n < nLatticeParticles)
-//    {
-//        do
-//        {
-//            x0 = rng.uniform()*solver().length();
-//            y0 = rng.uniform()*solver().width();
-//            z0 = hMin + rng.uniform()*(zMin - hMin);
-
-//        } while(solver().isBlockedPosition(x0, y0, z0) ||
-//                solver().isSurfaceSite(x0, y0, z0) ||
-//                isBlockedPosition(x0, y0, z0));
-
-//        addDiffusionReactant(x0, y0, z0, false);
-
-//        n++;
-//    }
 
 }
 
@@ -93,21 +69,6 @@ void OfflatticeMonteCarloBoundary::dump(const uint frameNumber) const
     OfflatticeMonteCarlo::dumpDiffusingParticles(frameNumber);
 }
 
-void OfflatticeMonteCarloBoundary::onInsertParticle(const double x, const double y, const double z)
+double OfflatticeMonteCarloBoundary::calculateLocalRate(const uint x, const uint y, const uint n) const
 {
-    (void) x;
-    (void) y;
-    (void) z;
-
-    //update flux if on boundary
 }
-
-void OfflatticeMonteCarloBoundary::onRemoveParticle(const uint n)
-{
-    (void) n;
-
-    //update flux if on boundary
-}
-
-
-

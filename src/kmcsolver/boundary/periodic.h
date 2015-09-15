@@ -1,12 +1,12 @@
 #pragma once
 
 
-#include "boundary.h"
+#include "boundary1d.h"
 
 namespace kMC
 {
 
-class Periodic : public Boundary
+class Periodic : public Boundary1D
 {
 public:
 

@@ -27,9 +27,16 @@ public:
 
     // Diffusion interface
 public:
-    void setupInitialConditions();
-    void registerHeightChange(const uint x, const uint y, const int delta);
     double calculateLocalRate(const uint x, const uint y, const uint n) const;
 
+
+    // HeightConnecter interface
+public:
+    void setupInitialConditions();
+    void registerHeightChange(const uint x,
+                              const uint y,
+                              const int value,
+                              std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                              const uint n);
 };
 

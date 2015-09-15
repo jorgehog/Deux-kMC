@@ -22,11 +22,11 @@ public:
 
     virtual ~Boundary() {}
 
-    virtual double transformCoordinate(const double xi) const = 0;
+    virtual double transformCoordinate(const double xi, const double xj, const double xk) const = 0;
 
-    virtual bool isBlocked(const double xi) const = 0;
+    virtual bool isBlocked(const double xi, const double xj, const double xk) const = 0;
 
-    virtual std::vector<double> imagesOf(const double xi) const = 0;
+    virtual std::vector<double> imagesOf(const double xi, const double xj, const double xk) const = 0;
 
 
     const Boundary::orientations m_orientation;

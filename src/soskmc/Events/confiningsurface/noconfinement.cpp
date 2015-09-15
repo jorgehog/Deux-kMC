@@ -22,11 +22,16 @@ void NoConfinement::setupInitialConditions()
 
 }
 
-void NoConfinement::registerHeightChange(const uint x, const uint y, std::vector<DissolutionDeposition *> affectedReactions, const uint n)
+void NoConfinement::registerHeightChange(const uint x,
+                                         const uint y,
+                                         const int value,
+                                         std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                                         const uint n)
 {
     (void) x;
     (void) y;
-    (void) affectedReactions;
+    (void) value;
+    (void) affectedSurfaceReactions;
     (void) n;
 }
 

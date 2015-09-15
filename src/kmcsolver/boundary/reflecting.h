@@ -1,11 +1,11 @@
 #pragma once
 
-#include "boundary.h"
+#include "boundary1d.h"
 
 namespace kMC
 {
 
-class Reflecting : public Boundary
+class Reflecting : public Boundary1D
 {
 public:
     Reflecting(const int location, const Boundary::orientations orientation);

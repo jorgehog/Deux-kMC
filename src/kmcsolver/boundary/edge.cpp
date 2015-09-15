@@ -3,7 +3,7 @@
 using namespace kMC;
 
 
-Edge::Edge(const int location,
+Edge::Edge(const double location,
            const orientations orientation) :
     FiniteSize(orientation),
     m_location(location)

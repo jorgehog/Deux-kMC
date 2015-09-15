@@ -9,14 +9,14 @@ class Edge : public FiniteSize
 {
 public:
 
-    Edge(const int location,
+    Edge(const double location,
          const orientations orientation);
 
     bool isBlocked(const double xi) const;
 
 private:
 
-    const int m_location;
+    const double m_location;
 
 };
 

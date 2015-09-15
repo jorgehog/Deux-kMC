@@ -27,11 +27,14 @@ void Diffusion::dump(const uint frameNumber) const
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            surfacewriter << 1
-                          << x
-                          << y
-                          << h
-                          << 5;
+            if (solver().confiningSurfaceEvent().hasSurface())
+            {
+                surfacewriter << 1
+                              << x
+                              << y
+                              << h
+                              << 5;
+            }
 
             for (int zSurface = zMin; zSurface <= solver().height(x, y) - 1; ++zSurface)
             {

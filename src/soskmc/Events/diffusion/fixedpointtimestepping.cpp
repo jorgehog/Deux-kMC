@@ -157,9 +157,13 @@ void FixedPointTimeStepping::setupInitialConditions()
 
 }
 
-void FixedPointTimeStepping::registerHeightChange(const uint x, const uint y, const int delta)
+void FixedPointTimeStepping::registerHeightChange(const uint x,
+                                                  const uint y,
+                                                  const int value,
+                                                  std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                                                  const uint n)
 {
-    OfflatticeMonteCarlo::registerHeightChange(x, y, delta);
+    OfflatticeMonteCarlo::registerHeightChange(x, y, value, affectedSurfaceReactions, n);
 
     calculateTimeStep();
 

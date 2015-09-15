@@ -185,7 +185,14 @@ private:
 
 };
 
-const Boundary *getBoundaryFromID(const uint ID, const uint span, Boundary::orientations orientation)
+const Boundary *getBoundaryFromID(SOSSolver *solver,
+                                  const uint ID,
+                                  const uint dim,
+                                  const uint span,
+                                  const uint yspan,
+                                  Boundary::orientations orientation,
+                                  const int boundaryHeight = 0,
+                                  const uint cutoff = 0)
 {
     uint location = orientation == Boundary::orientations::FIRST ? 0 : (span - 1);
 
@@ -202,6 +209,10 @@ const Boundary *getBoundaryFromID(const uint ID, const uint span, Boundary::orie
     case 3:
         return new Reflecting(location, orientation);
         break;
+    case 4:
+        return new ConstantHeight(boundaryHeight, location, orientation);
+    case 5:
+        return new AverageHeightBoundary(*solver, cutoff, dim, span, yspan, orientation, location);
     default:
         cerr << "invalid boundary: " << ID << endl;
         return nullptr;
@@ -210,15 +221,19 @@ const Boundary *getBoundaryFromID(const uint ID, const uint span, Boundary::orie
 
 }
 
-vector<vector<const Boundary*>> getBoundariesFromIDs(const vector<uint> IDs, const uint L, const uint W)
+void setBoundariesFromIDs(SOSSolver *solver,
+                          const vector<uint> IDs,
+                          const uint L, const uint W,
+                          const int boundaryHeight = 0,
+                          const uint cutoff = 0)
 {
-    const Boundary* leftBoundary = getBoundaryFromID(IDs.at(0), L, Boundary::orientations::FIRST);
-    const Boundary* rightBoundary = getBoundaryFromID(IDs.at(1), L, Boundary::orientations::LAST);
-    const Boundary* bottomBoundary = getBoundaryFromID(IDs.at(2), W, Boundary::orientations::FIRST);
-    const Boundary* topBoundary = getBoundaryFromID(IDs.at(3), W, Boundary::orientations::LAST);
+    const Boundary* leftBoundary = getBoundaryFromID(solver, IDs.at(0), 0, L, W, Boundary::orientations::FIRST, boundaryHeight, cutoff);
+    const Boundary* rightBoundary = getBoundaryFromID(solver, IDs.at(1), 0, L, W, Boundary::orientations::LAST, boundaryHeight, cutoff);
+    const Boundary* bottomBoundary = getBoundaryFromID(solver, IDs.at(2), 1, W, L, Boundary::orientations::FIRST, boundaryHeight, cutoff);
+    const Boundary* topBoundary = getBoundaryFromID(solver, IDs.at(3), 1, W, L, Boundary::orientations::LAST, boundaryHeight, cutoff);
 
-    return {{leftBoundary, rightBoundary},
-        {bottomBoundary, topBoundary}};
+    solver->setBoundaries({{leftBoundary, rightBoundary},
+                           {bottomBoundary, topBoundary}});
 }
 
 

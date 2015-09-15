@@ -42,15 +42,22 @@ uint OfflatticeMonteCarlo::dissolutionPaths(const uint x, const uint y) const
     return 1u;
 }
 
-void OfflatticeMonteCarlo::registerHeightChange(const uint x, const uint y, const int delta)
+void OfflatticeMonteCarlo::registerHeightChange(const uint x,
+                                                const uint y,
+                                                const int value,
+                                                std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                                                const uint n)
 {
+    (void) affectedSurfaceReactions;
+    (void) n;
+
     if (!hasStarted())
     {
         return;
     }
 
     //Remove particle based on the probability of it being the deposited
-    if (delta == 1)
+    if (value == 1)
     {
         vector<double> localRatesForSite(nOfflatticeParticles());
 
@@ -86,8 +93,8 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x, const uint y, cons
             dy = sin(theta)*sin(phi);
             dz = cos(theta);
 
-            x1 = solver().boundaryTransform(x, dx, 0);
-            y1 = solver().boundaryTransform(y, dy, 1);
+            x1 = solver().boundaryTransform(x, y, z, dx, 0);
+            y1 = solver().boundaryTransform(x, y, z, dy, 1);
             z1 = z + dz;
 
             BADAssClose(1, dx*dx + dy*dy + dz*dz, 1E-3);
@@ -249,9 +256,13 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
 
         do
         {
-            x1 = solver().boundaryTransform(x0, sqrt(2*D()*dt)*rng.normal() + D()*m_F(0, n)*dt, 0);
-            y1 = solver().boundaryTransform(y0, sqrt(2*D()*dt)*rng.normal() + D()*m_F(1, n)*dt, 1);
-            z1 = z0 + sqrt(2*D()*dt)*rng.normal() + D()*m_F(2, n)*dt;
+            double dx = sqrt(2*D()*dt)*rng.normal() + D()*m_F(0, n)*dt;
+            double dy = sqrt(2*D()*dt)*rng.normal() + D()*m_F(1, n)*dt;
+            double dz = sqrt(2*D()*dt)*rng.normal() + D()*m_F(2, n)*dt;
+
+            x1 = solver().boundaryTransform(x0, y0, z0, dx, 0);
+            y1 = solver().boundaryTransform(x0, y0, z0, dy, 1);
+            z1 = z0 + dz;
 
             if (solver().surfaceDim() == 1)
             {
@@ -333,9 +344,14 @@ void OfflatticeMonteCarlo::initializeParticleMatrices(const uint nParticles, con
     {
         do
         {
-            x0 = solver().boundaryTransform(rng.uniform()*(solver().length() - 0.5), 0);
-            y0 = solver().boundaryTransform(rng.uniform()*(solver().width() - 0.5), 1);
+            double x0Raw = rng.uniform()*(solver().length() - 0.5);
+            double y0Raw = rng.uniform()*(solver().width() - 0.5);
             z0 = zMin + rng.uniform()*(h - zMin);
+
+            //it is rarely the case that the boundary transformations
+            //touch a point inside the solver cube.
+            x0 = solver().boundaryTransform(x0Raw, y0Raw, z0, 0);
+            y0 = solver().boundaryTransform(x0, y0Raw, z0, 1);
 
         } while(solver().isBlockedPosition(x0, y0, z0));
 
@@ -360,7 +376,10 @@ void OfflatticeMonteCarlo::scan(const uint n, const uint dim, const double dr, c
 
     while (solver().isBlockedPosition(x0, y0, z0) && c < maxSteps)
     {
-        particlePositions(dim, n) = solver().boundaryTransform(particlePositions(dim, n), dr, dim);
+        particlePositions(dim, n) = solver().boundaryTransform(particlePositions(0, n),
+                                                               particlePositions(1, n),
+                                                               particlePositions(2, n),
+                                                               dr, dim);
 
         c++;
     }
@@ -401,6 +420,11 @@ void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber) const
     lammpswriter writer(4, "cavitydiff", "/tmp");
     writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     writer.initializeNewFile(frameNumber);
+
+    if (nOfflatticeParticles() == 0)
+    {
+        writer << 0 << 0 << 0 << solver().height(0, 0);
+    }
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
@@ -466,3 +490,8 @@ void OfflatticeMonteCarlo::setupInitialConditions()
     calculateLocalRates();
 }
 
+
+
+void OfflatticeMonteCarlo::execute()
+{
+}

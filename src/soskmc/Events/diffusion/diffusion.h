@@ -1,11 +1,12 @@
 #pragma once
 
 #include "../sosevent.h"
+#include "../../heightconnecter.h"
 
 class SOSDiffusionReaction;
 class ConcentrationBoundaryReaction;
 
-class Diffusion : public SOSEvent
+class Diffusion : public SOSEvent, public HeightConnecter
 {
 public:
     Diffusion(SOSSolver &solver,
@@ -18,13 +19,9 @@ public:
 
     virtual void dump(const uint frameNumber) const;
 
-    virtual void setupInitialConditions() = 0;
-
     virtual double depositionRate(const uint x, const uint y) const = 0;
 
     virtual uint dissolutionPaths(const uint x, const uint y) const = 0;
-
-    virtual void registerHeightChange(const uint x, const uint y, const int delta) = 0;
 
     virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z) = 0;
 

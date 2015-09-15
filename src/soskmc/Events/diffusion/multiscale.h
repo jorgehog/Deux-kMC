@@ -30,7 +30,6 @@ public:
 
     // Diffusion interface
 public:
-    void setupInitialConditions();
 
     double depositionRate(const uint x, const uint y) const
     {
@@ -42,15 +41,7 @@ public:
         return OfflatticeMonteCarlo::dissolutionPaths(x, y);
     }
 
-    void registerHeightChange(const uint x, const uint y, const int delta)
-    {
-        LatticeDiffusion::registerHeightChange(x, y, delta);
-    }
-
-    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
-    {
-        LatticeDiffusion::executeDiffusionReaction(reaction, x, y, z);
-    }
+    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
 
     void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
 
@@ -61,10 +52,22 @@ public:
 
     void dump(const uint frameNumber) const;
 
+
+    // HeightConnecter interface
+public:
+    void setupInitialConditions();
+    void registerHeightChange(const uint x,
+                              const uint y,
+                              const int value,
+                              std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                              const uint n)
+    {
+        LatticeDiffusion::registerHeightChange(x, y, value, affectedSurfaceReactions, n);
+    }
+
+
     // OfflatticeMonteCarlo interface
 public:
-    void onInsertParticle(const double x, const double y, const double z);
-    void onRemoveParticle(const uint n);
-
+    double calculateLocalRate(const uint x, const uint y, const uint n) const;
 };
 

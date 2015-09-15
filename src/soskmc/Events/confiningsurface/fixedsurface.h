@@ -19,20 +19,10 @@ public:
 
     // ConfiningSurface interface
 public:
-    void setupInitialConditions()
-    {
-        //pass
-    }
 
-    void registerHeightChange(const uint x, const uint y, std::vector<DissolutionDeposition *> affectedReactions, const uint n)
+    bool hasSurface() const
     {
-        (void) affectedReactions;
-        (void) n;
-
-        if (solver().height(x, y) > height())
-        {
-            terminateLoop("CRASH CRASH...");
-        }
+        return true;
     }
 
     double confinementEnergy(const uint x, const uint y)
@@ -47,4 +37,27 @@ public:
                              const double x1, const double y1, const double z1) const;
 
     double diffusionDrift(const double x, const double y, const double z) const;
+
+    // HeightConnecter interface
+public:
+    void setupInitialConditions()
+    {
+        //pass
+    }
+
+    void registerHeightChange(const uint x,
+                              const uint y,
+                              const int value,
+                              std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                              const uint n)
+    {
+        (void) value;
+        (void) affectedSurfaceReactions;
+        (void) n;
+
+        if (solver().height(x, y) > height())
+        {
+            terminateLoop("CRASH CRASH...");
+        }
+    }
 };

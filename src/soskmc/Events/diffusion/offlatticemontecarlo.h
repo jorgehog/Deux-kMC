@@ -118,14 +118,25 @@ public:
 
     // Diffusion interface
 public:
-    void setupInitialConditions();
     virtual void dump(const uint frameNumber) const;
     uint dissolutionPaths(const uint x, const uint y) const;
-    virtual void registerHeightChange(const uint x, const uint y, const int delta);
     virtual double depositionRate(const uint x, const uint y) const;
     virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
     virtual void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const;
+
+    // Event interface
+public:
+    void execute();
+
+    // HeightConnecter interface
+public:
+    void setupInitialConditions();
+    void registerHeightChange(const uint x,
+                              const uint y,
+                              const int value,
+                              std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                              const uint n);
 };
 
 

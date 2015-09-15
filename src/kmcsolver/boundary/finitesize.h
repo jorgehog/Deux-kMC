@@ -1,11 +1,11 @@
 #pragma once
 
-#include "boundary.h"
+#include "boundary1d.h"
 
 namespace kMC
 {
 
-class FiniteSize : public Boundary
+class FiniteSize : public Boundary1D
 {
 public:
     FiniteSize(const Boundary::orientations orientation);

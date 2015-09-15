@@ -243,14 +243,20 @@ void RDLSurface::setupInitialConditions()
     BADAssClose(RDLEnergySum(), -m_E0, 1E-5);
 }
 
-void RDLSurface::registerHeightChange(const uint x, const uint y, std::vector<DissolutionDeposition *> affectedReactions, const uint n)
+void RDLSurface::registerHeightChange(const uint x,
+                                      const uint y,
+                                      const int value,
+                                      std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
+                                      const uint n)
 {
+    (void) value;
+
     if (!hasStarted())
     {
         return;
     }
 
-    auto start = affectedReactions.begin();
+    auto start = affectedSurfaceReactions.begin();
     auto end = start + n;
 
     m_ratioPartialSums(x, y) = partialThetaRatio(x, y);
@@ -259,7 +265,7 @@ void RDLSurface::registerHeightChange(const uint x, const uint y, std::vector<Di
 
     for (uint i = 0; i < n; ++i)
     {
-        DissolutionDeposition *reaction = affectedReactions.at(i);
+        DissolutionDeposition *reaction = affectedSurfaceReactions.at(i);
         recalculateRDLEnergy(reaction->x(), reaction->y());
     }
 
@@ -302,3 +308,4 @@ double RDLSurface::diffusionDrift(const double x, const double y, const double z
 
     return 2*K*tan(KZrel);
 }
+
