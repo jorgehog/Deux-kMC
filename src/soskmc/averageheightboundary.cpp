@@ -189,8 +189,8 @@ void AverageHeightBoundary::registerHeightChange(const uint x, const uint y, con
 
     BADAssClose(m_average, calcAverage(), 1E-3);
 
-    int height = floor(m_average);
-    int prevHeight = floor(m_prevAverage);
+    int height = round(m_average);
+    int prevHeight = round(m_prevAverage);
 
     m_prevAverage = m_average;
 
@@ -204,5 +204,5 @@ void AverageHeightBoundary::setupInitialConditions()
     double prevPrev = m_prevAverage;
     m_prevAverage = m_average;
 
-    updateSites(floor(m_prevAverage), floor(prevPrev));
+    updateSites(round(m_prevAverage), round(prevPrev));
 }

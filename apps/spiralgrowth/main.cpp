@@ -104,11 +104,23 @@ int main(int argv, char** argc)
                                    topBoundaryID},
                          L, W, boundaryHeight, cutoff);
 
+    auto h0 = [&] (const uint x, const uint y) {
+        if (x < 20)
+        {
+            return 1;
+        }
+
+        else
+        {
+            return 0;
+        }
+    };
+
     for (uint x = 0; x < L; ++x)
     {
         for (uint y = 0; y < W; ++y)
         {
-            solver.setHeight(x, y, 0, false);
+            solver.setHeight(x, y, h0(x, y), false);
         }
     }
 
@@ -186,7 +198,7 @@ int main(int argv, char** argc)
         diffusion = new ConcentrationProfile(solver, [&L, &gamma] (const uint x, const uint y)
         {
             (void) y;
-            return 1-x/(L-1.);
+            return 1.2-0.2*x/(L-1.);
         });
     }
     else

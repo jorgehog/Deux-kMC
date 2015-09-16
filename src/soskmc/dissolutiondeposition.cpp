@@ -19,9 +19,12 @@ double DissolutionDeposition::calculateDissolutionRate() const
 double DissolutionDeposition::calculateDepositionRate() const
 {
     //derp when wall moves away, this reaction should have its rate changed back. Very rare?
-    if (solver().height(x(), y()) + 1 > solver().confiningSurfaceEvent().height())
+    if (solver().confiningSurfaceEvent().hasSurface())
     {
-        return 0;
+        if (solver().height(x(), y()) + 1 > solver().confiningSurfaceEvent().height())
+        {
+            return 0;
+        }
     }
 
     if (!solver().diffusionEvent().hasStarted())
