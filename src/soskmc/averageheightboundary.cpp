@@ -3,7 +3,7 @@
 
 
 AverageHeightBoundary::AverageHeightBoundary(SOSSolver &solver,
-                                             const uint cutoff,
+                                             const uint averageHeightDepth,
                                              const uint dim,
                                              const uint span,
                                              const uint yspan,
@@ -11,7 +11,7 @@ AverageHeightBoundary::AverageHeightBoundary(SOSSolver &solver,
                                              const double location) :
     SOSBoundary(solver, orientation),
     m_mutexSolver(solver),
-    m_cutoff(cutoff == 0 ? span : cutoff),
+    m_averageHeightDepth(averageHeightDepth == 0 ? span : averageHeightDepth),
     m_dim(dim),
     m_span(span),
     m_yspan(yspan),
@@ -110,12 +110,12 @@ void AverageHeightBoundary::getStartsAndEnds(uint &x0, uint &y0, uint &x1, uint 
         if (m_orientation == orientations::FIRST)
         {
             x0 = 0;
-            x1 = m_cutoff;
+            x1 = m_averageHeightDepth;
         }
 
         else
         {
-            x0 = m_span - m_cutoff;
+            x0 = m_span - m_averageHeightDepth;
             x1 = m_span;
         }
 
@@ -128,12 +128,12 @@ void AverageHeightBoundary::getStartsAndEnds(uint &x0, uint &y0, uint &x1, uint 
         if (m_orientation == orientations::FIRST)
         {
             y0 = 0;
-            y1 = m_cutoff;
+            y1 = m_averageHeightDepth;
         }
 
         else
         {
-            y0 = m_span - m_cutoff;
+            y0 = m_span - m_averageHeightDepth;
             y1 = m_span;
         }
 
@@ -154,7 +154,7 @@ bool AverageHeightBoundary::isBlocked(const double xi, const double xj, const do
 {
     (void) xj;
 
-    const double &averageHeight = average();
+    const int averageHeight = round(average());
 
     if (m_orientation == orientations::FIRST)
     {

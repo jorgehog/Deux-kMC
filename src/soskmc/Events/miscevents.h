@@ -248,3 +248,34 @@ private:
 };
 
 
+class AutoCorrelationHeight : public SOSEvent
+{
+
+public:
+
+    AutoCorrelationHeight(const SOSSolver &solver,
+                          const uint xSpan,
+                          const uint ySpan);
+
+    mat autoCorrelation() const;
+
+
+private:
+
+    const uint m_xSpan;
+    const uint m_ySpan;
+
+    mat m_autoCorrelationQuadrant;
+    mat m_autoCorrelationSubQuadrant;
+
+    // Event interface
+public:
+    void execute();
+
+    void initialize();
+};
+
+
+
+
+

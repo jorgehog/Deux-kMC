@@ -51,6 +51,11 @@ public:
         return m_width;
     }
 
+    uint minimumDimension() const
+    {
+        return length() < width() ? length() : width();
+    }
+
     uint area() const
     {
         return m_length*m_width;

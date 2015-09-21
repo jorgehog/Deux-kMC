@@ -1,4 +1,5 @@
 #DCVIZ
+from sympy.functions.elementary.complexes import periodic_argument
 
 from DCViz_sup import DCVizPlotter
 
@@ -11,8 +12,9 @@ from scipy.stats import linregress
 from scipy.optimize import curve_fit
 from matplotlib.ticker import FormatStrFormatter, MultipleLocator, FuncFormatter
 
-E0_tex = r"P_\lambda"
+from mpl_toolkits.mplot3d import Axes3D
 
+E0_tex = r"P_\lambda"
 fig_4_x = 0.05
 fig_4_y = 0.85
 fig_4_fs = 30
@@ -2187,3 +2189,80 @@ class shifts(DCVizPlotter):
 
 
         # self.zoomed.legend()
+
+
+class AutoCorrelation(DCVizPlotter):
+
+    nametag = "autocorr\.arma"
+
+    figMap = {"figure": ["subfigure"], "figure3D": [], "figure_projections" : "proj"}
+
+    tight = False
+
+    def plot(self, data):
+
+        data -= data.min()
+
+
+        Lm, Wm = data.shape
+
+        L = (Lm + 1)/2
+        W = (Wm + 1)/2
+
+        ax = self.subfigure.imshow(data, extent=[-L, L, -W, W], origin="lower", aspect="auto", interpolation="none", cmap="Blues")
+        self.subfigure.set_xlabel(r"$\delta x$")
+        self.subfigure.set_ylabel(r"$\delta y$")
+        #self.figure.colorbar(ax)
+        #
+        ax = Axes3D(self.figure3D)
+
+        elements = Lm*Wm
+
+        xpos, ypos = np.meshgrid(np.arange(Lm), np.arange(Wm))
+
+        xpos = xpos.flatten()
+        ypos = ypos.flatten()
+        zpos = np.zeros(elements)
+        dx = np.ones_like(zpos)
+        dy = dx.copy()
+        dz = data.flatten()
+
+        ax.bar3d(xpos, ypos, zpos, dx, dy, dz, linewidth=0)
+
+        d1 = np.diag(data)
+        d2 = np.diag(np.flipud(data))
+
+        for i in range(Lm):
+            for j in range(Wm):
+                print "%.2f" % data[i, j],
+            print
+
+        print
+        print
+
+        for d in d1:
+            print "%.2f" % d,
+        print
+
+        for d in d2:
+            print "%.2f" % d,
+        print
+
+
+        xl = np.linspace(-L, L, Lm)
+        xw = np.linspace(-W, W, Wm)
+
+        x1 = np.sqrt(2)*xl
+        x2 = np.sqrt(2)*xw
+
+        self.proj.plot(xl, data[L-1, :], label="X")
+        self.proj.plot(xw, data[:, W-1], label="Y")
+        self.proj.plot(x1, d1, label="11 diag")
+        self.proj.plot(x2, d2, label="-11 diag")
+        self.proj.legend()
+        self.proj.set_xlabel(r"$\delta r$")
+        self.proj.set_ylabel("corr")
+
+
+
+

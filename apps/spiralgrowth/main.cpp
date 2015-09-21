@@ -52,7 +52,7 @@ int main(int argv, char** argc)
     const uint bottomBoundaryID = boundarySettings[1][0];
     const uint topBoundaryID = boundarySettings[1][1];
 
-    const uint cutoff = getSetting<uint>(root, "cutoff");
+    const uint averageHeightDepth = getSetting<uint>(root, "averageHeightDepth");
 
     const int boundaryHeight = getSetting<int>(root, "boundaryHeight");
 
@@ -69,6 +69,10 @@ int main(int argv, char** argc)
     const double &maxdt = getSetting<double>(root, "maxdt");
     const double &depRatePower = getSetting<double>(root, "n");
     const double &depRateConstant = getSetting<double>(root, "c");
+
+    const uint &autoCorrelationInt = getSetting<uint>(root, "autocorrelation");
+    const uint &xCorrSpan = getSetting<uint>(root, "xCorrSpan");
+    const uint &yCorrSpan = getSetting<uint>(root, "yCorrSpan");
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
     const bool equilibriate = equilibriateInt == 1;
@@ -102,9 +106,11 @@ int main(int argv, char** argc)
                                    leftBoundaryID,
                                    bottomBoundaryID,
                                    topBoundaryID},
-                         L, W, boundaryHeight, cutoff);
+                         L, W, boundaryHeight, averageHeightDepth);
 
     auto h0 = [&] (const uint x, const uint y) {
+        return 0;
+
         if (x < 20)
         {
             return 1;
@@ -116,13 +122,13 @@ int main(int argv, char** argc)
         }
     };
 
-    for (uint x = 0; x < L; ++x)
-    {
-        for (uint y = 0; y < W; ++y)
-        {
-            solver.setHeight(x, y, h0(x, y), false);
-        }
-    }
+//    for (uint x = 0; x < L; ++x)
+//    {
+//        for (uint y = 0; y < W; ++y)
+//        {
+//            solver.setHeight(x, y, h0(x, y), false);
+//        }
+//    }
 
     if (concentrationBoundary == 1)
     {
@@ -130,6 +136,9 @@ int main(int argv, char** argc)
     }
 
     AverageHeight averageHeight(solver);
+
+    AutoCorrelationHeight autoCorrelation(solver, xCorrSpan, yCorrSpan);
+    autoCorrelation.setOnsetTime(thermalization);
 
     // Selecting confinement model
     if (confinementInt == 1)
@@ -198,7 +207,10 @@ int main(int argv, char** argc)
         diffusion = new ConcentrationProfile(solver, [&L, &gamma] (const uint x, const uint y)
         {
             (void) y;
-            return 1.2-0.2*x/(L-1.);
+            static constexpr double c0 = 3.0;
+            static constexpr double c1 = 1.0;
+
+            return c0-(c0 - c1)/(L-1.)*x;
         });
     }
     else
@@ -214,7 +226,7 @@ int main(int argv, char** argc)
     Lattice lattice;
     lattice.addEvent(solver);
 
-    DumpSystem systemDumper(solver, dumpInterval);
+    DumpSystem systemDumper(solver, dumpInterval, path);
     if (dumpParticles)
     {
         lattice.addEvent(systemDumper);
@@ -269,6 +281,11 @@ int main(int argv, char** argc)
     lattice.addEvent(confiningSurface);
     lattice.addEvent(diffusion);
 
+    if (autoCorrelationInt == 1)
+    {
+        lattice.addEvent(autoCorrelation);
+    }
+
     //    initializeSurface(solver, "fracture");
     initializeSurface(solver, "none");
 
@@ -306,7 +323,7 @@ int main(int argv, char** argc)
     simRoot.addData("bottomBoundaryID", bottomBoundaryID);
     simRoot.addData("topBoundaryID", topBoundaryID);
 
-    simRoot.addData("cutoff", cutoff);
+    simRoot.addData("averageHeightDepth", averageHeightDepth);
 
     simRoot.addData("boundaryHeight", boundaryHeight);
 
@@ -322,6 +339,10 @@ int main(int argv, char** argc)
     simRoot.addData("maxdt", maxdt);
     simRoot.addData("depRatePower", depRatePower);
     simRoot.addData("depRateConstant", depRateConstant);
+
+    simRoot.addData("autoCorrelationInt", autoCorrelationInt);
+    simRoot.addData("xCorrSpan", xCorrSpan);
+    simRoot.addData("yCorrSpan", yCorrSpan);
 
     simRoot.addData("useConcEquil", equilibriateInt);
     simRoot.addData("reset", resetInt);
@@ -347,6 +368,11 @@ int main(int argv, char** argc)
     simRoot.addData("rms", rms.value());
     simRoot.addData("size", size.timeAverage());
     simRoot.addData("var", var.value());
+
+    if (autoCorrelationInt == 1)
+    {
+        simRoot.addData("RACF", autoCorrelation.autoCorrelation());
+    }
 
     //---End data dump
 
