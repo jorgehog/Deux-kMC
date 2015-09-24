@@ -56,10 +56,10 @@ public:
 
     void removeDiffusionReactant(SOSDiffusionReaction *reaction, bool _delete = true);
 
-    void removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete = true);
+    void removeDiffusionReactant(const int x, const int y, const int z, bool _delete = true);
 
     //cannot be const for quick lookup
-    SOSDiffusionReaction *diffusionReaction(const uint x, const uint y, const int z) const;
+    SOSDiffusionReaction *diffusionReaction(const int x, const int y, const int z) const;
 
     void clearDiffusionReactions();
 
@@ -79,6 +79,8 @@ public:
     void dumpDiffusingParticles(const uint frameNumber, const string path = "/tmp") const;
 
     void moveReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z);
+
+    vector<SOSDiffusionReaction *> particlesSurrounding(const uint x, const uint y, const int z) const;
 
 private:
 

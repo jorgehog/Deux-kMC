@@ -867,6 +867,73 @@ TEST_F(SOSkMCTest, SOS_diff_closewall_trapped)
 
 
 
+TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
+{
+    const uint L = 10;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 10;
+
+    m_solver = new SOSSolver(L, W, alpha, mu);
+    setBoundariesFromIDs(m_solver, {2, 1, 0, 0}, L, W);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent;
+
+    SetUp_yo();
+
+    primeSolver();
+
+    diffusionEvent->clearDiffusionReactions();
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, rng.uniform()*5);
+            diffusionEvent->clearDiffusionReactions();
+        }
+    }
+
+    double P = 0;
+    double PTot = 0;
+    const uint nc = 100000;
+
+    for (uint cycle = 0; cycle < nc; ++cycle)
+    {
+        m_solver->setHeights(randi(L, W, distr_param(-2, 2)), false);
+        diffusionEvent->setupInitialConditions();
+
+        for (uint x = 0; x < L; ++x)
+        {
+            for (uint y = 0; y < W; ++y)
+            {
+               double p = (int)diffusionEvent->particlesSurrounding(x, y, m_solver->height(x, y) + 1).size()/(5. - (int)solver().calculateNNeighbors(x, y) + 1);
+               double p2 = 1 - solver().numberOfSurroundingSolutionSites(x, y, solver().height(x, y) + 1)/(5. - (int)solver().calculateNNeighbors(x, y) + 1);
+
+               EXPECT_NEAR(p, p2, 1E-10);
+
+               P += p;
+            }
+        }
+
+        PTot += diffusionEvent->numberOfDiffusionReactions();
+
+        diffusionEvent->clearDiffusionReactions();
+
+        cout.flush();
+        cout << "\r" << std::setw(4) << std::setprecision(2) << (cycle+1)/double(nc);
+    }
+
+    const double measuredSurfaceConcentration = P/(nc*solver().area());
+    const double measuredConcentration = PTot/(nc*(solver().volume()-solver().area()));
+
+    EXPECT_NEAR(solver().concentration(), measuredConcentration, 1E-3);
+    EXPECT_NEAR(solver().concentration(), measuredSurfaceConcentration, 1E-3);
+
+}
+
 
 
 

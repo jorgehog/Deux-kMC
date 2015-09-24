@@ -187,8 +187,8 @@ void SOSSolver::setDiffusionEvent(Diffusion &diffusionEvent)
 
 double SOSSolver::volume() const
 {
-    //sum (h_l - h_i)
-    return m_confiningSurfaceEvent->height()*area() - arma::accu(m_heights);
+    //sum (h_l - h_i - 1)
+    return (m_confiningSurfaceEvent->height() - 1)*area() - arma::accu(m_heights);
 }
 
 double SOSSolver::confinementEnergy(const uint x, const uint y) const
@@ -247,9 +247,7 @@ uint SOSSolver::numberOfSurroundingSolutionSites(const uint x, const uint y, con
     findConnections(x, y, h-1, connectedLeft2, connectedRight2,
                     connectedBottom2, connectedTop2);
 
-    BADAssBool(!diffusionEvent().isBlockedPosition(x, y, h+1), "diffusing particle resting on top of SOS height");
-
-    bool connectedAbove = isBlockedPosition(x, y, h+1);
+    bool connectedAbove = isBlockedPosition(x, y, h+1) || diffusionEvent().isBlockedPosition(x, y, h+1);
 
     uint n = 5;
 
