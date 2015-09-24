@@ -406,7 +406,7 @@ void LatticeDiffusion::setupInitialConditions()
         {
             x0 = rng.uniform()*solver().length();
             y0 = rng.uniform()*solver().width();
-            z0 = zMin + rng.uniform()*(hMax - zMin);
+            z0 = floor(zMin + rng.uniform()*(hMax - zMin));
 
         } while(solver().isBlockedPosition(x0, y0, z0) ||
                 solver().isSurfaceSite(x0, y0, z0) ||
