@@ -76,7 +76,7 @@ public:
 
     void registerAffectedAroundSingle(const int neighbor, const uint xi, const uint dim, const int z);
 
-    void dumpDiffusingParticles(const uint frameNumber) const;
+    void dumpDiffusingParticles(const uint frameNumber, const string path = "/tmp") const;
 
     void moveReaction(SOSDiffusionReaction *reaction, const uint x, const uint y, const int z);
 
@@ -97,7 +97,7 @@ public:
 
     // Diffusion interface
 public:
-    virtual void dump(const uint frameNumber) const;
+    virtual void dump(const uint frameNumber, const string path = "/tmp") const;
     double depositionRate(const uint x, const uint y) const;
     uint dissolutionPaths(const uint x, const uint y) const;
     void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);

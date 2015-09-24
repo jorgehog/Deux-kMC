@@ -62,11 +62,11 @@ void OfflatticeMonteCarloBoundary::executeConcentrationBoundaryReaction(Concentr
     //STUFF
 }
 
-void OfflatticeMonteCarloBoundary::dump(const uint frameNumber) const
+void OfflatticeMonteCarloBoundary::dump(const uint frameNumber, const string path) const
 {
-    Diffusion::dump(frameNumber);
-    LatticeDiffusion::dumpDiffusingParticles(frameNumber);
-    OfflatticeMonteCarlo::dumpDiffusingParticles(frameNumber);
+    Diffusion::dump(frameNumber, path);
+    LatticeDiffusion::dumpDiffusingParticles(frameNumber, path);
+    OfflatticeMonteCarlo::dumpDiffusingParticles(frameNumber, path);
 }
 
 double OfflatticeMonteCarloBoundary::calculateLocalRate(const uint x, const uint y, const uint n) const

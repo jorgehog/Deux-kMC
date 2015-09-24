@@ -14,12 +14,12 @@ Diffusion::~Diffusion()
 
 }
 
-void Diffusion::dump(const uint frameNumber) const
+void Diffusion::dump(const uint frameNumber, const string path) const
 {
     const double &h = solver().confiningSurfaceEvent().height();
     const int zMin = solver().heights().min();
 
-    lammpswriter surfacewriter(5, "surfaces", "/tmp");
+    lammpswriter surfacewriter(5, "surfaces", path);
     surfacewriter.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     surfacewriter.initializeNewFile(frameNumber);
 
@@ -36,7 +36,11 @@ void Diffusion::dump(const uint frameNumber) const
                               << 5;
             }
 
-            for (int zSurface = zMin; zSurface <= solver().height(x, y) - 1; ++zSurface)
+            int cut = solver().height(x, y) - 11;
+
+            int start = cut > zMin ? cut : zMin;
+
+            for (int zSurface = start; zSurface <= solver().height(x, y) - 1; ++zSurface)
             {
                 surfacewriter << 2
                               << x

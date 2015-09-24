@@ -210,12 +210,12 @@ void LatticeDiffusion::registerAffectedAroundSingle(const int neighbor, const ui
 
 }
 
-void LatticeDiffusion::dumpDiffusingParticles(const uint frameNumber) const
+void LatticeDiffusion::dumpDiffusingParticles(const uint frameNumber, const string path) const
 {
     const double &h = solver().confiningSurfaceEvent().height();
     const int zMin = solver().heights().min();
 
-    lammpswriter writer(4, "kmcdiff", "/tmp");
+    lammpswriter writer(4, "kmcdiff", path);
     writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     writer.initializeNewFile(frameNumber);
 
@@ -252,11 +252,11 @@ void LatticeDiffusion::moveReaction(SOSDiffusionReaction *reaction, const uint x
     reaction->setZ(z);
 }
 
-void LatticeDiffusion::dump(const uint frameNumber) const
+void LatticeDiffusion::dump(const uint frameNumber, const string path) const
 {
-    Diffusion::dump(frameNumber);
+    Diffusion::dump(frameNumber, path);
 
-    dumpDiffusingParticles(frameNumber);
+    dumpDiffusingParticles(frameNumber, path);
 }
 
 SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const uint y, const int z, bool setRate)

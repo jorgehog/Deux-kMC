@@ -50,7 +50,7 @@ public:
         return LatticeDiffusion::isBlockedPosition(x, y, z);
     }
 
-    void dump(const uint frameNumber) const;
+    void dump(const uint frameNumber, const string path = "/tmp") const;
 
 
     // HeightConnecter interface

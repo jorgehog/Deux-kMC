@@ -6,7 +6,7 @@
 class AverageHeightBoundary : public SOSBoundary, public HeightConnecter
 {
 public:
-    AverageHeightBoundary(SOSSolver &solver, const uint cutoff,
+    AverageHeightBoundary(SOSSolver &solver, const uint averageHeightDepth,
                           const uint dim, const uint span, const uint yspan,
                           orientations orientation,
                           const double location);
@@ -25,7 +25,7 @@ public:
 
     uint cutoffArea() const
     {
-        return m_cutoff*m_yspan;
+        return m_averageHeightDepth*m_yspan;
     }
 
     bool isInsideCutoff(const uint x, const uint y) const;
@@ -44,7 +44,7 @@ private:
 
     SOSSolver &m_mutexSolver;
 
-    const uint m_cutoff;
+    const uint m_averageHeightDepth;
 
     const uint m_dim;
     const uint m_span;
