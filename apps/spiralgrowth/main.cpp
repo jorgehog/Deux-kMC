@@ -186,7 +186,7 @@ int main(int argv, char** argc)
         diffusion = new ConcentrationProfile(solver, [&L, &gamma] (const uint x, const uint y)
         {
             (void) y;
-            return 1-x/(L-1.);
+            return 1 - 0.1*double(x)/(L-1);
         });
     }
     else
