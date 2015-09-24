@@ -2288,7 +2288,7 @@ class ignisSOS(DCVizPlotter):
                 li = names.index("latticeDiffusion")
 
                 c0 = exp(-3)
-                L, W, H = 50, 50, 20
+                L, W, H = 20, 20, 20
 
                 conc = (data[li]/(L*W*(H - data[hi] - 2)))/c0
                 cut = int(self.argv[1])
