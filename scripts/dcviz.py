@@ -1,5 +1,4 @@
 #DCVIZ
-from sympy.functions.elementary.complexes import periodic_argument
 
 from DCViz_sup import DCVizPlotter
 
@@ -2285,4 +2284,54 @@ class latticediff_speeds(DCVizPlotter):
 
         self.subfigure.set_xlabel(r"$\Omega$")
         self.subfigure.set_ylabel(r"$v = \Delta h / \Delta T$")
+
+class ignisSOS(DCVizPlotter):
+
+    nametag = "ignisSOS\.ign"
+
+
+    def plot(self, data):
+
+        print self.loader.get_metadata()
+
+        name_string, l, w = self.loader.get_metadata()
+
+        names = [desc.split("@")[0] for desc in name_string.split()]
+        targetname = self.argv[0]
+
+        if targetname in names:
+            self.scan_for_name(data, targetname, names)
+        else:
+
+            if targetname == "concentration":
+                hi = names.index("AverageHeight")
+                li = names.index("latticeDiffusion")
+
+                c0 = exp(-3)
+                L, W, H = 20, 20, 20
+
+                conc = (data[li]/(L*W*(H - data[hi] - 2)))/c0
+                cut = int(self.argv[1])
+
+                self.subfigure.plot(conc)
+                trail = np.cumsum(conc[cut:])/np.cumsum(np.ones_like(conc)[cut:])
+                self.subfigure.plot(np.arange(len(conc))[cut:], trail, "r--")
+                print trail[-1]
+                self.subfigure.set_ylabel("concentration")
+
+            else:
+
+                raise RuntimeError("Invalid option %s." % targetname)
+
+    def scan_for_name(self, data, targetname, names):
+
+        for _data, name in zip(data, names):
+
+            if name == targetname:
+                self.subfigure.plot(_data)
+                self.subfigure.set_ylabel(name)
+
+                return
+
+        raise RuntimeError("No match: %s in %s" % (targetname, str(names)))
 

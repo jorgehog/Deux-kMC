@@ -865,7 +865,130 @@ TEST_F(SOSkMCTest, SOS_diff_closewall_trapped)
 }
 
 
+TEST_F(SOSkMCTest, SOS_diff_solutionsites2)
+{
+    const uint L = 10;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 10;
 
+    m_solver = new SOSSolver(L, W, alpha, mu);
+    setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, L, W);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent;
+
+    SetUp_yo();
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, 0, false);
+        }
+    }
+
+    primeSolver();
+
+    diffusionEvent->clearDiffusionReactions();
+
+    //stuff
+
+}
+
+TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
+{
+    const uint L = 10;
+    const uint W = 3;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 10;
+
+    m_solver = new SOSSolver(L, W, alpha, mu);
+    setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, L, W);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent;
+
+    SetUp_yo();
+
+    primeSolver();
+
+    diffusionEvent->clearDiffusionReactions();
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            m_solver->setHeight(x, y, floor(-5 + 11*rng.uniform()));
+            diffusionEvent->clearDiffusionReactions();
+        }
+    }
+
+    const uint nc = 10000;
+    const uint ns = 5;
+
+    for (uint surf = 0; surf < ns; ++surf)
+    {
+        double P = 0;
+        double PTot = 0;
+        double POver = 0;
+
+        m_solver->setHeights(randi(L, W, distr_param(-2, 2)), false);
+
+        for (uint cycle = 0; cycle < nc; ++cycle)
+        {
+            diffusionEvent->setupInitialConditions();
+
+            for (uint x = 0; x < L; ++x)
+            {
+                for (uint y = 0; y < W; ++y)
+                {
+                    const double &h = solver().height(x, y);
+
+                    uint nn = solver().calculateNNeighbors(x, y);
+                    uint nsss =  solver().numberOfSurroundingSolutionSites(x, y, h + 1);
+                    uint nps = diffusionEvent->particlesSurrounding(x, y, h + 1).size();
+
+                    uint np = 5 - int(nsss + nn) + 1;
+
+                    EXPECT_EQ(nps, np);
+
+                    double p = nps/(5. - (int)nn + 1);
+                    double p2 = 1 - nsss/(5. - (int)nn + 1);
+
+                    EXPECT_NEAR(p, p2, 1E-10);
+
+                    P += p;
+
+                    if (diffusionEvent->isBlockedPosition(x, y, solver().height(x, y) + 2))
+                    {
+                        POver++;
+                    }
+                }
+            }
+
+            PTot += diffusionEvent->numberOfDiffusionReactions();
+
+            diffusionEvent->clearDiffusionReactions();
+
+            cout.flush();
+            cout << "\r" << surf << " " << std::setw(4) << std::setprecision(2) << (cycle+1)/double(nc);
+        }
+
+        cout << endl;
+
+        const double measuredSurfaceConcentration = P/(nc*solver().area());
+        const double measuredConcentration = PTot/(nc*(solver().volume()-solver().area()));
+        const double measuredOver = POver/(nc*solver().area());
+
+        EXPECT_NEAR(solver().concentration(), measuredOver, 1E-3);
+        EXPECT_NEAR(solver().concentration(), measuredConcentration, 1E-3);
+        EXPECT_NEAR(solver().concentration(), measuredSurfaceConcentration, 1E-3);
+    }
+
+}
 
 
 

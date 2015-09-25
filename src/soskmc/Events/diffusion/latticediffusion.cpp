@@ -14,7 +14,7 @@
 
 
 LatticeDiffusion::LatticeDiffusion(SOSSolver &solver) :
-    Diffusion(solver, "latticeDiffusion"),
+    Diffusion(solver, "latticeDiffusion", "", true, true),
     m_mutexSolver(solver)
 {
 
@@ -29,11 +29,6 @@ LatticeDiffusion::~LatticeDiffusion()
         delete m.second;
     }
 
-    //    for (SOSDiffusionReaction *reaction : m_diffusionReactionsMap)
-    //    {
-    //        delete reaction;
-    //    }
-
     m_diffusionReactionsMap.clear();
 }
 
@@ -43,9 +38,6 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
     m_diffusionReactionsMap.erase(indices(reaction));
 
     m_mutexSolver.removeReaction(reaction);
-
-    //    auto &r = m_diffusionReactions;
-    //    r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
 
     m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
 
@@ -65,12 +57,12 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 
 }
 
-void LatticeDiffusion::removeDiffusionReactant(const uint x, const uint y, const int z, bool _delete)
+void LatticeDiffusion::removeDiffusionReactant(const int x, const int y, const int z, bool _delete)
 {
     removeDiffusionReactant(diffusionReaction(x, y, z), _delete);
 }
 
-SOSDiffusionReaction *LatticeDiffusion::diffusionReaction(const uint x, const uint y, const int z) const
+SOSDiffusionReaction *LatticeDiffusion::diffusionReaction(const int x, const int y, const int z) const
 {
     const auto &res = m_diffusionReactionsMap.find(indices(x, y, z));
 
@@ -83,16 +75,6 @@ SOSDiffusionReaction *LatticeDiffusion::diffusionReaction(const uint x, const ui
     {
         return nullptr;
     }
-
-    //    for (SOSDiffusionReaction *reaction : m_diffusionReactions)
-    //    {
-    //        if ((x == reaction->x()) && (y == reaction->y()) && (z == reaction->z()))
-    //        {
-    //            return reaction;
-    //        }
-    //    }
-
-    //    return nullptr;
 }
 
 void LatticeDiffusion::clearDiffusionReactions()
@@ -252,6 +234,55 @@ void LatticeDiffusion::moveReaction(SOSDiffusionReaction *reaction, const uint x
     reaction->setZ(z);
 }
 
+vector<SOSDiffusionReaction *> LatticeDiffusion::particlesSurrounding(const uint x, const uint y, const int z) const
+{
+    int left = solver().leftSite(x, y, z);
+    int right = solver().rightSite(x, y, z);
+    int top = solver().topSite(x, y, z);
+    int bottom = solver().bottomSite(x, y, z);
+
+    int below = z - 1;
+    int above = z + 1;
+
+    vector<SOSDiffusionReaction *> particles;
+
+    SOSDiffusionReaction *r;
+
+    if ((r = diffusionReaction(left, y, z)) != nullptr)
+    {
+        particles.push_back(r);
+    }
+
+    if ((r = diffusionReaction(right, y, z)) != nullptr)
+    {
+        particles.push_back(r);
+    }
+
+    if ((r = diffusionReaction(x, top, z)) != nullptr)
+    {
+        particles.push_back(r);
+    }
+
+    if ((r = diffusionReaction(x, bottom, z)) != nullptr)
+    {
+        particles.push_back(r);
+    }
+
+    if ((r = diffusionReaction(x, y, below)) != nullptr)
+    {
+        particles.push_back(r);
+    }
+
+    if ((r = diffusionReaction(x, y, above)) != nullptr)
+    {
+        particles.push_back(r);
+    }
+
+    return particles;
+
+
+}
+
 void LatticeDiffusion::dump(const uint frameNumber, const string path) const
 {
     Diffusion::dump(frameNumber, path);
@@ -279,10 +310,7 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
 
     SOSDiffusionReaction *reaction = new SOSDiffusionReaction(m_mutexSolver, x, y, z);
 
-    //    m_diffusionReactions.push_back(reaction);
     m_diffusionReactionsMap[indices(x, y, z)] = reaction;
-//    m_diffusionReactionsMap.insert(std::make_pair(indices(x, y, z), reaction));
-
 
     m_mutexSolver.addReaction(reaction);
 
@@ -302,6 +330,8 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
 
 void LatticeDiffusion::execute()
 {
+    setValue(numberOfDiffusionReactions());
+
     deleteQueuedReactions();
 
 #ifndef NDEBUG
@@ -359,13 +389,15 @@ void LatticeDiffusion::execute()
 void LatticeDiffusion::setupInitialConditions()
 {
     const double hMax = solver().confiningSurfaceEvent().height();
-    const int zMin = solver().heights().min() + 1;
+    const int zMin = solver().heights().min() + 2;
 
-    const uint nLatticeParticles = solver().volume()*solver().concentration();
+    //subtract area from volume since we do not initiate surface particles
+    //add a random number such that if we get 3.3 particles, there is a 0.3 chance to get 3 + 1.
+    const uint nLatticeParticles = (solver().volume() - solver().area())*solver().concentration() + rng.uniform();
 
     uint x0;
     uint y0;
-    uint z0;
+    int z0;
 
     uint n = 0;
     while (n < nLatticeParticles)
@@ -374,7 +406,7 @@ void LatticeDiffusion::setupInitialConditions()
         {
             x0 = rng.uniform()*solver().length();
             y0 = rng.uniform()*solver().width();
-            z0 = zMin + rng.uniform()*(hMax - zMin);
+            z0 = floor(zMin + rng.uniform()*(hMax - zMin));
 
         } while(solver().isBlockedPosition(x0, y0, z0) ||
                 solver().isSurfaceSite(x0, y0, z0) ||

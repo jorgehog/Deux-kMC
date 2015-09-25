@@ -269,11 +269,6 @@ private:
 
     std::vector<HeightConnecter *> m_heightConnecters;
 
-    // KMCSolver interface
-private:
-    void initializeSolver();
-
-
     // Event interface
 public:
     void execute();

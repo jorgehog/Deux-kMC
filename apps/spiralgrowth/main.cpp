@@ -124,13 +124,13 @@ int main(int argv, char** argc)
         }
     };
 
-//    for (uint x = 0; x < L; ++x)
-//    {
-//        for (uint y = 0; y < W; ++y)
-//        {
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
 //            solver.setHeight(x, y, h0(x, y), false);
-//        }
-//    }
+        }
+    }
 
     if (concentrationBoundary == 1)
     {
@@ -209,6 +209,7 @@ int main(int argv, char** argc)
         diffusion = new ConcentrationProfile(solver, [&L, &gamma] (const uint x, const uint y)
         {
             (void) y;
+
             static constexpr double c0 = 3.0;
             static constexpr double c1 = 1.0;
 
