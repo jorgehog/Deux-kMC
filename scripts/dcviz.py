@@ -2264,5 +2264,25 @@ class AutoCorrelation(DCVizPlotter):
         self.proj.set_ylabel("corr")
 
 
+class latticediff_speeds(DCVizPlotter):
 
+    nametag = "lattice_(\w+)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    def plot(self, data):
+
+        supersaturations = self.get_family_member_data(data, "supersaturations")
+        speeds = self.get_family_member_data(data, "growthspeeds")
+        speeds *= (1 + supersaturations)
+
+        self.subfigure.plot(supersaturations, speeds, "--", c="r", fillstyle="none", marker="s", markeredgecolor="k", markersize=10)
+
+        self.subfigure.plot([-1, 1], [0, 0], "k--")
+        self.subfigure.plot([0, 0], [speeds.min(), speeds.max()], "k--")
+
+        self.subfigure.set_xlabel(r"$\Omega$")
+        self.subfigure.set_ylabel(r"$v = \Delta h / \Delta T$")
 

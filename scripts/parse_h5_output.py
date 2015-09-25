@@ -38,9 +38,7 @@ class ParseKMCHDF5:
             for l, run in file.items():
                 L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]
                 for run_id, data in run.items():
-
                     yield data, L, W, run_id
-
 
     def set_only_n(self, n):
         self.only_n = n

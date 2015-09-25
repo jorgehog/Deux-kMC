@@ -171,6 +171,9 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
 
 double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
 {
+
+    //if there is no site available between the confining wall and the surface,
+    //the rate is zero.
     if (solver().isBlockedPosition(x, y, solver().height(x, y) + 1))
     {
         return 0.0;

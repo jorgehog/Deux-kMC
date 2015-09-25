@@ -7,7 +7,6 @@ from ParameterJuggler import ParameterSetController, quick_replace
 from mpi4py import MPI
 
 def run_kmc(proc, combination, path, app, cfg):
-    time.sleep(proc/10.)
 
     print "Running ",
     for value in combination:

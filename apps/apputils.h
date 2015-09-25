@@ -8,6 +8,19 @@
 
 using namespace std;
 
+uint getProc(int argv, char** argc)
+{
+    if (argv == 1)
+    {
+        return 0u;
+    }
+
+    else
+    {
+        return uint(atoi(argc[1]));
+    }
+}
+
 string getTail(int argv, char** argc)
 {
     string ending;
@@ -19,7 +32,7 @@ string getTail(int argv, char** argc)
 
     else
     {
-        int proc = atoi(argc[1]);
+        int proc = getProc(argv, argc);
 
         stringstream procEnding;
         procEnding << "_" << proc;

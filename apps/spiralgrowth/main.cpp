@@ -44,7 +44,9 @@ int main(int argv, char** argc)
     const uint &W = getSetting<uint>(root, "W");
 
     const double &alpha = getSetting<double>(root, "alpha");
-    const double &gamma = getSetting<double>(root, "gamma");
+    const double &supersaturation = getSetting<double>(root, "supersaturation");
+
+    const double gamma = log(1 + supersaturation);
 
     const Setting &boundarySettings = getSetting(root, "boundaries");
     const uint rightBoundaryID = boundarySettings[0][0];
@@ -313,10 +315,16 @@ int main(int argv, char** argc)
     sizeDesc << L << "x" << W;
     H5Wrapper::Member &sizeRoot = h5root.addMember(sizeDesc.str());
 
-    H5Wrapper::Member &simRoot = sizeRoot.addMember(time(nullptr));
+    timeval tv;
+    gettimeofday(&tv, nullptr);
+
+    __int64_t run_ID = 1000*tv.tv_sec + tv.tv_usec/1000 + 10000000000000u*getProc(argv, argc);
+
+    H5Wrapper::Member &simRoot = sizeRoot.addMember(run_ID);
 
     simRoot.addData("alpha", alpha);
     simRoot.addData("gamma", gamma);
+    simRoot.addData("supersaturation", supersaturation);
 
     simRoot.addData("rightBoundaryID", rightBoundaryID);
     simRoot.addData("leftBoundaryID", leftBoundaryID);

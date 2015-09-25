@@ -704,7 +704,7 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
 
     bool isOutSideBox_y = (y < 0) || (y >= width());
 
-    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 0.5);
+    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 0.5) && confiningSurfaceEvent().hasSurface();
 
     if (isOutSideBox_x || isOutSideBox_y || isOutSideBox_z)
     {
