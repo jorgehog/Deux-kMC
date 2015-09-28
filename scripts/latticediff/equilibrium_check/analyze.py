@@ -6,6 +6,7 @@ import numpy as np
 sys.path.append(join(os.getcwd(), "..", ".."))
 
 from parse_h5_output import ParseKMCHDF5
+from intercombinatorzor import ICZ
 
 
 def main():
@@ -19,7 +20,7 @@ def main():
     n = 0
     for data, _, _, _ in parser:
 
-        supersaturation, speed = data.attrs["supersaturation"], data.attrs["GrowthSpeed"]
+        supersaturation = data.attrs["supersaturation"]
 
         if not supersaturation in supersaturations:
             supersaturations.append(supersaturation)
@@ -30,21 +31,43 @@ def main():
 
     N = n/len(supersaturations)
 
-    speeds = np.zeros(len(supersaturations))
+    print "Found", N, "repeats."
+
+    combinators = [ICZ("Time", "AverageHeight") for _ in range(len(supersaturations))]
 
     for data, _, _, _ in parser:
 
-        supersaturation, speed = data.attrs["supersaturation"], data.attrs["GrowthSpeed"]
+        supersaturation = data.attrs["supersaturation"]\
+
+        heights = parser.get_ignis_data(data, "AverageHeight")
+        time = parser.get_ignis_data(data, "Time")
 
         i = supersaturations.index(supersaturation)
 
-        speeds[i] += speed
+        combinators[i].feed(time, heights)
 
-    speeds /= N
-    supersaturations = np.array(supersaturations)
+    n_steps = len(combinators[0]["Time"])
+
+    all_times = np.zeros([len(supersaturations), n_steps])
+    all_heights = np.zeros_like(all_times)
+    lengths = np.zeros(len(supersaturations))
+
+    for i, supersaturation in enumerate(supersaturations):
+
+        t, h = combinators[i].intercombine("Time", "AverageHeight")
+
+        l = len(t)
+
+        lengths[i] = l
+
+        all_times[i, :l] = t
+        all_heights[i, :l] = h
+
 
     np.save("/tmp/lattice_supersaturations.npy", supersaturations)
-    np.save("/tmp/lattice_growthspeeds.npy", speeds)
+    np.save("/tmp/lattice_times.npy", all_times)
+    np.save("/tmp/lattice_heights.npy", all_heights)
+    np.save("/tmp/lattice_lengths.npy", lengths)
 
 if __name__ == "__main__":
     main()

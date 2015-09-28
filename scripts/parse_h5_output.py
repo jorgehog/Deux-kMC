@@ -40,6 +40,10 @@ class ParseKMCHDF5:
                 for run_id, data in run.items():
                     yield data, L, W, run_id
 
+    @staticmethod
+    def get_ignis_data(data, name):
+        return data["ignisData"][[desc.split("@")[0] for desc in list(data["ignisEventDescriptions"])[0]].index(name)]
+
     def set_only_n(self, n):
         self.only_n = n
 

@@ -2263,7 +2263,7 @@ class AutoCorrelation(DCVizPlotter):
         self.proj.set_ylabel("corr")
 
 
-class latticediff_speeds(DCVizPlotter):
+class LatticediffSpeeds(DCVizPlotter):
 
     nametag = "lattice_(\w+)\.npy"
 
@@ -2274,6 +2274,22 @@ class latticediff_speeds(DCVizPlotter):
     def plot(self, data):
 
         supersaturations = self.get_family_member_data(data, "supersaturations")
+        all_heights = self.get_family_member_data(data, "heights")
+        all_times = self.get_family_member_data(data, "times")
+        lengths = self.get_family_member_data(data, "lengths")
+
+        for i, supersaturation in enumerate(supersaturations):
+
+            l = lengths[i]
+            self.subfigure.plot(all_times[i, :l]/(1 + supersaturation), all_heights[i, :l], label=r"$\Omega=%.2f$" % supersaturation)
+
+        self.subfigure.set_xlabel("t")
+        self.subfigure.set_ylabel("h")
+        lg = self.subfigure.legend(loc="upper left", numpoints=1, handlelength=0.5, ncol=3, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        return
+
         speeds = self.get_family_member_data(data, "growthspeeds")
         speeds *= (1 + supersaturations)
 
@@ -2284,6 +2300,19 @@ class latticediff_speeds(DCVizPlotter):
 
         self.subfigure.set_xlabel(r"$\Omega$")
         self.subfigure.set_ylabel(r"$v = \Delta h / \Delta T$")
+
+        k = np.exp(self.kf(supersaturations, 1.0))
+        self.subfigure.plot(supersaturations, k*supersaturations, "k.")
+
+    def kf(self, s, a):
+        return -a*np.vectorize(self.kw)(s)
+
+    def kw(self, s):
+
+        if s >= 0:
+            return 0.14
+        else:
+            return 0.53
 
 class ignisSOS(DCVizPlotter):
 
