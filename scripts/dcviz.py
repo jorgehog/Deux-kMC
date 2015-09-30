@@ -2278,31 +2278,31 @@ class LatticediffSpeeds(DCVizPlotter):
         all_times = self.get_family_member_data(data, "times")
         lengths = self.get_family_member_data(data, "lengths")
 
+        M = 0
         for i, supersaturation in enumerate(supersaturations):
 
-            l = lengths[i]
-            self.subfigure.plot(all_times[i, :l]/(1 + supersaturation), all_heights[i, :l], label=r"$\Omega=%.2f$" % supersaturation)
+            if len(self.argv) != 0:
+                sfac = np.sign(supersaturation)
+            else:
+                sfac = 1
 
+            l = lengths[i]
+            T = all_times[i, :l]/(1 + supersaturation)
+            H = sfac*all_heights[i, :l]
+            label = r"$\Omega=%.2f$" % supersaturation
+            m = T[-1]*1.05
+
+            self.subfigure.plot(T, H, label=label)
+            self.subfigure.text(m, H[l/3:-l/3].mean(), label)
+
+            if m > M:
+                M = m
+
+        self.subfigure.set_xlim(0, M*1.3)
         self.subfigure.set_xlabel("t")
         self.subfigure.set_ylabel("h")
-        lg = self.subfigure.legend(loc="upper left", numpoints=1, handlelength=0.5, ncol=3, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
-        lg.get_frame().set_fill(not (self.toFile and self.transparent))
-
-        return
-
-        speeds = self.get_family_member_data(data, "growthspeeds")
-        speeds *= (1 + supersaturations)
-
-        self.subfigure.plot(supersaturations, speeds, "--", c="r", fillstyle="none", marker="s", markeredgecolor="k", markersize=10)
-
-        self.subfigure.plot([-1, 1], [0, 0], "k--")
-        self.subfigure.plot([0, 0], [speeds.min(), speeds.max()], "k--")
-
-        self.subfigure.set_xlabel(r"$\Omega$")
-        self.subfigure.set_ylabel(r"$v = \Delta h / \Delta T$")
-
-        k = np.exp(self.kf(supersaturations, 1.0))
-        self.subfigure.plot(supersaturations, k*supersaturations, "k.")
+        #lg = self.subfigure.legend(loc="upper left", numpoints=1, handlelength=0.5, ncol=3, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
+        #lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
     def kf(self, s, a):
         return -a*np.vectorize(self.kw)(s)
@@ -2313,6 +2313,7 @@ class LatticediffSpeeds(DCVizPlotter):
             return 0.14
         else:
             return 0.53
+
 
 class ignisSOS(DCVizPlotter):
 
