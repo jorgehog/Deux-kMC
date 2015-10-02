@@ -7,9 +7,7 @@ FirstPassageContinuum::FirstPassageContinuum(SOSSolver &solver,
     OfflatticeMonteCarlo(solver, maxdt),
     m_rateLaw(rateLaw)
 {
-    insertParticle(0, 0, 2);
-    rateLaw(this, 0, 0, 0);
-    cout << "....!" << endl;
+
 }
 
 FirstPassageContinuum::~FirstPassageContinuum()

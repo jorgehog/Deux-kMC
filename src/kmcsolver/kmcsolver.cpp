@@ -156,18 +156,7 @@ void KMCSolver::initialize()
 
 void KMCSolver::execute()
 {
-    double R = rng.uniform()*m_totalRate;
-
-    uint choice = binarySearchForInterval(R, m_cumsumRates);
-
-    //this makes sure that reactions with 0 rate is not selected.
-    if (choice != 0)
-    {
-        while (m_cumsumRates.at(choice) == m_cumsumRates.at(choice-1))
-        {
-            choice--;
-        }
-    }
+    uint choice = chooseFromTotalRate(m_cumsumRates, m_totalRate);
 
     m_selectedReaction = getReaction(choice);
 
