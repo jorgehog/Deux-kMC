@@ -35,9 +35,9 @@ public:
         return m_maxdt;
     }
 
-    static constexpr double D()
+    double D() const
     {
-        return 1.0;
+        return 1.0/solver().concentration();
     }
 
     double acceptanceRatio() const

@@ -323,64 +323,64 @@ int main(int argv, char** argc)
 
     H5Wrapper::Member &simRoot = sizeRoot.addMember(run_ID);
 
-    simRoot.addData("alpha", alpha);
-    simRoot.addData("gamma", gamma);
-    simRoot.addData("supersaturation", supersaturation);
+    simRoot["alpha"] = alpha;
+    simRoot["gamma"] = gamma;
+    simRoot["supersaturation"] = supersaturation;
 
-    simRoot.addData("rightBoundaryID", rightBoundaryID);
-    simRoot.addData("leftBoundaryID", leftBoundaryID);
-    simRoot.addData("bottomBoundaryID", bottomBoundaryID);
-    simRoot.addData("topBoundaryID", topBoundaryID);
+    simRoot["rightBoundaryID"] = rightBoundaryID;
+    simRoot["leftBoundaryID"] = leftBoundaryID;
+    simRoot["bottomBoundaryID"] = bottomBoundaryID;
+    simRoot["topBoundaryID"] = topBoundaryID;
 
-    simRoot.addData("averageHeightDepth", averageHeightDepth);
+    simRoot["averageHeightDepth"] = averageHeightDepth;
 
-    simRoot.addData("boundaryHeight", boundaryHeight);
+    simRoot["boundaryHeight"] = boundaryHeight;
 
-    simRoot.addData("concentrationBoundary", concentrationBoundary);
+    simRoot["concentrationBoundary"] = concentrationBoundary;
 
-    simRoot.addData("confinement", confinementInt);
-    simRoot.addData("confiningSurfaceHeight", confiningSurfaceHeight);
-    simRoot.addData("sigma0", sigma0);
-    simRoot.addData("r0", lD);
-    simRoot.addData("E0", E0);
+    simRoot["confinement"] = confinementInt;
+    simRoot["confiningSurfaceHeight"] = confiningSurfaceHeight;
+    simRoot["sigma0"] = sigma0;
+    simRoot["r0"] = lD;
+    simRoot["E0"] = E0;
 
-    simRoot.addData("diffuse", diffuseInt);
-    simRoot.addData("maxdt", maxdt);
-    simRoot.addData("depRatePower", depRatePower);
-    simRoot.addData("depRateConstant", depRateConstant);
+    simRoot["diffuse"] = diffuseInt;
+    simRoot["maxdt"] = maxdt;
+    simRoot["depRatePower"] = depRatePower;
+    simRoot["depRateConstant"] = depRateConstant;
 
-    simRoot.addData("autoCorrelationInt", autoCorrelationInt);
-    simRoot.addData("xCorrSpan", xCorrSpan);
-    simRoot.addData("yCorrSpan", yCorrSpan);
+    simRoot["autoCorrelationInt"] = autoCorrelationInt;
+    simRoot["xCorrSpan"] = xCorrSpan;
+    simRoot["yCorrSpan"] = yCorrSpan;
 
-    simRoot.addData("useConcEquil", equilibriateInt);
-    simRoot.addData("reset", resetInt);
-    simRoot.addData("muEq", muEq);
-    simRoot.addData("muEqError", equilibriater.error());
-    simRoot.addData("muShift", muShift);
+    simRoot["useConcEquil"] = equilibriateInt;
+    simRoot["reset"] = resetInt;
+    simRoot["muEq"] = muEq;
+    simRoot["muEqError"] = equilibriater.error();
+    simRoot["muShift"] = muShift;
 
-    simRoot.addData("storeIgnisData", storeIgnisDataInt);
+    simRoot["storeIgnisData"] = storeIgnisDataInt;
 
     if (storeIgnisData)
     {
-        simRoot.addData("heightmap", solver.heights());
-        simRoot.addData("ignisData", lattice.storedEventValues());
-        simRoot.addData("ignisEventDescriptions", lattice.outputEventDescriptions());
+        simRoot["heightmap"] = solver.heights();
+        simRoot["ignisData"] = lattice.storedEventValues();
+        simRoot["ignisEventDescriptions"] = lattice.outputEventDescriptions();
     }
 
-    simRoot.addData("randomSeed", seed);
+    simRoot["randomSeed"] = seed;
 
     //---Start Explicit dumps
 
-    simRoot.addData("GrowthSpeed", speed.value());
-    simRoot.addData("nNeighbors", nNeighbors.value());
-    simRoot.addData("rms", rms.value());
-    simRoot.addData("size", size.timeAverage());
-    simRoot.addData("var", var.value());
+    simRoot["GrowthSpeed"] = speed.value();
+    simRoot["nNeighbors"] = nNeighbors.value();
+    simRoot["rms"] = rms.value();
+    simRoot["size"] = size.timeAverage();
+    simRoot["var"] = var.value();
 
     if (autoCorrelationInt == 1)
     {
-        simRoot.addData("RACF", autoCorrelation.autoCorrelation());
+        simRoot["RACF"] = autoCorrelation.autoCorrelation();
     }
 
     //---End data dump
