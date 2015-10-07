@@ -53,7 +53,9 @@ public:
 
     Reaction *getReaction(const uint n) const
     {
-        return m_reactions.at(n);
+        BADAss(n, <, m_reactions.size(), "index out of bounds.");
+
+        return m_reactions[n];
     }
 
     const double &nextRandomLogNumber() const
@@ -105,6 +107,8 @@ private:
     void updateTime();
 
     void setCurrentTimeStep(double currentTimeStep);
+
+    void resizeCumsumRates();
 
     void getCumsumAndTotalRate();
 

@@ -88,6 +88,10 @@ int main(int argv, char** argc)
 
     const uint &nCycles = getSetting<uint>(root, "nCycles");
     const uint &thermalization = getSetting<uint>(root, "thermalization");
+
+    const uint &isolateEvents = getSetting<uint>(root, "isolateEvents");
+    const Setting &isolatedEvents = getSetting(root, "isolatedEvents");
+
     const uint &nCyclesPerOutput = getSetting<uint>(root, "nCyclesPerOutput");
     const uint &storeIgnisDataInt = getSetting<uint>(root, "storeIgnisData");
     const bool storeIgnisData = storeIgnisDataInt == 1;
@@ -98,7 +102,7 @@ int main(int argv, char** argc)
 
     //---End default config loading
     //---Start ignis environment and solver creation
-
+    Lattice lattice;
     SOSSolver solver(L, W, alpha, gamma);
 
     ConfiningSurface *confiningSurface;
@@ -137,11 +141,6 @@ int main(int argv, char** argc)
         solver.addConcentrationBoundary(0, Boundary::orientations::FIRST);
     }
 
-    AverageHeight averageHeight(solver);
-
-    AutoCorrelationHeight autoCorrelation(solver, xCorrSpan, yCorrSpan);
-    autoCorrelation.setOnsetTime(thermalization);
-
     // Selecting confinement model
     if (confinementInt == 1)
     {
@@ -164,7 +163,6 @@ int main(int argv, char** argc)
     else if (confinementInt == 4)
     {
         confiningSurface = new RDLSurface(solver, E0, sigma0, lD);
-        confiningSurface->setDependency(averageHeight);
     }
     else
     {
@@ -189,20 +187,7 @@ int main(int argv, char** argc)
     }
     else if (diffuseInt == 4)
     {
-        diffusion = new FirstPassageContinuum(solver, maxdt,
-                                              [depRateConstant, depRatePower]
-                                              (const FirstPassageContinuum *_this,
-                                              const uint x, const uint y, const uint n)
-        {
-            const int z = _this->solver().height(x, y) + 1;
-
-            const double dr2 = _this->solver().closestSquareDistance(x, y, z,
-                                                                     _this->particlePositions(0, n),
-                                                                     _this->particlePositions(1, n),
-                                                                     _this->particlePositions(2, n));
-
-            return depRateConstant/pow(dr2, depRatePower/2);
-        });
+        diffusion = new FirstPassageContinuum(solver, maxdt, depRatePower, depRateConstant);
     }
     else if (diffuseInt == 5)
     {
@@ -221,13 +206,20 @@ int main(int argv, char** argc)
         cout << "Invalid diffusion: " << diffuseInt << endl;
         return 1;
     }
+
+    lattice.addEvent(solver);
+    lattice.addEvent(confiningSurface);
+    lattice.addEvent(diffusion);
+
     //
+
+    AverageHeight averageHeight(solver);
+
+    AutoCorrelationHeight autoCorrelation(solver, xCorrSpan, yCorrSpan);
+    autoCorrelation.setOnsetTime(thermalization);
 
     EqMu eqMu(solver);
     Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
-
-    Lattice lattice;
-    lattice.addEvent(solver);
 
     DumpSystem systemDumper(solver, dumpInterval, path);
     if (dumpParticles)
@@ -281,8 +273,7 @@ int main(int argv, char** argc)
     lattice.addEvent(var);
 
 
-    lattice.addEvent(confiningSurface);
-    lattice.addEvent(diffusion);
+
 
     if (autoCorrelationInt == 1)
     {
@@ -297,6 +288,22 @@ int main(int argv, char** argc)
 
     EquilibrationOrganizer eqOrg(lattice, equilibriate, reset, true);
     eqOrg.prepare({&eqMu, &equilibriater}, {&averageHeight, confiningSurface});
+
+    if (isolateEvents != 0)
+    {
+        vector<string> eventTypes(isolatedEvents.getLength());
+
+        for (int i = 0; i < isolatedEvents.getLength(); ++i)
+        {
+            string eventType = isolatedEvents[i];
+
+            eventTypes[i] = eventType;
+        }
+
+        EventIsolator<uint> ei(lattice);
+
+        ei.isolate(eventTypes);
+    }
 
     lattice.eventLoop(nCycles);
 

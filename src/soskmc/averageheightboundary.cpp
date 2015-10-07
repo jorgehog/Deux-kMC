@@ -46,6 +46,8 @@ void AverageHeightBoundary::affectSurfaceSites()
 
 void AverageHeightBoundary::affectSolutionSites(const int z)
 {
+    throw std::runtime_error("what!");
+    (void) z;
     //derp
 }
 
@@ -107,7 +109,7 @@ void AverageHeightBoundary::getStartsAndEnds(uint &x0, uint &y0, uint &x1, uint 
 {
     if (m_dim == 0)
     {
-        if (m_orientation == orientations::FIRST)
+        if (orientation() == orientations::FIRST)
         {
             x0 = 0;
             x1 = m_averageHeightDepth;
@@ -125,7 +127,7 @@ void AverageHeightBoundary::getStartsAndEnds(uint &x0, uint &y0, uint &x1, uint 
 
     else
     {
-        if (m_orientation == orientations::FIRST)
+        if (orientation() == orientations::FIRST)
         {
             y0 = 0;
             y1 = m_averageHeightDepth;
@@ -156,7 +158,7 @@ bool AverageHeightBoundary::isBlocked(const double xi, const double xj, const do
 
     const int averageHeight = round(average());
 
-    if (m_orientation == orientations::FIRST)
+    if (orientation() == orientations::FIRST)
     {
         return (xi < m_location) && (xk <= averageHeight);
     }
@@ -167,13 +169,11 @@ bool AverageHeightBoundary::isBlocked(const double xi, const double xj, const do
     }
 }
 
-std::vector<double> AverageHeightBoundary::imagesOf(const double xi, const double xj, const double xk) const
+void AverageHeightBoundary::closestImage(const double xi, const double xj, const double xk,
+                                         const double xti, const double xtj, const double xtk,
+                                         double &dxi, double &dxj, double &dxk) const
 {
-    (void) xi;
-    (void) xj;
-    (void) xk;
-
-    return {};
+    noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
 }
 
 

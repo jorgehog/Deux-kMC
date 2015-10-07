@@ -108,14 +108,24 @@ inline uint chooseFromTotalRate(const double *accuRates, const uint size, const 
 
 }
 
-inline uint chooseFromTotalRate(const vec &accuRates, const double totalRate)
+inline uint chooseFromTotalRate(const vec &accuRates, const double totalRate, uint size = 0)
 {
-    return chooseFromTotalRate(accuRates.memptr(), accuRates.size(), totalRate);
+    if (size == 0)
+    {
+        size = accuRates.size();
+    }
+
+    return chooseFromTotalRate(accuRates.memptr(), size, totalRate);
 }
 
-inline uint chooseFromTotalRate(const std::vector<double> &accuRates, const double totalRate)
+inline uint chooseFromTotalRate(const std::vector<double> &accuRates, const double totalRate, uint size = 0)
 {
-    return chooseFromTotalRate(&accuRates.front(), accuRates.size(), totalRate);
+    if (size == 0)
+    {
+        size = accuRates.size();
+    }
+
+    return chooseFromTotalRate(&accuRates.front(), size, totalRate);
 }
 
 } //end of namespace kMC

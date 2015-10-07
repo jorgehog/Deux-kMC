@@ -28,7 +28,25 @@ bool Periodic::isBlocked(const double xi) const
     return false;
 }
 
-std::vector<double> Periodic::imagesOf(const double xi) const
+void Periodic::closestImage(const double xi, const double xti, double &dxi) const
 {
-    return {xi + (double)m_span, xi - (double)m_span};
+    double dxti = xti - xi;
+
+    if (fabs(dxti) < m_span/2)
+    {
+        dxi = dxti;
+    }
+
+    else
+    {
+        if (xi < m_span/2)
+        {
+            dxi = xti - (double)m_span - xi;
+        }
+
+        else
+        {
+            dxi = xti + (double)m_span - xi;
+        }
+    }
 }

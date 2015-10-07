@@ -13,7 +13,7 @@ Edge::Edge(const double location,
 
 bool Edge::isBlocked(const double xi) const
 {
-    if (m_orientation == orientations::FIRST)
+    if (orientation() == orientations::FIRST)
     {
         return xi < m_location;
     }

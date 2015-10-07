@@ -38,16 +38,15 @@ protected:
         // Code here will be called immediately after the constructor (right
         // before each test).
 
-        m_averageHeight = new AverageHeight(*m_solver);
-
-        m_pressureWallEvent->setDependency(m_averageHeight);
 
         m_lattice = new Lattice();
 
         m_lattice->addEvent(m_solver);
-        m_lattice->addEvent(m_averageHeight);
         m_lattice->addEvent(m_pressureWallEvent);
         m_lattice->addEvent(m_diffusionEvent);
+
+        m_averageHeight = new AverageHeight(*m_solver);
+        m_lattice->addEvent(m_averageHeight);
 
         m_lattice->enableOutput(false);
         m_lattice->enableEventValueStorage(false, false);

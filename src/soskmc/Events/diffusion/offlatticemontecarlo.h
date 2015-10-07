@@ -35,10 +35,7 @@ public:
         return m_maxdt;
     }
 
-    double D() const
-    {
-        return 1.0/solver().concentration();
-    }
+    double D() const;
 
     double acceptanceRatio() const
     {
@@ -99,8 +96,6 @@ protected:
     }
 
 private:
-
-    SOSSolver &m_mutexSolver;
 
     const double m_maxdt;
 

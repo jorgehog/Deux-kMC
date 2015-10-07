@@ -21,7 +21,9 @@ private:
 public:
     double transformCoordinate(const double xi, const double xj, const double xk) const;
     bool isBlocked(const double xi, const double xj, const double xk) const;
-    std::vector<double> imagesOf(const double xi, const double xj, const double xk) const;
+    void closestImage(const double xi, const double xj, const double xk,
+                      const double xti, const double xtj, const double xtk,
+                      double &dxi, double &dxj, double &dxk) const;
 };
 
 }

@@ -18,8 +18,8 @@ Reflecting::~Reflecting()
 
 double Reflecting::transformCoordinate(const double xi) const
 {
-    bool isBelow = (xi < m_location) && (m_orientation == orientations::FIRST);
-    bool isAbove = (xi > m_location) && (m_orientation == orientations::LAST);
+    bool isBelow = (xi < m_location) && (orientation() == orientations::FIRST);
+    bool isAbove = (xi > m_location) && (orientation() == orientations::LAST);
 
     if (isBelow)
     {
@@ -44,16 +44,7 @@ bool Reflecting::isBlocked(const double xi) const
     return false;
 }
 
-std::vector<double> Reflecting::imagesOf(const double xi) const
+void Reflecting::closestImage(const double xi, const double xti, double &dxi) const
 {
-    if (m_orientation == orientations::FIRST)
-    {
-        return {2*m_location - xi - 1};
-    }
-
-    else
-    {
-        return {2*m_location - xi + 1};
-    }
-
+    noImage1D(xi,xti, dxi);
 }

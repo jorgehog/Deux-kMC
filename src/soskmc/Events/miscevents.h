@@ -2,6 +2,8 @@
 
 #include "sosevent.h"
 
+#include "../sossolver.h"
+
 class Time : public SOSEvent
 {
 public:

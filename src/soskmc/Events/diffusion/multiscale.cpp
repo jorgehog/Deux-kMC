@@ -6,6 +6,8 @@
 
 #include "sosdiffusionreaction.h"
 
+#include "sossolver.h"
+
 OfflatticeMonteCarloBoundary::OfflatticeMonteCarloBoundary(SOSSolver &solver,
                                                            const double dt,
                                                            const uint boundarySpacing) :

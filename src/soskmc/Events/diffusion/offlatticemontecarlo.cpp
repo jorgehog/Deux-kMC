@@ -12,7 +12,6 @@ OfflatticeMonteCarlo::OfflatticeMonteCarlo(SOSSolver &solver,
                                            bool hasOutput,
                                            bool storeValue) :
     Diffusion(solver, type, unit, hasOutput, storeValue),
-    m_mutexSolver(solver),
     m_maxdt(maxdt)
 {
 
@@ -158,7 +157,7 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
     {
         for (uint _y = 0; _y < solver().width(); ++_y)
         {
-            r = &m_mutexSolver.surfaceReaction(_x, _y);
+            r = &mutexSolver().surfaceReaction(_x, _y);
 
             const double newDepositionRate = depositionRate(_x, _y);
 
@@ -190,7 +189,7 @@ double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
         R += Rn;
     }
 
-    return R/solver().concentration();
+    return R/solver().concentration()/solver().area();
 }
 
 void OfflatticeMonteCarlo::executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
@@ -416,6 +415,11 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
     delta = m_scanDeltas(minLoc);
     dim = minLoc/2;
 
+}
+
+double OfflatticeMonteCarlo::D() const
+{
+    return 1.0/solver().concentration();
 }
 
 void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber, const string path) const

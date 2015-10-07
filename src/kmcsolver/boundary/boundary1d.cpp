@@ -14,6 +14,11 @@ Boundary1D::~Boundary1D()
 
 }
 
+void Boundary1D::noImage1D(const double xi, const double xti, double &dxi) const
+{
+    dxi = xti - xi;
+}
+
 
 double kMC::Boundary1D::transformCoordinate(const double xi, const double xj, const double xk) const
 {
@@ -31,10 +36,17 @@ bool kMC::Boundary1D::isBlocked(const double xi, const double xj, const double x
     return isBlocked(xi);
 }
 
-std::vector<double> kMC::Boundary1D::imagesOf(const double xi, const double xj, const double xk) const
+void Boundary1D::closestImage(const double xi, const double xj, const double xk,
+                              const double xti, const double xtj, const double xtk,
+                              double &dxi, double &dxj, double &dxk) const
 {
     (void) xj;
     (void) xk;
+    (void) dxj;
+    (void) dxk;
 
-    return imagesOf(xi);
+    dxj = std::numeric_limits<double>::max();
+    dxk = std::numeric_limits<double>::max();
+
+    closestImage(xi, xti, dxi);
 }

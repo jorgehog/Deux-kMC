@@ -36,7 +36,7 @@ public:
 
     // Reaction interface
 public:
-    bool isAllowed() const;
+    bool isAllowed() const {return true;}
     void executeAndUpdate();
     double rateExpression();
 

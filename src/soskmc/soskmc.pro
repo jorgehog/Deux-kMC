@@ -28,7 +28,8 @@ SOURCES += \
     Events/diffusion/firstpassagecontinuum.cpp \
     Events/diffusion/concentrationprofile.cpp \
     heightconnecter.cpp \
-    averageheightboundary.cpp
+    averageheightboundary.cpp \
+    Events/sosevent.cpp
 
 HEADERS += \
     Events/equilibriater.h \

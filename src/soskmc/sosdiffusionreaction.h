@@ -46,7 +46,7 @@ private:
 
     // Reaction interface
 public:
-    bool isAllowed() const;
+    bool isAllowed() const {return numberOfFreePaths() != 0;}
     void executeAndUpdate();
     void affectedUpdateRule();
     double rateExpression();

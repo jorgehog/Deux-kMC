@@ -49,15 +49,5 @@ public:
                               const uint y,
                               const int value,
                               std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                              const uint n)
-    {
-        (void) value;
-        (void) affectedSurfaceReactions;
-        (void) n;
-
-        if (solver().height(x, y) > height())
-        {
-            terminateLoop("CRASH CRASH...");
-        }
-    }
+                              const uint n);
 };

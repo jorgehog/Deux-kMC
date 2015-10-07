@@ -18,7 +18,7 @@ public:
 
     bool isBlocked(const double xi) const;
 
-    std::vector<double> imagesOf(const double xi) const;
+    void closestImage(const double xi, const double xti, double &dxi) const;
 
 private:
 
