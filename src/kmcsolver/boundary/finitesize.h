@@ -14,7 +14,7 @@ public:
     // Boundary interface
 public:
     double transformCoordinate(const double xi) const;
-    std::vector<double> imagesOf(const double xi) const;
+    void closestImage(const double xi, const double xti, double &dxi) const;
 };
 
 }

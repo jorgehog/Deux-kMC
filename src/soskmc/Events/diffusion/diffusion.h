@@ -6,7 +6,7 @@
 class SOSDiffusionReaction;
 class ConcentrationBoundaryReaction;
 
-class Diffusion : public SOSEvent, public HeightConnecter
+class Diffusion : public ignis::LatticeEvent, public HeightConnecter
 {
 public:
     Diffusion(SOSSolver &solver,
@@ -28,5 +28,21 @@ public:
     virtual void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction) = 0;
 
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const = 0;
+
+    const SOSSolver &solver() const
+    {
+        return m_solver;
+    }
+
+private:
+
+    SOSSolver &m_solver;
+
+protected:
+
+    SOSSolver &mutexSolver() const
+    {
+        return m_solver;
+    }
 
 };

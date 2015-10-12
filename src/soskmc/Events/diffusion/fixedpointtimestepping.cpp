@@ -3,6 +3,8 @@
 #include "Events/confiningsurface/confiningsurface.h"
 #include "dissolutiondeposition.h"
 
+#include "sossolver.h"
+
 FixedPointTimeStepping::FixedPointTimeStepping(SOSSolver &solver, const double maxdt) :
     Diffusion(solver, "FixedPoint"),
     OfflatticeMonteCarlo(solver, maxdt),

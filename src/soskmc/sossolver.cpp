@@ -13,6 +13,8 @@ SOSSolver::SOSSolver(const uint length,
     KMCSolver(),
     m_heights_set(false),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
+    m_confiningSurfaceEvent(nullptr),
+    m_diffusionEvent(nullptr),
     m_length(length),
     m_width(width),
     m_alpha(alpha),
@@ -603,12 +605,12 @@ double SOSSolver::boundaryTransform(const double x, const double y, const double
 {
     if (dim == 0)
     {
-        return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(x, y, z);
+        return closestBoundary(x, dim)->transformCoordinate(x, y, z);
     }
 
     else if (dim == 1)
     {
-        return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(y, x, z);
+        return closestBoundary(x, dim)->transformCoordinate(y, x, z);
     }
 
     else
@@ -623,12 +625,12 @@ double SOSSolver::boundaryTransform(const double x, const double y, const double
 
     if (dim == 0)
     {
-        return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(x + dxi, y, z);
+        return closestBoundary(x, dim)->transformCoordinate(x + dxi, y, z);
     }
 
     else if (dim == 1)
     {
-        return boundary(dim, boundaryOrientation(x, dim))->transformCoordinate(y + dxi, x, z);
+        return closestBoundary(x, dim)->transformCoordinate(y + dxi, x, z);
     }
 
     else
@@ -636,6 +638,11 @@ double SOSSolver::boundaryTransform(const double x, const double y, const double
         return z + dxi;
     }
 
+}
+
+const Boundary *SOSSolver::closestBoundary(const double x, const uint dim) const
+{
+    return boundary(dim, boundaryOrientation(x, dim));
 }
 
 void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orientations orientation)
@@ -812,46 +819,47 @@ void SOSSolver::updateConcentrationBoundaryIfOnBoundary(const uint x, const uint
 double SOSSolver::closestSquareDistance(const uint x, const uint y, const int z,
                                         const double xp, const double yp, const double zp) const
 {
-    //zero image
-    double minDistance = absSquareDistance(x, y, z, xp, yp, zp);
 
-    //x images zero y
-    for (const double &xImage : boundary(0, boundaryOrientation(xp, 0))->imagesOf(xp, yp, zp))
+    double dxi0, dxj0, dxk0;
+    double dxi1, dxj1, dxk1;
+
+    closestBoundary(x, 0)->closestImage(x, y, z, xp, yp, zp, dxi0, dxj0, dxk0);
+
+    double dxi02 = dxi0*dxi0;
+    double dxj02 = dxj0*dxj0;
+    double dxk02 = dxk0*dxk0;
+
+    closestBoundary(y, 1)->closestImage(y, x, z, yp, xp, zp, dxj1, dxi1, dxk1);
+
+    double dx2 = dxi1*dxi1;
+    double dy2 = dxj1*dxj1;
+    double dz2 = dxk1*dxk1;
+
+    if (dxi02 < dx2)
     {
-        double distance = absSquareDistance(x, y, z, xImage, yp, zp);
-
-        if (distance < minDistance)
-        {
-            minDistance = distance;
-        }
+        dx2 = dxi02;
     }
 
-    //y images zero x
-    for (const double &yImage : boundary(1, boundaryOrientation(yp, 1))->imagesOf(yp, xp, zp))
+    if (dxj02 < dy2)
     {
-        double distance = absSquareDistance(x, y, z, xp, yImage, zp);
-
-        if (distance < minDistance)
-        {
-            minDistance = distance;
-        }
+        dy2 = dxj02;
     }
 
-    //x and y images
-    for (const double &xImage : boundary(0, boundaryOrientation(xp, 0))->imagesOf(xp, yp, zp))
+    if (dxk02 < dz2)
     {
-        for (const double &yImage : boundary(1, boundaryOrientation(yp, 1))->imagesOf(yp, xp, zp))
-        {
-            double distance = absSquareDistance(x, y, z, xImage, yImage, zp);
-
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-            }
-        }
+        dz2 = dxk02;
     }
 
-    return minDistance;
+
+    double dxk2 = z - zp;
+    double dxk22 = dxk2*dxk2;
+
+    if (dxk22 < dz2)
+    {
+        dz2 = dxk22;
+    }
+
+    return dx2 + dy2 + dz2;
 
 
 }
@@ -859,7 +867,11 @@ double SOSSolver::closestSquareDistance(const uint x, const uint y, const int z,
 double SOSSolver::absSquareDistance(const uint x, const uint y, const int z,
                                     const double xp, const double yp, const double zp) const
 {
-    return pow((double)x - xp, 2.) + pow((double)y - yp, 2.) + pow((double)z - zp, 2.);
+    double dx = x - xp;
+    double dy = y - yp;
+    double dz = z - zp;
+
+    return dx*dx + dy*dy + dz*dz;
 }
 
 void SOSSolver::execute()

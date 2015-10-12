@@ -1,6 +1,9 @@
+#include "sossolver.h"
+
 #include "equilibriater.h"
 
 #include "eqmu.h"
+
 
 
 Equilibriater::Equilibriater(SOSSolver &mutexSolver,

@@ -20,22 +20,11 @@ public:
         m_mu = 1;
         m_height = 20 + rng.uniform();
         double maxdt = 0.01;
-        auto rf = [] (const FirstPassageContinuum *_this, const uint x, const uint y, const uint n)
-        {
-            const int z = _this->solver().height(x, y) + 1;
-
-            const double dr2 = _this->solver().closestSquareDistance(x, y, z,
-                                                                     _this->particlePositions(0, n),
-                                                                     _this->particlePositions(1, n),
-                                                                     _this->particlePositions(2, n));
-
-            return 1/dr2;
-        };
 
         m_solver = new SOSSolver(m_L, m_W, m_alpha, m_mu);
         setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, m_L, m_W);
         m_pressureWallEvent = new FixedSurface(*m_solver, m_height);
-        m_cdiffusionEvent = new FirstPassageContinuum(*m_solver, maxdt, rf);
+        m_cdiffusionEvent = new FirstPassageContinuum(*m_solver, maxdt, 2, 1);
 
         m_diffusionEvent = m_cdiffusionEvent;
         SetUp_yo();
@@ -131,6 +120,8 @@ TEST_F(CDiffTest, fullscan)
 TEST_F(CDiffTest, dissolutionDeposition)
 {
     EXPECT_EQ(0, m_cdiffusionEvent->nOfflatticeParticles());
+
+    cout << m_solver->closestSquareDistance(1, 1, 0, 1, 1, 1) << endl;
 
     m_solver->registerHeightChange(1, 1, -1);
 

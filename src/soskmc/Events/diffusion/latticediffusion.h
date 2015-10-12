@@ -90,8 +90,6 @@ private:
 
     vector<SOSDiffusionReaction*> m_deleteQueue;
 
-    SOSSolver &m_mutexSolver;
-
 
     // Event interface
 public:

@@ -900,7 +900,7 @@ TEST_F(SOSkMCTest, SOS_diff_solutionsites2)
 TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
 {
     const uint L = 10;
-    const uint W = 3;
+    const uint W = 10;
     const double alpha = 1.0;
     const double mu = 0;
     const double height = 10;
@@ -928,6 +928,10 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
 
     const uint nc = 10000;
     const uint ns = 5;
+
+    double measuredSurfaceConcentration = 0;
+    double measuredConcentration = 0;
+    double measuredOver = 0;
 
     for (uint surf = 0; surf < ns; ++surf)
     {
@@ -979,14 +983,15 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
 
         cout << endl;
 
-        const double measuredSurfaceConcentration = P/(nc*solver().area());
-        const double measuredConcentration = PTot/(nc*(solver().volume()-solver().area()));
-        const double measuredOver = POver/(nc*solver().area());
+        measuredSurfaceConcentration += P/(nc*solver().area());
+        measuredConcentration += PTot/(nc*(solver().volume()-solver().area()));
+        measuredOver += POver/(nc*solver().area());
 
-        EXPECT_NEAR(solver().concentration(), measuredOver, 1E-3);
-        EXPECT_NEAR(solver().concentration(), measuredConcentration, 1E-3);
-        EXPECT_NEAR(solver().concentration(), measuredSurfaceConcentration, 1E-3);
     }
+
+    EXPECT_NEAR(solver().concentration(), measuredOver/ns, 1E-4);
+    EXPECT_NEAR(solver().concentration(), measuredConcentration/ns, 1E-4);
+    EXPECT_NEAR(solver().concentration(), measuredSurfaceConcentration/ns, 1E-4);
 
 }
 

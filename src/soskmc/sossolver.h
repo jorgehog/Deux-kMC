@@ -190,6 +190,8 @@ public:
 
     double boundaryTransform(const double x, const double y, const double z, const double dxi, const uint dim) const;
 
+    const Boundary *closestBoundary(const double x, const uint dim) const;
+
     void addConcentrationBoundary(const uint dim, const Boundary::orientations orientation);
 
     bool isBlockedPosition(const double x, const double y, const double z) const;

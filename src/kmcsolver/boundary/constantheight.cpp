@@ -19,7 +19,7 @@ ConstantHeight::~ConstantHeight()
 }
 
 
-double kMC::ConstantHeight::transformCoordinate(const double xi, const double xj, const double xk) const
+double ConstantHeight::transformCoordinate(const double xi, const double xj, const double xk) const
 {
     (void) xj;
     (void) xk;
@@ -27,11 +27,11 @@ double kMC::ConstantHeight::transformCoordinate(const double xi, const double xj
     return xi;
 }
 
-bool kMC::ConstantHeight::isBlocked(const double xi, const double xj, const double xk) const
+bool ConstantHeight::isBlocked(const double xi, const double xj, const double xk) const
 {
     (void) xj;
 
-    if (m_orientation == orientations::FIRST)
+    if (orientation() == orientations::FIRST)
     {
         return (xi < m_location) && (xk <= m_height);
     }
@@ -42,11 +42,9 @@ bool kMC::ConstantHeight::isBlocked(const double xi, const double xj, const doub
     }
 }
 
-std::vector<double> kMC::ConstantHeight::imagesOf(const double xi, const double xj, const double xk) const
+void ConstantHeight::closestImage(const double xi, const double xj, const double xk,
+                                  const double xti, const double xtj, const double xtk,
+                                  double &dxi, double &dxj, double &dxk) const
 {
-    (void) xi;
-    (void) xj;
-    (void) xk;
-
-    return {};
+    noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
 }

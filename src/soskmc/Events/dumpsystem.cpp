@@ -2,6 +2,9 @@
 
 #include "diffusion/diffusion.h"
 
+#include "sossolver.h"
+
+
 using namespace kMC;
 
 
@@ -28,7 +31,7 @@ void DumpSystem::initialize()
     m_nDumps = 0;
 }
 
-void kMC::DumpSystem::execute()
+void DumpSystem::execute()
 {
     if (cycle() % dumpInterval() == 0)
     {

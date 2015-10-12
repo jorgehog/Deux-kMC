@@ -5,7 +5,7 @@
 
 class DissolutionDeposition;
 
-class ConfiningSurface : public SOSEvent, public HeightConnecter
+class ConfiningSurface : public ignis::LatticeEvent, public HeightConnecter
 {
 public:
     ConfiningSurface(SOSSolver &solver,
@@ -35,7 +35,21 @@ public:
         m_height = height;
     }
 
+    const SOSSolver &solver() const
+    {
+        return m_solver;
+    }
+
 private:
 
     double m_height;
+
+    SOSSolver &m_solver;
+
+protected:
+
+    SOSSolver &mutexSolver() const
+    {
+        return m_solver;
+    }
 };

@@ -29,6 +29,14 @@ void KMCSolver::setCurrentTimeStep(double currentTimeStep)
     m_currentTimeStep = currentTimeStep;
 }
 
+void KMCSolver::resizeCumsumRates()
+{
+    if (m_cumsumRates.size() < numberOfReactions())
+    {
+        m_cumsumRates.resize(numberOfReactions());
+    }
+}
+
 void KMCSolver::initializeReactions()
 {
     updateAffectedReactions();
@@ -96,38 +104,21 @@ void KMCSolver::getCumsumAndTotalRate()
 
     m_totalRate = 0;
 
-    double rate;
-    Reaction *reaction;
+    resizeCumsumRates();
 
-    if (m_cumsumRates.size() != numberOfReactions())
+    uint i = 0;
+    for (const Reaction *reaction : m_reactions)
     {
-        m_cumsumRates.resize(numberOfReactions());
-    }
-
-    for (uint i = 0; i < numberOfReactions(); ++i)
-    {
-        reaction = getReaction(i);
-
         if (reaction->isAllowed())
         {
-            rate = reaction->rate();
-            BADAssClose(reaction->rate(),
-                        reaction->rateExpression(),
-                        1E-5,
-                        "Reaction rate inconsistency.",
-                        [&] ()
-            {
-                double r1 = reaction->rate();
-                double r2 = reaction->rateExpression();
-
-                BADAssSimpleDump(r1, r2);
-            });
-
-            m_totalRate += rate;
+            m_totalRate += reaction->rate();
         }
 
-        m_cumsumRates.at(i) = m_totalRate;
+        m_cumsumRates[i] = m_totalRate;
+
+        i++;
     }
+
 }
 
 
@@ -156,18 +147,9 @@ void KMCSolver::initialize()
 
 void KMCSolver::execute()
 {
-    double R = rng.uniform()*m_totalRate;
+    BADAss(m_cumsumRates.size(), >=, numberOfReactions());
 
-    uint choice = binarySearchForInterval(R, m_cumsumRates);
-
-    //this makes sure that reactions with 0 rate is not selected.
-    if (choice != 0)
-    {
-        while (m_cumsumRates.at(choice) == m_cumsumRates.at(choice-1))
-        {
-            choice--;
-        }
-    }
+    uint choice = chooseFromTotalRate(m_cumsumRates, m_totalRate, numberOfReactions());
 
     m_selectedReaction = getReaction(choice);
 

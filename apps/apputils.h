@@ -71,6 +71,106 @@ string getCfgName(int argv, char** argc)
     return cfgName;
 }
 
+
+template<typename eT>
+class EventIsolator
+{
+    typedef Event<eT>* EeT;
+
+public:
+    EventIsolator(MeshField<eT> &lattice) :
+        m_lattice(lattice),
+        m_skippedEvents([] (const EeT a, const EeT b) {return a->meshAddress() < b->meshAddress();})
+    {
+
+    }
+
+    void isolate(vector<string> eventNames)
+    {
+        vector<Event<eT>*> events;
+
+        for (Event<eT> *event : m_lattice.getEvents())
+        {
+            if (std::find(eventNames.begin(), eventNames.end(), event->type()) != eventNames.end())
+            {
+                events.push_back(event);
+            }
+        }
+
+        isolate(events);
+    }
+
+    void isolate(vector<Event<eT>*> events)
+    {
+
+        //events are added in the order in which they appear in the mainmesh.
+
+        set<uint> isolatedEvents;
+
+        for (uint i = 0; i < events.size(); ++i)
+        {
+            Event<eT> *isolatedEvent = events.at(i);
+
+            for (uint j = 0; j < m_lattice.getEvents().size(); ++j)
+            {
+                Event<eT> *event = m_lattice.getEvents().at(j);
+
+                //if the event is not in the isolated event list.
+                if (std::find(events.begin(), events.end(), event) == events.end())
+                {
+
+                    //and the isolated event depends on it
+                    if (isolatedEvent->dependsOn(event))
+                    {
+                        isolatedEvents.insert(j);
+                    }
+
+                    else
+                    {
+                        m_skippedEvents.insert(event);
+                    }
+                }
+
+                //else we append it
+                else
+                {
+                    isolatedEvents.insert(j);
+                }
+            }
+        }
+
+        //remove events for event lists
+        for (int i = m_lattice.getEvents().size() - 1; i >= 0; --i)
+        {
+            uint I = i;
+
+            if (std::find(isolatedEvents.begin(), isolatedEvents.end(), I) != isolatedEvents.end())
+            {
+                continue;
+            }
+
+            m_lattice.removeEvent(i);
+        }
+
+    }
+
+    void release()
+    {
+        for (Event<eT> *skippedEvent : m_skippedEvents)
+        {
+            m_lattice.addEvent(skippedEvent);
+        }
+
+        m_skippedEvents.clear();
+    }
+
+private:
+
+    MeshField<eT> &m_lattice;
+    set<EeT, std::function<bool(EeT, EeT)>> m_skippedEvents;
+};
+
+
 class EquilibrationOrganizer
 {
 public:

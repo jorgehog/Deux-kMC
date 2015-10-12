@@ -88,6 +88,10 @@ int main(int argv, char** argc)
 
     const uint &nCycles = getSetting<uint>(root, "nCycles");
     const uint &thermalization = getSetting<uint>(root, "thermalization");
+
+    const uint &isolateEvents = getSetting<uint>(root, "isolateEvents");
+    const Setting &isolatedEvents = getSetting(root, "isolatedEvents");
+
     const uint &nCyclesPerOutput = getSetting<uint>(root, "nCyclesPerOutput");
     const uint &storeIgnisDataInt = getSetting<uint>(root, "storeIgnisData");
     const bool storeIgnisData = storeIgnisDataInt == 1;
@@ -98,7 +102,7 @@ int main(int argv, char** argc)
 
     //---End default config loading
     //---Start ignis environment and solver creation
-
+    Lattice lattice;
     SOSSolver solver(L, W, alpha, gamma);
 
     ConfiningSurface *confiningSurface;
@@ -137,11 +141,6 @@ int main(int argv, char** argc)
         solver.addConcentrationBoundary(0, Boundary::orientations::FIRST);
     }
 
-    AverageHeight averageHeight(solver);
-
-    AutoCorrelationHeight autoCorrelation(solver, xCorrSpan, yCorrSpan);
-    autoCorrelation.setOnsetTime(thermalization);
-
     // Selecting confinement model
     if (confinementInt == 1)
     {
@@ -164,7 +163,6 @@ int main(int argv, char** argc)
     else if (confinementInt == 4)
     {
         confiningSurface = new RDLSurface(solver, E0, sigma0, lD);
-        confiningSurface->setDependency(averageHeight);
     }
     else
     {
@@ -189,20 +187,7 @@ int main(int argv, char** argc)
     }
     else if (diffuseInt == 4)
     {
-        diffusion = new FirstPassageContinuum(solver, maxdt,
-                                              [depRateConstant, depRatePower]
-                                              (const FirstPassageContinuum *_this,
-                                              const uint x, const uint y, const uint n)
-        {
-            const int z = _this->solver().height(x, y) + 1;
-
-            const double dr2 = _this->solver().closestSquareDistance(x, y, z,
-                                                                     _this->particlePositions(0, n),
-                                                                     _this->particlePositions(1, n),
-                                                                     _this->particlePositions(2, n));
-
-            return depRateConstant/pow(dr2, depRatePower/2);
-        });
+        diffusion = new FirstPassageContinuum(solver, maxdt, depRatePower, depRateConstant);
     }
     else if (diffuseInt == 5)
     {
@@ -221,13 +206,20 @@ int main(int argv, char** argc)
         cout << "Invalid diffusion: " << diffuseInt << endl;
         return 1;
     }
+
+    lattice.addEvent(solver);
+    lattice.addEvent(confiningSurface);
+    lattice.addEvent(diffusion);
+
     //
+
+    AverageHeight averageHeight(solver);
+
+    AutoCorrelationHeight autoCorrelation(solver, xCorrSpan, yCorrSpan);
+    autoCorrelation.setOnsetTime(thermalization);
 
     EqMu eqMu(solver);
     Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
-
-    Lattice lattice;
-    lattice.addEvent(solver);
 
     DumpSystem systemDumper(solver, dumpInterval, path);
     if (dumpParticles)
@@ -281,8 +273,7 @@ int main(int argv, char** argc)
     lattice.addEvent(var);
 
 
-    lattice.addEvent(confiningSurface);
-    lattice.addEvent(diffusion);
+
 
     if (autoCorrelationInt == 1)
     {
@@ -297,6 +288,22 @@ int main(int argv, char** argc)
 
     EquilibrationOrganizer eqOrg(lattice, equilibriate, reset, true);
     eqOrg.prepare({&eqMu, &equilibriater}, {&averageHeight, confiningSurface});
+
+    if (isolateEvents != 0)
+    {
+        vector<string> eventTypes(isolatedEvents.getLength());
+
+        for (int i = 0; i < isolatedEvents.getLength(); ++i)
+        {
+            string eventType = isolatedEvents[i];
+
+            eventTypes[i] = eventType;
+        }
+
+        EventIsolator<uint> ei(lattice);
+
+        ei.isolate(eventTypes);
+    }
 
     lattice.eventLoop(nCycles);
 
@@ -323,64 +330,64 @@ int main(int argv, char** argc)
 
     H5Wrapper::Member &simRoot = sizeRoot.addMember(run_ID);
 
-    simRoot.addData("alpha", alpha);
-    simRoot.addData("gamma", gamma);
-    simRoot.addData("supersaturation", supersaturation);
+    simRoot["alpha"] = alpha;
+    simRoot["gamma"] = gamma;
+    simRoot["supersaturation"] = supersaturation;
 
-    simRoot.addData("rightBoundaryID", rightBoundaryID);
-    simRoot.addData("leftBoundaryID", leftBoundaryID);
-    simRoot.addData("bottomBoundaryID", bottomBoundaryID);
-    simRoot.addData("topBoundaryID", topBoundaryID);
+    simRoot["rightBoundaryID"] = rightBoundaryID;
+    simRoot["leftBoundaryID"] = leftBoundaryID;
+    simRoot["bottomBoundaryID"] = bottomBoundaryID;
+    simRoot["topBoundaryID"] = topBoundaryID;
 
-    simRoot.addData("averageHeightDepth", averageHeightDepth);
+    simRoot["averageHeightDepth"] = averageHeightDepth;
 
-    simRoot.addData("boundaryHeight", boundaryHeight);
+    simRoot["boundaryHeight"] = boundaryHeight;
 
-    simRoot.addData("concentrationBoundary", concentrationBoundary);
+    simRoot["concentrationBoundary"] = concentrationBoundary;
 
-    simRoot.addData("confinement", confinementInt);
-    simRoot.addData("confiningSurfaceHeight", confiningSurfaceHeight);
-    simRoot.addData("sigma0", sigma0);
-    simRoot.addData("r0", lD);
-    simRoot.addData("E0", E0);
+    simRoot["confinement"] = confinementInt;
+    simRoot["confiningSurfaceHeight"] = confiningSurfaceHeight;
+    simRoot["sigma0"] = sigma0;
+    simRoot["r0"] = lD;
+    simRoot["E0"] = E0;
 
-    simRoot.addData("diffuse", diffuseInt);
-    simRoot.addData("maxdt", maxdt);
-    simRoot.addData("depRatePower", depRatePower);
-    simRoot.addData("depRateConstant", depRateConstant);
+    simRoot["diffuse"] = diffuseInt;
+    simRoot["maxdt"] = maxdt;
+    simRoot["depRatePower"] = depRatePower;
+    simRoot["depRateConstant"] = depRateConstant;
 
-    simRoot.addData("autoCorrelationInt", autoCorrelationInt);
-    simRoot.addData("xCorrSpan", xCorrSpan);
-    simRoot.addData("yCorrSpan", yCorrSpan);
+    simRoot["autoCorrelationInt"] = autoCorrelationInt;
+    simRoot["xCorrSpan"] = xCorrSpan;
+    simRoot["yCorrSpan"] = yCorrSpan;
 
-    simRoot.addData("useConcEquil", equilibriateInt);
-    simRoot.addData("reset", resetInt);
-    simRoot.addData("muEq", muEq);
-    simRoot.addData("muEqError", equilibriater.error());
-    simRoot.addData("muShift", muShift);
+    simRoot["useConcEquil"] = equilibriateInt;
+    simRoot["reset"] = resetInt;
+    simRoot["muEq"] = muEq;
+    simRoot["muEqError"] = equilibriater.error();
+    simRoot["muShift"] = muShift;
 
-    simRoot.addData("storeIgnisData", storeIgnisDataInt);
+    simRoot["storeIgnisData"] = storeIgnisDataInt;
 
     if (storeIgnisData)
     {
-        simRoot.addData("heightmap", solver.heights());
-        simRoot.addData("ignisData", lattice.storedEventValues());
-        simRoot.addData("ignisEventDescriptions", lattice.outputEventDescriptions());
+        simRoot["heightmap"] = solver.heights();
+        simRoot["ignisData"] = lattice.storedEventValues();
+        simRoot["ignisEventDescriptions"] = lattice.outputEventDescriptions();
     }
 
-    simRoot.addData("randomSeed", seed);
+    simRoot["randomSeed"] = seed;
 
     //---Start Explicit dumps
 
-    simRoot.addData("GrowthSpeed", speed.value());
-    simRoot.addData("nNeighbors", nNeighbors.value());
-    simRoot.addData("rms", rms.value());
-    simRoot.addData("size", size.timeAverage());
-    simRoot.addData("var", var.value());
+    simRoot["GrowthSpeed"] = speed.value();
+    simRoot["nNeighbors"] = nNeighbors.value();
+    simRoot["rms"] = rms.value();
+    simRoot["size"] = size.timeAverage();
+    simRoot["var"] = var.value();
 
     if (autoCorrelationInt == 1)
     {
-        simRoot.addData("RACF", autoCorrelation.autoCorrelation());
+        simRoot["RACF"] = autoCorrelation.autoCorrelation();
     }
 
     //---End data dump

@@ -189,11 +189,6 @@ void SOSDiffusionReaction::removeFromSimulation()
     solver().removeReaction(this);
 }
 
-bool SOSDiffusionReaction::isAllowed() const
-{
-    return numberOfFreePaths() != 0;
-}
-
 void SOSDiffusionReaction::executeAndUpdate()
 {
     int dx, dy, dz;

@@ -14,8 +14,7 @@
 
 
 LatticeDiffusion::LatticeDiffusion(SOSSolver &solver) :
-    Diffusion(solver, "latticeDiffusion", "", true, true),
-    m_mutexSolver(solver)
+    Diffusion(solver, "latticeDiffusion", "", true, true)
 {
 
 }
@@ -37,9 +36,9 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 {
     m_diffusionReactionsMap.erase(indices(reaction));
 
-    m_mutexSolver.removeReaction(reaction);
+    mutexSolver().removeReaction(reaction);
 
-    m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
+    mutexSolver().updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
 
     registerAffectedAround(reaction->x(), reaction->y(), reaction->z());
 
@@ -84,7 +83,7 @@ void LatticeDiffusion::clearDiffusionReactions()
     for (auto &m : m_diffusionReactionsMap)
     {
         reaction = m.second;
-        m_mutexSolver.removeReaction(reaction);
+        mutexSolver().removeReaction(reaction);
         delete reaction;
     }
 
@@ -110,13 +109,13 @@ void LatticeDiffusion::attachToSurface(const uint x,
 {
     BADAssBool(solver().isSurfaceSite(x, y, z));
 
-    m_mutexSolver.registerHeightChange(x, y, 1);
+    mutexSolver().registerHeightChange(x, y, 1);
     removeDiffusionReactant(reaction, false);
 
     int zAbove = z+1;
     while (isBlockedPosition(x, y, zAbove))
     {
-        m_mutexSolver.registerHeightChange(x, y, 1);
+        mutexSolver().registerHeightChange(x, y, 1);
         removeDiffusionReactant(x, y, zAbove, false);
         zAbove++;
     }
@@ -137,12 +136,12 @@ void LatticeDiffusion::registerAffectedAround(const uint x, const uint y, const 
     SOSDiffusionReaction *r;
     if ((r = diffusionReaction(x, y, z - 1)) != nullptr)
     {
-        m_mutexSolver.registerAffectedReaction(r);
+        mutexSolver().registerAffectedReaction(r);
     }
 
     if ((r = diffusionReaction(x, y, z + 1)) != nullptr)
     {
-        m_mutexSolver.registerAffectedReaction(r);
+        mutexSolver().registerAffectedReaction(r);
     }
 
 }
@@ -165,13 +164,13 @@ void LatticeDiffusion::registerAffectedAroundSingle(const int neighbor, const ui
         hNeighbor = solver().height(neighbor, xi);
         if (z == hNeighbor || z == hNeighbor + 1)
         {
-            m_mutexSolver.registerAffectedReaction(&m_mutexSolver.surfaceReaction(neighbor, xi));
+            mutexSolver().registerAffectedReaction(&mutexSolver().surfaceReaction(neighbor, xi));
         }
 
         r = diffusionReaction(neighbor, xi, z);
         if (r != nullptr)
         {
-            m_mutexSolver.registerAffectedReaction(r);
+            mutexSolver().registerAffectedReaction(r);
         }
     }
 
@@ -180,13 +179,13 @@ void LatticeDiffusion::registerAffectedAroundSingle(const int neighbor, const ui
         hNeighbor = solver().height(xi, neighbor);
         if (z == hNeighbor || z == hNeighbor + 1)
         {
-            m_mutexSolver.registerAffectedReaction(&m_mutexSolver.surfaceReaction(xi, neighbor));
+            mutexSolver().registerAffectedReaction(&mutexSolver().surfaceReaction(xi, neighbor));
         }
 
         r = diffusionReaction(xi, neighbor, z);
         if (r != nullptr)
         {
-            m_mutexSolver.registerAffectedReaction(r);
+            mutexSolver().registerAffectedReaction(r);
         }
     }
 
@@ -301,20 +300,20 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
     //if we add the particle to the surface, the particle becomes part of the surface
     if (solver().isSurfaceSite(x, y, z))
     {
-        m_mutexSolver.registerHeightChange(x, y, 1);
+        mutexSolver().registerHeightChange(x, y, 1);
         return nullptr;
     }
 
     BADAssBool(!isBlockedPosition(x, y, z), "spot already taken");
     BADAssBool(!solver().isBlockedPosition(x, y, z), "spot inside surfaces");
 
-    SOSDiffusionReaction *reaction = new SOSDiffusionReaction(m_mutexSolver, x, y, z);
+    SOSDiffusionReaction *reaction = new SOSDiffusionReaction(mutexSolver(), x, y, z);
 
     m_diffusionReactionsMap[indices(x, y, z)] = reaction;
 
-    m_mutexSolver.addReaction(reaction);
+    mutexSolver().addReaction(reaction);
 
-    m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(x, y);
+    mutexSolver().updateConcentrationBoundaryIfOnBoundary(x, y);
 
     reaction->setNumberOfFreePaths();
 
@@ -449,11 +448,11 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
 
     if (!(xOld == ux && yOld == uy))
     {
-        m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
-        m_mutexSolver.updateConcentrationBoundaryIfOnBoundary(ux, uy);
+        mutexSolver().updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
+        mutexSolver().updateConcentrationBoundaryIfOnBoundary(ux, uy);
     }
 
-    m_mutexSolver.registerAffectedReaction(reaction);
+    mutexSolver().registerAffectedReaction(reaction);
 
 }
 

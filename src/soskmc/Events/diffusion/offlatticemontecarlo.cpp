@@ -12,7 +12,6 @@ OfflatticeMonteCarlo::OfflatticeMonteCarlo(SOSSolver &solver,
                                            bool hasOutput,
                                            bool storeValue) :
     Diffusion(solver, type, unit, hasOutput, storeValue),
-    m_mutexSolver(solver),
     m_maxdt(maxdt)
 {
 
@@ -158,7 +157,7 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
     {
         for (uint _y = 0; _y < solver().width(); ++_y)
         {
-            r = &m_mutexSolver.surfaceReaction(_x, _y);
+            r = &mutexSolver().surfaceReaction(_x, _y);
 
             const double newDepositionRate = depositionRate(_x, _y);
 
@@ -190,7 +189,7 @@ double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
         R += Rn;
     }
 
-    return R/solver().concentration();
+    return R/solver().concentration()/solver().area();
 }
 
 void OfflatticeMonteCarlo::executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
@@ -336,6 +335,9 @@ void OfflatticeMonteCarlo::initializeParticleMatrices(const uint nParticles, con
     m_particlePositions.set_size(3, nParticles);
     m_F = zeros(3, nParticles);
 
+//    m_particleDepositionLocations.set_size(2, nParticles);
+//    m_selectedDepositionRates.set_size(nParticles);
+
     const double &h = solver().confiningSurfaceEvent().height();
 
     double x0;
@@ -415,6 +417,11 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
 
 }
 
+double OfflatticeMonteCarlo::D() const
+{
+    return 1.0/solver().concentration();
+}
+
 void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber, const string path) const
 {
     const double &h = solver().confiningSurfaceEvent().height();
@@ -465,7 +472,93 @@ void OfflatticeMonteCarlo::calculateLocalRates()
             }
         }
     }
+
+    //    selectDepositionReactants();
 }
+
+void OfflatticeMonteCarlo::selectDepositionReactants()
+{
+    uint xSelected, ySelected;
+    for (uint n = 0; n < nOfflatticeParticles(); ++n)
+    {
+        selectDepositionReactant(xSelected, ySelected, n);
+
+        m_particleDepositionLocations(n, 0) = xSelected;
+        m_particleDepositionLocations(n, 1) = ySelected;
+    }
+}
+
+void OfflatticeMonteCarlo::selectDepositionReactant(uint &xSelected, uint &ySelected, const uint n)
+{
+    vec accu(solver().length()*solver().width());
+
+    double totalRate = 0;
+    uint c = 0;
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            totalRate += localRates(x, y, n);
+
+            accu(c) = totalRate;
+
+            c++;
+        }
+    }
+
+    const uint choice = chooseFromTotalRate(accu, totalRate);
+
+    xSelected = choice / solver().width();
+    ySelected = choice % solver().width();
+}
+
+bool OfflatticeMonteCarlo::isInLineOfSight(const uint n, const uint x, const uint y) const
+{
+    const int z = solver().height(x, y) + 1;
+
+    double xp = particlePositions(n, 0);
+    double yp = particlePositions(n, 1);
+    double zp = particlePositions(n, 2);
+
+    const double dx = x - xp;
+    const double dy = y - yp;
+    const double dz = z - zp;
+
+    const double r = sqrt(dx*dx + dy*dy + dz*dz);
+
+    const double rxy = sqrt(dx*dx + dy*dy);
+
+    const double xyAngle = atan2(dy, dx);
+    const double yzAngle = atan2(dz, rxy);
+
+    const double _dr = 0.01;
+    const double _dz = _dr*sin(yzAngle);
+
+    const double _drxy = _dz/dz*rxy;
+
+    const double _dx = _drxy*cos(xyAngle);
+    const double _dy = _drxy*sin(xyAngle);
+
+    const uint nTraceSteps = r/_dr;
+
+    for (uint nTrace = 0; nTrace < nTraceSteps; ++nTrace)
+    {
+        xp += _dx;
+        yp += _dy;
+        zp += _dz;
+
+        if (solver().isBlockedPosition(xp, yp, zp))
+        {
+            return false;
+        }
+    }
+
+    return true;
+
+}
+
+
+
 
 
 void OfflatticeMonteCarlo::initialize()
@@ -485,7 +578,7 @@ void OfflatticeMonteCarlo::setupInitialConditions()
 {
     const double V = solver().volume();
 
-    uint N = V*solver().concentration();
+    uint N = V*solver().concentration() + rng.uniform();
 
     const double zMin = solver().heights().min();
     initializeParticleMatrices(N, zMin);

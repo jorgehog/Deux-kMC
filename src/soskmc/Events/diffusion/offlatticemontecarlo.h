@@ -35,10 +35,7 @@ public:
         return m_maxdt;
     }
 
-    static constexpr double D()
-    {
-        return 1.0;
-    }
+    double D() const;
 
     double acceptanceRatio() const
     {
@@ -86,6 +83,11 @@ public:
 
     void calculateLocalRates();
 
+    void selectDepositionReactants();
+    void selectDepositionReactant(uint &xSelected, uint &ySelected, const uint n);
+
+    bool isInLineOfSight(const uint n, const uint x, const uint y) const;
+
 protected:
 
     double &particlePositions(const uint i, const uint j)
@@ -95,13 +97,15 @@ protected:
 
 private:
 
-    SOSSolver &m_mutexSolver;
-
     const double m_maxdt;
 
     mat m_particlePositions;
     mat m_F;
     cube m_localRates;
+
+    //tmp
+    vec m_selectedDepositionRates;
+    umat m_particleDepositionLocations;
 
     long double m_accepted;
     long double m_trials;

@@ -2,9 +2,13 @@
 
 #include "../confiningsurface/confiningsurface.h"
 
+#include "sossolver.h"
+
+
 Diffusion::Diffusion(SOSSolver &solver,
                      string type, string unit, bool hasOutput, bool storeValue) :
-    SOSEvent(solver, type, unit, hasOutput, storeValue)
+    ignis::LatticeEvent(type, unit, hasOutput, storeValue),
+    m_solver(solver)
 {
     solver.setDiffusionEvent(*this);
 }

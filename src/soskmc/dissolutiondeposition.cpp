@@ -35,11 +35,6 @@ double DissolutionDeposition::calculateDepositionRate() const
     return solver().diffusionEvent().depositionRate(x(), y());
 }
 
-bool DissolutionDeposition::isAllowed() const
-{
-    return true;
-}
-
 void DissolutionDeposition::executeAndUpdate()
 {
     double r = rate()*rng.uniform();

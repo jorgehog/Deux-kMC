@@ -4,13 +4,15 @@
 
 #include <armadillo>
 
+#include "RNG/rng.h"
+
 using std::vector;
 using arma::vec;
 
 namespace kMC
 {
 
-inline uint binarySearchForInterval(const double target, const double* intervals, uint size)
+inline uint binarySearchForInterval(const double target, const double* intervals, const uint size)
 {
 
     BADAss(size, !=, 0u, "Number of intervals cannot be zero.");
@@ -87,5 +89,43 @@ inline uint binarySearchForInterval(const double target, const vec &intervals)
     return binarySearchForInterval(target, intervals.memptr(), intervals.size());
 }
 
+inline uint chooseFromTotalRate(const double *accuRates, const uint size, const double totalRate)
+{
+    double R = rng.uniform()*totalRate;
+
+    uint choice = binarySearchForInterval(R, accuRates, size);
+
+    //this makes sure that reactions with 0 rate is not selected.
+    if (choice != 0)
+    {
+        while (accuRates[choice] == accuRates[choice-1])
+        {
+            choice--;
+        }
+    }
+
+    return choice;
+
+}
+
+inline uint chooseFromTotalRate(const vec &accuRates, const double totalRate, uint size = 0)
+{
+    if (size == 0)
+    {
+        size = accuRates.size();
+    }
+
+    return chooseFromTotalRate(accuRates.memptr(), size, totalRate);
+}
+
+inline uint chooseFromTotalRate(const std::vector<double> &accuRates, const double totalRate, uint size = 0)
+{
+    if (size == 0)
+    {
+        size = accuRates.size();
+    }
+
+    return chooseFromTotalRate(&accuRates.front(), size, totalRate);
+}
 
 } //end of namespace kMC

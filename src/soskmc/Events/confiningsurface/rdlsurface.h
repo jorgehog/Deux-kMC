@@ -31,10 +31,7 @@ public:
         return m_lD;
     }
 
-    double evaluateRDLEnergy(const uint x, const uint y) const
-    {
-        return _RDLEnergyExpression(height() - solver().height(x, y));
-    }
+    double evaluateRDLEnergy(const uint x, const uint y) const;
 
     double RDLEnergy(const uint x, const uint y) const
     {
@@ -62,8 +59,6 @@ public:
 
 
 private:
-
-    SOSSolver &m_mutexSolver;
 
     double m_heightChange;
     double m_expFac;

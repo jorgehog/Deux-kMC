@@ -8,7 +8,6 @@ RDLSurface::RDLSurface(SOSSolver &solver,
                        const double s0,
                        const double lD) :
     ConfiningSurface(solver, "RDLSurface", "l0", true, true),
-    m_mutexSolver(solver),
     m_lD(lD),
     m_s0(s0),
     m_E0(E0),
@@ -142,7 +141,7 @@ double RDLSurface::bruteForceThetaRatio() const
 
 void RDLSurface::setupTheta()
 {
-    double thetaShift = dependency("AverageHeight")->value();
+    double thetaShift = solver().averageHeight();
     long double thetaPrev = 0;
 
     for (uint x = 0; x < solver().length(); ++x)
@@ -207,9 +206,14 @@ void RDLSurface::recalculateAllRDLEnergies()
     }
 }
 
+double RDLSurface::evaluateRDLEnergy(const uint x, const uint y) const
+{
+    return _RDLEnergyExpression(height() - solver().height(x, y));
+}
+
 void RDLSurface::execute()
 {
-    double value = height() - dependency("AverageHeight")->value();
+    double value = height() - solver().averageHeight();
 
     setValue(value);
 
@@ -273,7 +277,7 @@ void RDLSurface::registerHeightChange(const uint x,
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            DissolutionDeposition &reaction = m_mutexSolver.surfaceReaction(x, y);
+            DissolutionDeposition &reaction = mutexSolver().surfaceReaction(x, y);
 
             if (std::find(start, end, &reaction) == end)
             {

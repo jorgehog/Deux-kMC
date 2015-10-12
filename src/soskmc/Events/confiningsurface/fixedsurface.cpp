@@ -1,5 +1,7 @@
 #include "fixedsurface.h"
 
+#include "sossolver.h"
+
 FixedSurface::FixedSurface(SOSSolver &solver,
                            const double height) :
     ConfiningSurface(solver, "fixedSurface")
@@ -31,4 +33,16 @@ double FixedSurface::diffusionDrift(const double x, const double y, const double
     (void) z;
 
     return 0;
+}
+
+void FixedSurface::registerHeightChange(const uint x, const uint y, const int value, std::vector<DissolutionDeposition *> &affectedSurfaceReactions, const uint n)
+{
+    (void) value;
+    (void) affectedSurfaceReactions;
+    (void) n;
+
+    if (solver().height(x, y) > height())
+    {
+        terminateLoop("CRASH CRASH...");
+    }
 }

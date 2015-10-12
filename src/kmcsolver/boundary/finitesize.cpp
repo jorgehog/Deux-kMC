@@ -18,9 +18,7 @@ double FiniteSize::transformCoordinate(const double xi) const
     return xi;
 }
 
-std::vector<double> FiniteSize::imagesOf(const double xi) const
+void FiniteSize::closestImage(const double xi, const double xti, double &dxi) const
 {
-    (void) xi;
-
-    return {};
+    noImage1D(xi, xti, dxi);
 }
