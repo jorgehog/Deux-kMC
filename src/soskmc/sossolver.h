@@ -78,7 +78,7 @@ public:
 
     const double &gamma() const
     {
-        return m_mu;
+        return m_gamma;
     }
 
     double concentration() const
@@ -210,7 +210,11 @@ public:
         return *m_siteReactions(x, y);
     }
 
-    void setMu(const double gamma);
+    void setGamma(const double gamma);
+
+    void setConcentration(const double concentration);
+
+    void shiftConcentration(const double dc);
 
     const set_type &changedSurfaceSites() const
     {
@@ -252,7 +256,7 @@ private:
     const uint m_width;
 
     const double m_alpha;
-    double m_mu;
+    double m_gamma;
 
     imat m_heights;
     umat m_nNeighbors;

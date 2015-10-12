@@ -483,3 +483,39 @@ void AutoCorrelationHeight::initialize()
     m_autoCorrelationQuadrant.zeros();
     m_autoCorrelationSubQuadrant.zeros();
 }
+
+
+ConfinementConstantConcentration::ConfinementConstantConcentration(const SOSSolver &solver) :
+    SOSEvent(solver, "ccconf")
+{
+
+}
+
+double ConfinementConstantConcentration::newConcentration() const
+{
+    return (m_c0*m_V0 + m_deltaSum)/(m_V0 + m_deltaSum);
+}
+
+void ConfinementConstantConcentration::execute()
+{
+    m_currentVolume = solver().volume();
+}
+
+void ConfinementConstantConcentration::initialize()
+{
+    m_V0 = solver().volume();
+    m_c0 = solver().concentration();
+
+    m_deltaSum = 0;
+}
+
+void ConfinementConstantConcentration::reset()
+{
+    double newVolume = solver().volume();
+
+    m_deltaSum += newVolume - m_currentVolume;
+
+    m_currentVolume = newVolume;
+
+    solver().setConcentration(newConcentration());
+}

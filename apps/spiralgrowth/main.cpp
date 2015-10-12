@@ -303,7 +303,7 @@ int main(int argv, char** argc)
     equilibriater.finalizeAverages();
     double muEq = equilibriater.averageMu();
 
-    solver.setMu(muEq + muShift);
+    solver.setGamma(muEq + muShift);
 
     eqOrg.reset(nCycles);
 
