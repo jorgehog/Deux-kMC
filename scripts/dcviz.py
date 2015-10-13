@@ -2314,6 +2314,58 @@ class LatticediffSpeeds(DCVizPlotter):
         else:
             return 0.53
 
+class cconcdiffSpeeds(DCVizPlotter):
+
+    nametag = "cconc_(\w+)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    figMap = {"figure" : "subfigure", "figure2" : "subfigure2"}
+
+    def plot(self, data):
+
+        supersaturations = self.get_family_member_data(data, "supersaturations")
+        all_heights = self.get_family_member_data(data, "heights")
+        all_times = self.get_family_member_data(data, "times")
+        conc = self.get_family_member_data(data, "conc")
+        lengths = self.get_family_member_data(data, "lengths")
+
+        M = 0
+        pad = 0.5
+        for i, supersaturation in enumerate(supersaturations):
+
+            if len(self.argv) != 0:
+                sfac = np.sign(supersaturation)
+            else:
+                sfac = 1
+
+            l = lengths[i]
+            T = all_times[i, :l]/(conc[i, :l]/exp(-3))
+            H = sfac*all_heights[i, :l]
+            label = r"$\Omega(0)=%.2f$" % supersaturation
+            m = T[-1]*1.05
+
+            self.subfigure.plot(T, H, label=label)
+            self.subfigure.text(m, H[l/3:-l/3].mean(), label)
+
+            ss = conc[i, :l]/exp(-3) - 1
+            self.subfigure2.plot(T, ss, label=label)
+
+            if m > M:
+                M = m
+
+            self.subfigure2.text(-0.9*pad*T[-1], ss[0], label)
+
+        self.subfigure.set_xlim(0, M*1.3)
+        self.subfigure.set_xlabel("t")
+        self.subfigure.set_ylabel("h")
+
+        self.subfigure2.set_xlabel("t")
+        self.subfigure2.set_ylabel(r"$\Omega$")
+        self.subfigure2.set_xlim(-pad*T[-1], 1.1*T[-1])
+
 
 class ignisSOS(DCVizPlotter):
 

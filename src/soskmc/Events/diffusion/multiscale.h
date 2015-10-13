@@ -52,6 +52,8 @@ public:
 
     void dump(const uint frameNumber, const string path = "/tmp") const;
 
+    double concentration() const;
+
 
     // HeightConnecter interface
 public:

@@ -201,6 +201,10 @@ int main(int argv, char** argc)
             return c0-(c0 - c1)/(L-1.)*x;
         });
     }
+    else if (diffuseInt == 6)
+    {
+        diffusion = new ConfinedConstantConcentration(solver);
+    }
     else
     {
         cout << "Invalid diffusion: " << diffuseInt << endl;
@@ -212,6 +216,8 @@ int main(int argv, char** argc)
     lattice.addEvent(diffusion);
 
     //
+
+    ConcentrationTracker conc(solver);
 
     AverageHeight averageHeight(solver);
 
@@ -264,6 +270,7 @@ int main(int argv, char** argc)
     GrowthSpeed speed(solver);
     speed.setDependency(averageHeight);
 
+    lattice.addEvent(conc);
     lattice.addEvent(currentTime);
     lattice.addEvent(averageHeight);
     lattice.addEvent(nNeighbors);

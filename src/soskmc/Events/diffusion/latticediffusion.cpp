@@ -481,6 +481,11 @@ bool LatticeDiffusion::isBlockedPosition(const uint x, const uint y, const int z
     return diffusionReaction(x, y, z) != nullptr;
 }
 
+double LatticeDiffusion::concentration() const
+{
+    return m_diffusionReactionsMap.size()/solver().volume();
+}
+
 void LatticeDiffusion::registerHeightChange(const uint x,
                                             const uint y,
                                             const int value,

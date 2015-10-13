@@ -277,26 +277,14 @@ public:
     void initialize();
 };
 
-class ConfinementConstantConcentration : public SOSEvent
+class ConcentrationTracker : public SOSEvent
 {
 public:
+    ConcentrationTracker(const SOSSolver &solver) :
+        SOSEvent(solver, "Concentration", "", true, true)
+    {
 
-    ConfinementConstantConcentration(const SOSSolver &solver);
+    }
 
-    double newConcentration() const;
-
-private:
-
-    double m_V0;
-    double m_c0;
-
-    double m_deltaSum;
-
-    double m_currentVolume;
-
-    // Event interface
-public:
     void execute();
-    void initialize();
-    void reset();
 };

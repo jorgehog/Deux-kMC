@@ -26,20 +26,21 @@ private:
 
     // Event interface
 public:
-    void execute() {}
+    virtual void execute() {}
 
     // Diffusion interface
 public:
-    double depositionRate(const uint x, const uint y) const;
-    uint dissolutionPaths(const uint x, const uint y) const;
-    void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
-    void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
-    bool isBlockedPosition(const uint x, const uint y, const int z) const;
+    virtual double depositionRate(const uint x, const uint y) const;
+    virtual uint dissolutionPaths(const uint x, const uint y) const;
+    virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
+    virtual void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
+    virtual bool isBlockedPosition(const uint x, const uint y, const int z) const;
+    double concentration() const;
 
     // HeightConnecter interface
 public:
-    void setupInitialConditions() {}
-    void registerHeightChange(const uint x,
+    virtual void setupInitialConditions() {}
+    virtual void registerHeightChange(const uint x,
                               const uint y,
                               const int value,
                               std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
