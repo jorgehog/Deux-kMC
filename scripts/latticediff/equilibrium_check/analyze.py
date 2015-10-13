@@ -13,6 +13,11 @@ def main():
 
     input_file = sys.argv[1]
 
+    try:
+        every = int(sys.argv[2])
+    except:
+        every = 1
+
     parser = ParseKMCHDF5(input_file)
 
     supersaturations = []
@@ -39,8 +44,8 @@ def main():
 
         supersaturation = data.attrs["supersaturation"]\
 
-        heights = parser.get_ignis_data(data, "AverageHeight")
-        time = parser.get_ignis_data(data, "Time")
+        heights = parser.get_ignis_data(data, "AverageHeight")[::every]
+        time = parser.get_ignis_data(data, "Time")[::every]
 
         i = supersaturations.index(supersaturation)
 

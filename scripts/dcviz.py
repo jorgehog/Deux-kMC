@@ -1,5 +1,4 @@
 #DCVIZ
-from wx._gdi import DC
 
 from DCViz_sup import DCVizPlotter
 
