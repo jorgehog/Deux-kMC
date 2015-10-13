@@ -35,5 +35,5 @@ void ConfinedConstantConcentration::reset()
 {
     double newConcentration = (m_c0*m_V0 + m_deltaSum)/(m_V0 + m_deltaSum);
 
-    mutexSolver().setConcentration(newConcentration);
+    solver().setConcentration(newConcentration);
 }

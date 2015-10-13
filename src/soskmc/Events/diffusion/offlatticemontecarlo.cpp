@@ -157,7 +157,7 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
     {
         for (uint _y = 0; _y < solver().width(); ++_y)
         {
-            r = &mutexSolver().surfaceReaction(_x, _y);
+            r = &solver().surfaceReaction(_x, _y);
 
             const double newDepositionRate = depositionRate(_x, _y);
 

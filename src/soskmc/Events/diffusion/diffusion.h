@@ -42,7 +42,7 @@ private:
 
 protected:
 
-    SOSSolver &mutexSolver() const
+    SOSSolver &solver()
     {
         return m_solver;
     }

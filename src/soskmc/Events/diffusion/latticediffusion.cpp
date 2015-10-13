@@ -36,9 +36,9 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 {
     m_diffusionReactionsMap.erase(indices(reaction));
 
-    mutexSolver().removeReaction(reaction);
+    solver().removeReaction(reaction);
 
-    mutexSolver().updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
+    solver().updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
 
     registerAffectedAround(reaction->x(), reaction->y(), reaction->z());
 
@@ -83,7 +83,7 @@ void LatticeDiffusion::clearDiffusionReactions()
     for (auto &m : m_diffusionReactionsMap)
     {
         reaction = m.second;
-        mutexSolver().removeReaction(reaction);
+        solver().removeReaction(reaction);
         delete reaction;
     }
 
@@ -109,13 +109,13 @@ void LatticeDiffusion::attachToSurface(const uint x,
 {
     BADAssBool(solver().isSurfaceSite(x, y, z));
 
-    mutexSolver().registerHeightChange(x, y, 1);
+    solver().registerHeightChange(x, y, 1);
     removeDiffusionReactant(reaction, false);
 
     int zAbove = z+1;
     while (isBlockedPosition(x, y, zAbove))
     {
-        mutexSolver().registerHeightChange(x, y, 1);
+        solver().registerHeightChange(x, y, 1);
         removeDiffusionReactant(x, y, zAbove, false);
         zAbove++;
     }
@@ -136,12 +136,12 @@ void LatticeDiffusion::registerAffectedAround(const uint x, const uint y, const 
     SOSDiffusionReaction *r;
     if ((r = diffusionReaction(x, y, z - 1)) != nullptr)
     {
-        mutexSolver().registerAffectedReaction(r);
+        solver().registerAffectedReaction(r);
     }
 
     if ((r = diffusionReaction(x, y, z + 1)) != nullptr)
     {
-        mutexSolver().registerAffectedReaction(r);
+        solver().registerAffectedReaction(r);
     }
 
 }
@@ -164,13 +164,13 @@ void LatticeDiffusion::registerAffectedAroundSingle(const int neighbor, const ui
         hNeighbor = solver().height(neighbor, xi);
         if (z == hNeighbor || z == hNeighbor + 1)
         {
-            mutexSolver().registerAffectedReaction(&mutexSolver().surfaceReaction(neighbor, xi));
+            solver().registerAffectedReaction(&solver().surfaceReaction(neighbor, xi));
         }
 
         r = diffusionReaction(neighbor, xi, z);
         if (r != nullptr)
         {
-            mutexSolver().registerAffectedReaction(r);
+            solver().registerAffectedReaction(r);
         }
     }
 
@@ -179,13 +179,13 @@ void LatticeDiffusion::registerAffectedAroundSingle(const int neighbor, const ui
         hNeighbor = solver().height(xi, neighbor);
         if (z == hNeighbor || z == hNeighbor + 1)
         {
-            mutexSolver().registerAffectedReaction(&mutexSolver().surfaceReaction(xi, neighbor));
+            solver().registerAffectedReaction(&solver().surfaceReaction(xi, neighbor));
         }
 
         r = diffusionReaction(xi, neighbor, z);
         if (r != nullptr)
         {
-            mutexSolver().registerAffectedReaction(r);
+            solver().registerAffectedReaction(r);
         }
     }
 
@@ -300,20 +300,20 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
     //if we add the particle to the surface, the particle becomes part of the surface
     if (solver().isSurfaceSite(x, y, z))
     {
-        mutexSolver().registerHeightChange(x, y, 1);
+        solver().registerHeightChange(x, y, 1);
         return nullptr;
     }
 
     BADAssBool(!isBlockedPosition(x, y, z), "spot already taken");
     BADAssBool(!solver().isBlockedPosition(x, y, z), "spot inside surfaces");
 
-    SOSDiffusionReaction *reaction = new SOSDiffusionReaction(mutexSolver(), x, y, z);
+    SOSDiffusionReaction *reaction = new SOSDiffusionReaction(solver(), x, y, z);
 
     m_diffusionReactionsMap[indices(x, y, z)] = reaction;
 
-    mutexSolver().addReaction(reaction);
+    solver().addReaction(reaction);
 
-    mutexSolver().updateConcentrationBoundaryIfOnBoundary(x, y);
+    solver().updateConcentrationBoundaryIfOnBoundary(x, y);
 
     reaction->setNumberOfFreePaths();
 
@@ -448,11 +448,11 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
 
     if (!(xOld == ux && yOld == uy))
     {
-        mutexSolver().updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
-        mutexSolver().updateConcentrationBoundaryIfOnBoundary(ux, uy);
+        solver().updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
+        solver().updateConcentrationBoundaryIfOnBoundary(ux, uy);
     }
 
-    mutexSolver().registerAffectedReaction(reaction);
+    solver().registerAffectedReaction(reaction);
 
 }
 
