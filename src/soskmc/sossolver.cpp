@@ -18,7 +18,7 @@ SOSSolver::SOSSolver(const uint length,
     m_length(length),
     m_width(width),
     m_alpha(alpha),
-    m_mu(mu),
+    m_gamma(mu),
     m_heights(length, width, fill::zeros),
     m_nNeighbors(length, width),
     m_siteReactions(length, width),
@@ -762,11 +762,11 @@ bool SOSSolver::isSurfaceSite(const uint x, const uint y, const int z) const
     return height(x, y) == z - 1;
 }
 
-void SOSSolver::setMu(const double mu)
+void SOSSolver::setGamma(const double gamma)
 {
     if (hasStarted())
     {
-        double expFac = exp(m_mu - mu);
+        double expFac = exp(m_gamma - gamma);
 
         for (uint x = 0; x < length(); ++x)
         {
@@ -778,8 +778,20 @@ void SOSSolver::setMu(const double mu)
         }
     }
 
-    m_mu = mu;
+    m_gamma = gamma;
 
+}
+
+void SOSSolver::setConcentration(const double concentration)
+{
+    double gamma = log(concentration) + dim()*alpha();
+
+    setGamma(gamma);
+}
+
+void SOSSolver::shiftConcentration(const double dc)
+{
+    setConcentration(concentration() + dc);
 }
 
 void SOSSolver::updateConcentrationBoundaryIfOnBoundary(const uint x, const uint y)

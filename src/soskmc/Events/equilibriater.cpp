@@ -77,7 +77,7 @@ void Equilibriater::initiateNextConcentrationLevel(const double shift)
     m_shifts.push_back(shift);
     m_values.push_back(m_mutexSolver.gamma());
 
-    m_mutexSolver.setMu(newMu);
+    m_mutexSolver.setGamma(newMu);
 
     conv_to<vec>::from(m_shifts).eval().save("/tmp/shifts.arma");
     conv_to<vec>::from(m_values).eval().save("/tmp/values.arma");

@@ -3,7 +3,8 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SUBDIRS += ignis \
-    HDF5Wrapper
+    HDF5Wrapper \
+    intercombinatorzor
 
 HEADERS += lammpswriter/lammpswriter.h \
     libconfig_utils/libconfig_utils.h \

@@ -1,6 +1,7 @@
 #include "miscevents.h"
 #include "sosreaction.h"
 #include "../kmcsolver/boundary/boundary.h"
+#include "diffusion/diffusion.h"
 
 void SurfaceSize::initialize()
 {
@@ -482,4 +483,10 @@ void AutoCorrelationHeight::initialize()
 {
     m_autoCorrelationQuadrant.zeros();
     m_autoCorrelationSubQuadrant.zeros();
+}
+
+
+void ConcentrationTracker::execute()
+{
+    setValue(solver().diffusionEvent().concentration());
 }

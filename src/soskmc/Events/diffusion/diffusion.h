@@ -29,6 +29,8 @@ public:
 
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const = 0;
 
+    virtual double concentration() const = 0;
+
     const SOSSolver &solver() const
     {
         return m_solver;

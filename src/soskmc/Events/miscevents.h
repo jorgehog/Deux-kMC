@@ -276,3 +276,15 @@ public:
 
     void initialize();
 };
+
+class ConcentrationTracker : public SOSEvent
+{
+public:
+    ConcentrationTracker(const SOSSolver &solver) :
+        SOSEvent(solver, "Concentration", "", true, true)
+    {
+
+    }
+
+    void execute();
+};

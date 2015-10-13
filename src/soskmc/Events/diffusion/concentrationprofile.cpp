@@ -1,5 +1,8 @@
 #include "concentrationprofile.h"
 
+#include "../../sossolver.h"
+
+
 ConcentrationProfile::ConcentrationProfile(SOSSolver &solver, funcType profileFunction) :
     Diffusion(solver, "ConcProfile"),
     m_profileFunction(profileFunction)
@@ -58,5 +61,10 @@ bool ConcentrationProfile::isBlockedPosition(const uint x, const uint y, const i
     (void) z;
 
     return false;
+}
+
+double ConcentrationProfile::concentration() const
+{
+    return solver().concentration();
 }
 

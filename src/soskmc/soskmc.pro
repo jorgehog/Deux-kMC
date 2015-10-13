@@ -29,7 +29,8 @@ SOURCES += \
     Events/diffusion/concentrationprofile.cpp \
     heightconnecter.cpp \
     averageheightboundary.cpp \
-    Events/sosevent.cpp
+    Events/sosevent.cpp \
+    Events/diffusion/confinedconstantconcentration.cpp
 
 HEADERS += \
     Events/equilibriater.h \
@@ -57,7 +58,8 @@ HEADERS += \
     Events/diffusion/concentrationprofile.h \
     heightconnecter.h \
     sosboundary.h \
-    averageheightboundary.h
+    averageheightboundary.h \
+    Events/diffusion/confinedconstantconcentration.h
 
 LIBS += -lkMC
 

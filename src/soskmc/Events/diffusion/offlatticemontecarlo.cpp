@@ -236,6 +236,11 @@ bool OfflatticeMonteCarlo::isBlockedPosition(const uint x, const uint y, const i
     return false;
 }
 
+double OfflatticeMonteCarlo::concentration() const
+{
+    return nOfflatticeParticles()/solver().volume();
+}
+
 void OfflatticeMonteCarlo::diffuse(const double dt)
 {
     if (dt < 0 || fabs(dt) < 1E-15)
