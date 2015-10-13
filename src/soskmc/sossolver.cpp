@@ -705,9 +705,9 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
 
     //check vs length and not length - 1 or - 0.5 because of transformation issues.
     //so i.e. for periodicity,
-    bool isOutSideBox_x = (x < 0) || (x >= length());
+    bool isOutSideBox_x = (x < 0) || (x > length() - 1);
 
-    bool isOutSideBox_y = (y < 0) || (y >= width());
+    bool isOutSideBox_y = (y < 0) || (y > width() - 1);
 
     bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 0.5) && confiningSurfaceEvent().hasSurface();
 
@@ -716,20 +716,9 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
         return true;
     }
 
-    uint X = uint(round(x));
-    uint Y = uint(round(y));
+    const uint X = uint(round(x));
+    const uint Y = uint(round(y));
 
-    if (X == length())
-    {
-        X = length() - 1;
-    }
-
-    if (Y == width())
-    {
-        Y = width() - 1;
-    }
-
-    //DERP: collide in x-y plane
     return z < height(X, Y) + 0.5;
 }
 
@@ -860,6 +849,35 @@ double SOSSolver::absSquareDistance(const uint x, const uint y, const int z,
     double dz = z - zp;
 
     return dx*dx + dy*dy + dz*dz;
+}
+
+double SOSSolver::calculateVolumeCorrection() const
+{
+    //The volume at which we can place particles
+    //is this correction smaller than the volume of the box
+    //since particles have a half lattice unit size.
+
+    double correction = 0;
+
+    const double &h = confiningSurfaceEvent().height();
+
+    for (uint x = 1; x < m_length - 1; ++x)
+    {
+        correction += 0.5*((h - height(x, 0) - 1) + (h - height(x, m_width-1) - 1));
+    }
+
+    for (uint y = 1; y < m_width - 1; ++y)
+    {
+        correction += 0.5*((h - height(0, y) - 1) + (h - height(m_length-1, y) - 1));
+    }
+
+    correction += 3./4*((h - height(0, 0) - 1) +
+                        (h - height(0, m_width - 1) - 1) +
+                        (h - height(m_length - 1, 0) - 1) +
+                        (h - height(m_length - 1, m_width - 1) - 1));
+
+    return correction;
+
 }
 
 void SOSSolver::execute()

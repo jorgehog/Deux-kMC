@@ -242,6 +242,8 @@ public:
         m_heightConnecters.push_back(connecter);
     }
 
+    double calculateVolumeCorrection() const;
+
 private:
 
     bool m_heights_set;

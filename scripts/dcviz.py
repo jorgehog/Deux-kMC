@@ -1,4 +1,5 @@
 #DCVIZ
+from wx._gdi import DC
 
 from DCViz_sup import DCVizPlotter
 
@@ -2364,4 +2365,42 @@ class ignisSOS(DCVizPlotter):
                 return
 
         raise RuntimeError("No match: %s in %s" % (targetname, str(names)))
+
+
+class SizeTest(DCVizPlotter):
+
+    nametag = "size_test_(.*)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    def plot(self, data):
+
+        system_sizes = self.get_family_member_data(data, "system_sizes")
+        alpha_values = self.get_family_member_data(data, "alpha_values")
+        sizes = self.get_family_member_data(data, "sizes")
+
+        for i, L in enumerate(system_sizes):
+
+            I = np.where(sizes[i, :] != 0)
+            self.subfigure.plot(alpha_values[I], sizes[i, :][I], "-"+self.markers.next(), label=r"$L=%d$" % L)
+
+        self.subfigure.legend(loc="upper right", numpoints=1, handlelength=0.5, ncol=4, columnspacing=0.25, handletextpad=0.25, borderaxespad=0.1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

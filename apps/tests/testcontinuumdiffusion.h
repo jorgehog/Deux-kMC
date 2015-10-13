@@ -14,11 +14,11 @@ public:
     {
         SOSkMCTest::SetUp();
 
-        m_L = 3;
-        m_W = 3;
+        m_L = 5;
+        m_W = 5;
         m_alpha = 1.0;
         m_mu = 1;
-        m_height = 20 + rng.uniform();
+        m_height = 5 + rng.uniform();
         double maxdt = 0.01;
 
         m_solver = new SOSSolver(m_L, m_W, m_alpha, m_mu);
@@ -176,8 +176,45 @@ TEST_F(CDiffTest, diffusion)
 
 }
 
+TEST_F(CDiffTest, volume)
+{
+    solver().setHeights(randi<imat>(m_L, m_W, distr_param(-4, 4)), false);
 
+    const uint N = 10000000;
 
+    double inside = 0;
+    const int zMin = solver().heights().min();
+    const double zSpan = solver().confiningSurfaceEvent().height() - zMin;
+
+    const double correction = solver().calculateVolumeCorrection();
+
+    for (uint n = 0; n < N; ++n)
+    {
+        const double x = rng.uniform()*m_L;
+        const double y = rng.uniform()*m_W;
+        const double z = zMin + rng.uniform()*zSpan;
+
+        if (!solver().isBlockedPosition(x, y, z))
+        {
+            inside++;
+        }
+    }
+
+    const double frac = inside/N;
+
+    const double fullBoxVolume = m_L*m_W*zSpan;
+
+    const double soluteVolume = solver().volume();
+
+    const double estimatedVolume = frac*fullBoxVolume + correction;
+
+    const double relErr = fabs(estimatedVolume - soluteVolume)/soluteVolume;
+
+    EXPECT_NEAR(soluteVolume, estimatedVolume, soluteVolume/100.) << correction << " " << soluteVolume << " " << frac*fullBoxVolume;
+    EXPECT_NEAR(0, relErr, 1E-3);
+
+    cout << "err: " << relErr << endl;
+}
 
 
 
