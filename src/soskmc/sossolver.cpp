@@ -932,6 +932,8 @@ void SOSSolver::initialize()
 
     m_averageHeight = arma::accu(m_heights)/double(area());
 
+    confiningSurfaceEvent().setHeight(m_averageHeight + confiningSurfaceEvent().height());
+
     for (uint x = 0; x < m_length; ++x)
     {
         for (uint y = 0; y < m_width; ++y)

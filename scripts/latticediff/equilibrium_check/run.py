@@ -21,7 +21,8 @@ def main():
     controller.register_parameter_set(supersaturation_values)
     controller.set_repeats(n)
 
-    success = controller.run(run_kmc, path, app, cfg, ask=not controller.use_mpi, n_procs=n_procs, shuffle=True)
+    success = controller.run(run_kmc, path, app, cfg, ask=not controller.use_mpi, n_procs=n_procs, shuffle=True
+    )
 
     if success != 0:
         print "Simulation failed."
