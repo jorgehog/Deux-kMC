@@ -57,6 +57,7 @@ SOSSolver::~SOSSolver()
 void SOSSolver::registerHeightChange(const uint x, const uint y, const int value)
 {
     BADAssBool(!isOutsideBox(x, y));
+    BADAssEqual(abs(value), 1);
 
     m_heights(x, y) += value;
 
@@ -163,13 +164,13 @@ void SOSSolver::setHeight(const uint x, const uint y, const int value, const boo
 
 }
 
-void SOSSolver::setHeights(const imat &heights, const bool iteratively)
+void SOSSolver::setHeights(const imat &newheights, const bool iteratively)
 {
     for (uint x = 0; x < length(); ++x)
     {
         for (uint y = 0; y < width(); ++y)
         {
-            setHeight(x, y, heights(x, y), iteratively);
+            setHeight(x, y, newheights(x, y), iteratively);
         }
     }
 }

@@ -39,7 +39,7 @@ public:
 
     void setHeight(const uint x, const uint y, const int value, const bool iteratively = true);
 
-    void setHeights(const imat &heights, const bool iteratively = true);
+    void setHeights(const imat &newheights, const bool iteratively = true);
 
     const uint &length() const
     {

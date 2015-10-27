@@ -412,6 +412,8 @@ void LatticeDiffusion::setupInitialConditions()
 
         addDiffusionReactant(x0, y0, z0, false);
 
+        BADAssBool(!solver().isSurfaceSite(x0, y0, z0));
+
         n++;
     }
 }

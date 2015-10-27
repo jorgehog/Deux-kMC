@@ -290,7 +290,8 @@ TEST_F(SOSkMCTest, boundaries_reflect)
 
     EXPECT_EQ(4, r->calculateNumberOfFreePaths());
 
-    solver().registerHeightChange(0, 0, 2);
+    solver().registerHeightChange(0, 0, 1);
+    solver().registerHeightChange(0, 0, 1);
     EXPECT_EQ(3, solver().numberOfSurroundingSolutionSites(0, 0));
 
 }

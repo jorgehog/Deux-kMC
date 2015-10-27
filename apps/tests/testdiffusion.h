@@ -911,6 +911,8 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
 
+    rng.initialize(10);
+
     SetUp_yo();
 
     primeSolver();
@@ -921,7 +923,7 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
     {
         for (uint y = 0; y < W; ++y)
         {
-            m_solver->setHeight(x, y, floor(-5 + 11*rng.uniform()));
+            m_solver->setHeight(x, y, floor(-5 + 11*rng.uniform()), false);
             diffusionEvent->clearDiffusionReactions();
         }
     }
@@ -939,11 +941,15 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
         double PTot = 0;
         double POver = 0;
 
-        m_solver->setHeights(randi(L, W, distr_param(-2, 2)), false);
+        imat H = randi(L, W, distr_param(-2, 2));
+
+        uint skipped = 0;
 
         for (uint cycle = 0; cycle < nc; ++cycle)
         {
-            diffusionEvent->setupInitialConditions();
+            m_solver->setHeights(H, false);
+            diffusionEvent->clearDiffusionReactions();
+            m_solver->initialize();
 
             for (uint x = 0; x < L; ++x)
             {
@@ -951,16 +957,39 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
                 {
                     const double &h = solver().height(x, y);
 
+                    //Number of neighbors
                     uint nn = solver().calculateNNeighbors(x, y);
+
+                    //Number of solution sites
                     uint nsss =  solver().numberOfSurroundingSolutionSites(x, y, h + 1);
-                    uint nps = diffusionEvent->particlesSurrounding(x, y, h + 1).size();
 
-                    uint np = 5 - int(nsss + nn) + 1;
+                    //Number of particles surrounding the site above
+                    vector<SOSDiffusionReaction*> surr = diffusionEvent->particlesSurrounding(x, y, h + 1);
+                    uint nps = surr.size();
 
-                    EXPECT_EQ(nps, np);
+                    uint top = 1;
 
-                    double p = nps/(5. - (int)nn + 1);
-                    double p2 = 1 - nsss/(5. - (int)nn + 1);
+                    //if the surface is on top it is 5 not 6.
+                    if (solver().isBlockedPosition(x, y, h + 2))
+                    {
+                        top = 0;
+                    }
+
+                    uint np = 5 - int(nsss + nn) + top;
+
+                    EXPECT_EQ(nps, np) << nn << " "
+                                       << nsss << " "
+                                       << nps << " "
+                                       << np;
+
+                    if (nn == 5 && top == 0)
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    double p = nps/(5. - (int)nn + top);
+                    double p2 = 1 - nsss/(5. - (int)nn + top);
 
                     EXPECT_NEAR(p, p2, 1E-10);
 
@@ -969,6 +998,12 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
                     if (diffusionEvent->isBlockedPosition(x, y, solver().height(x, y) + 2))
                     {
                         POver++;
+                    }
+
+                    if (HasFailure())
+                    {
+                        diffusionEvent->dump(0);
+                        return;
                     }
                 }
             }
@@ -983,9 +1018,9 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
 
         cout << endl;
 
-        measuredSurfaceConcentration += P/(nc*solver().area());
-        measuredConcentration += PTot/(nc*(solver().volume()-solver().area()));
-        measuredOver += POver/(nc*solver().area());
+        measuredSurfaceConcentration += P/((nc-skipped)*solver().area());
+        measuredConcentration += PTot/((nc-skipped)*(solver().volume()-solver().area()));
+        measuredOver += POver/((nc-skipped)*solver().area());
 
     }
 
