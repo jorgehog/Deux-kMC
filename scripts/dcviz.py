@@ -2271,6 +2271,9 @@ class LatticediffSpeeds(DCVizPlotter):
 
     hugifyFonts = True
 
+    ceq = exp(-3)
+    h0 = 19
+
     def plot(self, data):
 
         supersaturations = self.get_family_member_data(data, "supersaturations")
@@ -2286,12 +2289,15 @@ class LatticediffSpeeds(DCVizPlotter):
             else:
                 sfac = 1
 
+            point = sfac*supersaturation*self.h0/(1/self.ceq - 1)
+
             l = lengths[i]
             T = all_times[i, :l]/(1 + supersaturation)
             H = sfac*all_heights[i, :l]
             label = r"$\Omega=%.2f$" % supersaturation
             m = T[-1]*1.05
 
+            self.subfigure.scatter(0.9*m, point)
             self.subfigure.plot(T, H, label=label)
             self.subfigure.text(m, H[l/3:-l/3].mean(), label)
 
@@ -2324,6 +2330,9 @@ class cconcdiffSpeeds(DCVizPlotter):
 
     figMap = {"figure" : "subfigure", "figure2" : "subfigure2"}
 
+    ceq = exp(-3)
+    h0 = 20
+
     def plot(self, data):
 
         supersaturations = self.get_family_member_data(data, "supersaturations")
@@ -2342,15 +2351,19 @@ class cconcdiffSpeeds(DCVizPlotter):
                 sfac = 1
 
             l = lengths[i]
-            T = all_times[i, :l]/(conc[i, :l]/exp(-3))
+
+            ss = conc[i, :l]/self.ceq - 1
+            T = all_times[i, :l]/(ss + 1)
             H = sfac*all_heights[i, :l]
             label = r"$\Omega(0)=%.2f$" % supersaturation
             m = T[-1]*1.05
 
+            point = supersaturation*self.h0/(1/self.ceq - 1)
+
+            self.subfigure.scatter(0.9*m, point, s=20)
             self.subfigure.plot(T, H, label=label)
             self.subfigure.text(m, H[l/3:-l/3].mean(), label)
 
-            ss = conc[i, :l]/exp(-3) - 1
             self.subfigure2.plot(T, ss, label=label)
 
             if m > M:

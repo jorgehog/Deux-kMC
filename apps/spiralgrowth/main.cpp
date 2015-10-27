@@ -132,7 +132,7 @@ int main(int argv, char** argc)
     {
         for (uint y = 0; y < W; ++y)
         {
-//            solver.setHeight(x, y, h0(x, y), false);
+            solver.setHeight(x, y, h0(x, y), false);
         }
     }
 
