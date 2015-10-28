@@ -24,21 +24,26 @@ class ParseKMCHDF5:
             for file in filenames:
 
                 fullpath = os.path.join(self.path, file)
-                self.files.append(h5py.File(fullpath, 'r'))
+                self.files.append(fullpath)
                 self.filenames.append(file)
 
         else:
-            self.files = [h5py.File(which_file, 'r')]
+            self.files = [which_file]
 
         self.only_n = None
 
     def __iter__(self):
 
-        for file in self.files:
+        for filepath in self.files:
+
+            file = h5py.File(filepath, 'r')
+
             for l, run in file.items():
                 L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]
                 for run_id, data in run.items():
                     yield data, L, W, run_id
+
+            file.close()
 
     @staticmethod
     def get_ignis_data(data, name):
@@ -50,10 +55,6 @@ class ParseKMCHDF5:
     def getfiles(self):
         return self.files
 
-    def close(self):
-
-        for file in self.files:
-            file.close()
 
 def getIgnisData(data, name):
 
