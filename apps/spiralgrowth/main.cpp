@@ -48,6 +48,8 @@ int main(int argv, char** argc)
 
     const double gamma = log(1 + supersaturation);
 
+    const string &initialSurfaceType = getSetting<string>(root, "initialSurfaceType");
+
     const Setting &boundarySettings = getSetting(root, "boundaries");
     const uint rightBoundaryID = boundarySettings[0][0];
     const uint leftBoundaryID = boundarySettings[0][1];
@@ -113,28 +115,6 @@ int main(int argv, char** argc)
                                    bottomBoundaryID,
                                    topBoundaryID},
                          L, W, boundaryHeight, averageHeightDepth);
-
-    auto h0 = [&] (const uint x, const uint y) {
-        return 0;
-
-        if (x < 20)
-        {
-            return 1;
-        }
-
-        else
-        {
-            return 0;
-        }
-    };
-
-    for (uint x = 0; x < L; ++x)
-    {
-        for (uint y = 0; y < W; ++y)
-        {
-            solver.setHeight(x, y, h0(x, y), false);
-        }
-    }
 
     if (concentrationBoundary == 1)
     {
@@ -279,16 +259,12 @@ int main(int argv, char** argc)
     lattice.addEvent(size);
     lattice.addEvent(var);
 
-
-
-
     if (autoCorrelationInt == 1)
     {
         lattice.addEvent(autoCorrelation);
     }
 
-    //    initializeSurface(solver, "fracture");
-    initializeSurface(solver, "none");
+    initializeSurface(solver, initialSurfaceType);
 
     //---End explicit implementation
     //---Running simulation
@@ -340,6 +316,8 @@ int main(int argv, char** argc)
     simRoot["alpha"] = alpha;
     simRoot["gamma"] = gamma;
     simRoot["supersaturation"] = supersaturation;
+
+    simRoot["initialSurfaceType"] = initialSurfaceType;
 
     simRoot["rightBoundaryID"] = rightBoundaryID;
     simRoot["leftBoundaryID"] = leftBoundaryID;
@@ -434,6 +412,43 @@ void initializeSurface(SOSSolver &solver, const string type)
                 solver.setHeight(x, y, value + noise, false);
             }
         }
+    }
+
+    else if (type == "random")
+    {
+        int maxSpan = solver.confiningSurfaceEvent().height()/10;
+
+        if (maxSpan == 0)
+        {
+            maxSpan = 1;
+        }
+
+        solver.setHeights(randi(solver.length(),
+                                solver.width(),
+                                distr_param(-maxSpan, maxSpan)),
+                          false);
+
+        int m = accu(solver.heights());
+
+        uint x;
+        uint y;
+        if (m != 0)
+        {
+            int N = abs(m);
+            int direction = -m/N;
+
+            for (int shift = 0; shift < N; ++shift)
+            {
+                do
+                {
+                    x = rng.uniform()*solver.length();
+                    y = rng.uniform()*solver.width();
+                } while (abs(solver.height(x, y)) == maxSpan);
+
+                solver.setHeight(x, y, solver.height(x, y) + direction, false);
+            }
+        }
+
     }
 
     else if (type == "none")

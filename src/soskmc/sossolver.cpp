@@ -905,34 +905,10 @@ void SOSSolver::initialize()
 {
     if (!m_heights_set)
     {
-
         m_heights.zeros();
-
-        int left;
-        int bottom;
-
-        m_averageHeight = 0;
-
-        for (uint x = 0; x < m_length; ++x)
-        {
-            for (uint y = 0; y < m_width; ++y)
-            {
-                left = leftSite(x, y, m_heights(x, y));
-                bottom = bottomSite(x, y, m_heights(x, y));
-
-                if (isOutsideBoxSingle(left, 0) || isOutsideBoxSingle(bottom, 1))
-                {
-                    continue;
-                }
-
-                m_heights(x, y) = (m_heights(left, y) + m_heights(x, bottom))/2 + round(-1 + 2*rng.uniform());
-            }
-        }
     }
 
     m_averageHeight = arma::accu(m_heights)/double(area());
-
-    confiningSurfaceEvent().setHeight(m_averageHeight + confiningSurfaceEvent().height());
 
     for (uint x = 0; x < m_length; ++x)
     {
