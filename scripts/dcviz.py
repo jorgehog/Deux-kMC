@@ -2291,8 +2291,10 @@ class LatticediffSpeeds(DCVizPlotter):
 
             point = sfac*supersaturation*self.h0/(1/self.ceq - 1)
 
+            T0 = all_times[i, 0]
+
             l = lengths[i]
-            T = all_times[i, :l]/(1 + supersaturation)
+            T = (all_times[i, :l]-T0)/(1 + supersaturation)
             H = sfac*all_heights[i, :l]
             label = r"$\Omega=%.2f$" % supersaturation
             m = T[-1]*1.05

@@ -97,6 +97,7 @@ int main(int argv, char** argc)
     const uint &nCyclesPerOutput = getSetting<uint>(root, "nCyclesPerOutput");
     const uint &storeIgnisDataInt = getSetting<uint>(root, "storeIgnisData");
     const bool storeIgnisData = storeIgnisDataInt == 1;
+    const bool storeIgnisFile = getSetting<uint>(root, "storeIgnisFile") == 1;
     const uint &ignisDataInterval = getSetting<uint>(root, "ignisDataInterval");
     const bool ignisOutput = getSetting<uint>(root, "ignisOutput") == 1;
     const bool dumpParticles = getSetting<uint>(root, "dumpParticles") == 1;
@@ -222,7 +223,7 @@ int main(int argv, char** argc)
     lattice.enableOutput(ignisOutput, nCyclesPerOutput);
     lattice.enableProgressReport();
     lattice.enableEventValueStorage(storeIgnisData,
-                                    storeIgnisData,
+                                    storeIgnisFile,
                                     "ignisSOS.ign",
                                     path,
                                     ignisDataInterval);

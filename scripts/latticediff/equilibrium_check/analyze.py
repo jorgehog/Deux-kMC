@@ -38,41 +38,51 @@ def main():
 
     print "Found", N, "repeats."
 
-    combinators = [ICZ("Time", "AverageHeight") for _ in range(len(supersaturations))]
+    combinators = [ICZ("Time", "AverageHeight", "Concentration") for _ in range(len(supersaturations))]
 
     for data, _, _, _ in parser:
 
         supersaturation = data.attrs["supersaturation"]\
 
         heights = parser.get_ignis_data(data, "AverageHeight")[::every]
-        time = parser.get_ignis_data(data, "Time")[::every]
+        concentrations = parser.get_ignis_data(data, "Concentration")[::every]
+        time = parser.get_ignis_data(data, "Time")
+        time -= time[0] #Normalize to real time and not state time
+        time = time[::every]
 
         i = supersaturations.index(supersaturation)
 
-        combinators[i].feed(time, heights)
+        combinators[i].feed(time, heights, concentrations)
 
     n_steps = len(combinators[0]["Time"])
 
     all_times = np.zeros([len(supersaturations), n_steps])
     all_heights = np.zeros_like(all_times)
+    all_concentrations = np.zeros_like(all_times)
     lengths = np.zeros(len(supersaturations))
 
     for i, supersaturation in enumerate(supersaturations):
 
         t, h = combinators[i].intercombine("Time", "AverageHeight")
+        t2, c = combinators[i].intercombine("Time", "Concentration")
+
+        if not (t == t2).all():
+            sys.exit("Failure")
 
         l = len(t)
 
         lengths[i] = l
 
-        all_times[i, :l] = t
         all_heights[i, :l] = h
+        all_concentrations[i, :l] = c
+        all_times[i, :l] = t
 
 
     np.save("/tmp/lattice_supersaturations.npy", supersaturations)
-    np.save("/tmp/lattice_times.npy", all_times)
-    np.save("/tmp/lattice_heights.npy", all_heights)
     np.save("/tmp/lattice_lengths.npy", lengths)
+    np.save("/tmp/lattice_heights.npy", all_heights)
+    np.save("/tmp/lattice_concentrations.npy", all_concentrations)
+    np.save("/tmp/lattice_times.npy", all_times)
 
 if __name__ == "__main__":
     main()
