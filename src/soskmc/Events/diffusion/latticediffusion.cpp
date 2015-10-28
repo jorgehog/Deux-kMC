@@ -390,9 +390,16 @@ void LatticeDiffusion::setupInitialConditions()
     const double hMax = solver().confiningSurfaceEvent().height();
     const int zMin = solver().heights().min() + 2;
 
+    const double V = solver().volume();
+
     //subtract area from volume since we do not initiate surface particles
     //add a random number such that if we get 3.3 particles, there is a 0.3 chance to get 3 + 1.
-    const uint nLatticeParticles = (solver().volume() - solver().area())*solver().concentration() + rng.uniform();
+    const uint nLatticeParticles = V*solver().concentration() + rng.uniform();
+
+    if (nLatticeParticles > V - solver().area())
+    {
+        throw std::runtime_error("concentration too high");
+    }
 
     uint x0;
     uint y0;
