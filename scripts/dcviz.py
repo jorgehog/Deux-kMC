@@ -2272,36 +2272,47 @@ class LatticediffSpeeds(DCVizPlotter):
     hugifyFonts = True
 
     ceq = exp(-3)
-    h0 = 19
+    h0 = 20
+
+    figMap = {"f0": "subfigure", "f1" : "subfigure2"}
 
     def plot(self, data):
 
         supersaturations = self.get_family_member_data(data, "supersaturations")
         all_heights = self.get_family_member_data(data, "heights")
         all_times = self.get_family_member_data(data, "times")
+        all_conc = self.get_family_member_data(data, "concentrations")
         lengths = self.get_family_member_data(data, "lengths")
+
+        all_supersaturations = all_conc/self.ceq - 1
 
         M = 0
         for i, supersaturation in enumerate(supersaturations):
+
+            s0 = all_conc[i, 0]/self.ceq - 1
+            if supersaturation != s0:
+                print "ERRAH", supersaturation, s0
 
             if len(self.argv) != 0:
                 sfac = np.sign(supersaturation)
             else:
                 sfac = 1
 
-            point = sfac*supersaturation*self.h0/(1/self.ceq - 1)
+            point = sfac*s0*self.h0/(1/self.ceq - 1)
 
             T0 = all_times[i, 0]
 
             l = lengths[i]
             T = (all_times[i, :l]-T0)/(1 + supersaturation)
             H = sfac*all_heights[i, :l]
-            label = r"$\Omega=%.2f$" % supersaturation
+            label = r"$\Omega=%.2f$" % s0
             m = T[-1]*1.05
 
             self.subfigure.scatter(0.9*m, point)
             self.subfigure.plot(T, H, label=label)
             self.subfigure.text(m, H[l/3:-l/3].mean(), label)
+
+            self.subfigure2.plot(T, all_supersaturations[i, :l])
 
             if m > M:
                 M = m
