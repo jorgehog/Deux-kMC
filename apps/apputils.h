@@ -349,7 +349,70 @@ void setBoundariesFromIDs(SOSSolver *solver,
                            {bottomBoundary, topBoundary}});
 }
 
+void initializeSurface(SOSSolver &solver, const string type)
+{
+    if (type == "fracture")
+    {
+        int noise;
+        double value = 0;
 
+        int TwoThirdsWay = (2*solver.confiningSurfaceEvent().height())/3;
+
+        double delta = TwoThirdsWay/double(solver.length());
+
+        for (uint x = 0; x < solver.length(); ++x)
+        {
+            value = value + delta;
+            for (uint y = 0; y < solver.width(); ++y)
+            {
+                noise = -1 + 3*rng.uniform();
+                solver.setHeight(x, y, value + noise, false);
+            }
+        }
+    }
+
+    else if (type == "random")
+    {
+        int maxSpan = solver.confiningSurfaceEvent().height()/10;
+
+        if (maxSpan == 0)
+        {
+            maxSpan = 1;
+        }
+
+        solver.setHeights(randi(solver.length(),
+                                solver.width(),
+                                distr_param(-maxSpan, maxSpan)),
+                          false);
+
+        int m = accu(solver.heights());
+
+        uint x;
+        uint y;
+        if (m != 0)
+        {
+            int N = abs(m);
+            int direction = -m/N;
+
+            for (int shift = 0; shift < N; ++shift)
+            {
+                do
+                {
+                    x = rng.uniform()*solver.length();
+                    y = rng.uniform()*solver.width();
+                } while (abs(solver.height(x, y)) == maxSpan);
+
+                solver.setHeight(x, y, solver.height(x, y) + direction, false);
+            }
+        }
+
+    }
+
+    else if (type == "none")
+    {
+        return;
+    }
+}
 
 
 

@@ -1016,8 +1016,6 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
             cout << "\r" << surf << " " << std::setw(4) << std::setprecision(2) << (cycle+1)/double(nc);
         }
 
-        cout << endl;
-
         measuredSurfaceConcentration += P/((nc-skipped)*solver().area());
         measuredConcentration += PTot/((nc-skipped)*(solver().volume()-solver().area()));
         measuredOver += POver/((nc-skipped)*solver().area());
@@ -1028,7 +1026,93 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
     EXPECT_NEAR(solver().concentration(), measuredConcentration/ns, 1E-4);
     EXPECT_NEAR(solver().concentration(), measuredSurfaceConcentration/ns, 1E-4);
 
+    cout << endl;
+
 }
+
+
+
+TEST_F(SOSkMCTest, SOS_diff_initial_supersat)
+{
+    const uint L = 30;
+    const uint W = 30;
+    const double alpha = 1.0;
+    const double mu = 0;
+    const double height = 20;
+
+    vec supersaturations = linspace(-0.9, 0.9, 19);
+    const double eqConc = exp(-3*alpha);
+
+
+    m_solver = new SOSSolver(L, W, alpha, mu);
+    setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, L, W);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
+    m_diffusionEvent = diffusionEvent;
+
+    initializeSurface(*m_solver, "random");
+
+    const uint cyclesPerSaturationLevel = 20;
+
+    for (const double &supersaturation : supersaturations)
+    {
+        const double gamma = std::log(1 + supersaturation);
+        solver().setGamma(gamma);
+
+        const double concentration = eqConc*(1 + supersaturation);
+
+        double meanConcentration = 0;
+        for (uint cycle = 0; cycle < cyclesPerSaturationLevel; ++cycle)
+        {
+            m_diffusionEvent->setupInitialConditions();
+            meanConcentration += m_diffusionEvent->concentration();
+            diffusionEvent->clearDiffusionReactions();
+
+            if (cycle % 1 == 0)
+            {
+                cout.flush();
+                cout << "\r" << std::setw(4) << std::setprecision(2) << (cycle+1)/double(cyclesPerSaturationLevel);
+            }
+        }
+
+        meanConcentration /= cyclesPerSaturationLevel;
+
+        EXPECT_NEAR(0, (concentration - meanConcentration)/concentration, 1E-3);
+
+        if (HasFailure())
+        {
+            break;
+        }
+
+    }
+
+    cout << endl;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
