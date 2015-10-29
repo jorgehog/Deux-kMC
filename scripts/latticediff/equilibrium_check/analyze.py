@@ -44,17 +44,19 @@ def main():
 
         supersaturation = data.attrs["supersaturation"]\
 
-        heights = parser.get_ignis_data(data, "AverageHeight")[::every]
-        concentrations = parser.get_ignis_data(data, "Concentration")[::every]
+        heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
+        concentrations = parser.get_ignis_data(data, "Concentration")[::every].copy()
         time = parser.get_ignis_data(data, "Time")
         time -= time[0] #Normalize to real time and not state time
-        time = time[::every]
+        time = time[::every].copy()
 
         i = supersaturations.index(supersaturation)
 
         combinators[i].feed(time, heights, concentrations)
 
     n_steps = len(combinators[0]["Time"])
+
+    print "Found", n_steps, "size data."
 
     all_times = np.zeros([len(supersaturations), n_steps])
     all_heights = np.zeros_like(all_times)
