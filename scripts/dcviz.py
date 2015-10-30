@@ -2265,14 +2265,14 @@ class AutoCorrelation(DCVizPlotter):
 
 class LatticediffSpeeds(DCVizPlotter):
 
-    nametag = "lattice_(\w+)\.npy"
+    nametag = "confined_\w+_(\w+)\.npy"
 
     isFamilyMember = True
 
     hugifyFonts = True
 
     ceq = exp(-3)
-    h0 = 20
+    h0 = 19
 
     figMap = {"f0": "subfigure", "f1" : "subfigure2"}
 
@@ -2284,7 +2284,11 @@ class LatticediffSpeeds(DCVizPlotter):
         all_conc = self.get_family_member_data(data, "concentrations")
         lengths = self.get_family_member_data(data, "lengths")
 
+        print all_conc.shape
+
         all_supersaturations = all_conc/self.ceq - 1
+
+        print supersaturations
 
         M = 0
         for i, supersaturation in enumerate(supersaturations):
@@ -2300,10 +2304,9 @@ class LatticediffSpeeds(DCVizPlotter):
 
             point = sfac*s0*self.h0/(1/self.ceq - 1)
 
-            T0 = all_times[i, 0]
-
             l = lengths[i]
-            T = (all_times[i, :l]-T0)/(1 + supersaturation)
+
+            T = all_times[i, :l]
             H = sfac*all_heights[i, :l]
             label = r"$\Omega=%.2f$" % s0
             m = T[-1]*1.05

@@ -20,12 +20,12 @@ void ConfinedConstantConcentration::registerHeightChange(const uint x,
     (void) affectedSurfaceReactions;
     (void) nAffectedSurfaceReactions;
 
-    m_deltaSum -= value;
+    m_deltaSum += value;
 }
 
 void ConfinedConstantConcentration::setupInitialConditions()
 {
-    m_V0 = solver().volume();
+    m_V0 = solver().freeVolume();
     m_c0 = solver().concentration();
 
     m_deltaSum = 0;
@@ -33,7 +33,7 @@ void ConfinedConstantConcentration::setupInitialConditions()
 
 void ConfinedConstantConcentration::reset()
 {
-    double newConcentration = (m_c0*m_V0 + m_deltaSum)/(m_V0 + m_deltaSum);
+    double newConcentration = (m_c0*m_V0 - m_deltaSum)/(m_V0 - m_deltaSum);
 
     solver().setConcentration(newConcentration);
 }

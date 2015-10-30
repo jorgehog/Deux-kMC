@@ -17,7 +17,11 @@ def main():
 
     supersaturations = []
 
-    every = 250
+    try:
+        every = int(sys.argv[2])
+    except:
+        every = 1
+
 
     n = 0
     for data, _, _, _ in parser:
@@ -41,9 +45,11 @@ def main():
 
         supersaturation = data.attrs["supersaturation"]\
 
-        heights = parser.get_ignis_data(data, "AverageHeight")[::every]
-        conc = parser.get_ignis_data(data, "Concentration")[::every]
-        time = parser.get_ignis_data(data, "Time")[::every]
+        heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
+        conc = parser.get_ignis_data(data, "Concentration")[::every].copy()
+        time = parser.get_ignis_data(data, "Time")
+        time -= time[0]
+        time = time[::every].copy()
 
         i = supersaturations.index(supersaturation)
 
@@ -51,17 +57,18 @@ def main():
 
     n_steps = len(combinators[0]["Time"])
 
+    print "found", n_steps, "sized data."
+
     all_times = np.zeros([len(supersaturations), n_steps])
     all_heights = np.zeros_like(all_times)
     all_conc = np.zeros_like(all_times)
     lengths = np.zeros(len(supersaturations))
 
-    supersaturations = sorted(supersaturations  )
-
     for i, supersaturation in enumerate(supersaturations):
 
         t, h = combinators[i].intercombine("Time", "AverageHeight")
         t, c = combinators[i].intercombine("Time", "Concentration")
+
 
         l = len(t)
 
@@ -76,11 +83,11 @@ def main():
 
     print
 
-    np.save("/tmp/cconc_supersaturations.npy", supersaturations)
-    np.save("/tmp/cconc_times.npy", all_times)
-    np.save("/tmp/cconc_heights.npy", all_heights)
-    np.save("/tmp/cconc_conc.npy", all_conc)
-    np.save("/tmp/cconc_lengths.npy", lengths)
+    np.save("/tmp/confined_cconc_supersaturations.npy", supersaturations)
+    np.save("/tmp/confined_cconc_times.npy", all_times)
+    np.save("/tmp/confined_cconc_heights.npy", all_heights)
+    np.save("/tmp/confined_cconc_concentrations.npy", all_conc)
+    np.save("/tmp/confined_cconc_lengths.npy", lengths)
 
 if __name__ == "__main__":
     main()

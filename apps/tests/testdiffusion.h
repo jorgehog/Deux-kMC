@@ -928,7 +928,7 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
         }
     }
 
-    const uint nc = 10000;
+    const uint nc = 100000;
     const uint ns = 5;
 
     double measuredSurfaceConcentration = 0;
@@ -942,14 +942,15 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
         double POver = 0;
 
         imat H = randi(L, W, distr_param(-2, 2));
+        m_solver->setHeights(H, false);
 
         uint skipped = 0;
 
         for (uint cycle = 0; cycle < nc; ++cycle)
         {
-            m_solver->setHeights(H, false);
-            diffusionEvent->clearDiffusionReactions();
-            m_solver->initialize();
+//            diffusionEvent->clearDiffusionReactions();
+//            m_solver->initialize();
+            diffusionEvent->setupInitialConditions();
 
             for (uint x = 0; x < L; ++x)
             {
@@ -1022,9 +1023,15 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
 
     }
 
-    EXPECT_NEAR(solver().concentration(), measuredOver/ns, 1E-4);
-    EXPECT_NEAR(solver().concentration(), measuredConcentration/ns, 1E-4);
-    EXPECT_NEAR(solver().concentration(), measuredSurfaceConcentration/ns, 1E-4);
+    measuredOver /= ns;
+    measuredSurfaceConcentration /= ns;
+    measuredConcentration /= ns;
+
+    const double c = solver().concentration();
+
+    EXPECT_NEAR(0, fabs(measuredOver - c)/c , 1E-3);
+    EXPECT_NEAR(0, fabs(measuredConcentration - c)/c, 1E-3);
+    EXPECT_NEAR(0, fabs(c - measuredSurfaceConcentration)/c, 1E-3);
 
     cout << endl;
 

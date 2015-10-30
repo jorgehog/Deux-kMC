@@ -58,7 +58,6 @@ public:
 
     void removeDiffusionReactant(const int x, const int y, const int z, bool _delete = true);
 
-    //cannot be const for quick lookup
     SOSDiffusionReaction *diffusionReaction(const int x, const int y, const int z) const;
 
     void clearDiffusionReactions();

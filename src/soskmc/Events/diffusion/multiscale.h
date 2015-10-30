@@ -5,13 +5,13 @@
 
 class SOSDiffusionReaction;
 
-class OfflatticeMonteCarloBoundary : public OfflatticeMonteCarlo, public LatticeDiffusion
+class Multiscale : public OfflatticeMonteCarlo, public LatticeDiffusion
 {
 public:
-    OfflatticeMonteCarloBoundary(SOSSolver &solver,
-                                 const double maxdt,
-                                 const uint boundarySpacing = 3);
-    ~OfflatticeMonteCarloBoundary();
+    Multiscale(SOSSolver &solver,
+               const double maxdt,
+               const uint boundarySpacing = 3);
+    ~Multiscale();
 
     bool checkIfEnoughRoom() const;
 

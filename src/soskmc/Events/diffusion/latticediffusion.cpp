@@ -388,18 +388,11 @@ void LatticeDiffusion::execute()
 void LatticeDiffusion::setupInitialConditions()
 {
     const double hMax = solver().confiningSurfaceEvent().height();
-    const int zMin = solver().heights().min() + 2;
-
-    const double freeV = solver().volume();
+    const int zMin = solver().heights().min() + 1;
 
     //subtract area from volume since we do not initiate surface particles
     //add a random number such that if we get 3.3 particles, there is a 0.3 chance to get 3 + 1.
-    const uint nLatticeParticles = freeV*solver().concentration() + rng.uniform();
-
-    if (nLatticeParticles > ceil(freeV - solver().area()))
-    {
-        throw std::runtime_error("concentration too high for initializing with surface solvent film.");
-    }
+    const uint nLatticeParticles = solver().freeVolume()*solver().concentration() + rng.uniform();
 
     uint x0;
     uint y0;
@@ -492,7 +485,7 @@ bool LatticeDiffusion::isBlockedPosition(const uint x, const uint y, const int z
 
 double LatticeDiffusion::concentration() const
 {
-    return m_diffusionReactionsMap.size()/solver().volume();
+    return m_diffusionReactionsMap.size()/solver().freeVolume();
 }
 
 void LatticeDiffusion::registerHeightChange(const uint x,

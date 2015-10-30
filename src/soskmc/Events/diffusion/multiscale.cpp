@@ -8,9 +8,9 @@
 
 #include "sossolver.h"
 
-OfflatticeMonteCarloBoundary::OfflatticeMonteCarloBoundary(SOSSolver &solver,
-                                                           const double dt,
-                                                           const uint boundarySpacing) :
+Multiscale::Multiscale(SOSSolver &solver,
+                       const double dt,
+                       const uint boundarySpacing) :
     Diffusion(solver, "MCDiffBoundary"),
     OfflatticeMonteCarlo(solver, dt),
     LatticeDiffusion(solver),
@@ -19,12 +19,12 @@ OfflatticeMonteCarloBoundary::OfflatticeMonteCarloBoundary(SOSSolver &solver,
 
 }
 
-OfflatticeMonteCarloBoundary::~OfflatticeMonteCarloBoundary()
+Multiscale::~Multiscale()
 {
 
 }
 
-bool OfflatticeMonteCarloBoundary::checkIfEnoughRoom() const
+bool Multiscale::checkIfEnoughRoom() const
 {
     //derp
     return true;
@@ -35,18 +35,21 @@ bool OfflatticeMonteCarloBoundary::checkIfEnoughRoom() const
     return (confinedSurfaceHeight - max >= 2*m_boundarySpacing);
 }
 
-void OfflatticeMonteCarloBoundary::execute()
+void Multiscale::execute()
 {
 
 }
 
-void OfflatticeMonteCarloBoundary::executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
+void Multiscale::executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
 {
-
+    (void) reaction;
+    (void) x;
+    (void) y;
+    (void) z;
 }
 
 
-void OfflatticeMonteCarloBoundary::setupInitialConditions()
+void Multiscale::setupInitialConditions()
 {
     const double zMin = solver().heights().max() + m_boundarySpacing;
 
@@ -59,23 +62,28 @@ void OfflatticeMonteCarloBoundary::setupInitialConditions()
 
 }
 
-void OfflatticeMonteCarloBoundary::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
+void Multiscale::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
 {
-    //STUFF
+    (void) reaction;
 }
 
-void OfflatticeMonteCarloBoundary::dump(const uint frameNumber, const string path) const
+void Multiscale::dump(const uint frameNumber, const string path) const
 {
     Diffusion::dump(frameNumber, path);
     LatticeDiffusion::dumpDiffusingParticles(frameNumber, path);
     OfflatticeMonteCarlo::dumpDiffusingParticles(frameNumber, path);
 }
 
-double OfflatticeMonteCarloBoundary::concentration() const
+double Multiscale::concentration() const
 {
     return 0;
 }
 
-double OfflatticeMonteCarloBoundary::calculateLocalRate(const uint x, const uint y, const uint n) const
+double Multiscale::calculateLocalRate(const uint x, const uint y, const uint n) const
 {
+    (void) x;
+    (void) y;
+    (void) n;
+
+    return 0;
 }

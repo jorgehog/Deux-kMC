@@ -47,6 +47,7 @@ def main():
         heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
         concentrations = parser.get_ignis_data(data, "Concentration")[::every].copy()
         time = parser.get_ignis_data(data, "Time")
+        time /= (1 + supersaturation)
         time -= time[0] #Normalize to real time and not state time
         time = time[::every].copy()
 
@@ -80,11 +81,11 @@ def main():
         all_times[i, :l] = t
 
 
-    np.save("/tmp/lattice_supersaturations.npy", supersaturations)
-    np.save("/tmp/lattice_lengths.npy", lengths)
-    np.save("/tmp/lattice_heights.npy", all_heights)
-    np.save("/tmp/lattice_concentrations.npy", all_concentrations)
-    np.save("/tmp/lattice_times.npy", all_times)
+    np.save("/tmp/confined_lattice_supersaturations.npy", supersaturations)
+    np.save("/tmp/confined_lattice_lengths.npy", lengths)
+    np.save("/tmp/confined_lattice_heights.npy", all_heights)
+    np.save("/tmp/confined_lattice_concentrations.npy", all_concentrations)
+    np.save("/tmp/confined_lattice_times.npy", all_times)
 
 if __name__ == "__main__":
     main()

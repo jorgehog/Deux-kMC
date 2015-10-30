@@ -119,6 +119,11 @@ public:
 
     double volume() const;
 
+    double freeVolume() const
+    {
+        return volume() - area();
+    }
+
     double confinementEnergy(const uint x, const uint y) const;
 
     uint calculateNNeighbors(const uint x, const uint y, const int h) const;
