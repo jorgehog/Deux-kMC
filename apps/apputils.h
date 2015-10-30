@@ -351,6 +351,16 @@ void setBoundariesFromIDs(SOSSolver *solver,
 
 void initializeSurface(SOSSolver &solver, const string type)
 {
+    int maxSpan = solver.confiningSurfaceEvent().height()/10;
+
+    if (maxSpan == 0)
+    {
+        maxSpan = 1;
+    }
+
+    const uint L = solver.length();
+    const uint W = solver.width();
+
     if (type == "fracture")
     {
         int noise;
@@ -373,12 +383,6 @@ void initializeSurface(SOSSolver &solver, const string type)
 
     else if (type == "random")
     {
-        int maxSpan = solver.confiningSurfaceEvent().height()/10;
-
-        if (maxSpan == 0)
-        {
-            maxSpan = 1;
-        }
 
         solver.setHeights(randi(solver.length(),
                                 solver.width(),
@@ -408,10 +412,77 @@ void initializeSurface(SOSSolver &solver, const string type)
 
     }
 
+    else if (type == "temple")
+    {
+        const uint templeSize = 2*maxSpan + 1;
+
+        for (uint x = 0; x < L; ++x)
+        {
+            const int templeIndexX = x%templeSize;
+            const int xrank = maxSpan - abs(maxSpan - templeIndexX);
+
+            const int polarityX = (x/templeSize)%2 == 0 ? 1 : -1;
+
+            for (uint y = 0; y < W; ++y)
+            {
+                const int templeIndexY = y%templeSize;
+                const int yrank = maxSpan - abs(maxSpan - templeIndexY);
+
+                const int polarityY = (y/templeSize)%2 == 0 ? 1 : -1;
+
+                const int h = xrank < yrank ? xrank : yrank;
+
+                const int polarity = polarityX*polarityY;
+
+                const int shift = polarity < 0 ? -1 : 0;
+
+                solver.setHeight(x, y, shift + polarity*h);
+            }
+        }
+
+    }
+
+    else if (type == "thermalized")
+    {
+        Lattice lattice;
+        SOSSolver thermSolver(L, W, solver.alpha(), solver.gamma());
+        ConstantConcentration conc(thermSolver);
+        NoConfinement conf(thermSolver);
+
+        setBoundariesFromIDs(&thermSolver, {0,0,0,0}, L, W);
+
+        lattice.addEvent(thermSolver);
+        lattice.addEvent(conf);
+        lattice.addEvent(conc);
+
+        initializeSurface(thermSolver, "random");
+
+        lattice.enableOutput(false);
+        lattice.enableProgressReport(false);
+        lattice.enableEventValueStorage(false, false);
+
+        lattice.eventLoop(10000);
+
+        solver.setHeights(thermSolver.heights());
+
+        const double &hPrev = solver.confiningSurfaceEvent().height();
+        const double hMean = accu(thermSolver.heights())/double(L*W);
+
+        solver.confiningSurfaceEvent().setHeight(hPrev + hMean);
+    }
+
     else if (type == "none")
     {
         return;
     }
+
+    else
+    {
+        throw std::runtime_error("invalid surfacetype: " + type);
+    }
+
+
+
 }
 
 

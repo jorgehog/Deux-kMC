@@ -9,7 +9,7 @@
 SOSSolver::SOSSolver(const uint length,
                      const uint width,
                      const double alpha,
-                     const double mu) :
+                     const double gamma) :
     KMCSolver(),
     m_heights_set(false),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
@@ -18,7 +18,8 @@ SOSSolver::SOSSolver(const uint length,
     m_length(length),
     m_width(width),
     m_alpha(alpha),
-    m_gamma(mu),
+    m_gamma(gamma),
+    m_concentration(exp(gamma-dim()*alpha)),
     m_heights(length, width, fill::zeros),
     m_nNeighbors(length, width),
     m_siteReactions(length, width),
@@ -765,9 +766,14 @@ bool SOSSolver::isSurfaceSite(const uint x, const uint y, const int z) const
 
 void SOSSolver::setGamma(const double gamma)
 {
+
+    double expFac = exp(m_gamma - gamma);
+
+    m_concentration = exp(gamma - dim()*alpha());
+
     if (hasStarted())
     {
-        double expFac = exp(m_gamma - gamma);
+        BADAss(expFac, ==, expFac);
 
         for (uint x = 0; x < length(); ++x)
         {
@@ -780,7 +786,6 @@ void SOSSolver::setGamma(const double gamma)
     }
 
     m_gamma = gamma;
-
 }
 
 void SOSSolver::setConcentration(const double concentration)

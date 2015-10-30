@@ -4,7 +4,6 @@
 #include "sossolver.h"
 
 #include "Events/diffusion/diffusion.h"
-#include "Events/diffusion/constantconcentration.h"
 
 #include "Events/confiningsurface/confiningsurface.h"
 
@@ -29,7 +28,7 @@ double DissolutionDeposition::calculateDepositionRate() const
 
     if (!solver().diffusionEvent().hasStarted())
     {
-        return ConstantConcentration::constantDepositionRate();
+        return 1.0;
     }
 
     return solver().diffusionEvent().depositionRate(x(), y());

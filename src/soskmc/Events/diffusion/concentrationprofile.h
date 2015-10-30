@@ -15,11 +15,6 @@ public:
     ConcentrationProfile(SOSSolver &solver, funcType profileFunction);
     virtual ~ConcentrationProfile();
 
-    static double constantDepositionRate()
-    {
-        return 1.0;
-    }
-
 private:
 
     const funcType m_profileFunction;

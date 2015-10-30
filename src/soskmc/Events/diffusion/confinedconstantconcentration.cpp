@@ -26,14 +26,23 @@ void ConfinedConstantConcentration::registerHeightChange(const uint x,
 void ConfinedConstantConcentration::setupInitialConditions()
 {
     m_V0 = solver().freeVolume();
-    m_c0 = solver().concentration();
+    m_N0 = solver().concentration()*m_V0;
 
     m_deltaSum = 0;
 }
 
 void ConfinedConstantConcentration::reset()
 {
-    double newConcentration = (m_c0*m_V0 - m_deltaSum)/(m_V0 - m_deltaSum);
+    //BADAss(m_deltaSum, <, m_N0, "Depleting the soltion is not supported in current model.");
 
-    solver().setConcentration(newConcentration);
+    if (m_deltaSum < m_N0)
+    {
+        solver().setConcentration((m_N0 - m_deltaSum)/(m_V0 - m_deltaSum));
+    }
+
+    else
+    {
+        //hack to allow depletion of solution
+        solver().setGamma(-10);
+    }
 }

@@ -2271,10 +2271,23 @@ class LatticediffSpeeds(DCVizPlotter):
 
     hugifyFonts = True
 
-    ceq = exp(-3)
-    h0 = 19
+    alpha = 1
+    h0 = 20
+    corr = False
 
-    figMap = {"f0": "subfigure", "f1" : "subfigure2"}
+    figMap = {"f0": "subfigure", "f1" : "subfigure2", "f2" : "subfigure3"}
+
+    def ceq(self):
+        return exp(-self.alpha*3)
+
+    def asympt(self, s0):
+        if self.corr:
+            ccorr = (1-1./(self.h0-1))
+            corr = ((s0 + 1)*ccorr - 1)/s0
+        else:
+            corr = 1
+
+        return s0*(self.h0-2)/(1/self.ceq() - 1)*corr
 
     def plot(self, data):
 
@@ -2284,31 +2297,43 @@ class LatticediffSpeeds(DCVizPlotter):
         all_conc = self.get_family_member_data(data, "concentrations")
         lengths = self.get_family_member_data(data, "lengths")
 
-        print all_conc.shape
+        if len(self.argv) > 1:
+            self.h0 = float(self.argv[0])
+            self.alpha = float(self.argv[1])
 
-        all_supersaturations = all_conc/self.ceq - 1
+        all_supersaturations = all_conc/self.ceq() - 1
 
-        print supersaturations
+        if "docorr" in self.argv:
+            self.corr = False
+
+        all_asympts = []
+        all_ss = []
 
         M = 0
         for i, supersaturation in enumerate(supersaturations):
 
-            s0 = all_conc[i, 0]/self.ceq - 1
+            s0 = all_supersaturations[i, 0]
             if supersaturation != s0:
                 print "ERRAH", supersaturation, s0
 
-            if len(self.argv) != 0:
+            if "flip" in self.argv:
                 sfac = np.sign(supersaturation)
             else:
                 sfac = 1
 
-            point = sfac*s0*self.h0/(1/self.ceq - 1)
+            asympt = self.asympt(s0)
+            point = sfac*asympt
 
             l = lengths[i]
 
             T = all_times[i, :l]
+
+            if (T != T).any():
+                print "NAN IN T"
+                T = np.arange(len(T))
+
             H = sfac*all_heights[i, :l]
-            label = r"$\Omega=%.2f$" % s0
+            label = r"$\Omega=%.2f$" % supersaturation
             m = T[-1]*1.05
 
             self.subfigure.scatter(0.9*m, point)
@@ -2317,14 +2342,20 @@ class LatticediffSpeeds(DCVizPlotter):
 
             self.subfigure2.plot(T, all_supersaturations[i, :l])
 
+            all_asympts.append(H[(3*len(H))/4:].mean())
+            all_ss.append(s0)
+
             if m > M:
                 M = m
+
+        self.subfigure3.plot(all_ss, all_asympts, "k*")
+
+        ss = np.linspace(supersaturations.min(), supersaturations.max())
+        self.subfigure3.plot(ss, self.asympt(ss), "r--")
 
         self.subfigure.set_xlim(0, M*1.3)
         self.subfigure.set_xlabel("t")
         self.subfigure.set_ylabel("h")
-        #lg = self.subfigure.legend(loc="upper left", numpoints=1, handlelength=0.5, ncol=3, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
-        #lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
     def kf(self, s, a):
         return -a*np.vectorize(self.kw)(s)

@@ -46,10 +46,16 @@ def main():
         supersaturation = data.attrs["supersaturation"]\
 
         heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
+        heights -= heights[0]
+
         conc = parser.get_ignis_data(data, "Concentration")[::every].copy()
-        time = parser.get_ignis_data(data, "Time")
+
+        time = parser.get_ignis_data(data, "Time")[::every].copy()
+
         time -= time[0]
-        time = time[::every].copy()
+
+        if (supersaturation - conc[0]/np.exp(-3*data.attrs["alpha"]) + 1) > 1E-10:
+            print "ERROR SUPERSAT"
 
         i = supersaturations.index(supersaturation)
 
@@ -66,9 +72,8 @@ def main():
 
     for i, supersaturation in enumerate(supersaturations):
 
-        t, h = combinators[i].intercombine("Time", "AverageHeight")
-        t, c = combinators[i].intercombine("Time", "Concentration")
-
+        t, h = combinators[i].mean("Time", "AverageHeight")
+        t, c = combinators[i].mean("Time", "Concentration")
 
         l = len(t)
 
@@ -78,7 +83,7 @@ def main():
         all_heights[i, :l] = h
         all_conc[i, :l] = c
 
-        print "\r%d/%d" % (i+1, len(supersaturations))
+        print "\r%d/%d" % (i+1, len(supersaturations)),
         sys.stdout.flush()
 
     print

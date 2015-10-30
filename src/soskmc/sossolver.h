@@ -83,7 +83,7 @@ public:
 
     double concentration() const
     {
-        return exp(gamma() - dim()*alpha());
+        return m_concentration;
     }
 
     const imat &heights() const
@@ -266,11 +266,13 @@ private:
 
     const double m_alpha;
     double m_gamma;
+    double m_concentration;
 
     imat m_heights;
     umat m_nNeighbors;
 
     double m_averageHeight;
+
 
     field<DissolutionDeposition*> m_siteReactions;
 
