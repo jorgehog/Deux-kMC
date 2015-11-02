@@ -9,6 +9,7 @@ import sys
 from numpy import exp
 from scipy.stats import linregress
 from scipy.optimize import curve_fit
+from scipy.special import lambertw
 from matplotlib.ticker import FormatStrFormatter, MultipleLocator, FuncFormatter
 
 from mpl_toolkits.mplot3d import Axes3D
@@ -2273,9 +2274,10 @@ class LatticediffSpeeds(DCVizPlotter):
 
     alpha = 1
     h0 = 20
+    h0c = h0 - 2
     corr = False
 
-    figMap = {"f0": "subfigure", "f1" : "subfigure2", "f2" : "subfigure3"}
+    figMap = {"f0": "subfigure", "f1" : "subfigure2", "f2" : "subfigure3", "f3" : "subfigure4", "f4" : "subfigure5"}
 
     def ceq(self):
         return exp(-self.alpha*3)
@@ -2287,7 +2289,61 @@ class LatticediffSpeeds(DCVizPlotter):
         else:
             corr = 1
 
-        return s0*(self.h0-2)/(1/self.ceq() - 1)*corr
+        return s0*self.h0c/(1/self.ceq() - 1)*corr
+
+    def K_over_c(self, supersaturation):
+
+        hs = self.h0c*(1 - self.ceq()*(1 + supersaturation))
+
+        return hs/(1 - self.ceq())
+
+    def c(self, k):
+        return k*(1/self.ceq() - 1)
+
+    def xi(self, K_over_c):
+        kappa = self.h0c/K_over_c - 1
+        return kappa*exp(kappa)
+
+    def k_convert(self, heights, times, supersaturation):
+
+        if supersaturation == 0:
+            return np.zeros_like(times)
+
+        K_over_c = self.K_over_c(supersaturation)
+
+        G = (self.h0c - heights)/K_over_c - 1
+
+        xi = self.xi(K_over_c)
+
+        expterm = G*exp(G)/xi
+
+        core = np.log(expterm)
+
+        c = -K_over_c*core/times
+
+        k = c/(1/self.ceq() - 1)
+
+        return k
+
+    def analytical(self, times, supersaturation, k):
+
+        K_over_c = self.K_over_c(supersaturation)
+        c = self.c(k)
+
+        core = self.xi(K_over_c)*exp(-c*times/K_over_c)
+
+        return self.h0c - K_over_c*(1 + lambertw(core).real)
+
+    def find_k(self, h, t, supersaturation):
+
+        if supersaturation == 0:
+            return 1.0
+
+        analytical = lambda time, k: self.analytical(time, supersaturation, k)
+
+        p, _ = curve_fit(analytical, t, h, (1.0))
+
+        return p[0]
 
     def plot(self, data):
 
@@ -2300,6 +2356,8 @@ class LatticediffSpeeds(DCVizPlotter):
         if len(self.argv) > 1:
             self.h0 = float(self.argv[0])
             self.alpha = float(self.argv[1])
+
+            self.h0c = self.h0 - 2
 
         all_supersaturations = all_conc/self.ceq() - 1
 
@@ -2321,7 +2379,7 @@ class LatticediffSpeeds(DCVizPlotter):
             else:
                 sfac = 1
 
-            asympt = self.asympt(s0)
+            asympt = self.asympt(supersaturation)
             point = sfac*asympt
 
             l = lengths[i]
@@ -2338,15 +2396,26 @@ class LatticediffSpeeds(DCVizPlotter):
 
             self.subfigure.scatter(0.9*m, point)
             self.subfigure.plot(T, H, label=label)
+
+            kval = self.find_k(H, T, supersaturation)
+
+            self.subfigure.plot(T, self.analytical(T, supersaturation, kval))
             self.subfigure.text(m, H[l/3:-l/3].mean(), label)
 
             self.subfigure2.plot(T, all_supersaturations[i, :l])
 
             all_asympts.append(H[(3*len(H))/4:].mean())
-            all_ss.append(s0)
+            all_ss.append(supersaturation)
 
             if m > M:
                 M = m
+
+            self.subfigure4.plot(T[1:], self.k_convert(H[1:], T[1:], supersaturation))
+
+            dh = np.diff(all_heights[i, :l], 1)
+            dh /= T[1:] - T[:-1]
+            self.subfigure5.plot(all_supersaturations[i, :l][:-1], dh)
+
 
         self.subfigure3.plot(all_ss, all_asympts, "k*")
 
@@ -2356,6 +2425,8 @@ class LatticediffSpeeds(DCVizPlotter):
         self.subfigure.set_xlim(0, M*1.3)
         self.subfigure.set_xlabel("t")
         self.subfigure.set_ylabel("h")
+
+
 
     def kf(self, s, a):
         return -a*np.vectorize(self.kw)(s)
