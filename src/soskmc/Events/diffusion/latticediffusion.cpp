@@ -443,6 +443,13 @@ void LatticeDiffusion::execute()
 
 void LatticeDiffusion::setupInitialConditions()
 {
+
+    //already initialized particles
+    if (numberOfDiffusionReactions() != 0)
+    {
+        return;
+    }
+
     //subtract area from volume since we do not initiate surface particles
     //add a random number such that if we get 3.3 particles, there is a 0.3 chance to get 3 + 1.
     const uint nLatticeParticles = solver().freeVolume()*solver().concentration() + rng.uniform();

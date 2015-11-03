@@ -24,3 +24,5 @@
 #include "../src/soskmc/Events/dumpsystem.h"
 
 #include "../src/soskmc/averageheightboundary.h"
+
+#include "../src/soskmc/sosdiffusionreaction.h"

@@ -2275,7 +2275,7 @@ class LatticediffSpeeds(DCVizPlotter):
     alpha = 1
     h0 = 20
     h0c = h0 - 2
-    corr = False
+    plot_analytical = True
 
     figMap = {"f0": "subfigure",
               "f1" : "subfigure2",
@@ -2288,13 +2288,7 @@ class LatticediffSpeeds(DCVizPlotter):
         return exp(-self.alpha*3)
 
     def asympt(self, s0):
-        if self.corr:
-            ccorr = (1-1./(self.h0-1))
-            corr = ((s0 + 1)*ccorr - 1)/s0
-        else:
-            corr = 1
-
-        return s0*self.h0c/(1/self.ceq() - 1)*corr
+        return s0*self.h0c/(1/self.ceq() - 1)
 
     def K_over_c(self, supersaturation):
 
@@ -2339,12 +2333,36 @@ class LatticediffSpeeds(DCVizPlotter):
 
         return self.h0c - K_over_c*(1 + lambertw(core).real)
 
+    def analytical_ss(self, times, supersaturation, k):
+
+        K_over_c = self.K_over_c(supersaturation)
+
+        c_over_k =  1/self.ceq() - 1
+
+        c = self.c(k)
+
+        core = self.xi(K_over_c)*exp(-c*times/K_over_c)
+
+        return c_over_k/(1 + 1/lambertw(core).real)
+
+
     def find_k(self, h, t, supersaturation):
 
         if supersaturation == 0:
             return np.nan
 
         analytical = lambda time, k: self.analytical(time, supersaturation, k)
+
+        p, _ = curve_fit(analytical, t, h, (1.0))
+
+        return p[0]
+
+    def find_k2(self, h, t, supersaturation):
+
+        if supersaturation == 0:
+            return np.nan
+
+        analytical = lambda time, k: self.analytical_ss(time, supersaturation, k)
 
         p, _ = curve_fit(analytical, t, h, (1.0))
 
@@ -2366,8 +2384,8 @@ class LatticediffSpeeds(DCVizPlotter):
 
         all_supersaturations = all_conc/self.ceq() - 1
 
-        if "docorr" in self.argv:
-            self.corr = False
+        if "noanal" in self.argv:
+            self.plot_analytical = False
 
         all_asympts = []
         all_ss = []
@@ -2375,9 +2393,6 @@ class LatticediffSpeeds(DCVizPlotter):
 
         M = 0
         for i, supersaturation in enumerate(supersaturations):
-
-            if abs(supersaturation) == 0.8:
-                continue
 
             s0 = all_supersaturations[i, 0]
             if supersaturation != s0:
@@ -2388,7 +2403,7 @@ class LatticediffSpeeds(DCVizPlotter):
             else:
                 sfac = 1
 
-            asympt = self.asympt(supersaturation)
+            asympt = self.asympt(s0)
             point = sfac*asympt
 
             l = lengths[i]
@@ -2400,33 +2415,49 @@ class LatticediffSpeeds(DCVizPlotter):
                 T = np.arange(len(T))
 
             H = sfac*all_heights[i, :l]
-            label = r"$\Omega=%.2f$" % supersaturation
+            label = r"$\Omega=%.2f$" % s0
             m = T[-1]*1.05
 
             self.subfigure.scatter(0.9*m, point)
             self.subfigure.plot(T, H, label=label)
 
-            kval = self.find_k(H[1:l/4], T[1:l/4], supersaturation)
-
-            self.subfigure.plot(T, self.analytical(T, supersaturation, kval))
             self.subfigure.text(m, H[l/3:-l/3].mean(), label)
 
-            self.subfigure2.plot(T, all_supersaturations[i, :l])
+            SS = all_supersaturations[i, :l]
+            self.subfigure2.plot(T, SS)
 
-            all_asympts.append(H[(3*len(H))/4:].mean())
-            all_ss.append(supersaturation)
-            all_k.append(kval)
+            if supersaturation == 0:
+                continue
 
             if m > M:
                 M = m
 
-            self.subfigure4.plot(T[1:], self.k_convert(H[1:], T[1:], supersaturation))
+            self.subfigure4.plot(self.k_convert(sfac*H[1:], T[1:], s0)[1:], label=label)
+            self.subfigure4.set_ylim(0, 1)
+
 
             dh = np.diff(all_heights[i, :l], 1)
             dh /= T[1:] - T[:-1]
-            self.subfigure5.plot(all_supersaturations[i, :l][:-1], dh)
+            self.subfigure5.plot(SS[:-1], dh)
 
+            ls = l/2
 
+            kval1 = self.find_k(sfac*H[1:ls], T[1:ls], s0)
+            kval2 = self.find_k2(SS[1:ls], T[1:ls], s0)
+
+            kval = 0.5*(kval1 + kval2)
+
+            if self.plot_analytical:
+                self.subfigure.plot(T, self.analytical(T, s0, kval1))
+                self.subfigure2.plot(T, self.analytical_ss(T, s0, kval2))
+                self.subfigure.scatter(T[ls], 0, s=20)
+                self.subfigure2.scatter(T[ls], 0, s=20)
+
+            all_asympts.append(sfac*H[ls:].mean())
+            all_ss.append(s0)
+            all_k.append(kval)
+
+        self.subfigure4.legend()
         self.subfigure3.plot(all_ss, all_asympts, "k*")
 
         ss = np.linspace(supersaturations.min(), supersaturations.max())
@@ -2439,77 +2470,8 @@ class LatticediffSpeeds(DCVizPlotter):
         self.subfigure6.plot(all_ss, all_k, "kx")
         self.subfigure6.set_xlabel(r"$\Omega$")
         self.subfigure6.set_ylabel("k")
-
-
-    def kf(self, s, a):
-        return -a*np.vectorize(self.kw)(s)
-
-    def kw(self, s):
-
-        if s >= 0:
-            return 0.14
-        else:
-            return 0.53
-
-class cconcdiffSpeeds(DCVizPlotter):
-
-    nametag = "cconc_(\w+)\.npy"
-
-    isFamilyMember = True
-
-    hugifyFonts = True
-
-    figMap = {"figure" : "subfigure", "figure2" : "subfigure2"}
-
-    ceq = exp(-3)
-    h0 = 20
-
-    def plot(self, data):
-
-        supersaturations = self.get_family_member_data(data, "supersaturations")
-        all_heights = self.get_family_member_data(data, "heights")
-        all_times = self.get_family_member_data(data, "times")
-        conc = self.get_family_member_data(data, "conc")
-        lengths = self.get_family_member_data(data, "lengths")
-
-        M = 0
-        pad = 0.5
-        for i, supersaturation in enumerate(supersaturations):
-
-            if len(self.argv) != 0:
-                sfac = np.sign(supersaturation)
-            else:
-                sfac = 1
-
-            l = lengths[i]
-
-            ss = conc[i, :l]/self.ceq - 1
-            T = all_times[i, :l]/(ss + 1)
-            H = sfac*all_heights[i, :l]
-            label = r"$\Omega(0)=%.2f$" % supersaturation
-            m = T[-1]*1.05
-
-            point = supersaturation*self.h0/(1/self.ceq - 1)
-
-            self.subfigure.scatter(0.9*m, point, s=20)
-            self.subfigure.plot(T, H, label=label)
-            self.subfigure.text(m, H[l/3:-l/3].mean(), label)
-
-            self.subfigure2.plot(T, ss, label=label)
-
-            if m > M:
-                M = m
-
-            self.subfigure2.text(-0.9*pad*T[-1], ss[0], label)
-
-        self.subfigure.set_xlim(0, M*1.3)
-        self.subfigure.set_xlabel("t")
-        self.subfigure.set_ylabel("h")
-
-        self.subfigure2.set_xlabel("t")
-        self.subfigure2.set_ylabel(r"$\Omega$")
-        self.subfigure2.set_xlim(-pad*T[-1], 1.1*T[-1])
-
+        self.subfigure6.set_ybound(0)
+        self.subfigure6.set_xlim(-1, 1)
 
 class ignisSOS(DCVizPlotter):
 

@@ -49,6 +49,8 @@ class LatticeDiffusion : public virtual Diffusion
 {
 public:
 
+    typedef unordered_map<indices, SOSDiffusionReaction*> map_type;
+
     LatticeDiffusion(SOSSolver &solver);
     ~LatticeDiffusion();
 
@@ -87,10 +89,15 @@ public:
 
     vector<SOSDiffusionReaction *> particlesSurrounding(const uint x, const uint y, const int z) const;
 
+    const map_type &diffusionReactionsMap() const
+    {
+        return m_diffusionReactionsMap;
+    }
+
 
 protected:
 
-    unordered_map<indices, SOSDiffusionReaction*> m_diffusionReactionsMap;
+    map_type m_diffusionReactionsMap;
 
 private:
 

@@ -450,7 +450,9 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         ConfiningSurface *conf;
         uint nc;
 
-        if (diffusionInt == 2 || diffusionInt == 7)
+        bool onlattice = diffusionInt == 2 || diffusionInt == 7;
+
+        if (onlattice)
         {
             conc = new LatticeDiffusionRescaling(thermSolver);
             conf = new FixedSurface(thermSolver, solver.confiningSurfaceEvent().height());
@@ -479,6 +481,16 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         lattice.eventLoop(nc);
 
         solver.setHeights(thermSolver.heights(), false);
+
+        if (onlattice)
+        {
+            LatticeDiffusion* diffEvent = dynamic_cast<LatticeDiffusion*>(&solver.diffusionEvent());
+            for (const auto &m : dynamic_cast<LatticeDiffusionRescaling*>(conc)->diffusionReactionsMap())
+            {
+                SOSDiffusionReaction *r = m.second;
+                diffEvent->addDiffusionReactant(r->x(), r->y(), r->z());
+            }
+        }
 
         const double &hPrev = solver.confiningSurfaceEvent().height();
         const double hMean = accu(thermSolver.heights())/double(L*W);

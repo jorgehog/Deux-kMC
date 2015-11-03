@@ -67,8 +67,8 @@ def main():
 
     for i, supersaturation in enumerate(supersaturations):
 
-        t, h = combinators[i].intercombine("Time", "AverageHeight")
-        t2, c = combinators[i].intercombine("Time", "Concentration")
+        t, h = combinators[i].mean("Time", "AverageHeight")
+        t2, c = combinators[i].mean("Time", "Concentration")
 
         if not (t == t2).all():
             sys.exit("Failure")
