@@ -81,10 +81,10 @@ int main(int argv, char** argc)
     const uint &resetInt = getSetting<uint>(root, "reset");
     const bool reset = resetInt == 1;
 
-    const uint &nSamplesMuEq = getSetting<uint>(root, "nSamplesMuEq");
-    const uint &nSamplesMu = getSetting<uint>(root, "nSamplesMu");
+    const uint &nSamplesGammaEq = getSetting<uint>(root, "nSamplesGammaEq");
+    const uint &nSamplesGamma = getSetting<uint>(root, "nSamplesGamma");
 
-    const double &muShift = getSetting<double>(root, "muShift");
+    const double &gammaShift = getSetting<double>(root, "muShift");
 
     const uint &nCycles = getSetting<uint>(root, "nCycles");
     const uint &thermalization = getSetting<uint>(root, "thermalization");
@@ -184,6 +184,10 @@ int main(int argv, char** argc)
     {
         diffusion = new ConfinedConstantConcentration(solver);
     }
+    else if (diffuseInt == 7)
+    {
+        diffusion = new LatticeDiffusionRescaling(solver);
+    }
     else
     {
         cout << "Invalid diffusion: " << diffuseInt << endl;
@@ -203,8 +207,8 @@ int main(int argv, char** argc)
     AutoCorrelationHeight autoCorrelation(solver, xCorrSpan, yCorrSpan);
     autoCorrelation.setOnsetTime(thermalization);
 
-    EqMu eqMu(solver);
-    Equilibriater equilibriater(solver, eqMu, nSamplesMuEq, nSamplesMu);
+    EqGamma eqGamma(solver);
+    Equilibriater equilibriater(solver, eqGamma, nSamplesGammaEq, nSamplesGamma);
 
     DumpSystem systemDumper(solver, dumpInterval, path);
     if (dumpParticles)
@@ -215,7 +219,7 @@ int main(int argv, char** argc)
 #ifndef NDEBUG
     RateChecker checker(solver);
     lattice.addEvent(checker);
-    eqMu.setDependency(checker);
+    eqGamma.setDependency(checker);
 #endif
 
     lattice.enableOutput(ignisOutput, nCyclesPerOutput);
@@ -269,7 +273,7 @@ int main(int argv, char** argc)
     //---Running simulation
 
     EquilibrationOrganizer eqOrg(lattice, equilibriate, reset, true);
-    eqOrg.prepare({&eqMu, &equilibriater}, {&averageHeight, confiningSurface});
+    eqOrg.prepare({&eqGamma, &equilibriater}, {&averageHeight, confiningSurface});
 
     if (isolateEvents != 0)
     {
@@ -290,9 +294,12 @@ int main(int argv, char** argc)
     lattice.eventLoop(nCycles);
 
     equilibriater.finalizeAverages();
-    double muEq = equilibriater.averageMu();
+    double gammaEq = equilibriater.averageGamma();
 
-    solver.setGamma(muEq + muShift);
+    if (equilibriate && reset)
+    {
+        solver.setGamma(gammaEq + gammaShift);
+    }
 
     eqOrg.reset(nCycles);
 
@@ -346,9 +353,9 @@ int main(int argv, char** argc)
 
     simRoot["useConcEquil"] = equilibriateInt;
     simRoot["reset"] = resetInt;
-    simRoot["muEq"] = muEq;
-    simRoot["muEqError"] = equilibriater.error();
-    simRoot["muShift"] = muShift;
+    simRoot["gammaEq"] = gammaEq;
+    simRoot["gammaEqError"] = equilibriater.error();
+    simRoot["gammaShift"] = gammaShift;
 
     simRoot["storeIgnisData"] = storeIgnisDataInt;
 

@@ -14,7 +14,7 @@ public:
 public:
     void execute()
     {
-        //pass
+        setValue(height());
     }
 
     // ConfiningSurface interface

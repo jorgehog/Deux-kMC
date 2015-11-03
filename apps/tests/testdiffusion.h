@@ -41,16 +41,18 @@ TEST_F(SOSkMCTest, affected_set)
     m_diffusionEvent = diffusionEvent; SetUp_yo();
 
     Dummy r;
-
-    m_solver->registerAffectedReaction(&r);
-
-    EXPECT_EQ(1, solver().affectedReactions().size());
-
-    m_solver->registerAffectedReaction(&r);
-
-    EXPECT_EQ(1, solver().affectedReactions().size());
-
     Dummy r2;
+
+    m_solver->addReaction(&r);
+    m_solver->addReaction(&r2);
+
+    m_solver->registerAffectedReaction(&r);
+
+    EXPECT_EQ(1, solver().affectedReactions().size());
+
+    m_solver->registerAffectedReaction(&r);
+
+    EXPECT_EQ(1, solver().affectedReactions().size());
 
     m_solver->registerAffectedReaction(&r2);
 

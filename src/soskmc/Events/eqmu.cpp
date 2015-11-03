@@ -5,29 +5,29 @@
 #include "miscevents.h"
 
 
-void EqMu::initialize()
+void EqGamma::initialize()
 {
     resetCounters();
 
     update();
 }
 
-void EqMu::execute()
+void EqGamma::execute()
 {
-    setValue(dMu());
+    setValue(dGamma());
 }
 
-void EqMu::reset()
+void EqGamma::reset()
 {
     update();
 }
 
-void EqMu::restart()
+void EqGamma::restart()
 {
     resetCounters();
 }
 
-void EqMu::update()
+void EqGamma::update()
 {
     double localDissolutionRate = 0;
 
@@ -50,6 +50,6 @@ void EqMu::update()
     double avgDissolutionRate = m_accuDissolutionRate/m_totalTime;
     const double avgDepositionRate = 1.0;
 
-    m_dMu = avgDissolutionRate/avgDepositionRate;
+    m_dGamma = avgDissolutionRate/avgDepositionRate;
 
 }

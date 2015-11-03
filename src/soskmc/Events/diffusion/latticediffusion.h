@@ -58,6 +58,12 @@ public:
 
     void removeDiffusionReactant(const int x, const int y, const int z, bool _delete = true);
 
+    void removeDiffusionReactant(const uint index, bool _delete = true);
+
+    void removeRandomParticles(const uint N, bool _delete = true);
+
+    void addRandomParticles(const uint N, bool setRate = false);
+
     SOSDiffusionReaction *diffusionReaction(const int x, const int y, const int z) const;
 
     void clearDiffusionReactions();
@@ -69,7 +75,7 @@ public:
 
     void deleteQueuedReactions();
 
-    void attachToSurface(const uint x, const uint y, const int z, SOSDiffusionReaction *reaction);
+    void attachToSurface(const uint x, const uint y, const int z);
 
     void registerAffectedAround(const uint x, const uint y, const int z);
 
@@ -81,11 +87,12 @@ public:
 
     vector<SOSDiffusionReaction *> particlesSurrounding(const uint x, const uint y, const int z) const;
 
-private:
 
-    vector<SOSDiffusionReaction*> dep_m_diffusionReactions;
+protected:
 
     unordered_map<indices, SOSDiffusionReaction*> m_diffusionReactionsMap;
+
+private:
 
     vector<SOSDiffusionReaction*> m_deleteQueue;
 

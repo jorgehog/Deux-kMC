@@ -3,12 +3,12 @@
 #include "sosevent.h"
 
 
-class EqMu : public SOSEvent
+class EqGamma : public SOSEvent
 {
 public:
 
-    EqMu(const SOSSolver &solver) :
-        SOSEvent(solver, "EqMu", "", true, true),
+    EqGamma(const SOSSolver &solver) :
+        SOSEvent(solver, "EqGamma", "", true, true),
         m_accuNeighbours(0),
         m_accuDissolutionRate(0),
         m_totalTime(0)
@@ -16,7 +16,7 @@ public:
 
     }
 
-    ~EqMu()
+    ~EqGamma()
     {
 
     }
@@ -29,14 +29,14 @@ public:
 
     void restart();
 
-    double dMu() const
+    double dGamma() const
     {
-        return log(m_dMu);
+        return log(m_dGamma);
     }
 
 private:
 
-    double m_dMu;
+    double m_dGamma;
 
     double m_accuNeighbours;
     double m_accuDissolutionRate;

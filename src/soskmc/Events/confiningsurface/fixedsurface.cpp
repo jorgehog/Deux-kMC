@@ -4,7 +4,7 @@
 
 FixedSurface::FixedSurface(SOSSolver &solver,
                            const double height) :
-    ConfiningSurface(solver, "fixedSurface")
+    ConfiningSurface(solver, "FixedSurface", "", true, true)
 {
     setHeight(height);
 }

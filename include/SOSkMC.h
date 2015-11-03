@@ -15,6 +15,7 @@
 #include "../src/soskmc/Events/diffusion/firstpassagecontinuum.h"
 #include "../src/soskmc/Events/diffusion/multiscale.h"
 #include "../src/soskmc/Events/diffusion/confinedconstantconcentration.h"
+#include "../src/soskmc/Events/diffusion/latticediffusionrescaling.h"
 
 #include "../src/soskmc/Events/eqmu.h"
 #include "../src/soskmc/Events/equilibriater.h"

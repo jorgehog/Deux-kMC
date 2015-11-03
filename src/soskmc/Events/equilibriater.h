@@ -2,26 +2,26 @@
 
 #include "sosevent.h"
 
-class EqMu;
+class EqGamma;
 
 class Equilibriater : public SOSEvent
 {
 public:
 
     Equilibriater(SOSSolver &mutexSolver,
-                  EqMu &eqMuEvent,
-                  const uint nSamplesMuEq = 100,
-                  const uint nSamplesMu = 1000);
+                  EqGamma &eqMuEvent,
+                  const uint nSamplesGammaEq = 100,
+                  const uint nSamplesGamma = 1000);
 
     void initialize();
 
     void execute();
 
-    const double &averageMu() const
+    const double &averageGamma() const
     {
         BADAssBool(m_finalized);
 
-        return m_averageMu;
+        return m_averageGamma;
     }
 
     const double &error() const
@@ -42,16 +42,16 @@ private:
 
     SOSSolver &m_mutexSolver;
 
-    EqMu &m_eqMuEvent;
+    EqGamma &m_eqGammaEvent;
 
-    const uint m_nSamplesMuEq;
-    const uint m_nSamplesMu;
+    const uint m_nSamplesGammaEq;
+    const uint m_nSamplesGamma;
 
     bool m_doAverage;
-    double m_averageMu;
-    double m_averageMu2Sum;
+    double m_averageGamma;
+    double m_averageGamma2Sum;
     double m_error;
-    uint m_averageMuCount;
+    uint m_averageGammaCount;
 
     bool m_finalized;
 

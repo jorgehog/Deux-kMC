@@ -2277,7 +2277,12 @@ class LatticediffSpeeds(DCVizPlotter):
     h0c = h0 - 2
     corr = False
 
-    figMap = {"f0": "subfigure", "f1" : "subfigure2", "f2" : "subfigure3", "f3" : "subfigure4", "f4" : "subfigure5"}
+    figMap = {"f0": "subfigure",
+              "f1" : "subfigure2",
+              "f2" : "subfigure3",
+              "f3" : "subfigure4",
+              "f4" : "subfigure5",
+              "f5" : "subfigure6"}
 
     def ceq(self):
         return exp(-self.alpha*3)
@@ -2337,7 +2342,7 @@ class LatticediffSpeeds(DCVizPlotter):
     def find_k(self, h, t, supersaturation):
 
         if supersaturation == 0:
-            return 1.0
+            return np.nan
 
         analytical = lambda time, k: self.analytical(time, supersaturation, k)
 
@@ -2366,9 +2371,13 @@ class LatticediffSpeeds(DCVizPlotter):
 
         all_asympts = []
         all_ss = []
+        all_k = []
 
         M = 0
         for i, supersaturation in enumerate(supersaturations):
+
+            if abs(supersaturation) == 0.8:
+                continue
 
             s0 = all_supersaturations[i, 0]
             if supersaturation != s0:
@@ -2397,7 +2406,7 @@ class LatticediffSpeeds(DCVizPlotter):
             self.subfigure.scatter(0.9*m, point)
             self.subfigure.plot(T, H, label=label)
 
-            kval = self.find_k(H, T, supersaturation)
+            kval = self.find_k(H[1:l/4], T[1:l/4], supersaturation)
 
             self.subfigure.plot(T, self.analytical(T, supersaturation, kval))
             self.subfigure.text(m, H[l/3:-l/3].mean(), label)
@@ -2406,6 +2415,7 @@ class LatticediffSpeeds(DCVizPlotter):
 
             all_asympts.append(H[(3*len(H))/4:].mean())
             all_ss.append(supersaturation)
+            all_k.append(kval)
 
             if m > M:
                 M = m
@@ -2426,6 +2436,9 @@ class LatticediffSpeeds(DCVizPlotter):
         self.subfigure.set_xlabel("t")
         self.subfigure.set_ylabel("h")
 
+        self.subfigure6.plot(all_ss, all_k, "kx")
+        self.subfigure6.set_xlabel(r"$\Omega$")
+        self.subfigure6.set_ylabel("k")
 
 
     def kf(self, s, a):
@@ -2502,10 +2515,7 @@ class ignisSOS(DCVizPlotter):
 
     nametag = "ignisSOS\.ign"
 
-
     def plot(self, data):
-
-        print self.loader.get_metadata()
 
         name_string, l, w = self.loader.get_metadata()
 
@@ -2515,33 +2525,19 @@ class ignisSOS(DCVizPlotter):
         if targetname in names:
             self.scan_for_name(data, targetname, names)
         else:
-
-            if targetname == "concentration":
-                hi = names.index("AverageHeight")
-                li = names.index("latticeDiffusion")
-
-                c0 = exp(-3)
-                L, W, H = 20, 20, 20
-
-                conc = (data[li]/(L*W*(H - data[hi] - 2)))/c0
-                cut = int(self.argv[1])
-
-                self.subfigure.plot(conc)
-                trail = np.cumsum(conc[cut:])/np.cumsum(np.ones_like(conc)[cut:])
-                self.subfigure.plot(np.arange(len(conc))[cut:], trail, "r--")
-                print trail[-1]
-                self.subfigure.set_ylabel("concentration")
-
-            else:
-
-                raise RuntimeError("Invalid option %s." % targetname)
+            raise RuntimeError("Invalid option %s." % targetname)
 
     def scan_for_name(self, data, targetname, names):
+
+        try:
+            every = int(self.argv[1])
+        except:
+            every = 1
 
         for _data, name in zip(data, names):
 
             if name == targetname:
-                self.subfigure.plot(_data)
+                self.subfigure.plot(_data[::every])
                 self.subfigure.set_ylabel(name)
 
                 return

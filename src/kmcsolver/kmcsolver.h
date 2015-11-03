@@ -69,6 +69,8 @@ public:
 
     void removeReaction(Reaction *reaction);
 
+    void removeIfAffected(Reaction *reaction);
+
     uint numberOfReactions() const
     {
         return m_reactions.size();
@@ -76,6 +78,7 @@ public:
 
     void registerAffectedReaction(Reaction *reaction)
     {
+        BADAss(std::find(m_reactions.begin(), m_reactions.end(), reaction), !=, m_reactions.end(), "affecting reaction which is not in reaction list.");
         m_affectedReactions.insert(reaction);
     }
 

@@ -349,7 +349,7 @@ void setBoundariesFromIDs(SOSSolver *solver,
                            {bottomBoundary, topBoundary}});
 }
 
-void initializeSurface(SOSSolver &solver, const string type)
+void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt = 0)
 {
     int maxSpan = solver.confiningSurfaceEvent().height()/10;
 
@@ -446,8 +446,23 @@ void initializeSurface(SOSSolver &solver, const string type)
     {
         Lattice lattice;
         SOSSolver thermSolver(L, W, solver.alpha(), solver.gamma());
-        ConstantConcentration conc(thermSolver);
-        NoConfinement conf(thermSolver);
+        Diffusion *conc;
+        ConfiningSurface *conf;
+        uint nc;
+
+        if (diffusionInt == 2 || diffusionInt == 7)
+        {
+            conc = new LatticeDiffusionRescaling(thermSolver);
+            conf = new FixedSurface(thermSolver, solver.confiningSurfaceEvent().height());
+            nc = 100000;
+        }
+
+        else
+        {
+            conc = new ConstantConcentration(thermSolver);
+            conf = new NoConfinement(thermSolver);
+            nc = 10000;
+        }
 
         setBoundariesFromIDs(&thermSolver, {0,0,0,0}, L, W);
 
@@ -461,14 +476,17 @@ void initializeSurface(SOSSolver &solver, const string type)
         lattice.enableProgressReport(false);
         lattice.enableEventValueStorage(false, false);
 
-        lattice.eventLoop(10000);
+        lattice.eventLoop(nc);
 
-        solver.setHeights(thermSolver.heights());
+        solver.setHeights(thermSolver.heights(), false);
 
         const double &hPrev = solver.confiningSurfaceEvent().height();
         const double hMean = accu(thermSolver.heights())/double(L*W);
 
         solver.confiningSurfaceEvent().setHeight(hPrev + hMean);
+
+        delete conc;
+        delete conf;
     }
 
     else if (type == "none")

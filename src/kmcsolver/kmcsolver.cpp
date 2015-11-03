@@ -84,13 +84,30 @@ void KMCSolver::addReaction(Reaction *reaction)
 
 void KMCSolver::removeReaction(const uint n)
 {
-    m_reactions.erase(m_reactions.begin() + n);
+    auto it = m_reactions.begin() + n;
+    Reaction *reaction = *it;
+
+    m_reactions.erase(it);
+
+    removeIfAffected(reaction);
 }
 
 void KMCSolver::removeReaction(Reaction *reaction)
 {
     auto &r = m_reactions;
     r.erase( std::remove( r.begin(), r.end(), reaction ), r.end() );
+
+    removeIfAffected(reaction);
+}
+
+void KMCSolver::removeIfAffected(Reaction *reaction)
+{
+    auto it = std::find(m_affectedReactions.begin(), m_affectedReactions.end(), reaction);
+
+    if (it != m_affectedReactions.end())
+    {
+        m_affectedReactions.erase(it);
+    }
 }
 
 double KMCSolver::getRandomLogNumber() const

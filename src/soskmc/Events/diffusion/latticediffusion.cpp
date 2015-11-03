@@ -34,6 +34,12 @@ LatticeDiffusion::~LatticeDiffusion()
 
 void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, bool _delete)
 {
+    BADAss(std::find(m_deleteQueue.begin(), m_deleteQueue.end(), reaction), ==, m_deleteQueue.end());
+    BADAssBool(isBlockedPosition(reaction->x(), reaction->y(), reaction->z()), "supposed to remove non existing particle", [&reaction] ()
+    {
+        BADAssSimpleDump(reaction->x(), reaction->y(), reaction->z());
+    });
+
     m_diffusionReactionsMap.erase(indices(reaction));
 
     solver().removeReaction(reaction);
@@ -59,6 +65,58 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 void LatticeDiffusion::removeDiffusionReactant(const int x, const int y, const int z, bool _delete)
 {
     removeDiffusionReactant(diffusionReaction(x, y, z), _delete);
+}
+
+void LatticeDiffusion::removeDiffusionReactant(const uint index, bool _delete)
+{
+    auto it = m_diffusionReactionsMap.begin();
+
+    std::advance(it, index);
+
+    removeDiffusionReactant((*it).second, _delete);
+}
+
+void LatticeDiffusion::removeRandomParticles(const uint N, bool _delete)
+{
+    uint n = 0;
+    while (n < N)
+    {
+        const uint which = rng.uniform()*numberOfDiffusionReactions();
+
+        removeDiffusionReactant(which, _delete);
+
+        n++;
+    }
+}
+
+void LatticeDiffusion::addRandomParticles(const uint N, bool setRate)
+{
+    const double hMax = solver().confiningSurfaceEvent().height();
+    const int zMin = solver().heights().min() + 1;
+
+    uint x0;
+    uint y0;
+    int z0;
+
+    uint n = 0;
+    while (n < N)
+    {
+        do
+        {
+            x0 = rng.uniform()*solver().length();
+            y0 = rng.uniform()*solver().width();
+            z0 = floor(zMin + rng.uniform()*(hMax - zMin));
+
+        } while(solver().isBlockedPosition(x0, y0, z0) ||
+                isBlockedPosition(x0, y0, z0) ||
+                solver().isSurfaceSite(x0, y0, z0));
+
+        addDiffusionReactant(x0, y0, z0, setRate);
+
+        BADAssBool(!solver().isSurfaceSite(x0, y0, z0));
+
+        n++;
+    }
 }
 
 SOSDiffusionReaction *LatticeDiffusion::diffusionReaction(const int x, const int y, const int z) const
@@ -104,19 +162,16 @@ void LatticeDiffusion::deleteQueuedReactions()
 
 void LatticeDiffusion::attachToSurface(const uint x,
                                        const uint y,
-                                       const int z,
-                                       SOSDiffusionReaction *reaction)
+                                       const int z)
 {
-    BADAssBool(solver().isSurfaceSite(x, y, z));
-
-    solver().registerHeightChange(x, y, 1);
-    removeDiffusionReactant(reaction, false);
-
-    int zAbove = z+1;
+    int zAbove = z;
     while (isBlockedPosition(x, y, zAbove))
     {
-        solver().registerHeightChange(x, y, 1);
+        BADAssBool(solver().isSurfaceSite(x, y, zAbove));
+        BADAssBool(isBlockedPosition(x, y, zAbove));
+
         removeDiffusionReactant(x, y, zAbove, false);
+        solver().registerHeightChange(x, y, 1);
         zAbove++;
     }
 }
@@ -370,6 +425,7 @@ void LatticeDiffusion::execute()
             reaction2 = m2.second;
             if (reaction != reaction2)
             {
+
                 bool equalX = reaction->x() == reaction2->x();
                 bool equalY = reaction->y() == reaction2->y();
                 bool equalZ = reaction->z() == reaction2->z();
@@ -387,36 +443,11 @@ void LatticeDiffusion::execute()
 
 void LatticeDiffusion::setupInitialConditions()
 {
-    const double hMax = solver().confiningSurfaceEvent().height();
-    const int zMin = solver().heights().min() + 1;
-
     //subtract area from volume since we do not initiate surface particles
     //add a random number such that if we get 3.3 particles, there is a 0.3 chance to get 3 + 1.
     const uint nLatticeParticles = solver().freeVolume()*solver().concentration() + rng.uniform();
 
-    uint x0;
-    uint y0;
-    int z0;
-
-    uint n = 0;
-    while (n < nLatticeParticles)
-    {
-        do
-        {
-            x0 = rng.uniform()*solver().length();
-            y0 = rng.uniform()*solver().width();
-            z0 = floor(zMin + rng.uniform()*(hMax - zMin));
-
-        } while(solver().isBlockedPosition(x0, y0, z0) ||
-                isBlockedPosition(x0, y0, z0) ||
-                solver().isSurfaceSite(x0, y0, z0));
-
-        addDiffusionReactant(x0, y0, z0, false);
-
-        BADAssBool(!solver().isSurfaceSite(x0, y0, z0));
-
-        n++;
-    }
+    addRandomParticles(nLatticeParticles);
 }
 
 
@@ -445,17 +476,20 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
 
     if (solver().isSurfaceSite(ux, uy, z))
     {
-        attachToSurface(ux, uy, z, reaction);
+        attachToSurface(ux, uy, z);
     }
+
+    else
+    {
+        solver().registerAffectedReaction(reaction);
+    }
+
 
     if (!(xOld == ux && yOld == uy))
     {
         solver().updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
         solver().updateConcentrationBoundaryIfOnBoundary(ux, uy);
     }
-
-    solver().registerAffectedReaction(reaction);
-
 }
 
 void LatticeDiffusion::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
@@ -530,15 +564,15 @@ void LatticeDiffusion::registerHeightChange(const uint x,
     //this can occur if the surface is changed so that it connects to a particle in the solution.
     else
     {
-        const int zSurface = solver().height(x, y) + 1;
-        SOSDiffusionReaction *r = diffusionReaction(x, y, zSurface);
+//        const int zSurface = solver().height(x, y) + 1;
+//        SOSDiffusionReaction *r = diffusionReaction(x, y, zSurface);
 
         registerAffectedAround(x, y, solver().height(x, y));
 
-        if (r != nullptr)
-        {
-            attachToSurface(x, y, zSurface, r);
-        }
+//        if (r != nullptr)
+//        {
+//            attachToSurface(x, y, zSurface, r);
+//        }
     }
 
 }
