@@ -2284,11 +2284,21 @@ class LatticediffSpeeds(DCVizPlotter):
               "f4" : "subfigure5",
               "f5" : "subfigure6"}
 
+    ceq_override = None
+
     def ceq(self):
-        return exp(-self.alpha*3)
+
+        if self.ceq_override is not None:
+            return self.ceq_override
+        else:
+            return exp(-self.alpha*3)
 
     def asympt(self, s0):
         return s0*self.h0c/(1/self.ceq() - 1)
+
+    def ceq_from_asympt(self, a, c0):
+
+        return (self.h0c*c0 - a)/(self.h0c - a)
 
     def K_over_c(self, supersaturation):
 
@@ -2337,7 +2347,7 @@ class LatticediffSpeeds(DCVizPlotter):
 
         K_over_c = self.K_over_c(supersaturation)
 
-        c_over_k =  1/self.ceq() - 1
+        c_over_k = 1/self.ceq() - 1
 
         c = self.c(k)
 
@@ -2353,7 +2363,7 @@ class LatticediffSpeeds(DCVizPlotter):
 
         analytical = lambda time, k: self.analytical(time, supersaturation, k)
 
-        p, _ = curve_fit(analytical, t, h, (1.0))
+        p, _ = curve_fit(analytical, t, h, (0.1))
 
         return p[0]
 
@@ -2364,9 +2374,33 @@ class LatticediffSpeeds(DCVizPlotter):
 
         analytical = lambda time, k: self.analytical_ss(time, supersaturation, k)
 
-        p, _ = curve_fit(analytical, t, h, (1.0))
+        p, _ = curve_fit(analytical, t, h, (0.1))
 
         return p[0]
+
+    def find_ks(self, h, t, supersaturation):
+
+        if supersaturation == 0:
+            return np.nan
+
+        analytical = lambda time, k, ss: self.analytical(time, ss, k)
+
+        p, _ = curve_fit(analytical, t, h, (1, supersaturation))
+
+        return p
+
+    def find_ks2(self, h, t, supersaturation):
+
+        if supersaturation == 0:
+            return np.nan
+
+        analytical = lambda time, k, ss: self.analytical_ss(time, ss, k)
+
+        p, _ = curve_fit(analytical, t, h, (1, supersaturation))
+
+        return p
+
+
 
     def plot(self, data):
 
@@ -2375,6 +2409,21 @@ class LatticediffSpeeds(DCVizPlotter):
         all_times = self.get_family_member_data(data, "times")
         all_conc = self.get_family_member_data(data, "concentrations")
         lengths = self.get_family_member_data(data, "lengths")
+
+        if "corr" in self.argv:
+
+            I0 = list(supersaturations).index(0)
+            l0 = lengths[I0]
+            h0 = all_heights[I0, :l0]
+            t0 = all_times[I0, :l0]
+            c0 = all_conc[I0, 0]
+
+            a = h0[(3*l0)/5:(4*l0)/5].mean()
+
+            print self.ceq()
+            self.ceq_override = self.ceq_from_asympt(a, c0)
+            print self.ceq()
+
 
         if len(self.argv) > 1:
             self.h0 = float(self.argv[0])
@@ -2394,6 +2443,11 @@ class LatticediffSpeeds(DCVizPlotter):
         M = 0
         for i, supersaturation in enumerate(supersaturations):
 
+            l = lengths[i]
+
+            self.ceq_override = all_conc[i, l/2:l].mean()
+            all_supersaturations[i, :l] = all_conc[i, :l]/self.ceq() - 1
+
             s0 = all_supersaturations[i, 0]
             if supersaturation != s0:
                 print "ERRAH", supersaturation, s0
@@ -2405,8 +2459,6 @@ class LatticediffSpeeds(DCVizPlotter):
 
             asympt = self.asympt(s0)
             point = sfac*asympt
-
-            l = lengths[i]
 
             T = all_times[i, :l]
 
@@ -2440,7 +2492,7 @@ class LatticediffSpeeds(DCVizPlotter):
             dh /= T[1:] - T[:-1]
             self.subfigure5.plot(SS[:-1], dh)
 
-            ls = l/2
+            ls = l-1
 
             kval1 = self.find_k(sfac*H[1:ls], T[1:ls], s0)
             kval2 = self.find_k2(SS[1:ls], T[1:ls], s0)
