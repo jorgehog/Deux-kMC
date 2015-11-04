@@ -9,12 +9,12 @@ import glob
 class ParseKMCHDF5:
 
     def __init__(self, which_file):
-        self.path, self.filename = os.path.split(which_file)
+        self.path, filename = os.path.split(which_file)
 
         self.files = []
         self.filenames = []
 
-        match = re.findall("(.*)\_\d+\.h5", self.filename)
+        match = re.findall("(.*)\_\d+\.h5", filename)
 
         if match:
             name = match[0]
@@ -34,9 +34,9 @@ class ParseKMCHDF5:
 
     def __iter__(self):
 
-        for filepath in self.files:
+        for self.filename in self.files:
 
-            file = h5py.File(filepath, 'r')
+            file = h5py.File(self.filename, 'r')
 
             for l, run in file.items():
                 L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]

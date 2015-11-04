@@ -40,21 +40,24 @@ def main():
 
     combinators = [ICZ("Time", "AverageHeight", "Concentration") for _ in range(len(supersaturations))]
 
-    for data, _, _, _ in parser:
+    for data, _, _, id in parser:
 
-        supersaturation = data.attrs["supersaturation"]\
+        try:
+            supersaturation = data.attrs["supersaturation"]
+            heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
+            heights -= heights[0]
+            concentrations = parser.get_ignis_data(data, "Concentration")[::every].copy()
+            time = parser.get_ignis_data(data, "Time")
+            time /= (1 + supersaturation)
+            time -= time[0] #Normalize to real time and not state time
+            time = time[::every].copy()
 
-        heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
-        heights -= heights[0]
-        concentrations = parser.get_ignis_data(data, "Concentration")[::every].copy()
-        time = parser.get_ignis_data(data, "Time")
-        time /= (1 + supersaturation)
-        time -= time[0] #Normalize to real time and not state time
-        time = time[::every].copy()
+            i = supersaturations.index(supersaturation)
 
-        i = supersaturations.index(supersaturation)
+            combinators[i].feed(time, heights, concentrations)
+        except:
+            pass
 
-        combinators[i].feed(time, heights, concentrations)
 
     n_steps = len(combinators[0]["Time"])
 
