@@ -2287,12 +2287,15 @@ class LatticediffSpeeds(DCVizPlotter):
 
     ceq_override = None
 
+    def ceq_analytical(self):
+        return exp(-self.alpha*3)
+
     def ceq(self):
 
         if self.ceq_override is not None:
             return self.ceq_override
         else:
-            return exp(-self.alpha*3)
+            return self.ceq_analytical()
 
     def asympt(self, s0):
         return s0*self.h0c/(1/self.ceq() - 1)
@@ -2345,6 +2348,9 @@ class LatticediffSpeeds(DCVizPlotter):
         return self.h0c - K_over_c*(1 + lambertw(core).real)
 
     def analytical_ss(self, times, supersaturation, k):
+
+        if abs(supersaturation) < 1E-10:
+            return np.zeros_like(times)
 
         K_over_c = self.K_over_c(supersaturation)
 
@@ -2446,7 +2452,7 @@ class LatticediffSpeeds(DCVizPlotter):
         for i, supersaturation in enumerate(supersaturations):
 
             l = lengths[i]
-            ls = l/10
+            ls = l/2
 
             if "corr" in self.argv:
                 #asd = self.ceq()
@@ -2454,7 +2460,7 @@ class LatticediffSpeeds(DCVizPlotter):
                 #print abs(self.ceq()-asd)/asd
                 #raw_input()
 
-            all_ceq.append(self.ceq())
+            all_ceq.append(100*abs(self.ceq()-self.ceq_analytical())/self.ceq_analytical())
 
             all_supersaturations[i, :l] = all_conc[i, :l]/self.ceq() - 1
 
@@ -2502,9 +2508,9 @@ class LatticediffSpeeds(DCVizPlotter):
             if not self.plot_analytical:
                 continue
 
-            dh = np.diff(all_heights[i, :l], 1)
-            dh /= T[1:] - T[:-1]
-            self.subfigure5.plot(SS[:-1], dh)
+            # dh = np.diff(all_heights[i, :l], 1)
+            # dh /= T[1:] - T[:-1]
+            # self.subfigure5.plot(SS[:-1], dh)
 
 
             kval1 = self.find_k(sfac*H[1:ls], T[1:ls], s0)
@@ -2512,15 +2518,18 @@ class LatticediffSpeeds(DCVizPlotter):
 
             kval = 0.5*(kval1 + kval2)
 
+            # kval = 0.4*(supersaturation < 0) + 0.6*(supersaturation > 0)
             if self.plot_analytical:
-                self.subfigure.plot(T, self.analytical(T, s0, kval1))
-                self.subfigure2.plot(T, self.analytical_ss(T, s0, kval2))
+                self.subfigure.plot(T, self.analytical(T, s0, kval))
+                self.subfigure2.plot(T, self.analytical_ss(T, s0, kval))
                 self.subfigure.scatter(T[ls], 0, s=20)
                 self.subfigure2.scatter(T[ls], 0, s=20)
 
             all_k.append(kval)
 
-        self.subfigure7.plot(all_asympts, all_ceq, 'k^')
+        self.subfigure7.plot(all_ss, all_ceq, 'k^')
+        self.subfigure7.set_xlabel(r"$\Omega(0)$")
+        self.subfigure7.set_ylabel(r"$\epsilon_\mathrm{eq} [\%]$")
 
 
         self.subfigure4.legend()
@@ -2551,27 +2560,39 @@ class ignisSOS(DCVizPlotter):
         name_string, l, w = self.loader.get_metadata()
 
         names = [desc.split("@")[0] for desc in name_string.split()]
-        targetname = self.argv[0]
+        yname = self.argv[0]
 
-        if targetname in names:
-            self.scan_for_name(data, targetname, names)
+        if "every" in self.argv:
+            i = self.argv.index("every")
+            every = int(self.argv[i+1])
         else:
-            raise RuntimeError("Invalid option %s." % targetname)
+            every = 1
+
+        if yname in names:
+            data_y = self.scan_for_name(data, yname, names)
+
+            try:
+                xname = self.argv[1]
+
+                data_x = self.scan_for_name(data, xname, names)
+
+                self.subfigure.set_xlabel(xname)
+
+            except:
+                data_x = np.arange(0, len(data_y))
+
+            self.subfigure.plot(data_x[::every], data_y[::every])
+            self.subfigure.set_ylabel(yname)
+
+        else:
+            raise RuntimeError("Invalid option %s." % yname)
 
     def scan_for_name(self, data, targetname, names):
-
-        try:
-            every = int(self.argv[1])
-        except:
-            every = 1
 
         for _data, name in zip(data, names):
 
             if name == targetname:
-                self.subfigure.plot(_data[::every])
-                self.subfigure.set_ylabel(name)
-
-                return
+                return _data
 
         raise RuntimeError("No match: %s in %s" % (targetname, str(names)))
 

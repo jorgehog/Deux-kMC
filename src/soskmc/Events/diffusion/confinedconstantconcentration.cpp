@@ -33,16 +33,14 @@ void ConfinedConstantConcentration::setupInitialConditions()
 
 void ConfinedConstantConcentration::reset()
 {
-    //BADAss(m_deltaSum, <, m_N0, "Depleting the soltion is not supported in current model.");
 
-    if (m_deltaSum < m_N0)
+    if (m_deltaSum < m_N0 && m_deltaSum < m_V0)
     {
         solver().setConcentration((m_N0 - m_deltaSum)/(m_V0 - m_deltaSum));
     }
 
     else
     {
-        //hack to allow depletion of solution
-        solver().setGamma(-10);
+        solver().setZeroConcentration();
     }
 }

@@ -20,6 +20,8 @@ SOSSolver::SOSSolver(const uint length,
     m_alpha(alpha),
     m_gamma(gamma),
     m_concentration(exp(gamma-dim()*alpha)),
+    m_expGamma(exp(gamma)),
+    m_concentrationIsZero(false),
     m_heights(length, width, fill::zeros),
     m_nNeighbors(length, width),
     m_siteReactions(length, width),
@@ -766,26 +768,39 @@ bool SOSSolver::isSurfaceSite(const uint x, const uint y, const int z) const
 
 void SOSSolver::setGamma(const double gamma)
 {
+    const double gammaPrev = m_gamma;
 
-    double expFac = exp(m_gamma - gamma);
-
-    m_concentration = exp(gamma - dim()*alpha());
+    m_gamma = gamma;
+    m_concentration = exp(m_gamma - dim()*alpha());
+    m_expGamma = exp(m_gamma);
 
     if (hasStarted())
     {
-        BADAss(expFac, ==, expFac);
 
-        for (uint x = 0; x < length(); ++x)
+        if (concentrationIsZero())
         {
-            for (uint y = 0; y < width(); ++y)
+            recalculateAllRates();
+            m_concentrationIsZero = false;
+            cout << "NONZERO CONC" << endl;
+        }
+
+        else
+        {
+
+            double expFac = exp(gammaPrev - gamma);
+            BADAss(expFac, ==, expFac);
+
+            for (uint x = 0; x < length(); ++x)
             {
-                DissolutionDeposition &_reaction = surfaceReaction(x, y);
-                _reaction.setDiffusionRate(_reaction.dissolutionRate()*expFac);
+                for (uint y = 0; y < width(); ++y)
+                {
+                    DissolutionDeposition &_reaction = surfaceReaction(x, y);
+                    _reaction.setDiffusionRate(_reaction.dissolutionRate()*expFac);
+                }
             }
         }
     }
 
-    m_gamma = gamma;
 }
 
 void SOSSolver::setConcentration(const double concentration)
@@ -898,8 +913,16 @@ double SOSSolver::calculateVolumeCorrection() const
 
 }
 
+void SOSSolver::setZeroConcentration()
+{
+    m_concentrationIsZero = true;
+    recalculateAllRates();
+}
+
 void SOSSolver::execute()
 {
+    BADAss(m_heights.max(), <=, confiningSurfaceEvent().height() - 1);
+
     KMCSolver::execute();
 
     m_changedSurfaceSites.clear();
@@ -930,4 +953,17 @@ void SOSSolver::initialize()
 
     KMCSolver::initialize();
 
+}
+
+double SOSSolver::timeUnit() const
+{
+    if (concentrationIsZero())
+    {
+        return 1.0;
+    }
+
+    else
+    {
+        return 1./m_expGamma;
+    }
 }

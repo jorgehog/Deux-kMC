@@ -110,6 +110,22 @@ void KMCSolver::removeIfAffected(Reaction *reaction)
     }
 }
 
+void KMCSolver::recalculateAllRates()
+{
+    for (Reaction *reaction : m_reactions)
+    {
+        if (reaction->isAllowed())
+        {
+            reaction->calculateRate();
+        }
+    }
+}
+
+double KMCSolver::timeUnit() const
+{
+    return 1.0;
+}
+
 double KMCSolver::getRandomLogNumber() const
 {
     return -std::log(rng.uniform());
@@ -141,7 +157,7 @@ void KMCSolver::getCumsumAndTotalRate()
 
 void KMCSolver::updateTime()
 {
-    setCurrentTimeStep(m_nextRandomLogNumber/m_totalRate);
+    setCurrentTimeStep(m_nextRandomLogNumber/m_totalRate*timeUnit());
 
     BADAss(currentTimeStep(), >, 0, "timestep should be posiive.");
 

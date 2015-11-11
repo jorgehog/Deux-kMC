@@ -9,10 +9,33 @@
 
 double DissolutionDeposition::calculateDissolutionRate() const
 {
+    //no paths
+    if (solver().height(x(), y()) >= solver().confiningSurfaceEvent().height() - 1)
+    {
+        uint nnBelow = solver().calculateNNeighbors(x(), y(), solver().height(x(), y()) - 1);
+
+        if (nnBelow == 5)
+        {
+            return 0;
+        }
+    }
+
     const double &Ew = solver().confinementEnergy(x(), y());
     const double E = (int)nNeighbors() + (int)solver().surfaceDim() - 5 + Ew;
 
-    return solver().diffusionEvent().dissolutionPaths(x(), y())*std::exp(-solver().alpha()*E - solver().gamma());
+    double gammaTerm;
+
+    if (solver().concentrationIsZero())
+    {
+        gammaTerm = 0;
+    }
+
+    else
+    {
+        gammaTerm = solver().gamma();
+    }
+
+    return solver().diffusionEvent().dissolutionPaths(x(), y())*std::exp(-solver().alpha()*E - gammaTerm);
 }
 
 double DissolutionDeposition::calculateDepositionRate() const
@@ -20,7 +43,7 @@ double DissolutionDeposition::calculateDepositionRate() const
     //derp when wall moves away, this reaction should have its rate changed back. Very rare?
     if (solver().confiningSurfaceEvent().hasSurface())
     {
-        if (solver().height(x(), y()) + 1 > solver().confiningSurfaceEvent().height())
+        if (solver().height(x(), y()) + 1 >= solver().confiningSurfaceEvent().height())
         {
             return 0;
         }
@@ -29,6 +52,11 @@ double DissolutionDeposition::calculateDepositionRate() const
     if (!solver().diffusionEvent().hasStarted())
     {
         return 1.0;
+    }
+
+    if (solver().concentrationIsZero())
+    {
+        return 0;
     }
 
     return solver().diffusionEvent().depositionRate(x(), y());

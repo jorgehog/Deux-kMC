@@ -52,7 +52,7 @@ def main():
 
         time = parser.get_ignis_data(data, "Time")[::every].copy()
 
-        time -= time[0]
+        #time -= time[0]
 
         if (supersaturation - conc[0]/np.exp(-3*data.attrs["alpha"]) + 1) > 1E-10:
             print "ERROR SUPERSAT"

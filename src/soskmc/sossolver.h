@@ -253,6 +253,13 @@ public:
 
     double calculateVolumeCorrection() const;
 
+    void setZeroConcentration();
+
+    bool concentrationIsZero() const
+    {
+        return m_concentrationIsZero;
+    }
+
 private:
 
     bool m_heights_set;
@@ -267,6 +274,8 @@ private:
     const double m_alpha;
     double m_gamma;
     double m_concentration;
+    double m_expGamma;
+    bool m_concentrationIsZero;
 
     imat m_heights;
     umat m_nNeighbors;
@@ -288,4 +297,9 @@ private:
 public:
     void execute();
     void initialize();
+
+    // KMCSolver interface
+public:
+    double timeUnit() const;
+
 };

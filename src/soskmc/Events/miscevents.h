@@ -13,10 +13,19 @@ public:
 
     }
 
+    void initialize()
+    {
+        m_T0 = solver().currentTime();
+    }
+
     void execute()
     {
-        setValue(solver().currentTime());
+        setValue(solver().currentTime() - m_T0);
     }
+
+private:
+
+    double m_T0;
 };
 
 class GrowthSpeed : public SOSEvent

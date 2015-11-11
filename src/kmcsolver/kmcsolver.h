@@ -87,6 +87,10 @@ public:
         return m_affectedReactions;
     }
 
+    void recalculateAllRates();
+
+    virtual double timeUnit() const;
+
 private:
     vector<Reaction*> m_reactions;
 
