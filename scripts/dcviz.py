@@ -2452,7 +2452,7 @@ class LatticediffSpeeds(DCVizPlotter):
         for i, supersaturation in enumerate(supersaturations):
 
             l = lengths[i]
-            ls = l/2
+            ls = (2*l)/3
 
             if "corr" in self.argv:
                 #asd = self.ceq()

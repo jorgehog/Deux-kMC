@@ -462,7 +462,7 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         else
         {
             conc = new ConstantConcentration(thermSolver);
-            conf = new NoConfinement(thermSolver);
+            conf = new ConstantConfinement(thermSolver, solver.confiningSurfaceEvent().height());
             nc = 10000;
         }
 
