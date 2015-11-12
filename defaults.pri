@@ -31,7 +31,7 @@ UTILS_OUT = $$shadowed($$UTILS)
 
 INCLUDEPATH += $$UTILS /usr/local/hdf5/include
 
-QMAKE_LIBDIR += $$UTILS_OUT/ignis/lib
+QMAKE_LIBDIR += $$UTILS_OUT/ignis/lib $$shadowed($$PWD)/lib
 
 LIBS += \
     -larmadillo \

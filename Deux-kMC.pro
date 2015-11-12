@@ -9,8 +9,9 @@ src.depends = utils
 apps.depends = src utils
 
 OTHER_FILES += infiles/config.cfg \
-               include/kMC \
-               .gitignore
+               .gitignore \
+               include/kMC.h \
+               include/SOSkMC.h
 
 include(deployment.pri)
 qtcAddDeployment()

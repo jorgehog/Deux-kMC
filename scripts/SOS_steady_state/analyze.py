@@ -9,6 +9,7 @@ from parse_h5_output import ParseKMCHDF5
 
 from intercombinatorzor import ICZ
 
+import re
 
 def main():
 
@@ -32,7 +33,15 @@ def main():
     n = 0
     for stuff in parser:
 
-        L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, repeat = stuff
+        #L, W, potential, alpha, mu, E0, s0, r0, neighbors, ignis_map, data, repeat = stuff
+        data, L, W, run_id = stuff
+
+        alpha = float(re.findall("alpha\_(.*)\_mu", run_id)[0])
+
+        if alpha != 3:
+            continue
+
+        E0 = float(re.findall("E0\_(.*)\_s0", run_id)[0])
 
         area = L*W
 

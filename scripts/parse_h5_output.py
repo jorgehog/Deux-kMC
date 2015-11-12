@@ -9,16 +9,14 @@ import glob
 class ParseKMCHDF5:
 
     def __init__(self, which_file):
-        self.path, self.filename = os.path.split(which_file)
+        self.path, filename = os.path.split(which_file)
 
         self.file = None
         self.file_number = None
         self.files = []
         self.filenames = []
 
-        self.skipWhen = lambda alpha, mu, E0, s0, r0, n: False
-
-        match = re.findall("(.*)\_\d+\.h5", self.filename)
+        match = re.findall("(.*)\_\d+\.h5", filename)
 
         if match:
             name = match[0]
@@ -32,54 +30,22 @@ class ParseKMCHDF5:
                 self.filenames.append(file)
 
         else:
-            self.files = [h5py.File(which_file, 'r')]
+            self.files = [which_file]
 
         self.only_n = None
 
     def __iter__(self):
 
-        for self.file_number, self.filepath in enumerate(self.files):
-            self.file = h5py.File(self.filepath, 'r')
+        for self.filename in self.files:
 
-            for l, run in self.file.items():
+            file = h5py.File(self.filename, 'r')
+
+            for l, run in file.items():
                 L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]
-                for potential in run.keys():
+                for run_id, data in run.items():
+                    yield data, L, W, run_id
 
-                    try:
-                        if "_n_" in potential:
-                            alpha, mu, E0, s0, r0, n = [float(re.findall("%s\_(-?\d+\.?\d*[eE]?-?\d*|-?nan)" % ID, potential)[0]) for ID in
-                                                     ["alpha", "mu", "E0", "s0", "r0", "n"]]
-                        else:
-                            alpha, mu, E0, s0, r0 = [float(re.findall("%s\_(-?\d+\.?\d*[eE]?-?\d*|-?nan)" % ID, potential)[0]) for ID in
-                                                     ["alpha", "mu", "E0", "s0", "r0"]]
-                            n = 0
-                    except:
-                        raise ValueError("invalid potential: %s" % potential)
-
-                    if self.skipWhen(alpha, mu, E0, s0, r0, n):
-                        continue
-
-                    data = run[potential]
-
-                    if "nNeighbors" in data.attrs.keys():
-                        neighbors = data.attrs["nNeighbors"]
-                    else:
-                        neighbors = 0
-
-                    _ignis_index_map = {}
-
-                    if data.attrs["storeIgnisData"]:
-                        for i, name in enumerate(data["ignisEventDescriptions"][0]):
-                            name_strip = str(name).split("@")[0]
-                            _ignis_index_map[name_strip] = i
-
-                    yield L, W, potential, alpha, mu, E0, s0, r0, neighbors, _ignis_index_map, data, n
-
-            self.file.close()
-
-
-        self.file = None
-        self.file_number = None
+            file.close()
 
     def get_data(self, file_number, name):
 
@@ -93,6 +59,9 @@ class ParseKMCHDF5:
         data = self.file[name]
 
         return data
+    @staticmethod
+    def get_ignis_data(data, name):
+        return data["ignisData"][[desc.split("@")[0] for desc in list(data["ignisEventDescriptions"])[0]].index(name)]
 
     def set_only_n(self, n):
         self.only_n = n
@@ -100,10 +69,15 @@ class ParseKMCHDF5:
     def getfiles(self):
         return self.files
 
-    def close(self):
 
-        for file in self.files:
-            file.close()
+def getIgnisData(data, name):
+
+    if not data.attrs["storeIgnisData"]:
+        raise RuntimeError("No ignis data stored.")
+
+    idx = list(data["ignisEventDescriptions"]).index(name)
+
+    return data["ignisData"][idx]
 
 if __name__ == "__main__":
     obj = ParseKMCHDF5("/home/jorgehog/code/build-kMC-Desktop_Qt_5_3_GCC_64bit-Release/apps/Quasi2DLoaded/Quasi2D.h5")

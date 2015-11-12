@@ -5,7 +5,8 @@ CONFIG += console
 
 INCLUDEPATH  += $$TOP_PWD/include $$PWD
 
-LIBS += -L$$shadowed($$PWD)/../lib -lkMC \
+LIBS += -lkMC \
+        -lSOSkMC \
         -L$$UTILS_OUT/HDF5Wrapper/lib -lHDF5Wrapper \
         -L/usr/local/hdf5/lib -lhdf5_cpp -lhdf5
 
@@ -37,3 +38,6 @@ createDirs.commands = $(MKDIR) $$mkcommands
 first.depends = $(first) $$first.depends createDirs
 
 QMAKE_EXTRA_TARGETS += createDirs
+
+HEADERS += \
+    $$PWD/apputils.h

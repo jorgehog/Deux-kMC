@@ -9,7 +9,15 @@ import sys
 from numpy import exp
 from scipy.stats import linregress
 from scipy.optimize import curve_fit
+from scipy.special import lambertw
 from matplotlib.ticker import FormatStrFormatter, MultipleLocator, FuncFormatter
+
+from mpl_toolkits.mplot3d import Axes3D
+
+E0_tex = r"P_\lambda"
+fig_4_x = 0.05
+fig_4_y = 0.85
+fig_4_fs = 30
 
 class SteadyState(DCVizPlotter):
 
@@ -29,9 +37,9 @@ class SteadyState(DCVizPlotter):
     fig_size = [8, 8]
 
     def adjust(self):
-        self.adjust_maps["value_figure"]["hspace"] = 0.2
+        self.adjust_maps["value_figure"]["hspace"] = 0.15
         self.adjust_maps["converge_figure"]["hspace"] = 0.15
-        self.adjust_maps["value_figure"]["top"] = 0.83
+        self.adjust_maps["value_figure"]["top"] = 0.88
 
     def trans(self, v):
         return v
@@ -45,6 +53,8 @@ class SteadyState(DCVizPlotter):
     alpha = 3
 
     unloaded = False
+
+    transparent = True
 
     def plot(self, data):
 
@@ -81,7 +91,7 @@ class SteadyState(DCVizPlotter):
             _, unloaded_rms = zip(*(sorted(unloaded_rms, key=lambda x: x[0])))
 
             self.subfigure2.plot(exp(mu_shift_values) - 1, unloaded_rms,
-                                 label=r"$E_0=0.00$",
+                                 label=r"$%s=0.00$" % E0_tex,
                                  marker="s",
                                  markeredgecolor="k",
                                  linestyle="--",
@@ -180,7 +190,7 @@ class SteadyState(DCVizPlotter):
 
                     n_sfig = self.alpha_values.index(alpha)
                     sfigs[n_sfig].plot(exp(mu_shift_values) - 1, rms_values,
-                                                               label=r"$E_0=%.2f$" % E0,
+                                                               label=r"$%s=%.2f$" % (E0_tex, E0),
                                                                marker=self.shapes[FFS[n_sfig]],
                                                                markeredgecolor="k",
                                                                linestyle="--",
@@ -265,16 +275,25 @@ class SteadyState(DCVizPlotter):
         self.srms_fig.text(xtext, srms_span/2, r"$%s = %.3f$" % (sslabel, srms_value_chosen), fontsize=self.fontSize)
         self.dh_fig.text(xtext, dh_span/2, r"$%s = %.3f$" % (whlabel, dh_value_chosen), fontsize=self.fontSize)
 
+        labels = ["a", "b", "c"]
+        sfigs_first = [self.rms_fig, self.srms_fig, self.dh_fig]
+        for i, sfig in enumerate(sfigs_first):
+            sfig.text(0.05, 0.8, r"$\mathrm{(%s)}$" % labels[i], verticalalignment="center", horizontalalignment="left", transform=sfig.axes.transAxes, fontsize=30)
+
+
+
+        labels2 = labels + ["d"]
 
         self.subfigure1.set_ylim(0, 17)
         pad = 13
         labelpads = [None, pad, pad, pad]
         for i, sfig in enumerate(sfigs):
-            sfig.set_xlim([-1, 2.1])
+            sfig.set_xlim([-1.1, 2.5])
             sfig.axes.get_xaxis().set_ticks([-1, 0, 1, 2])
             sfig.axes.yaxis.set_major_formatter(majorFormatter)
             sfig.set_ylabel(r"$%s$" % rmslabel, labelpad=labelpads[i])
             sfig.set_ybound(0)
+            sfig.text(1-0.1, 0.5, r"$\mathrm{(%s)}$" % labels2[i], horizontalalignment="left", verticalalignment="center", fontsize=30, transform=sfig.axes.transAxes)
 
             if i != len(sfigs) - 1:
                 sfig.axes.xaxis.set_ticklabels([])
@@ -294,7 +313,11 @@ class SteadyState(DCVizPlotter):
 
 
         self.subfigure4.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
-        self.subfigure1.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=3, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(-0.02, 1.7))
+        lg = self.subfigure1.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=3, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(-0.01, 1.6))
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+
+
 
     @staticmethod
     def formatter(value, index):
@@ -1192,6 +1215,8 @@ class GrowthSpeed3(DCVizPlotter):
     plot_values = [0.5, 1.0]
     shapes = ["s", "^", "v", 'o']
 
+    transparent = True
+
     def plot_and_slopify(self, E0, alpha,r0, omega, mu_shifts, mu, v):
         mu0 = (mu - mu_shifts).mean()
         c_over_c0 = exp(mu0 + mu_shifts)
@@ -1244,7 +1269,7 @@ class GrowthSpeed3(DCVizPlotter):
         # slope -= np.exp(-2*alpha + alpha*F0)
         return mu0, slope1, v, err
 
-    def uberplot(self, omega, v, k, E0):
+    def uberplot(self, omega, v, k, E0, kg_on_plot=False):
 
         idx_undersat = np.where(omega <= 0)
         idx_oversat = np.where(omega >= 0)
@@ -1257,7 +1282,7 @@ class GrowthSpeed3(DCVizPlotter):
 
         self.subfigure.plot(omega_undersat_list[::3] + omega_oversat_list,
                             v_undersat_list[::3] + v_oversat_list,
-                            label=r"$E_0=%.1f$" % E0,
+                            label=r"$%s=%.1f$" % (E0_tex, E0),
                             marker=self.shapes[k],
                             markeredgecolor="k",
                             linestyle="--",
@@ -1266,6 +1291,37 @@ class GrowthSpeed3(DCVizPlotter):
                             fillstyle='none',
                             markersize=7,
                             markeredgewidth=1.5)
+
+        if kg_on_plot:
+
+            pad_under = 0.4
+            xpad_under = 0.1
+            pad_over = 0.75
+            first_over = np.where(omega[idx_oversat] >= 0.5)[0][0]
+            last_over = np.where(omega[idx_oversat] >= 1.4)[0][0]
+            first_under = 0
+            last_under = np.where(omega[idx_undersat] >= -0.3)[0][0]
+
+            c = "k-"
+
+            self.subfigure.plot([omega_undersat_list[first_under]+xpad_under, omega_undersat_list[last_under]+xpad_under],
+                                [v_undersat_list[first_under]-pad_under, v_undersat_list[last_under]-pad_under], c,
+                                )
+            self.subfigure.plot([omega_oversat_list[first_over], omega_oversat_list[last_over]],
+                                [v_oversat_list[first_over]+pad_over, v_oversat_list[last_over]+pad_over], c,
+                                )
+
+            locs = [[0.44, 0.58],
+                    [0.19, 0.042]]
+            rots = [25, 0]
+            kgs = [0, 0]
+
+            kgs[0] = (v_oversat_list[first_over] - v_oversat_list[last_over])/(omega_oversat_list[first_over] - omega_oversat_list[last_over])
+            kgs[1] = (v_undersat_list[first_under] - v_undersat_list[last_under])/(omega_undersat_list[first_under] - omega_undersat_list[last_under])
+
+            for loc, rot, kg in zip(locs, rots, kgs):
+                self.subfigure.text(loc[0], loc[1], r"$k_g \sim %.2f$" % kg, horizontalalignment="left", verticalalignment="center", transform=self.subfigure.axes.transAxes, rotation=rot)
+
 
     def adjust(self):
 
@@ -1351,7 +1407,7 @@ class GrowthSpeed3(DCVizPlotter):
                             mu_zero[i+1][j][l+1][m+1] = mu0
 
                             if E0 in self.plot_values and j == J and l == L and m == M:
-                                self.uberplot(omega, v, k, E0)
+                                self.uberplot(omega, v, k, E0, E0 == 1)
 
                                 k += 1
 
@@ -1482,7 +1538,8 @@ class GrowthSpeed3(DCVizPlotter):
 
         self.subfigure5.plot(alpha_values, -S_tot, "r-^", label="Avg all param")
 
-        self.subfigure5.legend(numpoints=1, handlelength=1.2, borderaxespad=0.3, )
+        lg = self.subfigure5.legend(numpoints=1, handlelength=1.2, borderaxespad=0.3, )
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
         for l, r0 in enumerate(r0_values[1+l_incr:]):
             self.subfigure6.plot(s0_values[1:], alpha_cutz[l+1, 1:], label="r0 = %g" % r0)
@@ -1500,7 +1557,8 @@ class GrowthSpeed3(DCVizPlotter):
 
         for l, r0 in enumerate(r0_values[1+l_incr:]):
             self.subfigure8.plot(s0_values[1:], alpha_slopes[l+1, 1:], label="r0=%g" % r0)
-        self.subfigure8.legend()
+        lg = self.subfigure8.legend()
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         self.subfigure8.set_xlabel(r"$\sigma_0$")
         self.subfigure8.set_ylabel("alpha E0 prefac")
 
@@ -1520,23 +1578,25 @@ class GrowthSpeed3(DCVizPlotter):
 
         self.subfigure.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
         self.subfigure.set_ylabel(r"$\dot{H} = \Delta \langle h\rangle / \Delta t$")
-        self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2, borderaxespad=0.3 )
+        lg = self.subfigure.legend(loc="upper left", numpoints=1, handlelength=1.2, borderaxespad=0.3 )
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         self.subfigure.set_xlim(-1, 3)
         self.subfigure.axes.xaxis.set_ticks([-1, 0, 1, 2, 3])
         self.subfigure.axes.xaxis.set_major_formatter(FormatStrFormatter(r"$%g$"))
         self.subfigure.set_ylim(-3, 12)
         self.subfigure.axes.yaxis.set_ticks([-2, 0, 2, 4, 6, 8, 10])
 
-        self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=2, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3)
+        lg = self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=2, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3)
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         self.subfigure2.axes.set_yscale('log')
         self.subfigure2.set_xlim(-0.05, 1.05)
         self.subfigure2.set_ylim(0.6, 23)
 
-        self.subfigure2.set_xlabel(r"$E_0 \propto F_0/L$")
+        self.subfigure2.set_xlabel(r"$%s \propto F_0/L$" % E0_tex)
         self.subfigure2.set_ylabel(r"$k_g = \dot{H} / \Omega$")
 
         self.subfigure4.set_xlabel(r"$\alpha = E_b/kT$")
-        self.subfigure4.set_ylabel(r"$\log (k_g/k_0) / E_0$")
+        self.subfigure4.set_ylabel(r"$\log (k_g/k_0) / %s$" % E0_tex)
         self.subfigure4.set_ybound(0)
         self.subfigure4.set_xlim(0, alpha_values.max()*1.075)
 
@@ -1590,7 +1650,8 @@ class GrowthSpeed3(DCVizPlotter):
 
         print "cov", CV/NN
         # self.subfigure10.plot(alpha_values, p0_mat)
-        self.subfigure10.legend()
+        lg = self.subfigure10.legend()
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         self.subfigure10.set_xlabel("E0")
         self.subfigure10.set_ylabel("logk")
 
@@ -1637,6 +1698,21 @@ class GrowthSpeed3(DCVizPlotter):
 
         print win
 
+        ##labels
+
+        labelfigs = [self.subfigure, self.subfigure2, self.subfigure4]
+        labels = ["a", "b", "c"]
+        locs = [(0.4, 0.8),
+                (0.075, 0.4),
+                (0.075, 0.775)]
+
+        for sfig, label, loc in zip(labelfigs, labels, locs):
+            sfig.text(loc[0], loc[1], r"$\mathrm{(%s)}$" % label,
+                      horizontalalignment="left",
+                      verticalalignment="center",
+                      transform=sfig.axes.transAxes,
+                      fontsize=30)
+
     def distance(self, x1, y1, x2, y2, x0, y0):
         return abs((y2 - y1)*x0 - (x2 - x1)*y0 + x2*y1 - y2*x1)/np.sqrt((y2-y1)**2 + (x2-x1)**2)
     def distance2(self, a, b, c, x0, y0):
@@ -1655,6 +1731,8 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
     figMap = {"fig" : "gammaslopes", "fig2" : "E0slopes"}
 
     hugifyFonts = True
+
+    transparent = True
 
     def adjust(self):
 
@@ -1690,6 +1768,11 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
 
         N = 3
         shapes = ["^", "v", 'o']
+        rotations = [3, 14.5, 22.75]
+        plotslopes = []
+        xloc = 0.65
+        ylocs = [0.15, 0.475, 0.8]
+        texts = []
 
         n_runs = self.n_runs()
 
@@ -1726,7 +1809,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
                                       yerr=mu_errors,
                                       fmt=shapes[n_plots],
                                       fillstyle='none',
-                                      label=r"$E_0=%1.2f$" % (E0s[n]),
+                                      label=r"$%s=%1.2f$" % (E0_tex, E0s[n]),
                                       markersize=7,
                                       markeredgewidth=1.5,
                                       linewidth=1,
@@ -1738,14 +1821,26 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
 
             self.gammaslopes.plot([0, alphas.max()], [0, slopes[n]*alphas.max()], "r--", **kws)
 
+            texts.append(r"$%s=%1.2f$" % (E0_tex, E0s[n]))
+            plotslopes.append(slopes[n])
+
             n_plots += 1
+
+
 
 
         self.gammaslopes.set_xbound(0)
         self.gammaslopes.set_ybound(0)
-        self.gammaslopes.legend(loc="upper left", numpoints=1, handlelength=0.8, ncol=2, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
+        # self.gammaslopes.legend(loc="upper left", numpoints=1, handlelength=0.8, ncol=2, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
 
-
+        for text, yloc, rotation in zip(texts, ylocs, rotations):
+            # rotation = np.arctan(slope)*180/np.pi
+            print rotation, rotations, plotslopes
+            self.gammaslopes.text(xloc, yloc, text,
+                                  verticalalignment="center",
+                                  horizontalalignment="left",
+                                  transform=self.gammaslopes.axes.transAxes,
+                                  rotation=rotation)
 
         self.gammaslopes.set_xlabel(r"$\alpha = E_b/kT$")
         self.gammaslopes.set_ylabel(r"$\gamma_\mathrm{eq} = \ln c_\mathrm{eq}/c_0$")
@@ -1767,8 +1862,11 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
         majorFormatter = FormatStrFormatter(r'$%.1f$')
         self.E0slopes.axes.yaxis.set_major_formatter(majorFormatter)
 
-        self.E0slopes.set_xlabel(r"$E_0 \propto F_0/L$")
+        self.E0slopes.set_xlabel(r"$%s \propto F_0/L$" % E0_tex)
         self.E0slopes.set_ylabel(r"$\gamma_\mathrm{eq}/\alpha$")
+
+        self.gammaslopes.text(fig_4_x, fig_4_y, r"$\mathrm{(a)}$", verticalalignment="center", horizontalalignment="left", transform=self.gammaslopes.axes.transAxes, fontsize=fig_4_fs)
+        self.E0slopes.text(fig_4_x, fig_4_y, r"$\mathrm{(b)}$", verticalalignment="center", horizontalalignment="left", transform=self.E0slopes.axes.transAxes, fontsize=fig_4_fs)
 
         print sslope, d
 
@@ -1846,21 +1944,21 @@ class SOS_pressure_sizes(DCVizPlotter):
 
             self.subfigure.loglog(1./alpha_array, mean_s_array, 'k%s' % shapes[nplots],
                                  fillstyle='none',
-                                 label="$E_0 = %.2f$" % E0_value,
+                                 label="$%s = %.2f$" % (E0_tex, E0_value),
                                  markersize=7,
                                  markeredgewidth=1.5,
                                  linewidth=1)
 
             self.subfigure2.loglog(1./alpha_array, var_s_array, 'k%s' % shapes[nplots],
                      fillstyle='none',
-                     label="$E_0 = %.2f$" % E0_value,
+                     label="$%s = %.2f$" % (E0_tex, E0_value),
                      markersize=7,
                      markeredgewidth=1.5,
                      linewidth=1)
 
             self.subfigure3.loglog(1./alpha_array, (var_s_array*alpha_array)**p, 'k%s' % shapes[nplots],
                      fillstyle='none',
-                     label="$E_0 = %.2f$" % E0_value,
+                     label="$%s = %.2f$" % (E0_tex, E0_value),
                      markersize=7,
                      markeredgewidth=1.5,
                      linewidth=1)
@@ -1879,8 +1977,8 @@ class SOS_pressure_sizes(DCVizPlotter):
         ax.set_ylabel(r"$\langle E \rangle /E_bL$", labelpad=15)
         ax.yaxis.set_ticks([])
         ax.yaxis.set_ticklabels([])
-        self.subfigure.legend(loc="upper left", numpoints=1, handlelength=0.5, ncol=3, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(0, 1.55))
-
+        lg = self.subfigure.legend(loc="upper left", numpoints=1, handlelength=0.5, ncol=3, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(0, 1.55))
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
         # self.subfigure2.set_xlabel(r"$1/\alpha$")
         self.subfigure2.set_xlim(xmin, xmax)
         self.subfigure2.set_ylabel(r"$\sigma (s_{\uparrow\downarrow}) / L$")
@@ -1904,6 +2002,26 @@ class SOS_pressure_sizes(DCVizPlotter):
         ax3.yaxis.set_ticklabels([])
         # self.subfigure3.legend(numpoints=1, handlelength=1, loc="upper right")
 
+        #Descriptions
+        self.subfigure.text(0.05, 1-0.15, r"$\mathrm{surface\,\,size}$", verticalalignment="center", horizontalalignment="left", transform=ax.transAxes)
+        self.subfigure2.text(0.05, 1-0.15, r"$\mathrm{surface\,\,fluctuations}$", verticalalignment="center", horizontalalignment="left", transform=ax2.transAxes)
+        self.subfigure3.text(0.05, 0.15, r"$\mathrm{heat\,\,capacity}$", verticalalignment="center", horizontalalignment="left", transform=ax3.transAxes)
+
+        x_loc = 0.725
+        y_start = 0.1
+        y_len = 0.75
+        self.subfigure.annotate("",
+                                xy=(x_loc, y_start),
+                                xycoords="axes fraction",
+                                xytext=(x_loc, y_start + y_len),
+                                textcoords='axes fraction',
+                                arrowprops=dict(facecolor='black', shrink=0.1, width=2, headwidth=10),
+                                horizontalalignment='left', verticalalignment='center')
+        self.subfigure.text(x_loc + 0.025, 1-(y_start + y_len - 0.2), r"$\mathrm{increasing}$", verticalalignment="center", horizontalalignment="left", transform=ax.transAxes)
+        self.subfigure.text(x_loc + 0.025, 1-(y_start + y_len - 0.075), r"$\mathrm{confinement}$", verticalalignment="center", horizontalalignment="left", transform=ax.transAxes)
+
+        self.subfigure.text(0.4, 0.725, r"$\mathrm{zero\,\,load\,\,limit}$", verticalalignment="center", horizontalalignment="left", transform=ax.transAxes, rotation=8.5)
+
     @staticmethod
     def axisFormat(value, index):
 
@@ -1925,6 +2043,8 @@ class SOSanalyze(DCVizPlotter):
     figMap = {"figure_2" : "mean_figure"}
 
     fig_size = [8, 4]
+
+    transparent = True
 
     def adjust(self):
         for map in self.adjust_maps.values():
@@ -1980,13 +2100,16 @@ class SOSanalyze(DCVizPlotter):
                               markersize=7,
                               markeredgewidth=1.5)
 
-        self.mean_figure.legend(loc="lower right", numpoints=1, handlelength=0.8, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
+        lg = self.mean_figure.legend(loc="lower right", numpoints=1, handlelength=0.8, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
         self.mean_figure.set_xlabel(r"$\lambda_D$")
-        self.mean_figure.set_ylabel(r"$\gamma_\mathrm{eq}/\alpha E_0$")
+        self.mean_figure.set_ylabel(r"$\alpha %s/\gamma_\mathrm{eq}$" % E0_tex)
         self.mean_figure.set_xbound(0)
         # self.mean_figure.set_ybound(-0.45)
         # self.mean_figure.axes.set_yticks([0, 1, 2, 3, 4])
+
+        self.mean_figure.text(fig_4_x, fig_4_y, r"$\mathrm{(c)}$", verticalalignment="center", horizontalalignment="left", transform=self.mean_figure.axes.transAxes, fontsize=fig_4_fs)
 
 
 
@@ -2066,3 +2189,484 @@ class shifts(DCVizPlotter):
 
 
         # self.zoomed.legend()
+
+
+class AutoCorrelation(DCVizPlotter):
+
+    nametag = "autocorr\.arma"
+
+    figMap = {"figure": ["subfigure"], "figure3D": [], "figure_projections" : "proj"}
+
+    tight = False
+
+    def plot(self, data):
+
+        data -= data.min()
+
+
+        Lm, Wm = data.shape
+
+        L = (Lm + 1)/2
+        W = (Wm + 1)/2
+
+        ax = self.subfigure.imshow(data, extent=[-L, L, -W, W], origin="lower", aspect="auto", interpolation="none", cmap="Blues")
+        self.subfigure.set_xlabel(r"$\delta x$")
+        self.subfigure.set_ylabel(r"$\delta y$")
+        #self.figure.colorbar(ax)
+        #
+        ax = Axes3D(self.figure3D)
+
+        elements = Lm*Wm
+
+        xpos, ypos = np.meshgrid(np.arange(Lm), np.arange(Wm))
+
+        xpos = xpos.flatten()
+        ypos = ypos.flatten()
+        zpos = np.zeros(elements)
+        dx = np.ones_like(zpos)
+        dy = dx.copy()
+        dz = data.flatten()
+
+        ax.bar3d(xpos, ypos, zpos, dx, dy, dz, linewidth=0)
+
+        d1 = np.diag(data)
+        d2 = np.diag(np.flipud(data))
+
+        for i in range(Lm):
+            for j in range(Wm):
+                print "%.2f" % data[i, j],
+            print
+
+        print
+        print
+
+        for d in d1:
+            print "%.2f" % d,
+        print
+
+        for d in d2:
+            print "%.2f" % d,
+        print
+
+
+        xl = np.linspace(-L, L, Lm)
+        xw = np.linspace(-W, W, Wm)
+
+        x1 = np.sqrt(2)*xl
+        x2 = np.sqrt(2)*xw
+
+        self.proj.plot(xl, data[L-1, :], label="X")
+        self.proj.plot(xw, data[:, W-1], label="Y")
+        self.proj.plot(x1, d1, label="11 diag")
+        self.proj.plot(x2, d2, label="-11 diag")
+        self.proj.legend()
+        self.proj.set_xlabel(r"$\delta r$")
+        self.proj.set_ylabel("corr")
+
+
+class LatticediffSpeeds(DCVizPlotter):
+
+    nametag = "confined_\w+_(\w+)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    alpha = 1
+    h0 = 20
+    h0c = h0 - 2
+    plot_analytical = True
+
+    figMap = {"f0": ["subfigure", "subfigure2"],
+              "f2" : "subfigure3",
+              "f3" : "subfigure4",
+              "f4" : "subfigure5",
+              "f5" : "subfigure6",
+              "f6" : "subfigure7"}
+
+    #plotOnly = ["f0"]
+
+    def adjust(self):
+        self.adjust_maps["f0"]["top"] = 0.96
+        self.adjust_maps["f0"]["bottom"] = 0.13
+        # self.adjust_maps["f0"]["top"] = 0.86
+        self.adjust_maps["f0"]["right"] = 0.95
+        self.adjust_maps["f0"]["hspace"] = 0.15
+
+    fig_size = [6, 6]
+
+    ceq_override = None
+
+    def ceq_analytical(self):
+        return exp(-self.alpha*3)
+
+    def ceq(self):
+
+        if self.ceq_override is not None:
+            return self.ceq_override
+        else:
+            return self.ceq_analytical()
+
+    def asympt(self, s0):
+        return s0*self.h0c/(1/self.ceq() - 1)
+
+    def ceq_from_asympt(self, a, c0):
+
+        return (self.h0c*c0 - a)/(self.h0c - a)
+
+    def K_over_c(self, supersaturation):
+
+        hs = self.h0c*(1 - self.ceq()*(1 + supersaturation))
+
+        return hs/(1 - self.ceq())
+
+    def c(self, k):
+        return k*(1/self.ceq() - 1)
+
+    def xi(self, K_over_c):
+        kappa = self.h0c/K_over_c - 1
+        return kappa*exp(kappa)
+
+    def k_convert(self, heights, times, supersaturation):
+
+        if supersaturation == 0:
+            return np.zeros_like(times)
+
+        K_over_c = self.K_over_c(supersaturation)
+
+        G = (self.h0c - heights)/K_over_c - 1
+
+        xi = self.xi(K_over_c)
+
+        expterm = G*exp(G)/xi
+
+        core = np.log(expterm)
+
+        c = -K_over_c*core/times
+
+        k = c/(1/self.ceq() - 1)
+
+        return k
+
+    def analytical(self, times, supersaturation, k):
+
+        K_over_c = self.K_over_c(supersaturation)
+        c = self.c(k)
+
+        core = self.xi(K_over_c)*exp(-c*times/K_over_c)
+
+        return self.h0c - K_over_c*(1 + lambertw(core).real)
+
+    def analytical_ss(self, times, supersaturation, k):
+
+        if abs(supersaturation) < 1E-10:
+            return np.zeros_like(times)
+
+        K_over_c = self.K_over_c(supersaturation)
+
+        c_over_k = 1/self.ceq() - 1
+
+        c = self.c(k)
+
+        core = self.xi(K_over_c)*exp(-c*times/K_over_c)
+
+        return c_over_k/(1 + 1/lambertw(core).real)
+
+
+    def find_k(self, h, t, supersaturation):
+
+        if supersaturation == 0:
+            return np.nan
+
+        analytical = lambda time, k: self.analytical(time, supersaturation, k)
+
+        p, _ = curve_fit(analytical, t, h, (0.1))
+
+        return p[0]
+
+    def find_k2(self, h, t, supersaturation):
+
+        if supersaturation == 0:
+            return np.nan
+
+        analytical = lambda time, k: self.analytical_ss(time, supersaturation, k)
+
+        p, _ = curve_fit(analytical, t, h, (0.1))
+
+        return p[0]
+
+    def find_ks(self, h, t, supersaturation):
+
+        if supersaturation == 0:
+            return np.nan
+
+        analytical = lambda time, k, ss: self.analytical(time, ss, k)
+
+        p, _ = curve_fit(analytical, t, h, (1, supersaturation))
+
+        return p
+
+    def find_ks2(self, h, t, supersaturation):
+
+        if supersaturation == 0:
+            return np.nan
+
+        analytical = lambda time, k, ss: self.analytical_ss(time, ss, k)
+
+        p, _ = curve_fit(analytical, t, h, (1, supersaturation))
+
+        return p
+
+
+
+    def plot(self, data):
+
+        supersaturations = self.get_family_member_data(data, "supersaturations")
+        all_heights = self.get_family_member_data(data, "heights")
+        all_times = self.get_family_member_data(data, "times")
+        all_conc = self.get_family_member_data(data, "concentrations")
+        lengths = self.get_family_member_data(data, "lengths")
+
+        if "cheatcorr" in self.argv:
+
+            I0 = list(supersaturations).index(0)
+            l0 = lengths[I0]
+            h0 = all_heights[I0, :l0]
+            t0 = all_times[I0, :l0]
+            c0 = all_conc[I0, 0]
+
+            a = h0[(3*l0)/5:(4*l0)/5].mean()
+
+            print self.ceq()
+            self.ceq_override = self.ceq_from_asympt(a, c0)
+            print self.ceq()
+
+
+        if len(self.argv) > 1:
+            self.h0 = float(self.argv[0])
+            self.alpha = float(self.argv[1])
+
+            self.h0c = self.h0 - 2
+
+        all_supersaturations = all_conc/self.ceq() - 1
+
+        if "onlysim" in self.argv:
+            self.plot_analytical = False
+
+        all_asympts = []
+        all_ss = []
+        all_k = []
+        all_ceq = []
+
+        for i in range(len(lengths)):
+
+            l = lengths[i]
+            t_end = all_times[i, l-1]
+
+            if i == 0:
+                t_min = t_end
+            else:
+                if t_end < t_min:
+                    t_min = t_end
+
+        T_END = 1.5*t_end
+
+        for i, supersaturation in enumerate(supersaturations):
+
+            l = lengths[i]
+            ls = (2*l)/3
+
+            if "corr" in self.argv:
+                self.ceq_override = all_conc[i, (2*l)/3:(9*l)/10].mean()
+
+            all_ceq.append(100*abs(self.ceq()-self.ceq_analytical())/self.ceq_analytical())
+
+            all_supersaturations[i, :l] = all_conc[i, :l]/self.ceq() - 1
+
+            s0 = all_supersaturations[i, 0]
+
+            all_ss.append(s0)
+
+            if supersaturation != s0:
+                print "ERRAH", supersaturation, s0
+
+            if "flip" in self.argv:
+                sfac = np.sign(supersaturation)
+            else:
+                sfac = 1
+
+            asympt = self.asympt(s0)
+            point = sfac*asympt
+
+            T = all_times[i, :l]
+            I = np.where(T <= t_min)
+            T = T[I]
+
+
+            H = sfac*all_heights[i, :l][I]
+            label = r"$\Omega(0)=%.2f$" % s0
+
+            all_asympts.append(sfac*H[ls:].mean())
+
+            #self.subfigure.scatter(0.9*m, point)
+            if i == 0:
+                _label = r"$\mathrm{KMC}$"
+            else:
+                _label = None
+
+            self.subfigure.plot(T, H, "r-", label=_label)
+
+            #self.subfigure.text(1.05*t_end, point, label, verticalalignment='center')
+
+            SS = all_supersaturations[i, :l][I]
+            self.subfigure2.plot(T, SS, "r-")
+
+            if abs(supersaturation) > 0.1:
+                self.subfigure4.plot(self.k_convert(sfac*H[1:], T[1:], s0)[1:], label=label)
+                self.subfigure4.set_ylim(0, 1)
+
+            if not self.plot_analytical:
+                continue
+
+            if i == 0:
+                _labela = r"$\mathrm{Analytical}$"
+            else:
+                _labela = None
+
+            # dh = np.diff(all_heights[i, :l], 1)
+            # dh /= T[1:] - T[:-1]
+            # self.subfigure5.plot(SS[:-1], dh)
+
+
+            kval1 = self.find_k(sfac*H[1:ls], T[1:ls], s0)
+            kval2 = self.find_k2(SS[1:ls], T[1:ls], s0)
+
+            kval = 0.5*(kval1 + kval2)
+
+            # kval = 0.4*(supersaturation < 0) + 0.6*(supersaturation > 0)
+            if self.plot_analytical:
+                self.subfigure.plot(T, self.analytical(T, s0, kval), "k--", label=_labela)
+                self.subfigure2.plot(T, self.analytical_ss(T, s0, kval), "k--")
+                #self.subfigure.scatter(T[ls], 0, s=20)
+                #self.subfigure2.scatter(T[ls], 0, s=20)
+
+            all_k.append(kval)
+
+        time_label = r"$\nu t$"
+
+        self.subfigure7.plot(all_ss, all_ceq, 'k^')
+        self.subfigure7.set_xlabel(r"$\Omega(0)$")
+        self.subfigure7.set_ylabel(r"$\epsilon_\mathrm{eq} [\%]$")
+
+
+        self.subfigure4.legend()
+        self.subfigure3.plot(all_ss, all_asympts, "k*")
+
+        ss = np.linspace(supersaturations.min(), supersaturations.max())
+        self.subfigure3.plot(ss, self.asympt(ss), "r--")
+
+        self.subfigure.set_xlim(0, t_min)
+        #self.subfigure.set_ylim(self.subfigure.get_ylim()[0]*1.1, self.subfigure.get_ylim()[1]*1.1)
+        #self.subfigure.set_xlabel(time_label)
+        self.subfigure.set_ylabel(r"$h(t)/l_0$")
+        self.subfigure.xaxis.set_ticks([])
+
+        # lg = self.subfigure.axes.legend(loc="upper center", ncol=2, numpoints=1, handlelength=0.8, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.0, bbox_to_anchor=(0.5, 1.35))
+        # lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+
+        self.subfigure2.set_xlim(0, t_min)
+        self.subfigure2.set_xlabel(time_label)
+        self.subfigure2.set_ylabel(r"$\Omega(t)$")
+
+        if not self.plot_analytical:
+            return
+
+        self.subfigure6.plot(all_ss, all_k, "kx")
+        self.subfigure6.set_xlabel(r"$\Omega$")
+        self.subfigure6.set_ylabel("k")
+        self.subfigure6.set_ybound(0)
+        self.subfigure6.set_xlim(-1, 1)
+
+class ignisSOS(DCVizPlotter):
+
+    nametag = "ignisSOS\.ign"
+
+    def plot(self, data):
+
+        name_string, l, w = self.loader.get_metadata()
+
+        names = [desc.split("@")[0] for desc in name_string.split()]
+        yname = self.argv[0]
+
+        if "every" in self.argv:
+            i = self.argv.index("every")
+            every = int(self.argv[i+1])
+        else:
+            every = 1
+
+        if yname in names:
+            data_y = self.scan_for_name(data, yname, names)
+
+            try:
+                xname = self.argv[1]
+
+                data_x = self.scan_for_name(data, xname, names)
+
+                self.subfigure.set_xlabel(xname)
+
+            except:
+                data_x = np.arange(0, len(data_y))
+
+            self.subfigure.plot(data_x[::every], data_y[::every])
+            self.subfigure.set_ylabel(yname)
+
+        else:
+            raise RuntimeError("Invalid option %s." % yname)
+
+    def scan_for_name(self, data, targetname, names):
+
+        for _data, name in zip(data, names):
+
+            if name == targetname:
+                return _data
+
+        raise RuntimeError("No match: %s in %s" % (targetname, str(names)))
+
+
+class SizeTest(DCVizPlotter):
+
+    nametag = "size_test_(.*)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    def plot(self, data):
+
+        system_sizes = self.get_family_member_data(data, "system_sizes")
+        alpha_values = self.get_family_member_data(data, "alpha_values")
+        sizes = self.get_family_member_data(data, "sizes")
+
+        for i, L in enumerate(system_sizes):
+
+            I = np.where(sizes[i, :] != 0)
+            self.subfigure.plot(alpha_values[I], sizes[i, :][I], "-"+self.markers.next(), label=r"$L=%d$" % L)
+
+        self.subfigure.legend(loc="upper right", numpoints=1, handlelength=0.5, ncol=4, columnspacing=0.25, handletextpad=0.25, borderaxespad=0.1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
