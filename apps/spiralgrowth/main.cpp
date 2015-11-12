@@ -167,7 +167,7 @@ int main(int argv, char** argc)
     }
 
     //    lattice.addEvent(dumpHeights3D);
-    // lattice.addEvent(dumpHeightSlice);
+     lattice.addEvent(dumpHeightSlice);
 
 
 #ifndef NDEBUG

@@ -22,7 +22,7 @@ class SteadyState(DCVizPlotter):
     hugifyFonts = True
 
     figMap = {"converge_figure": ["rms_fig", "srms_fig", "dh_fig"],
-              "value_figure": ["subfigure2", "subfigure3", "subfigure4"]}
+              "value_figure": ["subfigure1", "subfigure2", "subfigure3", "subfigure4"]}
 
     stack = "V"
 
@@ -39,7 +39,7 @@ class SteadyState(DCVizPlotter):
 
     shapes = ["^", "v", "o"]
     plot_values = [0.01, 0.1, 0.5]
-    alpha_values = [1, 2, 3]
+    alpha_values = [0.5, 1, 2, 3]
     om = -0.75
     E0 = 0.01
     alpha = 3
@@ -52,11 +52,11 @@ class SteadyState(DCVizPlotter):
         start = 1
         transform = False
 
-        rmslabel=r"\sigma(h)/l_0"
-        sslabel=r"\sigma(s)/l_0"
-        whlabel=r"\langle \delta h_l \rangle/l_0"
+        rmslabel=r"\sigma(h)"
+        sslabel=r"\sigma(s)"
+        whlabel=r"\langle \delta h_l \rangle"
 
-        sfigs = [self.subfigure2, self.subfigure3, self.subfigure4]
+        sfigs = [self.subfigure1, self.subfigure2, self.subfigure3, self.subfigure4]
 
         E0_values = data[self.get_family_index_from_name("steadystate_E0.npy")]
         alpha_values = data[self.get_family_index_from_name("steadystate_alpha.npy")]
@@ -95,7 +95,7 @@ class SteadyState(DCVizPlotter):
 
         count = 0
         slopes = []
-        FFS = [0,0,0]
+        FFS = [0,0,0,0]
         for i, E0 in enumerate(E0_values):
 
             for j, alpha in enumerate(alpha_values):
@@ -121,7 +121,9 @@ class SteadyState(DCVizPlotter):
 
                     rms = data[self.get_family_index_from_name("steadystate_HeightRMS_%d.npy" % count)][start:L]
 
-                    ss = data[self.get_family_index_from_name("steadystate_SurfaceSize_%d.npy" % count)][start:L]
+
+                    #multiply by two to convert from s_ud to s
+                    ss = data[self.get_family_index_from_name("steadystate_SurfaceSize_%d.npy" % count)][start:L]*2
 
                     wh = data[self.get_family_index_from_name("steadystate_PressureWall_%d.npy" % count)][start:L]
 
@@ -263,19 +265,22 @@ class SteadyState(DCVizPlotter):
         self.srms_fig.text(xtext, srms_span/2, r"$%s = %.3f$" % (sslabel, srms_value_chosen), fontsize=self.fontSize)
         self.dh_fig.text(xtext, dh_span/2, r"$%s = %.3f$" % (whlabel, dh_value_chosen), fontsize=self.fontSize)
 
-        r = [0.6, 0.65, 0.65]
+
+        self.subfigure1.set_ylim(0, 17)
+        pad = 13
+        labelpads = [None, pad, pad, pad]
         for i, sfig in enumerate(sfigs):
             sfig.set_xlim([-1, 2.1])
             sfig.axes.get_xaxis().set_ticks([-1, 0, 1, 2])
             sfig.axes.yaxis.set_major_formatter(majorFormatter)
-            sfig.set_ylabel(r"$%s$" % rmslabel)
+            sfig.set_ylabel(r"$%s$" % rmslabel, labelpad=labelpads[i])
             sfig.set_ybound(0)
 
-            if i != 2:
+            if i != len(sfigs) - 1:
                 sfig.axes.xaxis.set_ticklabels([])
 
             ax = sfig.axes.twinx()
-            ax.set_ylabel(r"$\alpha=%d$" % self.alpha_values[i], labelpad=15)
+            ax.set_ylabel(r"$\alpha=%g$" % self.alpha_values[i], labelpad=15)
             ax.yaxis.set_ticks([])
             ax.yaxis.set_ticklabels([])
 
@@ -289,7 +294,7 @@ class SteadyState(DCVizPlotter):
 
 
         self.subfigure4.set_xlabel(r"$\Omega = c/c_\mathrm{eq} - 1$")
-        self.subfigure2.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=3, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(-0.01, 1.55))
+        self.subfigure1.legend(loc="upper left", numpoints=1, handlelength=1.2, ncol=3, columnspacing=0.3, handletextpad=0.5, borderaxespad=0.3,  bbox_to_anchor=(-0.02, 1.7))
 
     @staticmethod
     def formatter(value, index):
@@ -1290,6 +1295,8 @@ class GrowthSpeed3(DCVizPlotter):
         print v_values.shape
         print n_values.shape
 
+        print r0_values, s0_values
+
         # E0_values = E0_values[:6]
 
         omega = exp(mu_shift_values) - 1
@@ -1964,10 +1971,10 @@ class SOSanalyze(DCVizPlotter):
         # self.ss.set_xlabel(r"$\lambda_D$")
         # self.ss.set_ylabel(r"$\log \left[\mathrm{\sigma(K_3; \sigma_0})/K_3(\lambda_d)\right]$")
 
-        self.mean_figure.plot(r0, self.scale(r0), "r-", label=r"$\mathrm{Analytical\,\,thermodynamics}$", linewidth=3)
+        self.mean_figure.plot(r0, self.scale(r0), "r-", label=r"$\lambda_D\left(1 - \exp\left(-1/\lambda_D\right)\right)$", linewidth=3)
 
         self.mean_figure.plot(r0, r0_mean, 'ks',
-                              label=r"$\mathrm{The\,\,model\,\,(KMC)}$",
+                              label=r"$\mathrm{KMC}$",
                               linewidth=1,
                               fillstyle='none',
                               markersize=7,
@@ -1975,7 +1982,7 @@ class SOSanalyze(DCVizPlotter):
 
         self.mean_figure.legend(loc="lower right", numpoints=1, handlelength=0.8, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.3)
 
-        self.mean_figure.set_xlabel(r"$\lambda_D/l_0$")
+        self.mean_figure.set_xlabel(r"$\lambda_D$")
         self.mean_figure.set_ylabel(r"$\gamma_\mathrm{eq}/\alpha E_0$")
         self.mean_figure.set_xbound(0)
         # self.mean_figure.set_ybound(-0.45)
