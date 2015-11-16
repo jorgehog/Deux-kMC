@@ -63,11 +63,6 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
         double Rtot = 0;
         for (uint n = 0; n < nOfflatticeParticles(); ++n)
         {
-            if (!isInLineOfSight(n, x, y))
-            {
-                continue;
-            }
-
             //use old rates to calculate probability of depositing
             localRatesForSite.at(n) = localRates(x, y, n);
             Rtot += localRatesForSite.at(n);
@@ -77,16 +72,14 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
 
         uint N = binarySearchForInterval(R, localRatesForSite);
 
-        BADAssBool(isInLineOfSight(N, x, y));
-
         removeParticle(N);
     }
 
     //Add a particle on a unit sphere around the site;
     else
     {
-//        double dx, dy, dz;
-//        double x1, y1, z1;
+        int dx, dy, dz;
+        double x1, y1, z1;
 
         const int &z = solver().height(x, y) + 1;
 
@@ -108,9 +101,13 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
 
 //        } while (solver().isBlockedPosition(x1, y1, z1));
 
-//        insertParticle(x1, y1, z1);
+        solver().getRandomSolutionSite(x, y, z, dx, dy, dz);
 
-        insertParticle(x, y, z);
+        x1 = solver().boundaryTransform(x, y, z, dx, 0);
+        y1 = solver().boundaryTransform(x, y, z, dy, 1);
+        z1 = z + dz;
+
+        insertParticle(x1, y1, z1);
     }
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
@@ -190,11 +187,6 @@ double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
-        if (!isInLineOfSight(n, x, y))
-        {
-            continue;
-        }
-
         const double Rn = localRates(x, y, n);
 
         BADAssClose(Rn, calculateLocalRate(x, y, n), 1E-3);
@@ -317,6 +309,7 @@ void OfflatticeMonteCarlo::diffuseFull(const double dtFull)
 
     diffuse(dtFull - N*maxdt());
 
+    cout << sqrt(2*D()*dtFull) << endl;
     calculateLocalRates();
 }
 

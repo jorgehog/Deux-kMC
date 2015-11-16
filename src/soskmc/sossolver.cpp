@@ -380,6 +380,17 @@ void SOSSolver::getSolutionSite(const uint x, const uint y,
 
 }
 
+void SOSSolver::getRandomSolutionSite(const uint x, const uint y, const int height, int &dx, int &dy, int &dz) const
+{
+    const uint nSites = numberOfSurroundingSolutionSites(x, y, height);
+    const uint randomSite = rng.uniform()*nSites;
+
+    BADAss(nSites, !=, 0u);
+
+    getSolutionSite(x, y, height, dx, dy, dz, randomSite);
+
+}
+
 int SOSSolver::topSite(const uint x, const uint y, const int z, const uint n) const
 {
     return boundary(1, 1)->transformCoordinate(y + n, x, z);

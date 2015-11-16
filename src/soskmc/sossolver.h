@@ -151,6 +151,15 @@ public:
         getSolutionSite(x, y, height(x, y), dx, dy, dz, siteNumber);
     }
 
+    void getRandomSolutionSite(const uint x, const uint y, const int height,
+                               int &dx, int &dy, int &dz) const;
+
+    void getRandomSolutionSite(const uint x, const uint y,
+                               int &dx, int &dy, int &dz) const
+    {
+        getRandomSolutionSite(x, y, height(x, y), dx, dy, dz);
+    }
+
     int topSite(const uint x, const uint y, const int z, const uint n = 1) const;
 
     int bottomSite(const uint x, const uint y, const int z, const uint n = 1) const;

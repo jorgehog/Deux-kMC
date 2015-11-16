@@ -544,13 +544,8 @@ void LatticeDiffusion::registerHeightChange(const uint x,
     {
         const int h = solver().height(x, y)+1;
 
-        const uint nSites = solver().numberOfSurroundingSolutionSites(x, y, h);
-        const uint randomSite = rng.uniform()*nSites;
-
-        BADAss(nSites, !=, 0u);
-
         int dx, dy, dz;
-        solver().getSolutionSite(x, y, solver().height(x, y)+1, dx, dy, dz, randomSite);
+        solver().getRandomSolutionSite(x, y, h, dx, dy, dz);
 
         const uint xNew = solver().boundaryTransform(x, y, h, dx, 0);
         const uint yNew = solver().boundaryTransform(x, y, h, dy, 1);
