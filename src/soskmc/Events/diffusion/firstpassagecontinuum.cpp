@@ -5,7 +5,7 @@
 FirstPassageContinuum::FirstPassageContinuum(SOSSolver &solver,
                                              const double maxdt,
                                              const double n, const double c) :
-    Diffusion(solver, "FirstPassage"),
+    Diffusion(solver, "FirstPassage", "", true),
     OfflatticeMonteCarlo(solver, maxdt),
     m_n(n),
     m_c(c)
@@ -20,7 +20,7 @@ FirstPassageContinuum::~FirstPassageContinuum()
 
 void FirstPassageContinuum::execute()
 {
-    //pass
+    setValue(acceptanceRatio());
 }
 
 double FirstPassageContinuum::calculateLocalRate(const uint x, const uint y, const uint n) const
@@ -32,5 +32,5 @@ double FirstPassageContinuum::calculateLocalRate(const uint x, const uint y, con
                                                       particlePositions(1, n),
                                                       particlePositions(2, n));
 
-    return m_c*std::pow(dr2, m_n/2);
+    return m_c/std::pow(dr2, m_n/2);
 }

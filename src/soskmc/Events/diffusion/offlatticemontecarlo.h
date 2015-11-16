@@ -35,8 +35,6 @@ public:
         return m_maxdt;
     }
 
-    double D() const;
-
     double acceptanceRatio() const
     {
         return m_accepted/m_trials;

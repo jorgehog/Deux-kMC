@@ -58,11 +58,16 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
     //Remove particle based on the probability of it being the deposited
     if (value == 1)
     {
-        vector<double> localRatesForSite(nOfflatticeParticles());
+        vector<double> localRatesForSite(nOfflatticeParticles(), 0);
 
         double Rtot = 0;
         for (uint n = 0; n < nOfflatticeParticles(); ++n)
         {
+            if (!isInLineOfSight(n, x, y))
+            {
+                continue;
+            }
+
             //use old rates to calculate probability of depositing
             localRatesForSite.at(n) = localRates(x, y, n);
             Rtot += localRatesForSite.at(n);
@@ -72,36 +77,40 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
 
         uint N = binarySearchForInterval(R, localRatesForSite);
 
+        BADAssBool(isInLineOfSight(N, x, y));
+
         removeParticle(N);
     }
 
     //Add a particle on a unit sphere around the site;
     else
     {
-        double dx, dy, dz;
-        double x1, y1, z1;
+//        double dx, dy, dz;
+//        double x1, y1, z1;
 
         const int &z = solver().height(x, y) + 1;
 
-        do
-        {
-            double theta = rng.uniform()*datum::pi;
-            double phi = rng.uniform()*datum::pi*2;
+//        do
+//        {
+//            double theta = rng.uniform()*datum::pi;
+//            double phi = rng.uniform()*datum::pi*2;
 
-            dx = sin(theta)*cos(phi);
-            dy = sin(theta)*sin(phi);
-            dz = cos(theta);
+//            dx = sin(theta)*cos(phi);
+//            dy = sin(theta)*sin(phi);
+//            dz = cos(theta);
 
-            x1 = solver().boundaryTransform(x, y, z, dx, 0);
-            y1 = solver().boundaryTransform(x, y, z, dy, 1);
-            z1 = z + dz;
+//            x1 = solver().boundaryTransform(x, y, z, dx, 0);
+//            y1 = solver().boundaryTransform(x, y, z, dy, 1);
+//            z1 = z + dz;
 
-            BADAssClose(1, dx*dx + dy*dy + dz*dz, 1E-3);
+//            BADAssClose(1, dx*dx + dy*dy + dz*dz, 1E-3);
 
 
-        } while (solver().isBlockedPosition(x1, y1, z1));
+//        } while (solver().isBlockedPosition(x1, y1, z1));
 
-        insertParticle(x1, y1, z1);
+//        insertParticle(x1, y1, z1);
+
+        insertParticle(x, y, z);
     }
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
@@ -170,7 +179,6 @@ void OfflatticeMonteCarlo::registerHeightChange(const uint x,
 
 double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
 {
-
     //if there is no site available between the confining wall and the surface,
     //the rate is zero.
     if (solver().isBlockedPosition(x, y, solver().height(x, y) + 1))
@@ -182,6 +190,11 @@ double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
+        if (!isInLineOfSight(n, x, y))
+        {
+            continue;
+        }
+
         const double Rn = localRates(x, y, n);
 
         BADAssClose(Rn, calculateLocalRate(x, y, n), 1E-3);
@@ -189,7 +202,7 @@ double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
         R += Rn;
     }
 
-    return R/solver().concentration()/solver().area();
+    return R/solver().concentration();
 }
 
 void OfflatticeMonteCarlo::executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
@@ -259,6 +272,8 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
 
         BADAssBool(!solver().isBlockedPosition(x0, y0, z0));
 
+        m_F(0, n) = 0;
+        m_F(1, n) = 0;
         m_F(2, n) = solver().confiningSurfaceEvent().diffusionDrift(x0, y0, z0);
 
         do
@@ -422,11 +437,6 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
 
 }
 
-double OfflatticeMonteCarlo::D() const
-{
-    return 1.0/solver().concentration();
-}
-
 void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber, const string path) const
 {
     const double &h = solver().confiningSurfaceEvent().height();
@@ -519,6 +529,8 @@ void OfflatticeMonteCarlo::selectDepositionReactant(uint &xSelected, uint &ySele
 
 bool OfflatticeMonteCarlo::isInLineOfSight(const uint n, const uint x, const uint y) const
 {
+    //slow as ****
+
     const int z = solver().height(x, y) + 1;
 
     double xp = particlePositions(n, 0);

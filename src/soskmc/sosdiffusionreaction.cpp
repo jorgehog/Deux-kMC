@@ -212,6 +212,6 @@ void SOSDiffusionReaction::affectedUpdateRule()
 
 double SOSDiffusionReaction::rateExpression()
 {
-    return numberOfFreePaths()/solver().concentration();
+    return numberOfFreePaths()*solver().diffusionEvent().D();
 }
 

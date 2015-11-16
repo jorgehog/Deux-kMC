@@ -64,4 +64,9 @@ void Diffusion::dump(const uint frameNumber, const string path) const
     surfacewriter.finalize();
 }
 
+double Diffusion::D() const
+{
+    return 1.0/solver().concentration();
+}
+
 

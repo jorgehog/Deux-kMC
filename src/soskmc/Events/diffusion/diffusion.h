@@ -36,6 +36,8 @@ public:
         return m_solver;
     }
 
+    double D() const;
+
 private:
 
     SOSSolver &m_solver;
