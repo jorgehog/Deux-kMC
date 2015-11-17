@@ -30,8 +30,8 @@ public:
                           const double y,
                           const double z) const;
 
-    // HeightObserver interface
+    // kMC::Observer interface
 public:
-    void initializeObserver();
-    void notifyObserver();
+    void initializeObserver(const Subjects &subject);
+    void notifyObserver(const Subjects &subject);
 };

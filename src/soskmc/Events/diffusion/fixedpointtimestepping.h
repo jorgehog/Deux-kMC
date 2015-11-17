@@ -30,9 +30,9 @@ public:
     double calculateLocalRate(const uint x, const uint y, const uint n) const;
 
 
-    // HeightObserver interface
+    // kMC::Observer interface
 public:
-    void initializeObserver();
-    void notifyObserver();
+    void initializeObserver(const Subjects &subject);
+    void notifyObserver(const Subjects &subject);
 };
 

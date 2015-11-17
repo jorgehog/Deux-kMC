@@ -9,13 +9,17 @@ ConfinedConstantConcentration::ConfinedConstantConcentration(SOSSolver &solver) 
 
 }
 
-void ConfinedConstantConcentration::notifyObserver()
+void ConfinedConstantConcentration::notifyObserver(const Subjects &subject)
 {
+    (void) subject;
+
     m_deltaSum += solver().currentSurfaceChange().value;
 }
 
-void ConfinedConstantConcentration::initializeObserver()
+void ConfinedConstantConcentration::initializeObserver(const Subjects &subject)
 {
+    (void) subject;
+
     m_V0 = solver().freeVolume();
     m_N0 = solver().concentration()*m_V0;
 

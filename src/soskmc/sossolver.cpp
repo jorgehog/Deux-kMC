@@ -4,13 +4,14 @@
 #include "Events/confiningsurface/confiningsurface.h"
 #include "Events/diffusion/constantconcentration.h"
 #include "../kmcsolver/boundary/boundary.h"
-#include "observers.h"
+
 
 SOSSolver::SOSSolver(const uint length,
                      const uint width,
                      const double alpha,
                      const double gamma) :
     KMCSolver(),
+    Subject(),
     m_heights_set(false),
     m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_confiningSurfaceEvent(nullptr),
@@ -24,7 +25,7 @@ SOSSolver::SOSSolver(const uint length,
     m_concentrationIsZero(false),
     m_heights(length, width, fill::zeros),
     m_nNeighbors(length, width),
-    m_siteReactions(length, width)
+    m_surfaceReactions(length, width)
 {
     m_currentSurfaceChange.affectedSurfaceReactions.resize(5);
 
@@ -32,8 +33,8 @@ SOSSolver::SOSSolver(const uint length,
     {
         for (uint y = 0; y < width; ++y)
         {
-            m_siteReactions(x, y) = new DissolutionDeposition(x, y, *this);
-            addReaction(m_siteReactions(x, y));
+            m_surfaceReactions(x, y) = new DissolutionDeposition(x, y, *this);
+            addReaction(m_surfaceReactions(x, y));
         }
     }
 }
@@ -44,7 +45,7 @@ SOSSolver::~SOSSolver()
     {
         for (uint y = 0; y < width(); ++y)
         {
-            delete m_siteReactions(x, y);
+            delete m_surfaceReactions(x, y);
         }
     }
 
@@ -53,13 +54,12 @@ SOSSolver::~SOSSolver()
         delete r;
     }
 
-    m_siteReactions.clear();
+    m_surfaceReactions.clear();
     m_concentrationBoundaryReactions.clear();
 }
 
 void SOSSolver::registerHeightChange(const uint x, const uint y, const int value)
 {
-
     BADAssBool(!isOutsideBox(x, y));
     BADAssEqual(abs(value), 1);
 
@@ -116,10 +116,9 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
     m_currentSurfaceChange.value = value;
     m_currentSurfaceChange.n = n;
 
-    for (HeightObserver *obsever : m_heightObservers)
-    {
-        obsever->notifyObserver();
-    }
+    BADAss(m_currentSurfaceChange.value, ==, value);
+
+    notifyObservers(Subjects::SOLVER);
 
     //recalcuate rates for neighbor reactions.
     for (uint i = 1; i < n; ++i)
@@ -190,13 +189,14 @@ void SOSSolver::setHeights(const imat &newheights, const bool iteratively)
 void SOSSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
 {
     m_confiningSurfaceEvent = &confiningSurfaceEvent;
-    registerHeightObserver(&confiningSurfaceEvent);
+    registerObserver(&confiningSurfaceEvent);
+    confiningSurfaceEvent.registerObserver(this);
 }
 
 void SOSSolver::setDiffusionEvent(Diffusion &diffusionEvent)
 {
     m_diffusionEvent = &diffusionEvent;
-    registerHeightObserver(&diffusionEvent);
+    registerObserver(&diffusionEvent);
 }
 
 double SOSSolver::volume() const
@@ -624,13 +624,14 @@ void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orienta
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
 {
 
-    //check vs length and not length - 1 or - 0.5 because of transformation issues.
-    //so i.e. for periodicity,
+    //surface particle center is at x = 0 and x = l-1 so that volume = l
     bool isOutSideBox_x = (x < 0) || (x > length() - 1);
 
     bool isOutSideBox_y = (y < 0) || (y > width() - 1);
 
-    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 0.5) && confiningSurfaceEvent().hasSurface();
+    //center of conf surf is at confSE().height(), such that it extends to confSE().height() - 0.5
+    //which makes a particle of radius 0.5 collide if z is larger than cse.h() - 1
+    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 1) && confiningSurfaceEvent().hasSurface();
 
     if (isOutSideBox_x || isOutSideBox_y || isOutSideBox_z)
     {
@@ -640,7 +641,9 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
     const uint X = uint(round(x));
     const uint Y = uint(round(y));
 
-    return z < height(X, Y) + 0.5;
+    //center of surface particle is at h=height(X, Y) and surface particles extend to h+0.5
+    //such that particles of radius 0.5 collide when z is lower than h - 1
+    return z < height(X, Y) + 1;
 }
 
 bool SOSSolver::isOutsideBoxSingle(const int x, const uint dim) const
@@ -813,18 +816,18 @@ double SOSSolver::calculateVolumeCorrection() const
 
     for (uint x = 1; x < m_length - 1; ++x)
     {
-        correction += 0.5*((h - height(x, 0) - 1) + (h - height(x, m_width-1) - 1));
+        correction += 0.5*((h - height(x, 0) - 2) + (h - height(x, m_width-1) - 2));
     }
 
     for (uint y = 1; y < m_width - 1; ++y)
     {
-        correction += 0.5*((h - height(0, y) - 1) + (h - height(m_length-1, y) - 1));
+        correction += 0.5*((h - height(0, y) - 2) + (h - height(m_length-1, y) - 2));
     }
 
-    correction += 3./4*((h - height(0, 0) - 1) +
-                        (h - height(0, m_width - 1) - 1) +
-                        (h - height(m_length - 1, 0) - 1) +
-                        (h - height(m_length - 1, m_width - 1) - 1));
+    correction += 3./4*((h - height(0, 0) - 2) +
+                        (h - height(0, m_width - 1) - 2) +
+                        (h - height(m_length - 1, 0) - 2) +
+                        (h - height(m_length - 1, m_width - 1) - 2));
 
     return correction;
 
@@ -863,10 +866,7 @@ void SOSSolver::initialize()
         }
     }
 
-    for (HeightObserver *observer : m_heightObservers)
-    {
-        observer->initializeObserver();
-    }
+    initializeObservers(Subjects::SOLVER);
 
     KMCSolver::initialize();
 
@@ -883,4 +883,33 @@ double SOSSolver::timeUnit() const
     {
         return 1./m_expGamma;
     }
+}
+
+void SOSSolver::initializeObserver(const Subjects &subject)
+{
+    (void) subject;
+
+    BADAssBreak("This should never happen.");
+}
+
+void SOSSolver::notifyObserver(const Subjects &subject)
+{
+    (void) subject;
+
+    const double &h = confiningSurfaceEvent().height();
+    const int surfaceContactHeight = h - 1;
+
+    //very slow... uvec xy = arma::find(m_heights == surfaceContactHeight);
+
+    for (uint x = 0; x < length(); ++x)
+    {
+        for (uint y = 0; y < width(); ++y)
+        {
+            if (height(x, y) == surfaceContactHeight)
+            {
+                registerAffectedReaction(m_surfaceReactions(x, y));
+            }
+        }
+    }
+
 }

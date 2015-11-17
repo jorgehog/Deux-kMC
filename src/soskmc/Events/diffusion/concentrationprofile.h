@@ -32,9 +32,13 @@ public:
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const;
     double concentration() const;
 
-    // HeightObserver interface
+    // kMC::Observer interface
 public:
-    virtual void initializeObserver() {}
-    virtual void notifyObserver();
+    virtual void initializeObserver(const Subjects &subject)
+    {
+        (void) subject;
+    }
+
+    virtual void notifyObserver(const Subjects &subject);
 };
 

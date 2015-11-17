@@ -2,11 +2,15 @@
 
 #include "../sosevent.h"
 #include "../../observers.h"
+#include "../../subjects.h"
+
+using kMC::Observer;
+using kMC::Subjects;
 
 class SOSDiffusionReaction;
 class ConcentrationBoundaryReaction;
 
-class Diffusion : public ignis::LatticeEvent, public HeightObserver
+class Diffusion : public ignis::LatticeEvent, public Observer<Subjects>
 {
 public:
     Diffusion(SOSSolver &solver,

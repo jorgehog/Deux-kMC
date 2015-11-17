@@ -14,10 +14,10 @@ private:
 
     double m_deltaSum;
 
-    // HeightObserver interface
+    // kMC::Observer interface
 public:
-    void notifyObserver();
-    void initializeObserver();
+    void notifyObserver(const Subjects &subject);
+    void initializeObserver(const Subjects &subject);
 
     // Event interface
 public:

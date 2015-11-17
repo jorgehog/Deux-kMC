@@ -19,7 +19,7 @@ AverageHeightBoundary::AverageHeightBoundary(SOSSolver &solver,
 {
     getStartsAndEnds(m_x0, m_y0, m_x1, m_y1);
 
-    m_mutexSolver.registerHeightObserver(this);
+    solver.registerObserver(this);
 }
 
 AverageHeightBoundary::~AverageHeightBoundary()
@@ -177,11 +177,13 @@ void AverageHeightBoundary::closestImage(const double xi, const double xj, const
 }
 
 
-void AverageHeightBoundary::notifyObserver()
+void AverageHeightBoundary::notifyObserver(const Subjects &subject)
 {
+    (void) subject;
+
     const uint &x = solver().currentSurfaceChange().x;
     const uint &y = solver().currentSurfaceChange().y;
-    const double &value = solver().currentSurfaceChange().value;
+    const int &value = solver().currentSurfaceChange().value;
 
     if (isInsideCutoff(x, y))
     {
@@ -198,8 +200,10 @@ void AverageHeightBoundary::notifyObserver()
     updateSites(height, prevHeight);
 }
 
-void AverageHeightBoundary::initializeObserver()
+void AverageHeightBoundary::initializeObserver(const Subjects &subject)
 {
+    (void) subject;
+
     m_average = calcAverage();
 
     double prevPrev = m_prevAverage;

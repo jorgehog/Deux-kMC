@@ -18,12 +18,12 @@ FixedRDLSurface::~FixedRDLSurface()
 
 }
 
-void FixedRDLSurface::notifyObserver()
+void FixedRDLSurface::notifyObserver(const Subjects &subject)
 {
     const uint &x = solver().currentSurfaceChange().x;
     const uint &y = solver().currentSurfaceChange().y;
 
     RDLSurface::recalculateRDLEnergy(x, y);
 
-    FixedSurface::notifyObserver();
+    FixedSurface::notifyObserver(subject);
 }

@@ -49,8 +49,10 @@ void Multiscale::executeDiffusionReaction(SOSDiffusionReaction *reaction, const 
 }
 
 
-void Multiscale::initializeObserver()
+void Multiscale::initializeObserver(const Subjects &subject)
 {
+    (void) subject;
+
     const double zMin = solver().heights().max() + m_boundarySpacing;
 
     BADAss(zMin, <, solver().confiningSurfaceEvent().height(), "not enough room for continuum solver.");

@@ -2,6 +2,9 @@
 
 #include "../kmcsolver/kmcsolver.h"
 #include "../kmcsolver/boundary/boundary.h"
+#include "observers.h"
+#include "subjects.h"
+
 #include <armadillo>
 
 #include <unordered_set>
@@ -16,7 +19,6 @@ class DissolutionDeposition;
 class ConcentrationBoundaryReaction;
 class ConfiningSurface;
 class Diffusion;
-class HeightObserver;
 
 struct CurrentSurfaceChange
 {
@@ -28,7 +30,7 @@ struct CurrentSurfaceChange
     uint n;
 };
 
-class SOSSolver : public KMCSolver
+class SOSSolver : public KMCSolver, public Subject<Subjects>, public Observer<Subjects>
 {
     typedef pair<uint, uint> pair_type;
     typedef unordered_set<pair_type, boost::hash<pair_type>> set_type;
@@ -116,6 +118,11 @@ public:
     void setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent);
 
     void setDiffusionEvent(Diffusion &diffusionEvent);
+
+    bool confiningSurfaceIsSet() const
+    {
+        return m_confiningSurfaceEvent != nullptr;
+    }
 
     ConfiningSurface &confiningSurfaceEvent() const
     {
@@ -228,12 +235,12 @@ public:
 
     DissolutionDeposition &surfaceReaction(const uint x, const uint y)
     {
-        return *m_siteReactions(x, y);
+        return *m_surfaceReactions(x, y);
     }
 
     const DissolutionDeposition &surfaceReaction(const uint x, const uint y) const
     {
-        return *m_siteReactions(x, y);
+        return *m_surfaceReactions(x, y);
     }
 
     void setGamma(const double gamma);
@@ -263,11 +270,6 @@ public:
     const double &averageHeight() const
     {
         return m_averageHeight;
-    }
-
-    void registerHeightObserver(HeightObserver *connecter)
-    {
-        m_heightObservers.push_back(connecter);
     }
 
     double calculateVolumeCorrection() const;
@@ -309,13 +311,11 @@ private:
     double m_averageHeight;
 
 
-    field<DissolutionDeposition*> m_siteReactions;
+    field<DissolutionDeposition*> m_surfaceReactions;
 
     vector<ConcentrationBoundaryReaction*> m_concentrationBoundaryReactions;
 
     set_type m_changedSurfaceSites;
-
-    std::vector<HeightObserver *> m_heightObservers;
 
     // Event interface
 public:
@@ -326,4 +326,10 @@ public:
 public:
     double timeUnit() const;
 
+
+    // Observer interface
+public:
+    void initializeObserver(const Subjects &subject);
+    void notifyObserver(const Subjects &subject);
 };
+

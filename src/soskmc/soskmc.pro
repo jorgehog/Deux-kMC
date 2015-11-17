@@ -63,7 +63,8 @@ HEADERS += \
     Events/diffusion/confinedconstantconcentration.h \
     Events/confiningsurface/constantconfinement.h \
     Events/diffusion/latticediffusionconstantn.h \
-    observers.h
+    observers.h \
+    subjects.h
 
 LIBS += -lkMC
 

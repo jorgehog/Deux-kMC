@@ -3,7 +3,12 @@
 #include "sosboundary.h"
 #include "observers.h"
 
-class AverageHeightBoundary : public SOSBoundary, public HeightObserver
+#include "subjects.h"
+
+using kMC::Observer;
+using kMC::Subjects;
+
+class AverageHeightBoundary : public SOSBoundary, public Observer<Subjects>
 {
 public:
     AverageHeightBoundary(SOSSolver &solver, const uint averageHeightDepth,
@@ -63,9 +68,9 @@ public:
                       const double xti, const double xtj, const double xtk,
                       double &dxi, double &dxj, double &dxk) const;
 
-    // HeightObserver interface
+    // kMC::Observer interface
 public:
-    void notifyObserver();
-    void initializeObserver();
+    void notifyObserver(const Subjects &subject);
+    void initializeObserver(const Subjects &subject);
 };
 

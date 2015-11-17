@@ -1,11 +1,5 @@
 #include "observers.h"
 
-Observer::Observer()
-{
+using namespace kMC;
 
-}
 
-Observer::~Observer()
-{
-
-}

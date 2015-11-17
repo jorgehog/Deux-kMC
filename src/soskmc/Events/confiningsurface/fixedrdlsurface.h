@@ -32,7 +32,7 @@ public:
         return true;
     }
 
-    void notifyObserver();
+    void notifyObserver(const Subjects &subject);
 
     double confinementEnergy(const uint x, const uint y)
     {
@@ -51,10 +51,12 @@ public:
     }
 
 
-    // HeightObserver interface
+    // kMC::Observer interface
 public:
-    void initializeObserver()
+    void initializeObserver(const Subjects &subject)
     {
+        (void) subject;
+
         RDLSurface::recalculateAllRDLEnergies();
     }
 

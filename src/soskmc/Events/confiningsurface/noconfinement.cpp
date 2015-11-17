@@ -17,14 +17,14 @@ void NoConfinement::execute()
 
 }
 
-void NoConfinement::initializeObserver()
+void NoConfinement::initializeObserver(const Subjects &subject)
 {
-
+    (void) subject;
 }
 
-void NoConfinement::notifyObserver()
+void NoConfinement::notifyObserver(const Subjects &subject)
 {
-
+    (void) subject;
 }
 
 double NoConfinement::confinementEnergy(const uint x, const uint y)

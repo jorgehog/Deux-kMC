@@ -28,9 +28,9 @@ uint ConcentrationProfile::dissolutionPaths(const uint x, const uint y) const
     return 1u;
 }
 
-void ConcentrationProfile::notifyObserver()
+void ConcentrationProfile::notifyObserver(const Subjects &subject)
 {
-
+    (void) subject;
 }
 
 void ConcentrationProfile::executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)

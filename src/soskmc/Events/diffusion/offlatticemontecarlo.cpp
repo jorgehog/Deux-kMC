@@ -41,8 +41,10 @@ uint OfflatticeMonteCarlo::dissolutionPaths(const uint x, const uint y) const
     return 1u;
 }
 
-void OfflatticeMonteCarlo::notifyObserver()
+void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
 {
+    (void) subject;
+
     if (!hasStarted())
     {
         return;
@@ -50,7 +52,7 @@ void OfflatticeMonteCarlo::notifyObserver()
 
     const uint &x = solver().currentSurfaceChange().x;
     const uint &y = solver().currentSurfaceChange().y;
-    const double &value = solver().currentSurfaceChange().value;
+    const int &value = solver().currentSurfaceChange().value;
 
     //Remove particle based on the probability of it being the deposited
     if (value == 1)
@@ -581,8 +583,10 @@ void OfflatticeMonteCarlo::reset()
     diffuseFull(dtFull);
 }
 
-void OfflatticeMonteCarlo::initializeObserver()
+void OfflatticeMonteCarlo::initializeObserver(const Subjects &subject)
 {
+    (void) subject;
+
     const double V = solver().volume();
 
     uint N = V*solver().concentration() + rng.uniform();

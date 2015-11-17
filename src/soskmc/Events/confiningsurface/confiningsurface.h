@@ -3,9 +3,13 @@
 #include "../sosevent.h"
 #include "../../observers.h"
 
-class DissolutionDeposition;
+#include "../../subjects.h"
 
-class ConfiningSurface : public ignis::LatticeEvent, public HeightObserver
+using kMC::Subject;
+using kMC::Observer;
+using kMC::Subjects;
+
+class ConfiningSurface : public ignis::LatticeEvent, public Observer<Subjects>, public Subject<Subjects>
 {
 public:
     ConfiningSurface(SOSSolver &solver,
@@ -30,10 +34,7 @@ public:
         return m_height;
     }
 
-    void setHeight(const double height)
-    {
-        m_height = height;
-    }
+    void setHeight(const double height);
 
     const SOSSolver &solver() const
     {
@@ -46,6 +47,8 @@ private:
 
     SOSSolver &m_solver;
 
+
+
 protected:
 
     SOSSolver &mutexSolver() const
@@ -53,3 +56,5 @@ protected:
         return m_solver;
     }
 };
+
+

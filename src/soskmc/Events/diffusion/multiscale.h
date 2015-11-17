@@ -55,12 +55,12 @@ public:
     double concentration() const;
 
 
-    // HeightObserver interface
+    // kMC::Observer interface
 public:
-    void initializeObserver();
-    void notifyObserver()
+    void initializeObserver(const Subjects &subject);
+    void notifyObserver(const Subjects &subject)
     {
-        LatticeDiffusion::notifyObserver();
+        LatticeDiffusion::notifyObserver(subject);
     }
 
 

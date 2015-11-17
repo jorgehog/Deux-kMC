@@ -12,12 +12,13 @@ private:
 
     double m_h;
 
-    // HeightObserver interface
+    // kMC::Observer interface
 public:
-    void notifyObserver();
+    void notifyObserver(const Subjects &subject);
 
     // Event interface
 public:
     void initialize();
+    void execute();
 };
 

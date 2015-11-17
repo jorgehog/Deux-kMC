@@ -236,8 +236,10 @@ void RDLSurface::reset()
     BADAssClose(RDLEnergySum(), -m_E0, 1E-3);
 }
 
-void RDLSurface::initializeObserver()
+void RDLSurface::initializeObserver(const Subjects &subject)
 {
+    (void) subject;
+
     setupTheta();
 
     setHeight(m_r0LogThetaPrev + m_lD*std::log(m_s0/m_E0));
@@ -247,8 +249,9 @@ void RDLSurface::initializeObserver()
     BADAssClose(RDLEnergySum(), -m_E0, 1E-5);
 }
 
-void RDLSurface::notifyObserver()
+void RDLSurface::notifyObserver(const Subjects &subject)
 {
+    (void) subject;
 
     if (!hasStarted())
     {

@@ -71,7 +71,7 @@ TEST_F(CDiffTest, scan)
 
     EXPECT_NEAR(1, x0, 1E-2);
     EXPECT_NEAR(1, y0, 1E-2);
-    EXPECT_NEAR(0.5, z0, 1E-2);
+    EXPECT_NEAR(1, z0, 1E-2);
 
     solver().setHeight(1,1,1,false);
 
@@ -83,7 +83,7 @@ TEST_F(CDiffTest, scan)
 
     EXPECT_NEAR(0.5, x0, 1E-2);
     EXPECT_NEAR(1, y0, 1E-2);
-    EXPECT_NEAR(0.5, z0, 1E-2);
+    EXPECT_NEAR(1, z0, 1E-2);
 
 
 
@@ -96,7 +96,7 @@ TEST_F(CDiffTest, fullscan)
 
     m_solver->setHeight(1, 1, 1, false);
 
-    m_cdiffusionEvent->insertParticle(1, 1, 1.3);
+    m_cdiffusionEvent->insertParticle(1, 1, 1.8);
 
     uint dim;
     double delta;
@@ -178,7 +178,8 @@ TEST_F(CDiffTest, diffusion)
 
 TEST_F(CDiffTest, volume)
 {
-    solver().setHeights(randi<imat>(m_L, m_W, distr_param(-4, 4)), false);
+//    solver().setHeights(randi<imat>(m_L, m_W, distr_param(-4, 4)), false);
+    solver().confiningSurfaceEvent().setHeight(5);
 
     const uint N = 10000000;
 
@@ -204,7 +205,7 @@ TEST_F(CDiffTest, volume)
 
     const double fullBoxVolume = m_L*m_W*zSpan;
 
-    const double soluteVolume = solver().volume();
+    const double soluteVolume = solver().freeVolume();
 
     const double estimatedVolume = frac*fullBoxVolume + correction;
 

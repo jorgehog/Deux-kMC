@@ -454,15 +454,15 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
 
         if (onlattice)
         {
+            conf = new ConstantConfinement(thermSolver, solver.confiningSurfaceEvent().height());
             conc = new LatticeDiffusionConstantN(thermSolver);
-            conf = new FixedSurface(thermSolver, solver.confiningSurfaceEvent().height());
             nc = 100000;
         }
 
         else
         {
-            conc = new ConstantConcentration(thermSolver);
             conf = new ConstantConfinement(thermSolver, solver.confiningSurfaceEvent().height());
+            conc = new ConstantConcentration(thermSolver);
             nc = 10000;
         }
 

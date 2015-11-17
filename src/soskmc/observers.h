@@ -3,19 +3,61 @@
 #include <vector>
 #include <sys/types.h>
 
+namespace kMC
+{
+
+template<class IDType>
 class Observer
 {
 public:
-    Observer();
-    virtual ~Observer();
+    Observer() {}
+    virtual ~Observer() {}
 
-    virtual void initializeObserver() = 0;
+    virtual void initializeObserver(const IDType &subject) = 0;
 
-    virtual void notifyObserver() = 0;
+    virtual void notifyObserver(const IDType &subject) = 0;
 };
 
-//!Makes a connection between a height change and the inherited class
-class HeightObserver: public Observer {};
+template<class IDType>
+class Subject
+{
+public:
+    using ObserverType = Observer<IDType>;
 
-//!Makes a connection between a change in the confining surface and the inherited classc
-class ConfiningSurfaceObserver : public Observer {};
+    Subject() {}
+
+    virtual ~Subject() {}
+
+    void registerObserver(ObserverType *observer)
+    {
+        m_observers.push_back(observer);
+    }
+
+    void removeObserver(ObserverType *observer)
+    {
+        (void) observer;
+        //not implemented
+    }
+
+    void initializeObservers(const IDType &ID)
+    {
+        for (ObserverType *observer : m_observers)
+        {
+            observer->initializeObserver(ID);
+        }
+    }
+
+    void notifyObservers(const IDType &ID)
+    {
+        for (ObserverType *observer : m_observers)
+        {
+            observer->notifyObserver(ID);
+        }
+    }
+
+private:
+    std::vector<ObserverType* > m_observers;
+
+};
+
+}

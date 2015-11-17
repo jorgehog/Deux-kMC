@@ -2,6 +2,8 @@
 
 #include "confiningsurface.h"
 
+class DissolutionDeposition;
+
 class RDLSurface : public virtual ConfiningSurface
 {
 public:
@@ -115,10 +117,10 @@ public:
     double diffusionDrift(const double x, const double y, const double z) const;
 
 
-    // HeightObserver interface
+    // kMC::Observer interface
 public:
 
-    void initializeObserver();
+    void initializeObserver(const Subjects &subject);
 
-    void notifyObserver();
+    void notifyObserver(const Subjects &subject);
 };

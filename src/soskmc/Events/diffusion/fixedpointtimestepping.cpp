@@ -150,18 +150,18 @@ void FixedPointTimeStepping::execute()
     calculateTimeStep();
 }
 
-void FixedPointTimeStepping::initializeObserver()
+void FixedPointTimeStepping::initializeObserver(const Subjects &subject)
 {
-    OfflatticeMonteCarlo::initializeObserver();
+    OfflatticeMonteCarlo::initializeObserver(subject);
 
     m_currentTimeStep = 1.0;
     calculateTimeStep(true);
 
 }
 
-void FixedPointTimeStepping::notifyObserver()
+void FixedPointTimeStepping::notifyObserver(const Subjects &subject)
 {
-    OfflatticeMonteCarlo::notifyObserver();
+    OfflatticeMonteCarlo::notifyObserver(subject);
 
     calculateTimeStep();
 
