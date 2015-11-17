@@ -31,6 +31,8 @@ public:
 
     const double &height() const
     {
+        BADAssBool(hasSurface());
+
         return m_height;
     }
 

@@ -80,7 +80,7 @@ public:
 
     const uint &surfaceDim() const
     {
-        return m_dim;
+        return m_surfaceDim;
     }
 
     const double &alpha() const
@@ -292,7 +292,7 @@ private:
 
     bool m_heights_set;
 
-    const uint m_dim;
+    const uint m_surfaceDim;
     ConfiningSurface *m_confiningSurfaceEvent;
     Diffusion *m_diffusionEvent;
 

@@ -9,14 +9,17 @@
 
 double DissolutionDeposition::calculateDissolutionRate() const
 {
-    //no paths
-    if (solver().height(x(), y()) >= solver().confiningSurfaceEvent().height() - 1)
+    if (solver().confiningSurfaceEvent().hasSurface())
     {
-        uint nnBelow = solver().calculateNNeighbors(x(), y(), solver().height(x(), y()) - 1);
-
-        if (nnBelow == 5)
+        if (solver().height(x(), y()) >= solver().confiningSurfaceEvent().height() - 1)
         {
-            return 0;
+            uint nnBelow = solver().calculateNNeighbors(x(), y(), solver().height(x(), y()) - 1);
+
+            //no paths
+            if (nnBelow == 5)
+            {
+                return 0;
+            }
         }
     }
 

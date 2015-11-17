@@ -351,11 +351,20 @@ void setBoundariesFromIDs(SOSSolver *solver,
 
 void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt = 0)
 {
-    int maxSpan = solver.confiningSurfaceEvent().height()/10;
+    int maxSpan;
 
-    if (maxSpan == 0)
+    if (solver.confiningSurfaceEvent().hasSurface())
     {
-        maxSpan = 1;
+        maxSpan = solver.confiningSurfaceEvent().height()/10;
+
+        if (maxSpan == 0)
+        {
+            maxSpan = 1;
+        }
+    }
+    else
+    {
+        maxSpan = 3;
     }
 
     const uint L = solver.length();

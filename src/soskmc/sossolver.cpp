@@ -13,7 +13,7 @@ SOSSolver::SOSSolver(const uint length,
     KMCSolver(),
     Subject(),
     m_heights_set(false),
-    m_dim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
+    m_surfaceDim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_confiningSurfaceEvent(nullptr),
     m_diffusionEvent(nullptr),
     m_length(length),
@@ -841,8 +841,6 @@ void SOSSolver::setZeroConcentration()
 
 void SOSSolver::execute()
 {
-    BADAss(m_heights.max(), <=, confiningSurfaceEvent().height() - 1);
-
     KMCSolver::execute();
 
     m_changedSurfaceSites.clear();
