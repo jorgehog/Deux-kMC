@@ -14,10 +14,10 @@ private:
 
     double m_deltaSum;
 
-    // HeightConnecter interface
+    // HeightObserver interface
 public:
-    void registerHeightChange(const uint x, const uint y, const int value, std::vector<DissolutionDeposition *> &affectedSurfaceReactions, const uint nAffectedSurfaceReactions);
-    void setupInitialConditions();
+    void notifyObserver();
+    void initializeObserver();
 
     // Event interface
 public:

@@ -27,12 +27,12 @@ SOURCES += \
     Events/diffusion/multiscale.cpp \
     Events/diffusion/firstpassagecontinuum.cpp \
     Events/diffusion/concentrationprofile.cpp \
-    heightconnecter.cpp \
     averageheightboundary.cpp \
     Events/sosevent.cpp \
     Events/diffusion/confinedconstantconcentration.cpp \
-    Events/diffusion/latticediffusionrescaling.cpp \
-    Events/confiningsurface/constantconfinement.cpp
+    Events/confiningsurface/constantconfinement.cpp \
+    Events/diffusion/latticediffusionconstantn.cpp \
+    observers.cpp
 
 HEADERS += \
     Events/equilibriater.h \
@@ -58,12 +58,12 @@ HEADERS += \
     Events/diffusion/multiscale.h \
     Events/diffusion/firstpassagecontinuum.h \
     Events/diffusion/concentrationprofile.h \
-    heightconnecter.h \
     sosboundary.h \
     averageheightboundary.h \
     Events/diffusion/confinedconstantconcentration.h \
-    Events/diffusion/latticediffusionrescaling.h \
-    Events/confiningsurface/constantconfinement.h
+    Events/confiningsurface/constantconfinement.h \
+    Events/diffusion/latticediffusionconstantn.h \
+    observers.h
 
 LIBS += -lkMC
 

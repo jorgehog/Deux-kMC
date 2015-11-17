@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../sosevent.h"
-#include "../../heightconnecter.h"
+#include "../../observers.h"
 
 class SOSDiffusionReaction;
 class ConcentrationBoundaryReaction;
 
-class Diffusion : public ignis::LatticeEvent, public HeightConnecter
+class Diffusion : public ignis::LatticeEvent, public HeightObserver
 {
 public:
     Diffusion(SOSSolver &solver,

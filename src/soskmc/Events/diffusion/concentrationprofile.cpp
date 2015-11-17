@@ -28,17 +28,9 @@ uint ConcentrationProfile::dissolutionPaths(const uint x, const uint y) const
     return 1u;
 }
 
-void ConcentrationProfile::registerHeightChange(const uint x,
-                                                const uint y,
-                                                const int value,
-                                                std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                                                const uint n)
+void ConcentrationProfile::notifyObserver()
 {
-    (void) x;
-    (void) y;
-    (void) value;
-    (void) affectedSurfaceReactions;
-    (void) n;
+
 }
 
 void ConcentrationProfile::executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)

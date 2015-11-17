@@ -19,7 +19,7 @@ AverageHeightBoundary::AverageHeightBoundary(SOSSolver &solver,
 {
     getStartsAndEnds(m_x0, m_y0, m_x1, m_y1);
 
-    m_mutexSolver.registerHeightConnecter(this);
+    m_mutexSolver.registerHeightObserver(this);
 }
 
 AverageHeightBoundary::~AverageHeightBoundary()
@@ -177,10 +177,11 @@ void AverageHeightBoundary::closestImage(const double xi, const double xj, const
 }
 
 
-void AverageHeightBoundary::registerHeightChange(const uint x, const uint y, const int value, std::vector<DissolutionDeposition *> &affectedSurfaceReactions, const uint nAffectedSurfaceReactions)
+void AverageHeightBoundary::notifyObserver()
 {
-    (void) affectedSurfaceReactions;
-    (void) nAffectedSurfaceReactions;
+    const uint &x = solver().currentSurfaceChange().x;
+    const uint &y = solver().currentSurfaceChange().y;
+    const double &value = solver().currentSurfaceChange().value;
 
     if (isInsideCutoff(x, y))
     {
@@ -197,7 +198,7 @@ void AverageHeightBoundary::registerHeightChange(const uint x, const uint y, con
     updateSites(height, prevHeight);
 }
 
-void AverageHeightBoundary::setupInitialConditions()
+void AverageHeightBoundary::initializeObserver()
 {
     m_average = calcAverage();
 

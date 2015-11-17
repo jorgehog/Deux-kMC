@@ -4,7 +4,7 @@
 #include "Events/confiningsurface/confiningsurface.h"
 #include "Events/diffusion/constantconcentration.h"
 #include "../kmcsolver/boundary/boundary.h"
-#include "heightconnecter.h"
+#include "observers.h"
 
 SOSSolver::SOSSolver(const uint length,
                      const uint width,
@@ -24,10 +24,10 @@ SOSSolver::SOSSolver(const uint length,
     m_concentrationIsZero(false),
     m_heights(length, width, fill::zeros),
     m_nNeighbors(length, width),
-    m_siteReactions(length, width),
-    m_affectedSurfaceReactions(5)
-
+    m_siteReactions(length, width)
 {
+    m_currentSurfaceChange.affectedSurfaceReactions.resize(5);
+
     for (uint x = 0; x < length; ++x)
     {
         for (uint y = 0; y < width; ++y)
@@ -59,6 +59,7 @@ SOSSolver::~SOSSolver()
 
 void SOSSolver::registerHeightChange(const uint x, const uint y, const int value)
 {
+
     BADAssBool(!isOutsideBox(x, y));
     BADAssEqual(abs(value), 1);
 
@@ -77,46 +78,53 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
 
     uint n = 0;
 
-    m_affectedSurfaceReactions.at(n) = &surfaceReaction(x, y);
+    vector<DissolutionDeposition *> &affectedSurfaceReactions = m_currentSurfaceChange.affectedSurfaceReactions;
+
+    affectedSurfaceReactions.at(n) = &surfaceReaction(x, y);
     n++;
 
     if (!isOutsideBoxSingle(left, 0))
     {
         setNNeighbors(left, y);
-        m_affectedSurfaceReactions.at(n) = &surfaceReaction(left, y);
+        affectedSurfaceReactions.at(n) = &surfaceReaction(left, y);
         n++;
     }
 
     if (!isOutsideBoxSingle(right, 0))
     {
         setNNeighbors(right, y);
-        m_affectedSurfaceReactions.at(n) = &surfaceReaction(right, y);
+        affectedSurfaceReactions.at(n) = &surfaceReaction(right, y);
         n++;
     }
 
     if (!isOutsideBoxSingle(top, 1))
     {
         setNNeighbors(x, top);
-        m_affectedSurfaceReactions.at(n) = &surfaceReaction(x, top);
+        affectedSurfaceReactions.at(n) = &surfaceReaction(x, top);
         n++;
     }
 
     if (!isOutsideBoxSingle(bottom, 1))
     {
         setNNeighbors(x, bottom);
-        m_affectedSurfaceReactions.at(n) = &surfaceReaction(x, bottom);
+        affectedSurfaceReactions.at(n) = &surfaceReaction(x, bottom);
         n++;
     }
 
-    for (HeightConnecter *heightConnecter : m_heightConnecters)
+    m_currentSurfaceChange.x = x;
+    m_currentSurfaceChange.y = y;
+    m_currentSurfaceChange.value = value;
+    m_currentSurfaceChange.n = n;
+
+    for (HeightObserver *obsever : m_heightObservers)
     {
-        heightConnecter->registerHeightChange(x, y, value, m_affectedSurfaceReactions, n);
+        obsever->notifyObserver();
     }
 
     //recalcuate rates for neighbor reactions.
     for (uint i = 1; i < n; ++i)
     {
-        registerAffectedReaction(m_affectedSurfaceReactions.at(i));
+        registerAffectedReaction(affectedSurfaceReactions.at(i));
     }
 
     updateConcentrationBoundaryIfOnBoundary(x, y);
@@ -182,13 +190,13 @@ void SOSSolver::setHeights(const imat &newheights, const bool iteratively)
 void SOSSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
 {
     m_confiningSurfaceEvent = &confiningSurfaceEvent;
-    registerHeightConnecter(&confiningSurfaceEvent);
+    registerHeightObserver(&confiningSurfaceEvent);
 }
 
 void SOSSolver::setDiffusionEvent(Diffusion &diffusionEvent)
 {
     m_diffusionEvent = &diffusionEvent;
-    registerHeightConnecter(&diffusionEvent);
+    registerHeightObserver(&diffusionEvent);
 }
 
 double SOSSolver::volume() const
@@ -431,108 +439,6 @@ void SOSSolver::findConnections(const uint x,
     connectedBottom = findSingleConnection(bottom, 1, 0, x, h, onlySurface);
     connectedTop = findSingleConnection(top, 1, 1, x, h, onlySurface);
 
-    //    connectedLeft = false;
-    //    connectedRight = false;
-    //    connectedBottom = false;
-    //    connectedTop = false;
-    //    bool checkConnection;
-
-    //    checkConnection = !isOutsideBoxSingle(left, 0);
-    //    if (!boundary(0, 0)->isBlocked(left))
-    //    {
-    //        if (!onlySurface)
-    //        {
-    //            if (diffusionEvent().isBlockedPosition(left, y, h))
-    //            {
-    //                connectedLeft = true;
-    //                checkConnection = false;
-    //            }
-    //        }
-
-    //        if (checkConnection)
-    //        {
-    //            const int &hLeft = m_heights(left, y);
-    //            connectedLeft = hLeft >= h;
-    //        }
-    //    }
-
-    //    else
-    //    {
-    //        connectedLeft = true;
-    //    }
-
-    //    checkConnection = !isOutsideBoxSingle(right, 0);
-    //    if (!boundary(0, 1)->isBlocked(right))
-    //    {
-
-    //        if (!onlySurface)
-    //        {
-    //            if (diffusionEvent().isBlockedPosition(right, y, h))
-    //            {
-    //                connectedRight = true;
-    //                checkConnection = false;
-    //            }
-    //        }
-
-    //        if (checkConnection)
-    //        {
-    //            const int &hRight = m_heights(right, y);
-    //            connectedRight = hRight >= h;
-    //        }
-    //    }
-
-    //    else
-    //    {
-    //        connectedRight = true;
-    //    }
-
-    //    checkConnection = !isOutsideBoxSingle(top, 1);
-    //    if (!boundary(1, 1)->isBlocked(top))
-    //    {
-    //        if (!onlySurface)
-    //        {
-    //            if (diffusionEvent().isBlockedPosition(x, top, h))
-    //            {
-    //                connectedTop = true;
-    //                checkConnection = false;
-    //            }
-    //        }
-
-    //        if (checkConnection)
-    //        {
-    //            const int &hTop = m_heights(x, top);
-    //            connectedTop = hTop >= h;
-    //        }
-    //    }
-
-    //    else
-    //    {
-    //        connectedTop = true;
-    //    }
-
-    //    checkConnection = !isOutsideBoxSingle(bottom, 1);
-    //    if (!boundary(1, 0)->isBlocked(bottom))
-    //    {
-    //        if (!onlySurface)
-    //        {
-    //            if (diffusionEvent().isBlockedPosition(x, bottom, h))
-    //            {
-    //                connectedBottom = true;
-    //                checkConnection = false;
-    //            }
-    //        }
-
-    //        if (checkConnection)
-    //        {
-    //            const int &hBottom = m_heights(x, bottom);
-    //            connectedBottom = hBottom >= h;
-    //        }
-    //    }
-
-    //    else
-    //    {
-    //        connectedBottom = true;
-    //    }
 }
 
 bool SOSSolver::findSingleConnection(const int xNeighbor,
@@ -957,9 +863,9 @@ void SOSSolver::initialize()
         }
     }
 
-    for (HeightConnecter *connecter : m_heightConnecters)
+    for (HeightObserver *observer : m_heightObservers)
     {
-        connecter->setupInitialConditions();
+        observer->initializeObserver();
     }
 
     KMCSolver::initialize();

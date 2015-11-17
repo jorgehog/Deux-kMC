@@ -236,7 +236,7 @@ void RDLSurface::reset()
     BADAssClose(RDLEnergySum(), -m_E0, 1E-3);
 }
 
-void RDLSurface::setupInitialConditions()
+void RDLSurface::initializeObserver()
 {
     setupTheta();
 
@@ -247,18 +247,20 @@ void RDLSurface::setupInitialConditions()
     BADAssClose(RDLEnergySum(), -m_E0, 1E-5);
 }
 
-void RDLSurface::registerHeightChange(const uint x,
-                                      const uint y,
-                                      const int value,
-                                      std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                                      const uint n)
+void RDLSurface::notifyObserver()
 {
-    (void) value;
 
     if (!hasStarted())
     {
         return;
     }
+
+    const CurrentSurfaceChange &csc = solver().currentSurfaceChange();
+
+    const uint &x = csc.x;
+    const uint &y = csc.y;
+    const uint &n = csc.n;
+    const vector<DissolutionDeposition*> &affectedSurfaceReactions = csc.affectedSurfaceReactions;
 
     auto start = affectedSurfaceReactions.begin();
     auto end = start + n;

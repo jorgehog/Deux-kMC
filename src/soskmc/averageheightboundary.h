@@ -1,9 +1,9 @@
 #pragma once
 
 #include "sosboundary.h"
-#include "heightconnecter.h"
+#include "observers.h"
 
-class AverageHeightBoundary : public SOSBoundary, public HeightConnecter
+class AverageHeightBoundary : public SOSBoundary, public HeightObserver
 {
 public:
     AverageHeightBoundary(SOSSolver &solver, const uint averageHeightDepth,
@@ -63,9 +63,9 @@ public:
                       const double xti, const double xtj, const double xtk,
                       double &dxi, double &dxj, double &dxk) const;
 
-    // HeightConnecter interface
+    // HeightObserver interface
 public:
-    void registerHeightChange(const uint x, const uint y, const int value, std::vector<DissolutionDeposition *> &affectedSurfaceReactions, const uint nAffectedSurfaceReactions);
-    void setupInitialConditions();
+    void notifyObserver();
+    void initializeObserver();
 };
 

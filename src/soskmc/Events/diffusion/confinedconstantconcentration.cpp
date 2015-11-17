@@ -9,21 +9,12 @@ ConfinedConstantConcentration::ConfinedConstantConcentration(SOSSolver &solver) 
 
 }
 
-void ConfinedConstantConcentration::registerHeightChange(const uint x,
-                                                         const uint y,
-                                                         const int value,
-                                                         std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                                                         const uint nAffectedSurfaceReactions)
+void ConfinedConstantConcentration::notifyObserver()
 {
-    (void) x;
-    (void) y;
-    (void) affectedSurfaceReactions;
-    (void) nAffectedSurfaceReactions;
-
-    m_deltaSum += value;
+    m_deltaSum += solver().currentSurfaceChange().value;
 }
 
-void ConfinedConstantConcentration::setupInitialConditions()
+void ConfinedConstantConcentration::initializeObserver()
 {
     m_V0 = solver().freeVolume();
     m_N0 = solver().concentration()*m_V0;

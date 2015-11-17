@@ -454,7 +454,7 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
 
         if (onlattice)
         {
-            conc = new LatticeDiffusionRescaling(thermSolver);
+            conc = new LatticeDiffusionConstantN(thermSolver);
             conf = new FixedSurface(thermSolver, solver.confiningSurfaceEvent().height());
             nc = 100000;
         }
@@ -485,7 +485,7 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         if (onlattice)
         {
             LatticeDiffusion* diffEvent = dynamic_cast<LatticeDiffusion*>(&solver.diffusionEvent());
-            for (const auto &m : dynamic_cast<LatticeDiffusionRescaling*>(conc)->diffusionReactionsMap())
+            for (const auto &m : dynamic_cast<LatticeDiffusionConstantN*>(conc)->diffusionReactionsMap())
             {
                 SOSDiffusionReaction *r = m.second;
                 diffEvent->addDiffusionReactant(r->x(), r->y(), r->z());

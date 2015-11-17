@@ -1,5 +1,7 @@
 #include "fixedrdlsurface.h"
 
+#include "../../sossolver.h"
+
 FixedRDLSurface::FixedRDLSurface(SOSSolver &solver,
                                  const double s0,
                                  const double ld,
@@ -14,4 +16,14 @@ FixedRDLSurface::FixedRDLSurface(SOSSolver &solver,
 FixedRDLSurface::~FixedRDLSurface()
 {
 
+}
+
+void FixedRDLSurface::notifyObserver()
+{
+    const uint &x = solver().currentSurfaceChange().x;
+    const uint &y = solver().currentSurfaceChange().y;
+
+    RDLSurface::recalculateRDLEnergy(x, y);
+
+    FixedSurface::notifyObserver();
 }

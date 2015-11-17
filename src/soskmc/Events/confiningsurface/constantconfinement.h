@@ -12,9 +12,9 @@ private:
 
     double m_h;
 
-    // HeightConnecter interface
+    // HeightObserver interface
 public:
-    void registerHeightChange(const uint x, const uint y, const int value, std::vector<DissolutionDeposition *> &affectedSurfaceReactions, const uint nAffectedSurfaceReactions);
+    void notifyObserver();
 
     // Event interface
 public:

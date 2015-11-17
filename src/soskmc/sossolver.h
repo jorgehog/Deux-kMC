@@ -16,7 +16,17 @@ class DissolutionDeposition;
 class ConcentrationBoundaryReaction;
 class ConfiningSurface;
 class Diffusion;
-class HeightConnecter;
+class HeightObserver;
+
+struct CurrentSurfaceChange
+{
+    uint x;
+    uint y;
+    int value;
+
+    std::vector<DissolutionDeposition*> affectedSurfaceReactions;
+    uint n;
+};
 
 class SOSSolver : public KMCSolver
 {
@@ -255,9 +265,9 @@ public:
         return m_averageHeight;
     }
 
-    void registerHeightConnecter(HeightConnecter *connecter)
+    void registerHeightObserver(HeightObserver *connecter)
     {
-        m_heightConnecters.push_back(connecter);
+        m_heightObservers.push_back(connecter);
     }
 
     double calculateVolumeCorrection() const;
@@ -269,7 +279,14 @@ public:
         return m_concentrationIsZero;
     }
 
+    const CurrentSurfaceChange &currentSurfaceChange() const
+    {
+        return m_currentSurfaceChange;
+    }
+
 private:
+
+    CurrentSurfaceChange m_currentSurfaceChange;
 
     bool m_heights_set;
 
@@ -296,11 +313,9 @@ private:
 
     vector<ConcentrationBoundaryReaction*> m_concentrationBoundaryReactions;
 
-    std::vector<DissolutionDeposition*> m_affectedSurfaceReactions;
-
     set_type m_changedSurfaceSites;
 
-    std::vector<HeightConnecter *> m_heightConnecters;
+    std::vector<HeightObserver *> m_heightObservers;
 
     // Event interface
 public:

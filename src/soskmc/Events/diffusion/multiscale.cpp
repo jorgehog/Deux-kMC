@@ -49,7 +49,7 @@ void Multiscale::executeDiffusionReaction(SOSDiffusionReaction *reaction, const 
 }
 
 
-void Multiscale::setupInitialConditions()
+void Multiscale::initializeObserver()
 {
     const double zMin = solver().heights().max() + m_boundarySpacing;
 

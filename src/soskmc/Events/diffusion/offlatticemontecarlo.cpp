@@ -41,19 +41,16 @@ uint OfflatticeMonteCarlo::dissolutionPaths(const uint x, const uint y) const
     return 1u;
 }
 
-void OfflatticeMonteCarlo::registerHeightChange(const uint x,
-                                                const uint y,
-                                                const int value,
-                                                std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                                                const uint n)
+void OfflatticeMonteCarlo::notifyObserver()
 {
-    (void) affectedSurfaceReactions;
-    (void) n;
-
     if (!hasStarted())
     {
         return;
     }
+
+    const uint &x = solver().currentSurfaceChange().x;
+    const uint &y = solver().currentSurfaceChange().y;
+    const double &value = solver().currentSurfaceChange().value;
 
     //Remove particle based on the probability of it being the deposited
     if (value == 1)
@@ -584,7 +581,7 @@ void OfflatticeMonteCarlo::reset()
     diffuseFull(dtFull);
 }
 
-void OfflatticeMonteCarlo::setupInitialConditions()
+void OfflatticeMonteCarlo::initializeObserver()
 {
     const double V = solver().volume();
 

@@ -441,7 +441,7 @@ void LatticeDiffusion::execute()
 
 }
 
-void LatticeDiffusion::setupInitialConditions()
+void LatticeDiffusion::initializeObserver()
 {
 
     //already initialized particles
@@ -529,14 +529,11 @@ double LatticeDiffusion::concentration() const
     return m_diffusionReactionsMap.size()/solver().freeVolume();
 }
 
-void LatticeDiffusion::registerHeightChange(const uint x,
-                                            const uint y,
-                                            const int value,
-                                            std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                                            const uint n)
+void LatticeDiffusion::notifyObserver()
 {
-    (void) affectedSurfaceReactions;
-    (void) n;
+    const uint &x = solver().currentSurfaceChange().x;
+    const uint &y = solver().currentSurfaceChange().y;
+    const double &value = solver().currentSurfaceChange().value;
 
     //position particle on random surrounding site
     //add one to solution site heights because at this stage height(x,y) is already updated
@@ -566,15 +563,7 @@ void LatticeDiffusion::registerHeightChange(const uint x,
     //this can occur if the surface is changed so that it connects to a particle in the solution.
     else
     {
-//        const int zSurface = solver().height(x, y) + 1;
-//        SOSDiffusionReaction *r = diffusionReaction(x, y, zSurface);
-
         registerAffectedAround(x, y, solver().height(x, y));
-
-//        if (r != nullptr)
-//        {
-//            attachToSurface(x, y, zSurface, r);
-//        }
     }
 
 }

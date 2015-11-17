@@ -143,6 +143,10 @@ int main(int argv, char** argc)
     {
         confiningSurface = new RDLSurface(solver, E0, sigma0, lD);
     }
+    else if (confinementInt == 5)
+    {
+        confiningSurface = new ConstantConfinement(solver, confiningSurfaceHeight);
+    }
     else
     {
         cout << "Invalid confinement: " << confinementInt << endl;
@@ -158,7 +162,6 @@ int main(int argv, char** argc)
     else if (diffuseInt == 2)
     {
         diffusion = new LatticeDiffusion(solver);
-        diffusion->setDependency(confiningSurface);
     }
     else if (diffuseInt == 3)
     {
@@ -186,13 +189,15 @@ int main(int argv, char** argc)
     }
     else if (diffuseInt == 7)
     {
-        diffusion = new LatticeDiffusionRescaling(solver);
+        diffusion = new LatticeDiffusionConstantN(solver);
     }
     else
     {
         cout << "Invalid diffusion: " << diffuseInt << endl;
         return 1;
     }
+
+    diffusion->setDependency(confiningSurface);
 
     lattice.addEvent(solver);
     lattice.addEvent(confiningSurface);

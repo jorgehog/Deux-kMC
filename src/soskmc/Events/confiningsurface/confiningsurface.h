@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../sosevent.h"
-#include "../../heightconnecter.h"
+#include "../../observers.h"
 
 class DissolutionDeposition;
 
-class ConfiningSurface : public ignis::LatticeEvent, public HeightConnecter
+class ConfiningSurface : public ignis::LatticeEvent, public HeightObserver
 {
 public:
     ConfiningSurface(SOSSolver &solver,

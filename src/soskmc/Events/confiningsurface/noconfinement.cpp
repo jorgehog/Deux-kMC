@@ -17,22 +17,14 @@ void NoConfinement::execute()
 
 }
 
-void NoConfinement::setupInitialConditions()
+void NoConfinement::initializeObserver()
 {
 
 }
 
-void NoConfinement::registerHeightChange(const uint x,
-                                         const uint y,
-                                         const int value,
-                                         std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                                         const uint n)
+void NoConfinement::notifyObserver()
 {
-    (void) x;
-    (void) y;
-    (void) value;
-    (void) affectedSurfaceReactions;
-    (void) n;
+
 }
 
 double NoConfinement::confinementEnergy(const uint x, const uint y)

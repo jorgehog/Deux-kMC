@@ -115,13 +115,10 @@ public:
     double diffusionDrift(const double x, const double y, const double z) const;
 
 
-    // HeightConnecter interface
+    // HeightObserver interface
 public:
 
-    void setupInitialConditions();
+    void initializeObserver();
 
-    void registerHeightChange(const uint x,
-                              const uint y,
-                              const int value,
-                              std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                              const uint n);};
+    void notifyObserver();
+};

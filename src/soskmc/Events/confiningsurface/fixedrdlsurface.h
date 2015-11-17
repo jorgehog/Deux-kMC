@@ -32,15 +32,7 @@ public:
         return true;
     }
 
-    void registerHeightChange(const uint x, const uint y, const int value,
-                              std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                              const uint n)
-    {
-
-        RDLSurface::recalculateRDLEnergy(x, y);
-
-        FixedSurface::registerHeightChange(x, y, value, affectedSurfaceReactions, n);
-    }
+    void notifyObserver();
 
     double confinementEnergy(const uint x, const uint y)
     {
@@ -59,9 +51,9 @@ public:
     }
 
 
-    // HeightConnecter interface
+    // HeightObserver interface
 public:
-    void setupInitialConditions()
+    void initializeObserver()
     {
         RDLSurface::recalculateAllRDLEnergies();
     }

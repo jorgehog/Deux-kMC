@@ -17,19 +17,21 @@ ConstantConfinement::~ConstantConfinement()
 
 
 
-void ConstantConfinement::registerHeightChange(const uint x, const uint y, const int value, std::vector<DissolutionDeposition *> &affectedSurfaceReactions, const uint nAffectedSurfaceReactions)
+void ConstantConfinement::notifyObserver()
 {
-    (void) x;
-    (void) y;
-    (void) value;
-    (void) affectedSurfaceReactions;
-    (void) nAffectedSurfaceReactions;
-
     double newHeight = solver().averageHeight() + m_h;
 
-    if (solver().heights().max() <= newHeight - 1)
+    uint xi, yi;
+    int maxHeight = solver().heights().max(xi, yi);
+
+    if (maxHeight <= newHeight - 1)
     {
         setHeight(newHeight);
+    }
+
+    else
+    {
+        mutexSolver().registerHeightChange(xi, yi, -1);
     }
 }
 

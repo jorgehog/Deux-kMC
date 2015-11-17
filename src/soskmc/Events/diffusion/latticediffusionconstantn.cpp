@@ -1,12 +1,12 @@
-#include "latticediffusionrescaling.h"
+#include "latticediffusionconstantn.h"
 
 #include "../../sossolver.h"
 #include "../confiningsurface/confiningsurface.h"
 #include "../../sosdiffusionreaction.h"
 #include "../../dissolutiondeposition.h"
 
-LatticeDiffusionRescaling::LatticeDiffusionRescaling(SOSSolver &solver) :
-    Diffusion(solver, "LatticeDiffusionRescaling", "", true, true),
+LatticeDiffusionConstantN::LatticeDiffusionConstantN(SOSSolver &solver) :
+    Diffusion(solver, "LatticeDiffusionConstantN", "", true, true),
     LatticeDiffusion(solver)
 {
 
@@ -14,15 +14,11 @@ LatticeDiffusionRescaling::LatticeDiffusionRescaling(SOSSolver &solver) :
 
 
 
-void LatticeDiffusionRescaling::registerHeightChange(const uint x, const uint y, const int value, std::vector<DissolutionDeposition *> &affectedSurfaceReactions, const uint nAffectedSurfaceReactions)
+void LatticeDiffusionConstantN::notifyObserver()
 {
-    LatticeDiffusion::registerHeightChange(x, y, value, affectedSurfaceReactions, nAffectedSurfaceReactions);
+    LatticeDiffusion::notifyObserver();
 
-    double newHeight = solver().averageHeight() + m_targetSeparation;
-    int surfaceContactHeight = (int)newHeight - 1;
-
-    //set height to wanted separation and remove blocked particles
-    solver().confiningSurfaceEvent().setHeight(newHeight);
+    int surfaceContactHeight = solver().confiningSurfaceEvent().height() - 1;
 
     vector<SOSDiffusionReaction *> blockedReactions;
 
@@ -75,9 +71,9 @@ void LatticeDiffusionRescaling::registerHeightChange(const uint x, const uint y,
 
 }
 
-void LatticeDiffusionRescaling::setupInitialConditions()
+void LatticeDiffusionConstantN::initializeObserver()
 {
-    LatticeDiffusion::setupInitialConditions();
+    LatticeDiffusion::initializeObserver();
 
     m_targetNParticles = numberOfDiffusionReactions();
     m_targetSeparation = solver().confiningSurfaceEvent().height() - solver().averageHeight();

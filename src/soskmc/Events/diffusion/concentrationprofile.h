@@ -32,13 +32,9 @@ public:
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const;
     double concentration() const;
 
-    // HeightConnecter interface
+    // HeightObserver interface
 public:
-    virtual void setupInitialConditions() {}
-    virtual void registerHeightChange(const uint x,
-                              const uint y,
-                              const int value,
-                              std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                              const uint n);
+    virtual void initializeObserver() {}
+    virtual void notifyObserver();
 };
 

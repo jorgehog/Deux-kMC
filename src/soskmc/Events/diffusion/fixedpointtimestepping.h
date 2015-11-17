@@ -30,13 +30,9 @@ public:
     double calculateLocalRate(const uint x, const uint y, const uint n) const;
 
 
-    // HeightConnecter interface
+    // HeightObserver interface
 public:
-    void setupInitialConditions();
-    void registerHeightChange(const uint x,
-                              const uint y,
-                              const int value,
-                              std::vector<DissolutionDeposition *> &affectedSurfaceReactions,
-                              const uint n);
+    void initializeObserver();
+    void notifyObserver();
 };
 
