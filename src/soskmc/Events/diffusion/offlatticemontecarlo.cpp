@@ -129,7 +129,7 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
             {
                 for (uint _y = 0; _y < solver().width(); ++_y)
                 {
-                    m_localRates(_x, _y, n) = calculateLocalRate(_x, _y, n);
+                    m_localRates(_x, _y, n) = calculateLocalRateOverD(_x, _y, n);
                 }
             }
         }
@@ -137,7 +137,7 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
         else
         {
             //else we just recalulate the rate for the new height
-            m_localRates(x, y, n) = calculateLocalRate(x, y, n);
+            m_localRates(x, y, n) = calculateLocalRateOverD(x, y, n);
         }
     }
 
@@ -148,7 +148,7 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
         {
             for (uint n = 0; n < nOfflatticeParticles(); ++n)
             {
-                BADAssClose(m_localRates(_x, _y, n), calculateLocalRate(_x, _y, n), 1E-3, "what", [&] ()
+                BADAssClose(m_localRates(_x, _y, n), calculateLocalRateOverD(_x, _y, n), 1E-3, "what", [&] ()
                 {
                     BADAssSimpleDump(_x, _y, n);
                 });
@@ -175,25 +175,19 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
 
 double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
 {
-    //if there is no site available between the confining wall and the surface,
-    //the rate is zero.
-    if (solver().isBlockedPosition(x, y, solver().height(x, y) + 1))
-    {
-        return 0.0;
-    }
-
-    double R = 0;
+    double ROverD = 0;
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
         const double Rn = localRates(x, y, n);
 
-        BADAssClose(Rn, calculateLocalRate(x, y, n), 1E-3);
+        BADAssClose(Rn, calculateLocalRateOverD(x, y, n), 1E-3);
 
-        R += Rn;
+        ROverD += Rn;
     }
 
-    return R/solver().concentration();
+    //Dscaled ensures that this rate has the proper time unit
+    return ROverD*DScaled();
 }
 
 void OfflatticeMonteCarlo::executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z)
@@ -255,6 +249,9 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
     double x1, y1, z1;
     double x0, y0, z0;
 
+    //we use DUnscaled because dt is in unscaled units
+    const double D = DUnscaled();
+
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
         x0 = m_particlePositions(0, n);
@@ -269,9 +266,9 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
 
         do
         {
-            double dx = sqrt(2*D()*dt)*rng.normal() + D()*m_F(0, n)*dt;
-            double dy = sqrt(2*D()*dt)*rng.normal() + D()*m_F(1, n)*dt;
-            double dz = sqrt(2*D()*dt)*rng.normal() + D()*m_F(2, n)*dt;
+            double dx = sqrt(2*D*dt)*rng.normal() + D*m_F(0, n)*dt;
+            double dy = sqrt(2*D*dt)*rng.normal() + D*m_F(1, n)*dt;
+            double dz = sqrt(2*D*dt)*rng.normal() + D*m_F(2, n)*dt;
 
             x1 = solver().boundaryTransform(x0, y0, z0, dx, 0);
             y1 = solver().boundaryTransform(x0, y0, z0, dy, 1);
@@ -301,6 +298,8 @@ void OfflatticeMonteCarlo::diffuseFull(const double dtFull)
 {
     const uint N = dtFull/maxdt();
 
+//    cout << setprecision(16) << fixed << D() << " " << dtFull << " " << sqrt(2*D()*dtFull) << endl;
+
     for (uint i = 0; i < N; ++i)
     {
         diffuse(maxdt());
@@ -308,7 +307,6 @@ void OfflatticeMonteCarlo::diffuseFull(const double dtFull)
 
     diffuse(dtFull - N*maxdt());
 
-    cout << sqrt(2*D()*dtFull) << endl;
     calculateLocalRates();
 }
 
@@ -336,7 +334,7 @@ void OfflatticeMonteCarlo::insertParticle(const double x, const double y, const 
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            m_localRates(x, y, nOfflatticeParticles() - 1) = calculateLocalRate(x, y, nOfflatticeParticles() - 1);
+            m_localRates(x, y, nOfflatticeParticles() - 1) = calculateLocalRateOverD(x, y, nOfflatticeParticles() - 1);
         }
     }
 
@@ -361,8 +359,8 @@ void OfflatticeMonteCarlo::initializeParticleMatrices(const uint nParticles, con
     {
         do
         {
-            double x0Raw = rng.uniform()*(solver().length() - 0.5);
-            double y0Raw = rng.uniform()*(solver().width() - 0.5);
+            double x0Raw = rng.uniform()*solver().length();
+            double y0Raw = rng.uniform()*solver().width();
             z0 = zMin + rng.uniform()*(h - zMin);
 
             //it is rarely the case that the boundary transformations
@@ -434,13 +432,13 @@ void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber, const 
     const double &h = solver().confiningSurfaceEvent().height();
     const int zMin = solver().heights().min();
 
-    lammpswriter writer(4, "cavitydiff", path);
+    lammpswriter writer(5, "cavitydiff", path);
     writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     writer.initializeNewFile(frameNumber);
 
     if (nOfflatticeParticles() == 0)
     {
-        writer << 0 << 0 << 0 << solver().height(0, 0);
+        writer << 0 << 0 << 0 << zMin << 0;
     }
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
@@ -454,7 +452,8 @@ void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber, const 
         writer << 0
                << x
                << y
-               << z;
+               << z
+               << totalParticleDepositionRate(n);
     }
 
     writer.finalize();
@@ -475,12 +474,27 @@ void OfflatticeMonteCarlo::calculateLocalRates()
         {
             for (uint n = 0; n < nOfflatticeParticles(); ++n)
             {
-                m_localRates(x, y, n) = calculateLocalRate(x, y, n);
+                m_localRates(x, y, n) = calculateLocalRateOverD(x, y, n);
             }
         }
     }
 
     //    selectDepositionReactants();
+}
+
+double OfflatticeMonteCarlo::totalParticleDepositionRate(const uint n) const
+{
+    double r = 0;
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            r += m_localRates(x, y, n);
+        }
+    }
+
+    return r;
 }
 
 void OfflatticeMonteCarlo::selectDepositionReactants()
@@ -566,10 +580,6 @@ bool OfflatticeMonteCarlo::isInLineOfSight(const uint n, const uint x, const uin
 
 }
 
-
-
-
-
 void OfflatticeMonteCarlo::initialize()
 {
     m_accepted = 0;
@@ -587,17 +597,15 @@ void OfflatticeMonteCarlo::initializeObserver(const Subjects &subject)
 {
     (void) subject;
 
-    const double V = solver().volume();
+    const double V = solver().freeVolume();
 
-    uint N = V*solver().concentration() + rng.uniform();
+    const uint N = V*solver().concentration() + rng.uniform();
 
     const double zMin = solver().heights().min();
     initializeParticleMatrices(N, zMin);
 
     calculateLocalRates();
 }
-
-
 
 void OfflatticeMonteCarlo::execute()
 {

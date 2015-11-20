@@ -81,7 +81,7 @@ double Multiscale::concentration() const
     return 0;
 }
 
-double Multiscale::calculateLocalRate(const uint x, const uint y, const uint n) const
+double Multiscale::calculateLocalRateOverD(const uint x, const uint y, const uint n) const
 {
     (void) x;
     (void) y;

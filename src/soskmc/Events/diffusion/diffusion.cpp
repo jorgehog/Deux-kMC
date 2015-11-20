@@ -4,6 +4,8 @@
 
 #include "sossolver.h"
 
+#include "dissolutiondeposition.h"
+
 
 Diffusion::Diffusion(SOSSolver &solver,
                      string type, string unit, bool hasOutput, bool storeValue) :
@@ -37,7 +39,7 @@ void Diffusion::dump(const uint frameNumber, const string path) const
                               << x
                               << y
                               << h
-                              << 5;
+                              << 0;
             }
 
             int cut = solver().height(x, y) - 11;
@@ -50,23 +52,40 @@ void Diffusion::dump(const uint frameNumber, const string path) const
                               << x
                               << y
                               << zSurface
-                              << 6;
+                              << 0;
             }
 
             surfacewriter << 2
                           << x
                           << y
-                          << solver().height(x, y)
-                          << solver().nNeighbors(x, y);
+                          << solver().height(x, y);
+
+            if (solver().surfaceReaction(x, y).isAllowed())
+            {
+                surfacewriter << solver().surfaceReaction(x, y).rate();
+            }
+
+            else
+            {
+                surfacewriter << 0;
+            }
+
         }
     }
 
     surfacewriter.finalize();
 }
 
-double Diffusion::D() const
+double Diffusion::DUnscaled() const
 {
-    return 1.0/solver().concentration();
+    return 1/solver().c0();
 }
+
+double Diffusion::DScaled() const
+{
+    return DUnscaled()/solver().timeUnit();
+}
+
+
 
 

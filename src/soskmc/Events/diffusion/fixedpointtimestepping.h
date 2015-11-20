@@ -9,7 +9,7 @@ public:
 
     void calculateTimeStep(bool calculateDissolutionRate = false);
 
-    double calculateLocalRate(const uint x, const uint y, const uint n, const double timeStep) const;
+    double calculateLocalRateOverD(const uint x, const uint y, const uint n, const double timeStep) const;
 
 
 private:
@@ -27,7 +27,7 @@ public:
 
     // Diffusion interface
 public:
-    double calculateLocalRate(const uint x, const uint y, const uint n) const;
+    double calculateLocalRateOverD(const uint x, const uint y, const uint n) const;
 
 
     // kMC::Observer interface

@@ -19,8 +19,9 @@ SOSSolver::SOSSolver(const uint length,
     m_length(length),
     m_width(width),
     m_alpha(alpha),
+    m_c0(exp(-(int)dim()*alpha)),
     m_gamma(gamma),
-    m_concentration(exp(gamma-dim()*alpha)),
+    m_concentration(exp(gamma-(int)dim()*alpha)),
     m_expGamma(exp(gamma)),
     m_concentrationIsZero(false),
     m_heights(length, width, fill::zeros),
@@ -691,7 +692,7 @@ void SOSSolver::setGamma(const double gamma)
     const double gammaPrev = m_gamma;
 
     m_gamma = gamma;
-    m_concentration = exp(m_gamma - dim()*alpha());
+    m_concentration = exp(m_gamma - (int)dim()*alpha());
     m_expGamma = exp(m_gamma);
 
     if (hasStarted())
@@ -701,7 +702,6 @@ void SOSSolver::setGamma(const double gamma)
         {
             recalculateAllRates();
             m_concentrationIsZero = false;
-            cout << "NONZERO CONC" << endl;
         }
 
         else
@@ -836,7 +836,15 @@ double SOSSolver::calculateVolumeCorrection() const
 void SOSSolver::setZeroConcentration()
 {
     m_concentrationIsZero = true;
-    recalculateAllRates();
+
+    m_gamma = std::numeric_limits<double>::min();
+    m_concentration = 0;
+    m_expGamma = 0;
+
+    if (hasStarted())
+    {
+        recalculateAllRates();
+    }
 }
 
 void SOSSolver::execute()
@@ -872,14 +880,18 @@ void SOSSolver::initialize()
 
 double SOSSolver::timeUnit() const
 {
+    //original rate expression is exp(-alpha*n)/c0
+
+    //divide by nothing
     if (concentrationIsZero())
     {
-        return 1.0;
+        return 1.;
     }
 
+    //divide rates by c/c0 gives multiplication of timestep by same factor
     else
     {
-        return 1./m_expGamma;
+        return m_expGamma;
     }
 }
 

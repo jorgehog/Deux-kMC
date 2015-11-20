@@ -23,6 +23,6 @@ public:
 
     // OfflatticeMonteCarlo interface
 public:
-    virtual double calculateLocalRate(const uint x, const uint y, const uint n) const;
+    virtual double calculateLocalRateOverD(const uint x, const uint y, const uint n) const;
 };
 

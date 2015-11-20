@@ -157,7 +157,7 @@ void KMCSolver::getCumsumAndTotalRate()
 
 void KMCSolver::updateTime()
 {
-    setCurrentTimeStep(m_nextRandomLogNumber/m_totalRate*timeUnit());
+    setCurrentTimeStep(m_nextRandomLogNumber/(m_totalRate*timeUnit()));
 
     BADAss(currentTimeStep(), >, 0, "timestep should be posiive.");
 

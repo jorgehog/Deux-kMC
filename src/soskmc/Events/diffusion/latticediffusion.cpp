@@ -256,13 +256,13 @@ void LatticeDiffusion::dumpDiffusingParticles(const uint frameNumber, const stri
     const double &h = solver().confiningSurfaceEvent().height();
     const int zMin = solver().heights().min();
 
-    lammpswriter writer(4, "kmcdiff", path);
+    lammpswriter writer(5, "kmcdiff", path);
     writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     writer.initializeNewFile(frameNumber);
 
     if (m_diffusionReactionsMap.empty())
     {
-        writer << 3 << 0 << 0 << solver().height(0, 0);
+        writer << 3 << 0 << 0 << zMin << 0;
     }
 
     SOSDiffusionReaction *reaction;
@@ -277,7 +277,8 @@ void LatticeDiffusion::dumpDiffusingParticles(const uint frameNumber, const stri
         writer << 3
                << x
                << y
-               << z;
+               << z
+               << reaction->rate();
     }
 
     writer.finalize();
@@ -499,9 +500,9 @@ void LatticeDiffusion::execute()
             if (reaction != reaction2)
             {
 
-                bool equalX = reaction->x() == reaction2->x();
-                bool equalY = reaction->y() == reaction2->y();
-                bool equalZ = reaction->z() == reaction2->z();
+                const bool equalX = reaction->x() == reaction2->x();
+                const bool equalY = reaction->y() == reaction2->y();
+                const bool equalZ = reaction->z() == reaction2->z();
 
                 if (equalX && equalY && equalZ)
                 {

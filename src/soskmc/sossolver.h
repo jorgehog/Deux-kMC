@@ -88,6 +88,11 @@ public:
         return m_alpha;
     }
 
+    const double &c0() const
+    {
+        return m_c0;
+    }
+
     const double &gamma() const
     {
         return m_gamma;
@@ -300,6 +305,7 @@ private:
     const uint m_width;
 
     const double m_alpha;
+    double m_c0;
     double m_gamma;
     double m_concentration;
     double m_expGamma;

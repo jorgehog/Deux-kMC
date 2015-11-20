@@ -107,7 +107,7 @@ void FixedPointTimeStepping::calculateTimeStep(bool calculateDissolutionRate)
     cout << "  " << eps << " --- " << totalDepositionRate << " " << totalDissolutionRate << " " << totalDepositionRate/totalDissolutionRate << endl;
 }
 
-double FixedPointTimeStepping::calculateLocalRate(const uint x,
+double FixedPointTimeStepping::calculateLocalRateOverD(const uint x,
                                                   const uint y,
                                                   const uint n,
                                                   const double timeStep) const
@@ -115,7 +115,7 @@ double FixedPointTimeStepping::calculateLocalRate(const uint x,
 
     const int z = solver().height(x, y) + 1;
 
-    const double sigmaSquared = 4*D()*timeStep;
+    const double sigmaSquared = 4*DScaled()*timeStep;
 
     const double dxSquared = pow((double)x - particlePositions(0, n), 2);
     const double dySquared = pow((double)y - particlePositions(1, n), 2);
@@ -136,7 +136,7 @@ double FixedPointTimeStepping::calculateLocalRate(const uint x,
     }
 
     //This takes into account that the particle can deposit at any time between t and t + dt, not only at t + dt.
-    const double N = 4*D()*r;
+    const double N = 4*DScaled()*r;
     //    const double N = r;
     //    const double N = 1;
     return std::erfc(r/sqrt(sigmaSquared))/N/timeStep;
@@ -176,8 +176,8 @@ void FixedPointTimeStepping::notifyObserver(const Subjects &subject)
     }
 }
 
-double FixedPointTimeStepping::calculateLocalRate(const uint x, const uint y, const uint n) const
+double FixedPointTimeStepping::calculateLocalRateOverD(const uint x, const uint y, const uint n) const
 {
-    return calculateLocalRate(x, y, n, m_currentTimeStep);
+    return calculateLocalRateOverD(x, y, n, m_currentTimeStep);
 }
 

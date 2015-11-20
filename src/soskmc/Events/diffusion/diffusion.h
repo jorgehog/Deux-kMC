@@ -40,7 +40,9 @@ public:
         return m_solver;
     }
 
-    double D() const;
+    double DUnscaled() const;
+
+    double DScaled() const;
 
 private:
 

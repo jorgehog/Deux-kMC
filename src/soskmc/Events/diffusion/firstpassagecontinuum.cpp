@@ -23,7 +23,7 @@ void FirstPassageContinuum::execute()
     setValue(acceptanceRatio());
 }
 
-double FirstPassageContinuum::calculateLocalRate(const uint x, const uint y, const uint n) const
+double FirstPassageContinuum::calculateLocalRateOverD(const uint x, const uint y, const uint n) const
 {
     const int z = solver().height(x, y) + 1;
 

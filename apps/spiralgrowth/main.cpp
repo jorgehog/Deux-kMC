@@ -43,6 +43,7 @@ int main(int argv, char** argc)
 
     const double &alpha = getSetting<double>(root, "alpha");
     const double &supersaturation = getSetting<double>(root, "supersaturation");
+    const uint &zeroConcentration = getSetting<uint>(root, "zeroConcentration");
 
     const double gamma = log(1 + supersaturation);
 
@@ -105,6 +106,11 @@ int main(int argv, char** argc)
     //---Start ignis environment and solver creation
     Lattice lattice;
     SOSSolver solver(L, W, alpha, gamma);
+
+    if (zeroConcentration)
+    {
+        solver.setZeroConcentration();
+    }
 
     ConfiningSurface *confiningSurface;
     Diffusion *diffusion;

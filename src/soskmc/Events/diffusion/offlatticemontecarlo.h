@@ -14,7 +14,7 @@ public:
 
     virtual ~OfflatticeMonteCarlo();
 
-    virtual double calculateLocalRate(const uint x, const uint y, const uint n) const = 0;
+    virtual double calculateLocalRateOverD(const uint x, const uint y, const uint n) const = 0;
 
     void diffuse(const double dt);
 
@@ -80,6 +80,8 @@ public:
     void clearDiffusingParticles();
 
     void calculateLocalRates();
+
+    double totalParticleDepositionRate(const uint n) const;
 
     void selectDepositionReactants();
     void selectDepositionReactant(uint &xSelected, uint &ySelected, const uint n);

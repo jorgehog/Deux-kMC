@@ -24,17 +24,22 @@ double DissolutionDeposition::calculateDissolutionRate() const
     }
 
     const double &Ew = solver().confinementEnergy(x(), y());
+
+    //this ensures that the expression goes as exp(-alpha*(n - 2 or 3))
     const double E = (int)nNeighbors() + (int)solver().surfaceDim() - 5 + Ew;
 
     double gammaTerm;
 
+
     if (solver().concentrationIsZero())
     {
-        gammaTerm = 0;
+        //we use an expression equal to exp(-alpha*n)/c0
+        gammaTerm = 0; //now he have divided by nothing
     }
 
     else
     {
+        //now we have divided by the concentration/c0
         gammaTerm = solver().gamma();
     }
 
@@ -55,11 +60,6 @@ double DissolutionDeposition::calculateDepositionRate() const
     if (!solver().diffusionEvent().hasStarted())
     {
         return 1.0;
-    }
-
-    if (solver().concentrationIsZero())
-    {
-        return 0;
     }
 
     return solver().diffusionEvent().depositionRate(x(), y());
