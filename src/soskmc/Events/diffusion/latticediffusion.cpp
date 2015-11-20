@@ -518,6 +518,8 @@ void LatticeDiffusion::initializeObserver(const Subjects &subject)
 {
     BADAss(subject, ==, Subjects::SOLVER, "Solver should be the only subject initializing diffusion.");
 
+    (void) subject;
+
     //already initialized particles
     if (numberOfDiffusionReactions() != 0)
     {

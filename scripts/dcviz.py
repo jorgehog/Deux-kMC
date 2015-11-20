@@ -2127,8 +2127,8 @@ class shifts(DCVizPlotter):
 
         cut = 10
 
-        # shifts = data[self.get_family_index_from_name("shifts.arma")][0]
-        values = data[self.get_family_index_from_name("values.arma")][0]
+        shifts = data[self.get_family_index_from_name("shifts.arma")]
+        values = data[self.get_family_index_from_name("values.arma")]
 
         print sum(values[cut:])/(len(values) - cut)
 
