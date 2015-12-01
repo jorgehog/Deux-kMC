@@ -13,8 +13,15 @@ public:
 
     ~FirstPassageContinuum();
 
+    void setc(const double c);
+
+    const double &c() const
+    {
+        return m_c;
+    }
+
 private:
-    double m_n;
+    const double m_n;
     double m_c;
 
     // Event interface

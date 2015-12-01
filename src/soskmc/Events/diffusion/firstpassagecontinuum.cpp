@@ -18,6 +18,13 @@ FirstPassageContinuum::~FirstPassageContinuum()
 
 }
 
+void FirstPassageContinuum::setc(const double c)
+{
+    m_c = c;
+
+    calculateLocalRates();
+}
+
 void FirstPassageContinuum::execute()
 {
     setValue(acceptanceRatio());

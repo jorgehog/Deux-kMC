@@ -3,4 +3,6 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SUBDIRS += spiralgrowth \
-    tests
+    tests \
+    cconvergence \
+    cconvergence2

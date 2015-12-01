@@ -251,6 +251,7 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
 
     //we use DUnscaled because dt is in unscaled units
     const double D = DUnscaled();
+    const double prefac = sqrt(2*D*dt);
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
@@ -260,15 +261,16 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
 
         BADAssBool(!solver().isBlockedPosition(x0, y0, z0));
 
-        m_F(0, n) = 0;
-        m_F(1, n) = 0;
-        m_F(2, n) = solver().confiningSurfaceEvent().diffusionDrift(x0, y0, z0);
+//        m_F(0, n) = 0;
+//        m_F(1, n) = 0;
+//        m_F(2, n) = solver().confiningSurfaceEvent().diffusionDrift(x0, y0, z0);
+
 
         do
         {
-            double dx = sqrt(2*D*dt)*rng.normal() + D*m_F(0, n)*dt;
-            double dy = sqrt(2*D*dt)*rng.normal() + D*m_F(1, n)*dt;
-            double dz = sqrt(2*D*dt)*rng.normal() + D*m_F(2, n)*dt;
+            double dx = prefac*rng.normal();// + D*m_F(0, n)*dt;
+            double dy = prefac*rng.normal();// + D*m_F(1, n)*dt;
+            double dz = prefac*rng.normal();// + D*m_F(2, n)*dt;
 
             x1 = solver().boundaryTransform(x0, y0, z0, dx, 0);
             y1 = solver().boundaryTransform(x0, y0, z0, dy, 1);
@@ -278,6 +280,12 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
             {
                 y1 = y0;
             }
+
+            if (cycle() == 1783 && n == 94)
+            {
+                cout << "hmm" << endl;
+            }
+
 
         } while(solver().isBlockedPosition(x1, y1, z1));
 

@@ -625,10 +625,16 @@ void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orienta
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
 {
 
-    //surface particle center is at x = 0 and x = l-1 so that volume = l
-    bool isOutSideBox_x = (x < 0) || (x > length() - 1);
+    //issue here when x = 19.7 it is outside, but not really. it is at 0.2.
+    //if we let 19.7 pass it will round to 20. Need periodic to
+    //transform 19.7 into -0.2 so it rounds up to 0
 
-    bool isOutSideBox_y = (y < 0) || (y > width() - 1);
+    //to enable round arond 0 and length to have same room as othes we let particles
+    //go from -0.5 to l-0.5. Boundaries should not suggest these moves
+    //if they are illegal.
+    bool isOutSideBox_x = (x <= -0.5) || (x >= length() - 0.5);
+
+    bool isOutSideBox_y = (y <= -0.5) || (y >= width() - 0.5);
 
     //center of conf surf is at confSE().height(), such that it extends to confSE().height() - 0.5
     //which makes a particle of radius 0.5 collide if z is larger than cse.h() - 1

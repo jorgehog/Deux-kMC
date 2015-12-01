@@ -18,7 +18,7 @@ Periodic::~Periodic()
 
 double Periodic::transformCoordinate(const double xi) const
 {
-    return std::fmod(xi + m_span, m_span);
+    return std::fmod(xi + m_span + 0.5, m_span) - 0.5;
 }
 
 bool Periodic::isBlocked(const double xi) const

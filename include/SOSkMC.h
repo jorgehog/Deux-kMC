@@ -27,3 +27,4 @@
 #include "../src/soskmc/averageheightboundary.h"
 
 #include "../src/soskmc/sosdiffusionreaction.h"
+#include "../src/soskmc/dissolutiondeposition.h"

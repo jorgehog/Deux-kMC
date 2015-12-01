@@ -27,7 +27,7 @@ int main(int argv, char** argc)
 
     if (seedType == 0)
     {
-        seed = time(nullptr);
+        seed = time(nullptr) % 1000000;
     }
     else
     {
