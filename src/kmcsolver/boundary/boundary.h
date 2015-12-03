@@ -23,9 +23,11 @@ public:
 
     virtual ~Boundary() {}
 
-    virtual double transformCoordinate(const double xi, const double xj, const double xk) const = 0;
+    virtual double transformContinousCoordinate(const double xi, const double xj, const double xk) const = 0;
+    virtual int transformLatticeCoordinate(const int xi, const int xj, const int xk) const = 0;
 
-    virtual bool isBlocked(const double xi, const double xj, const double xk) const = 0;
+    virtual bool isBlockedContinous(const double xi, const double xj, const double xk) const = 0;
+    virtual bool isBlockedLattice(const int xi, const int xj, const int xk) const = 0;
 
     virtual void closestImage(const double xi, const double xj, const double xk,
                               const double xti, const double xtj, const double xtk,

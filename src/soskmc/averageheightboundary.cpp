@@ -144,30 +144,26 @@ void AverageHeightBoundary::getStartsAndEnds(uint &x0, uint &y0, uint &x1, uint 
     }
 }
 
-double AverageHeightBoundary::transformCoordinate(const double xi, const double xj, const double xk) const
+double AverageHeightBoundary::transformContinousCoordinate(const double xi, const double xj, const double xk) const
 {
-    (void) xj;
-    (void) xk;
-
-    return xi;
+    return transformFunction(xi, xj, xk);
 }
 
-bool AverageHeightBoundary::isBlocked(const double xi, const double xj, const double xk) const
+int AverageHeightBoundary::transformLatticeCoordinate(const int xi, const int xj, const int xk) const
 {
-    (void) xj;
-
-    const int averageHeight = round(average());
-
-    if (orientation() == orientations::FIRST)
-    {
-        return (xi < m_location) && (xk <= averageHeight);
-    }
-
-    else
-    {
-        return (xi > m_location) && (xk <= averageHeight);
-    }
+    return transformFunction(xi, xj, xk);
 }
+
+bool AverageHeightBoundary::isBlockedContinous(const double xi, const double xj, const double xk) const
+{
+    return blockedFunction(xi, xj, xk);
+}
+
+bool AverageHeightBoundary::isBlockedLattice(const int xi, const int xj, const int xk) const
+{
+    return blockedFunction(xi, xj, xk);
+}
+
 
 void AverageHeightBoundary::closestImage(const double xi, const double xj, const double xk,
                                          const double xti, const double xtj, const double xtk,

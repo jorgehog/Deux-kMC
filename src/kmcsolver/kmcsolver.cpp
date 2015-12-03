@@ -41,10 +41,11 @@ void KMCSolver::initializeReactions()
 {
     updateAffectedReactions();
 
-    m_totalRate = 0;
-    m_cumsumRates.resize(numberOfReactions());
+//    m_totalRate = 0;
 
-    double rate;
+//    m_cumsumRates.resize(numberOfReactions());
+
+//    double rate;
     Reaction *reaction;
 
     for (uint i = 0; i < numberOfReactions(); ++i)
@@ -54,16 +55,16 @@ void KMCSolver::initializeReactions()
         if (reaction->isAllowed())
         {
             reaction->calculateRate();
-            rate = reaction->rate();
+//            rate = reaction->rate();
 
-            m_totalRate += rate;
+//            m_totalRate += rate;
         }
-        else
-        {
-            rate = 0;
-        }
+//        else
+//        {
+//            rate = 0;
+//        }
 
-        m_cumsumRates.at(i) = m_totalRate;
+//        m_cumsumRates.at(i) = m_totalRate;
     }
 }
 
@@ -174,19 +175,23 @@ void KMCSolver::initialize()
 
     initializeReactions();
 
-    updateTime();
+//    updateTime();
 }
 
 
 void KMCSolver::execute()
 {
+    m_nextRandomLogNumber = getRandomLogNumber();
+
+    getCumsumAndTotalRate();
+
+    updateTime();
+
     BADAss(m_cumsumRates.size(), >=, numberOfReactions());
 
     uint choice = chooseFromTotalRate(m_cumsumRates, m_totalRate, numberOfReactions());
 
     m_selectedReaction = getReaction(choice);
-
-    m_nextRandomLogNumber = getRandomLogNumber();
 
     BADAssBool(selectedReaction()->isAllowed());
 }
@@ -195,9 +200,5 @@ void KMCSolver::execute()
 void KMCSolver::reset()
 {
     m_selectedReaction->executeAndUpdate();
-
-    getCumsumAndTotalRate();
-
-    updateTime();
 }
 

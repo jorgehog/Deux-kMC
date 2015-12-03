@@ -20,20 +20,36 @@ void Boundary1D::noImage1D(const double xi, const double xti, double &dxi) const
 }
 
 
-double kMC::Boundary1D::transformCoordinate(const double xi, const double xj, const double xk) const
+double kMC::Boundary1D::transformContinousCoordinate(const double xi, const double xj, const double xk) const
 {
     (void) xj;
     (void) xk;
 
-    return transformCoordinate(xi);
+    return transformContinousCoordinate(xi);
 }
 
-bool kMC::Boundary1D::isBlocked(const double xi, const double xj, const double xk) const
+int Boundary1D::transformLatticeCoordinate(const int xi, const int xj, const int xk) const
 {
     (void) xj;
     (void) xk;
 
-    return isBlocked(xi);
+    return transformLatticeCoordinate(xi);
+}
+
+bool Boundary1D::isBlockedContinous(const double xi, const double xj, const double xk) const
+{
+    (void) xj;
+    (void) xk;
+
+    return isBlockedContinous(xi);
+}
+
+bool Boundary1D::isBlockedLattice(const int xi, const int xj, const int xk) const
+{
+    (void) xj;
+    (void) xk;
+
+    return isBlockedLattice(xi);
 }
 
 void Boundary1D::closestImage(const double xi, const double xj, const double xk,

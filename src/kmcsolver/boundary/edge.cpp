@@ -11,15 +11,14 @@ Edge::Edge(const double location,
 
 }
 
-bool Edge::isBlocked(const double xi) const
-{
-    if (orientation() == orientations::FIRST)
-    {
-        return xi < m_location;
-    }
 
-    else
-    {
-        return xi > m_location;
-    }
+
+bool Edge::isBlockedContinous(const double xi) const
+{
+    return blockedFunction<double>(xi);
+}
+
+bool Edge::isBlockedLattice(const int xi) const
+{
+    return blockedFunction<int>(xi);
 }

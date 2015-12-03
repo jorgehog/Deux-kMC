@@ -19,27 +19,24 @@ ConstantHeight::~ConstantHeight()
 }
 
 
-double ConstantHeight::transformCoordinate(const double xi, const double xj, const double xk) const
+double ConstantHeight::transformContinousCoordinate(const double xi, const double xj, const double xk) const
 {
-    (void) xj;
-    (void) xk;
-
-    return xi;
+    return transformFunction<double>(xi, xj, xk);
 }
 
-bool ConstantHeight::isBlocked(const double xi, const double xj, const double xk) const
+bool ConstantHeight::isBlockedContinous(const double xi, const double xj, const double xk) const
 {
-    (void) xj;
+    return blockedFunction<double>(xi, xj, xk);
+}
 
-    if (orientation() == orientations::FIRST)
-    {
-        return (xi < m_location) && (xk <= m_height);
-    }
+bool ConstantHeight::isBlockedLattice(const int xi, const int xj, const int xk) const
+{
+    return blockedFunction<int>(xi, xj, xk);
+}
 
-    else
-    {
-        return (xi > m_location) && (xk <= m_height);
-    }
+int ConstantHeight::transformLatticeCoordinate(const int xi, const int xj, const int xk) const
+{
+    return transformFunction<int>(xi, xj, xk);
 }
 
 void ConstantHeight::closestImage(const double xi, const double xj, const double xk,

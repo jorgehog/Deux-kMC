@@ -14,17 +14,17 @@ public:
     {
         SOSkMCTest::SetUp();
 
-        m_L = 5;
-        m_W = 5;
+        m_L = 10;
+        m_W = 10;
         m_alpha = 1.0;
         m_mu = 1;
         m_height = 5 + rng.uniform();
-        double maxdt = 0.01;
+        double maxdt = 0.1;
 
         m_solver = new SOSSolver(m_L, m_W, m_alpha, m_mu);
         setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, m_L, m_W);
         m_pressureWallEvent = new FixedSurface(*m_solver, m_height);
-        m_cdiffusionEvent = new FirstPassageContinuum(*m_solver, maxdt, 2, 1);
+        m_cdiffusionEvent = new FirstPassageContinuum(*m_solver, maxdt, 4, 0.038);
 
         m_diffusionEvent = m_cdiffusionEvent;
         SetUp_yo();
@@ -127,7 +127,7 @@ TEST_F(CDiffTest, dissolutionDeposition)
 
     EXPECT_EQ(1, m_cdiffusionEvent->nOfflatticeParticles());
 
-    EXPECT_NEAR(1, m_cdiffusionEvent->localRates(1, 1, 0), 1E-3);
+    EXPECT_NEAR(m_cdiffusionEvent->c(), m_cdiffusionEvent->localRates(1, 1, 0), 1E-3);
 
     m_solver->registerHeightChange(1, 1, 1);
 
@@ -142,7 +142,7 @@ TEST_F(CDiffTest, diffusion)
         {
             solver().registerHeightChange(x, y, -1);
 
-            EXPECT_NEAR(1, m_cdiffusionEvent->localRates(x, y, m_cdiffusionEvent->nOfflatticeParticles()-1), 1E-3);
+            EXPECT_NEAR(m_cdiffusionEvent->c(), m_cdiffusionEvent->localRates(x, y, m_cdiffusionEvent->nOfflatticeParticles()-1), 1E-3);
 
             if (HasFailure())
             {
@@ -191,8 +191,8 @@ TEST_F(CDiffTest, volume)
 
     for (uint n = 0; n < N; ++n)
     {
-        const double x = rng.uniform()*m_L;
-        const double y = rng.uniform()*m_W;
+        const double x = rng.uniform()*m_L - 0.5;
+        const double y = rng.uniform()*m_W - 0.5;
         const double z = zMin + rng.uniform()*zSpan;
 
         if (!solver().isBlockedPosition(x, y, z))

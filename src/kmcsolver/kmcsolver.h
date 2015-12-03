@@ -44,7 +44,7 @@ public:
 
     const Boundary *boundary(const uint i, const uint j) const
     {
-        return m_boundaries.at(i).at(j);
+        return m_boundaries[i][j];
     }
 
     void initializeReactions();

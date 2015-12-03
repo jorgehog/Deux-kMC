@@ -4,9 +4,10 @@
 
 using namespace kMC;
 
-Periodic::Periodic(const uint span, const Boundary::orientations orientation) :
+Periodic::Periodic(const int span, const Boundary::orientations orientation) :
     Boundary1D(orientation),
-    m_span(span)
+    m_span(span),
+    m_spanMinusHalf(span-0.5)
 {
 
 }
@@ -16,16 +17,37 @@ Periodic::~Periodic()
 
 }
 
-double Periodic::transformCoordinate(const double xi) const
+double Periodic::transformContinousCoordinate(const double xi) const
 {
-    return std::fmod(xi + m_span + 0.5, m_span) - 0.5;
+    if (xi > m_spanMinusHalf)
+    {
+        return xi - m_span;
+    }
+
+    else if (xi < -0.5)
+    {
+        return xi + m_span;
+    }
+
+    else
+    {
+        return xi;
+    }
 }
 
-bool Periodic::isBlocked(const double xi) const
+int Periodic::transformLatticeCoordinate(const int xi) const
 {
-    (void) xi;
+    return (xi + m_span) % m_span;
+}
 
-    return false;
+bool Periodic::isBlockedContinous(const double xi) const
+{
+    return blockedFunction(xi);
+}
+
+bool Periodic::isBlockedLattice(const int xi) const
+{
+    return blockedFunction(xi);
 }
 
 void Periodic::closestImage(const double xi, const double xti, double &dxi) const

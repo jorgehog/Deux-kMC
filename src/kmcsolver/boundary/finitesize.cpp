@@ -13,10 +13,16 @@ FiniteSize::~FiniteSize()
 
 }
 
-double FiniteSize::transformCoordinate(const double xi) const
+double FiniteSize::transformContinousCoordinate(const double xi) const
 {
-    return xi;
+    return transformFunction<double>(xi);
 }
+
+int FiniteSize::transformLatticeCoordinate(const int xi) const
+{
+    return transformFunction<int>(xi);
+}
+
 
 void FiniteSize::closestImage(const double xi, const double xti, double &dxi) const
 {

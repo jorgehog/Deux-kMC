@@ -10,21 +10,38 @@ class Periodic : public Boundary1D
 {
 public:
 
-    Periodic(const uint span, const orientations orientation);
+    Periodic(const int span, const orientations orientation);
 
     ~Periodic();
 
-    double transformCoordinate(const double xi) const;
+    template<typename T>
+    bool blockedFunction(const T& xi) const;
 
-    bool isBlocked(const double xi) const;
+    double transformContinousCoordinate(const double xi) const;
+
+    int transformLatticeCoordinate(const int xi) const;
+
+    bool isBlockedContinous(const double xi) const;
+
+    bool isBlockedLattice(const int xi) const;
 
     void closestImage(const double xi, const double xti, double &dxi) const;
 
 private:
 
-    const uint m_span;
+    const int m_span;
+    const double m_spanMinusHalf;
 
 };
+
+
+template<typename T>
+bool Periodic::blockedFunction(const T &xi) const
+{
+    (void) xi;
+
+    return false;
+}
 
 }
 

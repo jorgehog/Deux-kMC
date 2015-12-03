@@ -402,22 +402,22 @@ void SOSSolver::getRandomSolutionSite(const uint x, const uint y, const int heig
 
 int SOSSolver::topSite(const uint x, const uint y, const int z, const uint n) const
 {
-    return boundary(1, 1)->transformCoordinate(y + n, x, z);
+    return boundary(1, 1)->transformLatticeCoordinate(y + n, x, z);
 }
 
 int SOSSolver::bottomSite(const uint x, const uint y, const int z, const uint n) const
 {
-    return boundary(1, 0)->transformCoordinate((int)y - (int)n, x, z);
+    return boundary(1, 0)->transformLatticeCoordinate((int)y - (int)n, x, z);
 }
 
 int SOSSolver::leftSite(const uint x, const uint y, const int z, const uint n) const
 {
-    return boundary(0, 0)->transformCoordinate((int)x - (int)n, y, z);
+    return boundary(0, 0)->transformLatticeCoordinate((int)x - (int)n, y, z);
 }
 
 int SOSSolver::rightSite(const uint x, const uint y, const int z, const uint n) const
 {
-    return boundary(0, 1)->transformCoordinate(x + n, y, z);
+    return boundary(0, 1)->transformLatticeCoordinate(x + n, y, z);
 }
 
 void SOSSolver::findConnections(const uint x,
@@ -453,7 +453,7 @@ bool SOSSolver::findSingleConnection(const int xNeighbor,
     bool connected = false;
     bool checkConnection = !isOutsideBoxSingle(xNeighbor, dim);
 
-    if (!boundary(dim, orientation)->isBlocked(xNeighbor, y, h))
+    if (!boundary(dim, orientation)->isBlockedLattice(xNeighbor, y, h))
     {
         if (!onlySurface)
         {
@@ -516,56 +516,242 @@ uint SOSSolver::span() const
     }
 }
 
-uint SOSSolver::boundaryOrientation(const double x, const uint dim) const
+void SOSSolver::boundaryLatticeTransform(int &xTrans, int &yTrans, const int x, const int y, const int z) const
 {
-    const uint lx = dim == 0 ? length() : width();
+    uint xOrientation;
+    uint yOrientation;
 
-    return x >= lx/2 ? 1 : 0;
-}
-
-double SOSSolver::boundaryTransform(const double x, const double y, const double z, const uint dim) const
-{
-    if (dim == 0)
+    if (x < signed(length()/2))
     {
-        return closestBoundary(x, dim)->transformCoordinate(x, y, z);
-    }
-
-    else if (dim == 1)
-    {
-        return closestBoundary(x, dim)->transformCoordinate(y, x, z);
+        xOrientation = 0;
     }
 
     else
     {
-        return z;
+        xOrientation = 1;
     }
 
-}
-
-double SOSSolver::boundaryTransform(const double x, const double y, const double z, const double dxi, const uint dim) const
-{
-
-    if (dim == 0)
+    if (y < signed(width()/2))
     {
-        return closestBoundary(x, dim)->transformCoordinate(x + dxi, y, z);
-    }
-
-    else if (dim == 1)
-    {
-        return closestBoundary(x, dim)->transformCoordinate(y + dxi, x, z);
+        yOrientation = 0;
     }
 
     else
     {
-        return z + dxi;
+        yOrientation = 1;
+    }
+
+    xTrans = boundary(0, xOrientation)->transformLatticeCoordinate(x, y, z);
+    yTrans = boundary(1, yOrientation)->transformLatticeCoordinate(y, x, z);
+}
+
+void SOSSolver::boundaryContinousTransform(double &xTrans, double &yTrans, const double x, const double y, const double z) const
+{
+    uint xOrientation;
+    uint yOrientation;
+
+    if (x < length()/2)
+    {
+        xOrientation = 0;
+    }
+
+    else
+    {
+        xOrientation = 1;
+    }
+
+    if (y < width()/2)
+    {
+        yOrientation = 0;
+    }
+
+    else
+    {
+        yOrientation = 1;
+    }
+
+    xTrans = boundary(0, xOrientation)->transformContinousCoordinate(x, y, z);
+    yTrans = boundary(1, yOrientation)->transformContinousCoordinate(y, x, z);
+}
+
+int SOSSolver::boundaryLatticeTransformSingle(const int x, const int y, const int z, uint dim, const int shift) const
+{
+    uint orientation;
+
+    if (dim == 0)
+    {
+        if (x < signed(length()/2))
+        {
+            orientation = 0;
+        }
+
+        else
+        {
+            orientation = 1;
+        }
+
+        return boundary(0, orientation)->transformLatticeCoordinate(x + shift, y, z);
+    }
+
+    else
+    {
+        if (y < signed(width()/2))
+        {
+            orientation = 0;
+        }
+
+        else
+        {
+            orientation = 1;
+        }
+
+        return boundary(0, orientation)->transformLatticeCoordinate(y + shift, x, z);
     }
 
 }
 
-const Boundary *SOSSolver::closestBoundary(const double x, const uint dim) const
+double SOSSolver::boundaryContinousTransformSingle(const double x, const double y, const double z, uint dim, const double shift) const
 {
-    return boundary(dim, boundaryOrientation(x, dim));
+    uint orientation;
+
+    if (dim == 2)
+    {
+        return z + shift;
+    }
+
+    else if (dim == 0)
+    {
+        if (x < length()/2)
+        {
+            orientation = 0;
+        }
+
+        else
+        {
+            orientation = 1;
+        }
+
+        return boundary(0, orientation)->transformContinousCoordinate(x + shift, y, z);
+    }
+
+    else
+    {
+        if (y < width()/2)
+        {
+            orientation = 0;
+        }
+
+        else
+        {
+            orientation = 1;
+        }
+
+        return boundary(0, orientation)->transformContinousCoordinate(y + shift, x, z);
+    }
 }
+
+//uint SOSSolver::boundaryOrientation(const double x, const uint dim) const
+//{
+//    const uint lx = dim == 0 ? length() : width();
+
+//    return x >= lx/2 ? 1 : 0;
+//}
+
+//void SOSSolver::boundaryTransformXY(double &xTrans, double &yTrans, const double x, const double y, const double z) const
+//{
+//    uint xOrientation;
+//    uint yOrientation;
+
+//    if (x < length()/2)
+//    {
+//        xOrientation = 0;
+//    }
+
+//    else
+//    {
+//        xOrientation = 1;
+//    }
+
+//    if (y < width()/2)
+//    {
+//        yOrientation = 0;
+//    }
+
+//    else
+//    {
+//        yOrientation = 1;
+//    }
+
+//    xTrans = boundary(0, xOrientation)->transformCoordinate(x, y, z);
+//    yTrans = boundary(1, yOrientation)->transformCoordinate(x, y, z);
+
+//}
+
+//double SOSSolver::boundaryTransform(const double x, const double y, const double z, const uint dim) const
+//{
+//    uint orientation;
+
+//    if (dim == 0)
+//    {
+//        if (x < length()/2)
+//        {
+//            orientation = 0;
+//        }
+
+//        else
+//        {
+//            orientation = 1;
+//        }
+
+//        return boundary(0, orientation)->transformCoordinate(x, y, z);
+//    }
+
+//    else if (dim == 1)
+//    {
+//        if (y < length()/2)
+//        {
+//            orientation = 0;
+//        }
+
+//        else
+//        {
+//            orientation = 1;
+//        }
+
+//        return boundary(1, orientation)->transformCoordinate(y, x, z);
+//    }
+
+//    else
+//    {
+//        return z;
+//    }
+
+//}
+
+//double SOSSolver::boundaryTransform(const double x, const double y, const double z, const double dxi, const uint dim) const
+//{
+
+//    if (dim == 0)
+//    {
+//        return closestBoundary(x, dim)->transformCoordinate(x + dxi, y, z);
+//    }
+
+//    else if (dim == 1)
+//    {
+//        return closestBoundary(x, dim)->transformCoordinate(y + dxi, x, z);
+//    }
+
+//    else
+//    {
+//        return z + dxi;
+//    }
+
+//}
+
+//const Boundary *SOSSolver::closestBoundary(const double x, const uint dim) const
+//{
+//    return boundary(dim, boundaryOrientation(x, dim));
+//}
 
 void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orientations orientation)
 {
@@ -591,14 +777,14 @@ void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orienta
 
     if (dim == 0)
     {
-        outSideTrans = b->transformCoordinate(outSide, 0, height(outSide, 0));
-        blocked = b->isBlocked(outSideTrans, 0, height(outSideTrans, 0));
+        outSideTrans = b->transformLatticeCoordinate(outSide, 0, height(outSide, 0));
+        blocked = b->isBlockedLattice(outSideTrans, 0, height(outSideTrans, 0));
     }
 
     else if (dim == 1)
     {
-        outSideTrans = b->transformCoordinate(outSide, 0, height(0, outSide));
-        blocked = b->isBlocked(outSideTrans, 0, height(0, outSideTrans));
+        outSideTrans = b->transformLatticeCoordinate(outSide, 0, height(0, outSide));
+        blocked = b->isBlockedLattice(outSideTrans, 0, height(0, outSideTrans));
     }
 
     else
@@ -755,17 +941,39 @@ void SOSSolver::updateConcentrationBoundaryIfOnBoundary(const uint x, const uint
 double SOSSolver::closestSquareDistance(const uint x, const uint y, const int z,
                                         const double xp, const double yp, const double zp) const
 {
+    uint xOrientation;
+    uint yOrientation;
+
+    if (x < length()/2)
+    {
+        xOrientation = 0;
+    }
+
+    else
+    {
+        xOrientation = 1;
+    }
+
+    if (y < width()/2)
+    {
+        yOrientation = 0;
+    }
+
+    else
+    {
+        yOrientation = 1;
+    }
 
     double dxi0, dxj0, dxk0;
     double dxi1, dxj1, dxk1;
 
-    closestBoundary(x, 0)->closestImage(x, y, z, xp, yp, zp, dxi0, dxj0, dxk0);
+    boundary(0, xOrientation)->closestImage(x, y, z, xp, yp, zp, dxi0, dxj0, dxk0);
 
     double dxi02 = dxi0*dxi0;
     double dxj02 = dxj0*dxj0;
     double dxk02 = dxk0*dxk0;
 
-    closestBoundary(y, 1)->closestImage(y, x, z, yp, xp, zp, dxj1, dxi1, dxk1);
+    boundary(1, yOrientation)->closestImage(y, x, z, yp, xp, zp, dxj1, dxi1, dxk1);
 
     double dx2 = dxi1*dxi1;
     double dy2 = dxj1*dxj1;
@@ -812,30 +1020,32 @@ double SOSSolver::absSquareDistance(const uint x, const uint y, const int z,
 
 double SOSSolver::calculateVolumeCorrection() const
 {
-    //The volume at which we can place particles
-    //is this correction smaller than the volume of the box
-    //since particles have a half lattice unit size.
+    return 0;
 
-    double correction = 0;
+    //    //The volume at which we can place particles
+    //    //is this correction smaller than the volume of the box
+    //    //since particles have a half lattice unit size.
 
-    const double &h = confiningSurfaceEvent().height();
+    //    double correction = 0;
 
-    for (uint x = 1; x < m_length - 1; ++x)
-    {
-        correction += 0.5*((h - height(x, 0) - 2) + (h - height(x, m_width-1) - 2));
-    }
+    //    const double &h = confiningSurfaceEvent().height();
 
-    for (uint y = 1; y < m_width - 1; ++y)
-    {
-        correction += 0.5*((h - height(0, y) - 2) + (h - height(m_length-1, y) - 2));
-    }
+    //    for (uint x = 1; x < m_length - 1; ++x)
+    //    {
+    //        correction += 0.5*((h - height(x, 0) - 2) + (h - height(x, m_width-1) - 2));
+    //    }
 
-    correction += 3./4*((h - height(0, 0) - 2) +
-                        (h - height(0, m_width - 1) - 2) +
-                        (h - height(m_length - 1, 0) - 2) +
-                        (h - height(m_length - 1, m_width - 1) - 2));
+    //    for (uint y = 1; y < m_width - 1; ++y)
+    //    {
+    //        correction += 0.5*((h - height(0, y) - 2) + (h - height(m_length-1, y) - 2));
+    //    }
 
-    return correction;
+    //    correction += 3./4*((h - height(0, 0) - 2) +
+    //                        (h - height(0, m_width - 1) - 2) +
+    //                        (h - height(m_length - 1, 0) - 2) +
+    //                        (h - height(m_length - 1, m_width - 1) - 2));
+
+    //    return correction;
 
 }
 

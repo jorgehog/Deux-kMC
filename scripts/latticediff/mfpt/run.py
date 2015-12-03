@@ -13,7 +13,7 @@ def main():
     controller, path, app, cfg, n_procs = parse_input(sys.argv)
 
     supersaturation_values = ParameterSet(cfg, "supersaturation\s*\=\s*(.*)\;")
-    super_saturation = np.linspace(-4./5, 4./5, 9)
+    super_saturation = np.linspace(-4./5, 4./5, 5)
     supersaturation_values.initialize_set(super_saturation)
 
     n = 10

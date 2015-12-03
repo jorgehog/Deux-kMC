@@ -17,6 +17,12 @@ public:
                           const double location);
     virtual ~AverageHeightBoundary();
 
+    template<typename T>
+    const T &transformFunction(const T &xi, const T &xj, const T& xk) const;
+
+    template<typename T>
+    bool blockedFunction(const T& xi, const T &xj, const T& xk) const;
+
     void affectSurfaceSites();
     void affectSolutionSites(const int z);
     void updateSites(const int height, const int prevHeight);
@@ -62,8 +68,10 @@ private:
 
     // Boundary interface
 public:
-    double transformCoordinate(const double xi, const double xj, const double xk) const;
-    bool isBlocked(const double xi, const double xj, const double xk) const;
+    double transformContinousCoordinate(const double xi, const double xj, const double xk) const;
+    int transformLatticeCoordinate(const int xi, const int xj, const int xk) const;
+    bool isBlockedContinous(const double xi, const double xj, const double xk) const;
+    bool isBlockedLattice(const int xi, const int xj, const int xk) const;
     void closestImage(const double xi, const double xj, const double xk,
                       const double xti, const double xtj, const double xtk,
                       double &dxi, double &dxj, double &dxk) const;
@@ -73,4 +81,32 @@ public:
     void notifyObserver(const Subjects &subject);
     void initializeObserver(const Subjects &subject);
 };
+
+template<typename T>
+const T &AverageHeightBoundary::transformFunction(const T &xi, const T &xj, const T& xk) const
+{
+    (void) xj;
+    (void) xk;
+
+    return xi;
+}
+
+template<typename T>
+bool AverageHeightBoundary::blockedFunction(const T &xi, const T &xj, const T& xk) const
+{
+    (void) xj;
+
+    const int averageHeight = round(average());
+
+    if (orientation() == orientations::FIRST)
+    {
+        return (xi < m_location) && (xk <= averageHeight);
+    }
+
+    else
+    {
+        return (xi > m_location) && (xk <= averageHeight);
+    }
+}
+
 

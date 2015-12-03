@@ -78,32 +78,36 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
     else
     {
         int dx, dy, dz;
-        double x1, y1, z1;
+        //        double x1, y1, z1;
+        int x1, y1, z1;
 
         const int &z = solver().height(x, y) + 1;
 
-//        do
-//        {
-//            double theta = rng.uniform()*datum::pi;
-//            double phi = rng.uniform()*datum::pi*2;
+        //        do
+        //        {
+        //            double theta = rng.uniform()*datum::pi;
+        //            double phi = rng.uniform()*datum::pi*2;
 
-//            dx = sin(theta)*cos(phi);
-//            dy = sin(theta)*sin(phi);
-//            dz = cos(theta);
+        //            dx = sin(theta)*cos(phi);
+        //            dy = sin(theta)*sin(phi);
+        //            dz = cos(theta);
 
-//            x1 = solver().boundaryTransform(x, y, z, dx, 0);
-//            y1 = solver().boundaryTransform(x, y, z, dy, 1);
-//            z1 = z + dz;
+        //            x1 = solver().boundaryTransform(x, y, z, dx, 0);
+        //            y1 = solver().boundaryTransform(x, y, z, dy, 1);
+        //            z1 = z + dz;
 
-//            BADAssClose(1, dx*dx + dy*dy + dz*dz, 1E-3);
+        //            BADAssClose(1, dx*dx + dy*dy + dz*dz, 1E-3);
 
 
-//        } while (solver().isBlockedPosition(x1, y1, z1));
+        //        } while (solver().isBlockedPosition(x1, y1, z1));
 
         solver().getRandomSolutionSite(x, y, z, dx, dy, dz);
 
-        x1 = solver().boundaryTransform(x, y, z, dx, 0);
-        y1 = solver().boundaryTransform(x, y, z, dy, 1);
+        //        x1 = solver().boundaryTransform(x, y, z, dx, 0);
+        //        y1 = solver().boundaryTransform(x, y, z, dy, 1);
+
+        solver().boundaryLatticeTransform(x1, y1, x + dx, y + dy, z);
+
         z1 = z + dz;
 
         insertParticle(x1, y1, z1);
@@ -125,51 +129,35 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
             scanForDisplacement(n, dim, delta);
             particlePositions(dim, n) += delta;
 
-            for (uint _x = 0; _x < solver().length(); ++_x)
-            {
-                for (uint _y = 0; _y < solver().width(); ++_y)
-                {
-                    m_localRates(_x, _y, n) = calculateLocalRateOverD(_x, _y, n);
-                }
-            }
+//            for (uint _x = 0; _x < solver().length(); ++_x)
+//            {
+//                for (uint _y = 0; _y < solver().width(); ++_y)
+//                {
+//                    m_localRates(_x, _y, n) = calculateLocalRateOverD(_x, _y, n);
+//                }
+//            }
         }
 
         else
         {
             //else we just recalulate the rate for the new height
-            m_localRates(x, y, n) = calculateLocalRateOverD(x, y, n);
+//            m_localRates(x, y, n) = calculateLocalRateOverD(x, y, n);
         }
     }
 
-#ifndef NDEBUG
-    for (uint _x = 0; _x < solver().length(); ++_x)
-    {
-        for (uint _y = 0; _y < solver().width(); ++_y)
-        {
-            for (uint n = 0; n < nOfflatticeParticles(); ++n)
-            {
-                BADAssClose(m_localRates(_x, _y, n), calculateLocalRateOverD(_x, _y, n), 1E-3, "what", [&] ()
-                {
-                    BADAssSimpleDump(_x, _y, n);
-                });
-            }
-        }
-    }
-#endif
+//    DissolutionDeposition *r;
+//    for (uint _x = 0; _x < solver().length(); ++_x)
+//    {
+//        for (uint _y = 0; _y < solver().width(); ++_y)
+//        {
+//            r = &solver().surfaceReaction(_x, _y);
 
-    DissolutionDeposition *r;
-    for (uint _x = 0; _x < solver().length(); ++_x)
-    {
-        for (uint _y = 0; _y < solver().width(); ++_y)
-        {
-            r = &solver().surfaceReaction(_x, _y);
+//            const double newDepositionRate = depositionRate(_x, _y);
 
-            const double newDepositionRate = depositionRate(_x, _y);
-
-            r->setDepositionRate(newDepositionRate);
-            r->changeRate(newDepositionRate + r->dissolutionRate());
-        }
-    }
+//            r->setDepositionRate(newDepositionRate);
+//            r->changeRate(newDepositionRate + r->dissolutionRate());
+//        }
+//    }
 
 }
 
@@ -261,9 +249,9 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
 
         BADAssBool(!solver().isBlockedPosition(x0, y0, z0));
 
-//        m_F(0, n) = 0;
-//        m_F(1, n) = 0;
-//        m_F(2, n) = solver().confiningSurfaceEvent().diffusionDrift(x0, y0, z0);
+        //        m_F(0, n) = 0;
+        //        m_F(1, n) = 0;
+        //        m_F(2, n) = solver().confiningSurfaceEvent().diffusionDrift(x0, y0, z0);
 
 
         do
@@ -272,8 +260,10 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
             double dy = prefac*rng.normal();// + D*m_F(1, n)*dt;
             double dz = prefac*rng.normal();// + D*m_F(2, n)*dt;
 
-            x1 = solver().boundaryTransform(x0, y0, z0, dx, 0);
-            y1 = solver().boundaryTransform(x0, y0, z0, dy, 1);
+            //            x1 = solver().boundaryTransform(x0, y0, z0, dx, 0);
+            //            y1 = solver().boundaryTransform(x0, y0, z0, dy, 1);
+
+            solver().boundaryContinousTransform(x1, y1, x0 + dx, y0 + dy, z0);
             z1 = z0 + dz;
 
             if (solver().surfaceDim() == 1)
@@ -306,7 +296,7 @@ void OfflatticeMonteCarlo::diffuseFull(const double dtFull)
 {
     const uint N = dtFull/maxdt();
 
-//    cout << setprecision(16) << fixed << D() << " " << dtFull << " " << sqrt(2*D()*dtFull) << endl;
+    //    cout << setprecision(16) << fixed << D() << " " << dtFull << " " << sqrt(2*D()*dtFull) << endl;
 
     for (uint i = 0; i < N; ++i)
     {
@@ -353,8 +343,8 @@ void OfflatticeMonteCarlo::initializeParticleMatrices(const uint nParticles, con
     m_particlePositions.set_size(3, nParticles);
     m_F = zeros(3, nParticles);
 
-//    m_particleDepositionLocations.set_size(2, nParticles);
-//    m_selectedDepositionRates.set_size(nParticles);
+    //    m_particleDepositionLocations.set_size(2, nParticles);
+    //    m_selectedDepositionRates.set_size(nParticles);
 
     const double &h = solver().confiningSurfaceEvent().height();
 
@@ -371,10 +361,12 @@ void OfflatticeMonteCarlo::initializeParticleMatrices(const uint nParticles, con
             double y0Raw = rng.uniform()*solver().width();
             z0 = zMin + rng.uniform()*(h - zMin);
 
-            //it is rarely the case that the boundary transformations
-            //touch a point inside the solver cube.
-            x0 = solver().boundaryTransform(x0Raw, y0Raw, z0, 0);
-            y0 = solver().boundaryTransform(x0, y0Raw, z0, 1);
+            //            //it is rarely the case that the boundary transformations
+            //            //touch a point inside the solver cube.
+            //            x0 = solver().boundaryTransform(x0Raw, y0Raw, z0, 0);
+            //            y0 = solver().boundaryTransform(x0, y0Raw, z0, 1);
+
+            solver().boundaryContinousTransform(x0, y0, x0Raw, y0Raw, z0);
 
         } while(solver().isBlockedPosition(x0, y0, z0));
 
@@ -399,10 +391,10 @@ void OfflatticeMonteCarlo::scan(const uint n, const uint dim, const double dr, c
 
     while (solver().isBlockedPosition(x0, y0, z0) && c < maxSteps)
     {
-        particlePositions(dim, n) = solver().boundaryTransform(particlePositions(0, n),
-                                                               particlePositions(1, n),
-                                                               particlePositions(2, n),
-                                                               dr, dim);
+        particlePositions(dim, n) = solver().boundaryContinousTransformSingle(particlePositions(0, n),
+                                                                              particlePositions(1, n),
+                                                                              particlePositions(2, n),
+                                                                              dim, dr);
 
         c++;
     }
@@ -476,16 +468,56 @@ void OfflatticeMonteCarlo::clearDiffusingParticles()
 
 void OfflatticeMonteCarlo::calculateLocalRates()
 {
-    for (uint x = 0; x < solver().length(); ++x)
+
+    m_localRates.zeros();
+
+    for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
-        for (uint y = 0; y < solver().width(); ++y)
+        const double &xp = particlePositions(0, n);
+        const double &yp = particlePositions(1, n);
+        const double &zp = particlePositions(2, n);
+
+        const int x = int(round(xp));
+        const int y = int(round(yp));
+        const int z = int(round(zp));
+
+        const double dx = x - xp;
+        const double dy = y - yp;
+
+        const int l = 3;
+
+        int xTrans;
+        int yTrans;
+
+        for (int xscan = -l; xscan <= l; ++xscan)
         {
-            for (uint n = 0; n < nOfflatticeParticles(); ++n)
+            for (int yscan = -l; yscan <= l; ++yscan)
             {
-                m_localRates(x, y, n) = calculateLocalRateOverD(x, y, n);
+                solver().boundaryLatticeTransform(xTrans, yTrans, x + xscan, y + yscan, z);
+
+                const int &h = solver().height(xTrans, yTrans);
+
+                const double dz2 = (h+1-zp)*(h+1-zp);
+
+                if (dz2 < l*l)
+                {
+                    const double r2 = dz2 + (xscan + dx)*(xscan + dx) + (yscan + dy)*(yscan+dy);
+                    m_localRates(xTrans, yTrans, n) = 0.038/(r2*r2);
+                }
             }
         }
     }
+
+    //    for (uint x = 0; x < solver().length(); ++x)
+    //    {
+    //        for (uint y = 0; y < solver().width(); ++y)
+    //        {
+    //            for (uint n = 0; n < nOfflatticeParticles(); ++n)
+    //            {
+    //                m_localRates(x, y, n) = calculateLocalRateOverD(x, y, n);
+    //            }
+    //        }
+    //    }
 
     //    selectDepositionReactants();
 }

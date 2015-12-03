@@ -220,13 +220,19 @@ public:
 
     uint span() const;
 
-    uint boundaryOrientation(const double x, const uint dim) const;
+    void boundaryLatticeTransform(int &xTrans, int &yTrans, const int x, const int y, const int z) const;
+    void boundaryContinousTransform(double &xTrans, double &yTrans, const double x, const double y, const double z) const;
 
-    double boundaryTransform(const double x, const double y, const double z, const uint dim) const;
+    int boundaryLatticeTransformSingle(const int x, const int y, const int z, uint dim, const int shift = 0) const;
+    double boundaryContinousTransformSingle(const double x, const double y, const double z, uint dim, const double shift = 0) const;
 
-    double boundaryTransform(const double x, const double y, const double z, const double dxi, const uint dim) const;
+//    void boundaryTransformXY(double &xTrans, double &yTrans, const double x, const double y, const double z) const;
 
-    const Boundary *closestBoundary(const double x, const uint dim) const;
+//    double boundaryTransform(const double x, const double y, const double z, const uint dim) const;
+
+//    double boundaryTransform(const double x, const double y, const double z, const double dxi, const uint dim) const;
+
+//    const Boundary *closestBoundary(const double x, const uint dim) const;
 
     void addConcentrationBoundary(const uint dim, const Boundary::orientations orientation);
 
@@ -290,6 +296,7 @@ public:
     {
         return m_currentSurfaceChange;
     }
+
 
 private:
 

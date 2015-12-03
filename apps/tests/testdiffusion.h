@@ -652,8 +652,13 @@ TEST_F(SOSkMCTest, SOS_allSolutionSites)
             for (uint p = 0; p < r->calculateNumberOfFreePaths(); ++p)
             {
                 r->getDiffusionPath(p, dx, dy, dz);
-                uint x = m_solver->boundaryTransform(r->x(), r->y(), r->z(), dx, 0);
-                uint y = m_solver->boundaryTransform(r->x(), r->y(), r->z(), dy, 1);
+                //                uint x = m_solver->boundaryTransform(r->x(), r->y(), r->z(), dx, 0);
+                //                uint y = m_solver->boundaryTransform(r->x(), r->y(), r->z(), dy, 1);
+
+                int x;
+                int y;
+                solver().boundaryLatticeTransform(x, y, r->x() + dx, r->y() + dy, r->z());
+
                 int z = r->z() + dz;
 
                 //we expect that there are no particles along the free diffusion paths.

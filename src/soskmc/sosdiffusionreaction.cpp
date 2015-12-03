@@ -177,8 +177,14 @@ void SOSDiffusionReaction::getDiffusionPath(const uint path, int &dx, int &dy, i
 
 void SOSDiffusionReaction::executeReaction(const int dx, const int dy, const int dz)
 {
-    const int xNew = solver().boundaryTransform(x(), y(), z(), dx, 0);
-    const int yNew = solver().boundaryTransform(x(), y(), z(), dy, 1);
+//    const int xNew = solver().boundaryTransform(x(), y(), z(), dx, 0);
+//    const int yNew = solver().boundaryTransform(x(), y(), z(), dy, 1);
+
+    int xNew;
+    int yNew;
+
+    solver().boundaryLatticeTransform(xNew, yNew, x() + dx, y() + dy, z());
+
     const int zNew = z() + dz;
 
     solver().diffusionEvent().executeDiffusionReaction(this, xNew, yNew, zNew);

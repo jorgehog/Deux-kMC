@@ -420,6 +420,9 @@ mat AutoCorrelationHeight::autoCorrelation() const
 
 void AutoCorrelationHeight::execute()
 {
+    int xn;
+    int yn;
+
     const double &hMean = solver().averageHeight();
 
     for (uint x = 0; x < solver().length(); ++x)
@@ -435,9 +438,7 @@ void AutoCorrelationHeight::execute()
             {
                 for (uint dy = 0; dy < m_ySpan; ++dy)
                 {
-                    int xn = solver().boundaryTransform(x, y, h, dx, 0);
-                    int yn = solver().boundaryTransform(x, y, h, dy, 1);
-
+                    solver().boundaryLatticeTransform(xn, yn, x + dx, y + dy, h);
 
                     if (!solver().isOutsideBox(xn, yn))
                     {
@@ -456,8 +457,7 @@ void AutoCorrelationHeight::execute()
             {
                 for (uint dy = 1; dy < m_ySpan; ++dy)
                 {
-                    int xn = solver().boundaryTransform(x, y, h, dx, 0);
-                    int yn = solver().boundaryTransform(x, y, h, -int(dy), 1);
+                    solver().boundaryLatticeTransform(xn, yn, x + dx, y - (int)dy, h);
 
                     if (!solver().isOutsideBox(xn, yn))
                     {

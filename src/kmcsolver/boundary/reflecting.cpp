@@ -14,35 +14,27 @@ Reflecting::~Reflecting()
 
 }
 
-
-
-double Reflecting::transformCoordinate(const double xi) const
+double Reflecting::transformContinousCoordinate(const double xi) const
 {
-    bool isBelow = (xi < m_location) && (orientation() == orientations::FIRST);
-    bool isAbove = (xi > m_location) && (orientation() == orientations::LAST);
-
-    if (isBelow)
-    {
-        return 2*m_location - xi - 1;
-    }
-
-    else if (isAbove)
-    {
-        return 2*m_location - xi + 1;
-    }
-
-    else
-    {
-        return xi;
-    }
+    return transformFunction(xi);
 }
 
-bool Reflecting::isBlocked(const double xi) const
+int Reflecting::transformLatticeCoordinate(const int xi) const
 {
-    (void) xi;
-
-    return false;
+    return transformFunction(xi);
 }
+
+bool Reflecting::isBlockedContinous(const double xi) const
+{
+    return blockedFunction(xi);
+}
+
+bool Reflecting::isBlockedLattice(const int xi) const
+{
+    return blockedFunction(xi);
+}
+
+
 
 void Reflecting::closestImage(const double xi, const double xti, double &dxi) const
 {

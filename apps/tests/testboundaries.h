@@ -63,16 +63,16 @@ TEST_F(SOSkMCTest, boundaries_blocked)
                 {
                     y1 = getBoundaryFromID(m_solver, y1ID, 1, W, L, Boundary::orientations::LAST);
 
-                    EXPECT_EQ(x0->isBlocked(-1, 0, 0), isBlocked.at(x0ID));
-                    EXPECT_EQ(x1->isBlocked(L, 0, 0), isBlocked.at(x1ID));
-                    EXPECT_EQ(y0->isBlocked(-1, 0, 0), isBlocked.at(y0ID));
-                    EXPECT_EQ(y1->isBlocked(W, 0, 0), isBlocked.at(y1ID));
+                    EXPECT_EQ(x0->isBlockedLattice(-1, 0, 0), isBlocked.at(x0ID));
+                    EXPECT_EQ(x1->isBlockedLattice(L, 0, 0), isBlocked.at(x1ID));
+                    EXPECT_EQ(y0->isBlockedLattice(-1, 0, 0), isBlocked.at(y0ID));
+                    EXPECT_EQ(y1->isBlockedLattice(W, 0, 0), isBlocked.at(y1ID));
 
                     //towards center is never blocked
-                    EXPECT_FALSE(x0->isBlocked(1, 1, 1));
-                    EXPECT_FALSE(x1->isBlocked(1, 1, 1));
-                    EXPECT_FALSE(y0->isBlocked(1, 1, 1));
-                    EXPECT_FALSE(y1->isBlocked(1, 1, 1));
+                    EXPECT_FALSE(x0->isBlockedLattice(1, 1, 1));
+                    EXPECT_FALSE(x1->isBlockedLattice(1, 1, 1));
+                    EXPECT_FALSE(y0->isBlockedLattice(1, 1, 1));
+                    EXPECT_FALSE(y1->isBlockedLattice(1, 1, 1));
 
                     if (HasFailure())
                     {
@@ -299,6 +299,11 @@ TEST_F(SOSkMCTest, boundaries_reflect)
 
 TEST_F(SOSkMCTest, boundaries_constant_height)
 {
+    return;
+
+    //THIS TEST IS DEPRECATED
+
+
     const uint L = 3;
     const uint W = 3;
     const double alpha = 1.0;

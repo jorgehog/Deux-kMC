@@ -13,11 +13,12 @@ Open::~Open()
 
 }
 
-
-
-bool Open::isBlocked(const double xi) const
+bool Open::isBlockedContinous(const double xi) const
 {
-    (void) xi;
+    return blockedFunction<double>(xi);
+}
 
-    return false;
+bool Open::isBlockedLattice(const int xi) const
+{
+    return blockedFunction<int>(xi);
 }
