@@ -14,19 +14,19 @@ public:
 
     const double &dissolutionRate() const
     {
-        return m_diffusionRate;
+        return m_dissolutionRate;
     }
 
-    void setDiffusionRate(const double newRate)
+    void setDissolutionRate(const double newRate)
     {
-        m_diffusionRate = newRate;
-        changeRate(m_diffusionRate + m_depositionRate);
+        m_dissolutionRate = newRate;
+        changeRate(m_dissolutionRate + m_depositionRate);
     }
 
     void setDepositionRate(const double newRate)
     {
         m_depositionRate = newRate;
-        changeRate(m_diffusionRate + m_depositionRate);
+        changeRate(m_dissolutionRate + m_depositionRate);
     }
 
     double calculateDissolutionRate() const;
@@ -42,5 +42,5 @@ public:
 
 private:
     double m_depositionRate;
-    double m_diffusionRate;
+    double m_dissolutionRate;
 };

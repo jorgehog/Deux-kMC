@@ -14,6 +14,8 @@ public:
 
     virtual ~OfflatticeMonteCarlo();
 
+    virtual double calculateLocalRateOverD(const double rSquared) const = 0;
+
     virtual double calculateLocalRateOverD(const uint x, const uint y, const uint n) const = 0;
 
     void diffuse(const double dt);
@@ -24,7 +26,7 @@ public:
 
     void insertParticle(const double x, const double y, const double z);
 
-    void initializeParticleMatrices(const uint nOfflatticeParticles, const double zMin);
+    void initializeParticleMatrices(const uint N, const double zMin);
 
     void scan(const uint n, const uint dim, const double dr, const uint maxSteps = 100);
 
@@ -62,7 +64,7 @@ public:
 
     const uint &nOfflatticeParticles() const
     {
-        return m_particlePositions.n_cols;
+        return m_nParticles;
     }
 
     void setParticlePosition(const uint i, const uint j, const double value)
@@ -102,6 +104,9 @@ private:
     mat m_particlePositions;
     mat m_F;
     cube m_localRates;
+    vec m_localRatesForSite;
+
+    uint m_nParticles;
 
     //tmp
     vec m_selectedDepositionRates;

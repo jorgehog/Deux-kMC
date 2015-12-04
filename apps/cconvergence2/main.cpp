@@ -21,9 +21,8 @@ int main()
     FixedSurface confiningSurface(solver, height);
 
     const double maxdt = 0.1;
-    const double n = 4.0;
-    const double c = 0.1;
-    FirstPassageContinuum diffusion(solver, maxdt, n, c);
+    const double c = 0.05;
+    FirstPassageContinuum diffusion(solver, maxdt, c);
 
     Lattice lattice;
         lattice.enableOutput(false);
@@ -34,8 +33,8 @@ int main()
     lattice.addEvent(diffusion);
 
     const uint nCyclesPerEquilibrium = 1000;
-    const uint nCyclesPerC = 1;
-    const uint nIterations = 10;
+    const uint nCyclesPerC = 3;
+    const uint nIterations = 3;
 
     BasicExecuteEvent<uint> pauser("pauser", [&] (BasicExecuteEvent<uint> *event)
     {

@@ -11,6 +11,7 @@ public:
 
     double calculateLocalRateOverD(const uint x, const uint y, const uint n, const double timeStep) const;
 
+    double calculateLocalRateOverD(const double rSquared) const {(void)rSquared;return 0;}
 
 private:
     SOSSolver &m_mutexSolver;

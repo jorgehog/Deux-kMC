@@ -3,11 +3,9 @@
 #include "../../sossolver.h"
 
 FirstPassageContinuum::FirstPassageContinuum(SOSSolver &solver,
-                                             const double maxdt,
-                                             const double n, const double c) :
+                                             const double maxdt, const double c) :
     Diffusion(solver, "FirstPassage", "", true),
     OfflatticeMonteCarlo(solver, maxdt),
-    m_n(n),
     m_c(c)
 {
 
@@ -39,5 +37,10 @@ double FirstPassageContinuum::calculateLocalRateOverD(const uint x, const uint y
                                                       particlePositions(1, n),
                                                       particlePositions(2, n));
 
-    return m_c/std::pow(dr2, m_n/2);
+    return calculateLocalRateOverD(dr2);
+}
+
+double FirstPassageContinuum::calculateLocalRateOverD(const double rSquared) const
+{
+    return m_c/(rSquared*rSquared);
 }

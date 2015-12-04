@@ -37,7 +37,22 @@ double Periodic::transformContinousCoordinate(const double xi) const
 
 int Periodic::transformLatticeCoordinate(const int xi) const
 {
-    return (xi + m_span) % m_span;
+    if (xi >= m_span)
+    {
+        return xi - m_span;
+    }
+
+    else if (xi < 0)
+    {
+        return xi + m_span;
+    }
+
+    else
+    {
+        return xi;
+    }
+
+//    return (xi + m_span) % m_span;
 }
 
 bool Periodic::isBlockedContinous(const double xi) const

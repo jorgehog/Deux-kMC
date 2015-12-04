@@ -295,9 +295,7 @@ public:
 
     RateChecker(const KMCSolver &solver);
 
-    void execute() {}
-
-    void reset();
+    void execute();
 
 private:
 

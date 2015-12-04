@@ -20,10 +20,9 @@ int main()
     FixedSurface confiningSurface(solver, height);
 
     const double maxdt = 0.01;
-    const double n = 4.0;
     const double c = 1.0;
 
-    FirstPassageContinuum diffusion(solver, maxdt, n, c);
+    FirstPassageContinuum diffusion(solver, maxdt, c);
 
     const uint nSurfacesPerC = 10;
     const uint nSamplesPerSurface = 100;

@@ -70,7 +70,6 @@ int main(int argv, char** argc)
 
     const uint &diffuseInt = getSetting<uint>(root, "diffuse");
     const double &maxdt = getSetting<double>(root, "maxdt");
-    const double &depRatePower = getSetting<double>(root, "n");
     const double &depRateConstant = getSetting<double>(root, "c");
 
     const uint &autoCorrelationInt = getSetting<uint>(root, "autocorrelation");
@@ -175,7 +174,7 @@ int main(int argv, char** argc)
     }
     else if (diffuseInt == 4)
     {
-        diffusion = new FirstPassageContinuum(solver, maxdt, depRatePower, depRateConstant);
+        diffusion = new FirstPassageContinuum(solver, maxdt, depRateConstant);
     }
     else if (diffuseInt == 5)
     {
@@ -355,7 +354,6 @@ int main(int argv, char** argc)
 
     simRoot["diffuse"] = diffuseInt;
     simRoot["maxdt"] = maxdt;
-    simRoot["depRatePower"] = depRatePower;
     simRoot["depRateConstant"] = depRateConstant;
 
     simRoot["autoCorrelationInt"] = autoCorrelationInt;

@@ -5,4 +5,5 @@ CONFIG -= qt
 SUBDIRS += spiralgrowth \
     tests \
     cconvergence \
-    cconvergence2
+    cconvergence2 \
+    cconvergence3

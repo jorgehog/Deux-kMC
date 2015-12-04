@@ -8,7 +8,6 @@ class FirstPassageContinuum : public OfflatticeMonteCarlo
 public:
     FirstPassageContinuum(SOSSolver &solver,
                           const double maxdt,
-                          const double n,
                           const double c);
 
     ~FirstPassageContinuum();
@@ -21,7 +20,6 @@ public:
     }
 
 private:
-    const double m_n;
     double m_c;
 
     // Event interface
@@ -31,5 +29,6 @@ public:
     // OfflatticeMonteCarlo interface
 public:
     virtual double calculateLocalRateOverD(const uint x, const uint y, const uint n) const;
+    virtual double calculateLocalRateOverD(const double rSquared) const;
 };
 

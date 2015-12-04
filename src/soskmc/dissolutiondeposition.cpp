@@ -83,8 +83,8 @@ void DissolutionDeposition::executeAndUpdate()
 double DissolutionDeposition::rateExpression()
 {
     m_depositionRate = calculateDepositionRate();
-    m_diffusionRate = calculateDissolutionRate();
+    m_dissolutionRate = calculateDissolutionRate();
 
-    return m_depositionRate + m_diffusionRate;
+    return m_depositionRate + m_dissolutionRate;
 }
 

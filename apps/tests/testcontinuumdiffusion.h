@@ -24,7 +24,7 @@ public:
         m_solver = new SOSSolver(m_L, m_W, m_alpha, m_mu);
         setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, m_L, m_W);
         m_pressureWallEvent = new FixedSurface(*m_solver, m_height);
-        m_cdiffusionEvent = new FirstPassageContinuum(*m_solver, maxdt, 4, 0.038);
+        m_cdiffusionEvent = new FirstPassageContinuum(*m_solver, maxdt, 0.038);
 
         m_diffusionEvent = m_cdiffusionEvent;
         SetUp_yo();
@@ -40,7 +40,6 @@ public:
         primeSolver();
 
         m_cdiffusionEvent->clearDiffusingParticles();
-
 
     }
 
@@ -63,6 +62,10 @@ TEST_F(CDiffTest, scan)
     const double &y0 = m_cdiffusionEvent->particlePositions()(1, n);
     const double &z0 = m_cdiffusionEvent->particlePositions()(2, n);
 
+    EXPECT_EQ(1, x0);
+    EXPECT_EQ(1, y0);
+    EXPECT_EQ(0, z0);
+
     EXPECT_TRUE(solver().isBlockedPosition(x0, y0, z0));
 
     m_cdiffusionEvent->scan(n, 2, 0.01);
@@ -72,6 +75,14 @@ TEST_F(CDiffTest, scan)
     EXPECT_NEAR(1, x0, 1E-2);
     EXPECT_NEAR(1, y0, 1E-2);
     EXPECT_NEAR(1, z0, 1E-2);
+
+    if (HasFailure())
+    {
+        cout << x0 << " " << y0 << " " << z0 << endl;
+        cout << solver().isBlockedPosition(x0, y0, z0) << endl;
+        cout << solver().height(x0, y0) << endl;
+        return;
+    }
 
     solver().setHeight(1,1,1,false);
 
@@ -121,9 +132,8 @@ TEST_F(CDiffTest, dissolutionDeposition)
 {
     EXPECT_EQ(0, m_cdiffusionEvent->nOfflatticeParticles());
 
-    cout << m_solver->closestSquareDistance(1, 1, 0, 1, 1, 1) << endl;
-
     m_solver->registerHeightChange(1, 1, -1);
+    m_cdiffusionEvent->calculateLocalRates();
 
     EXPECT_EQ(1, m_cdiffusionEvent->nOfflatticeParticles());
 
@@ -141,6 +151,7 @@ TEST_F(CDiffTest, diffusion)
         for (uint y = 0; y < m_W; ++y)
         {
             solver().registerHeightChange(x, y, -1);
+            m_cdiffusionEvent->calculateLocalRates();
 
             EXPECT_NEAR(m_cdiffusionEvent->c(), m_cdiffusionEvent->localRates(x, y, m_cdiffusionEvent->nOfflatticeParticles()-1), 1E-3);
 

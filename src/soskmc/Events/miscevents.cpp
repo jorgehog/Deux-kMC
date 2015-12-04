@@ -268,7 +268,7 @@ RateChecker::RateChecker(const KMCSolver &solver) :
 
 }
 
-void RateChecker::reset()
+void RateChecker::execute()
 {
     for (uint n = 0; n < m_solver.numberOfReactions(); ++n)
     {
