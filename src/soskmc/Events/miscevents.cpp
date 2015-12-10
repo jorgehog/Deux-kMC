@@ -155,7 +155,7 @@ void DumpHeights3D::execute()
 
 void AverageHeight::initialize()
 {
-    setValue(getValue());
+    m_h0 = solver().averageHeight();
 }
 
 void AverageHeight::execute()
@@ -166,7 +166,7 @@ void AverageHeight::execute()
 double AverageHeight::getValue() const
 {
     BADAssClose(solver().averageHeight(), accu(solver().heights())/double(solver().area()), 1E-3);
-    return solver().averageHeight();
+    return solver().averageHeight() - m_h0;
 }
 
 

@@ -47,10 +47,7 @@ def main():
             heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
             heights -= heights[0]
             concentrations = parser.get_ignis_data(data, "Concentration")[::every].copy()
-            time = parser.get_ignis_data(data, "Time")
-            time /= (1 + supersaturation)
-            time -= time[0] #Normalize to real time and not state time
-            time = time[::every].copy()
+            time = parser.get_ignis_data(data, "Time")[::every].copy()
 
             i = supersaturations.index(supersaturation)
 

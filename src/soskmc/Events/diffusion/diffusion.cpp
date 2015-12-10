@@ -76,6 +76,16 @@ void Diffusion::dump(const uint frameNumber, const string path) const
     surfacewriter.finalize();
 }
 
+uint Diffusion::numberOfParticles() const
+{
+    if (hasDiscreteParticles())
+    {
+        throw std::runtime_error("Number of particles is not correctly overloaded.");
+    }
+
+    return 0;
+}
+
 double Diffusion::DUnscaled() const
 {
     return 1/solver().c0();

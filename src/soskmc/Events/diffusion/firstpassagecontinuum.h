@@ -7,7 +7,7 @@ class FirstPassageContinuum : public OfflatticeMonteCarlo
 {
 public:
     FirstPassageContinuum(SOSSolver &solver,
-                          const double maxdt,
+                          const double maxdt, const int depositionBoxHalfSize,
                           const double c);
 
     ~FirstPassageContinuum();

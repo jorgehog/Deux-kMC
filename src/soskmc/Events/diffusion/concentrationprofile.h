@@ -31,6 +31,7 @@ public:
     virtual void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const;
     double concentration() const;
+    bool hasDiscreteParticles() const;
 
     // kMC::Observer interface
 public:

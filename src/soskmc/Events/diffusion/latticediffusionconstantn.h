@@ -9,7 +9,6 @@ public:
 private:
 
     uint m_targetNParticles;
-    double m_targetSeparation;
 
     // kMC::Observer interface
 public:

@@ -22,7 +22,7 @@ int main()
     const double maxdt = 0.01;
     const double c = 1.0;
 
-    FirstPassageContinuum diffusion(solver, maxdt, c);
+    FirstPassageContinuum diffusion(solver, maxdt, 3, c);
 
     const uint nSurfacesPerC = 10;
     const uint nSamplesPerSurface = 100;

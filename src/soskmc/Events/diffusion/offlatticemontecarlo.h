@@ -2,11 +2,27 @@
 
 #include "diffusion.h"
 
+namespace Tests
+{
+class World;
+class PathFinder;
+}
+
+struct PathFindingJazz
+{
+    uint xTrans;
+    uint yTrans;
+    int xEnd;
+    int yEnd;
+    int zEnd;
+};
+
 class OfflatticeMonteCarlo : public virtual Diffusion
 {
 public:
     OfflatticeMonteCarlo(SOSSolver &solver,
                          const double maxdt,
+                         const int depositionBoxHalfSize,
                          string type = "",
                          string unit = "",
                          bool hasOutput = false,
@@ -26,7 +42,7 @@ public:
 
     void insertParticle(const double x, const double y, const double z);
 
-    void initializeParticleMatrices(const uint N, const double zMin);
+    void initializeParticleMatrices(const uint N);
 
     void scan(const uint n, const uint dim, const double dr, const uint maxSteps = 100);
 
@@ -35,6 +51,11 @@ public:
     const double &maxdt() const
     {
         return m_maxdt;
+    }
+
+    const int &depositionBoxHalfSize() const
+    {
+        return m_depositionBoxHalfSize;
     }
 
     double acceptanceRatio() const
@@ -90,16 +111,16 @@ public:
 
     bool isInLineOfSight(const uint n, const uint x, const uint y) const;
 
-protected:
-
-    double &particlePositions(const uint i, const uint j)
-    {
-        return m_particlePositions(i, j);
-    }
-
 private:
 
     const double m_maxdt;
+    const int m_depositionBoxHalfSize;
+    const int m_boxSize;
+
+    Tests::World *m_world;
+    Tests::PathFinder *m_pathFinder;
+    vector<PathFindingJazz*> m_pathFindingJazzes;
+    uint m_nPathFinds;
 
     mat m_particlePositions;
     mat m_F;
@@ -134,6 +155,10 @@ public:
     virtual void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const;
     double concentration() const;
+    bool hasDiscreteParticles() const;
+    uint numberOfParticles() const;
+    void insertRandomParticle();
+    void removeRandomParticle();
 
     // Event interface
 public:

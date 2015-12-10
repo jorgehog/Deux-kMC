@@ -4,7 +4,7 @@
 
 
 ConstantConfinement::ConstantConfinement(SOSSolver &solver, const double height) :
-    ConfiningSurface(solver, "ConstantConfinement", "", true, true),
+    ConfiningSurface(solver, "ConstantConfinement"),
     FixedSurface(solver, height)
 {
 

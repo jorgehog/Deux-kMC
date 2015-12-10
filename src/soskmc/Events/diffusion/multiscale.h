@@ -54,6 +54,11 @@ public:
 
     double concentration() const;
 
+    bool hasDiscreteParticles() const;
+    uint numberOfParticles() const;
+    void insertRandomParticle();
+    void removeRandomParticle();
+
 
     // kMC::Observer interface
 public:

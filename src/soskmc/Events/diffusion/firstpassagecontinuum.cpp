@@ -3,9 +3,11 @@
 #include "../../sossolver.h"
 
 FirstPassageContinuum::FirstPassageContinuum(SOSSolver &solver,
-                                             const double maxdt, const double c) :
-    Diffusion(solver, "FirstPassage", "", true),
-    OfflatticeMonteCarlo(solver, maxdt),
+                                             const double maxdt,
+                                             const int depositionBoxHalfSize,
+                                             const double c) :
+    Diffusion(solver, "FirstPassage"),
+    OfflatticeMonteCarlo(solver, maxdt, depositionBoxHalfSize),
     m_c(c)
 {
 

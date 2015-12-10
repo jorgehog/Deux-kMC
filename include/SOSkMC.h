@@ -28,3 +28,5 @@
 
 #include "../src/soskmc/sosdiffusionreaction.h"
 #include "../src/soskmc/dissolutiondeposition.h"
+
+#include "../src/soskmc/particlenumberconservator.h"

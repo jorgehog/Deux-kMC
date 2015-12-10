@@ -12,7 +12,7 @@ Multiscale::Multiscale(SOSSolver &solver,
                        const double dt,
                        const uint boundarySpacing) :
     Diffusion(solver, "MCDiffBoundary"),
-    OfflatticeMonteCarlo(solver, dt),
+    OfflatticeMonteCarlo(solver, 0, dt),
     LatticeDiffusion(solver),
     m_boundarySpacing(boundarySpacing)
 {
@@ -53,14 +53,10 @@ void Multiscale::initializeObserver(const Subjects &subject)
 {
     (void) subject;
 
-    const double zMin = solver().heights().max() + m_boundarySpacing;
+//    const double V = solver().area()*(solver().confiningSurfaceEvent().height() - zMin);
+//    const uint N = V*solver().concentration();
 
-    BADAss(zMin, <, solver().confiningSurfaceEvent().height(), "not enough room for continuum solver.");
-
-    const double V = solver().area()*(solver().confiningSurfaceEvent().height() - zMin);
-    const uint N = V*solver().concentration();
-
-    initializeParticleMatrices(N, zMin);
+//    initializeParticleMatrices(N);
 
 }
 
@@ -79,6 +75,26 @@ void Multiscale::dump(const uint frameNumber, const string path) const
 double Multiscale::concentration() const
 {
     return 0;
+}
+
+bool Multiscale::hasDiscreteParticles() const
+{
+    return true;
+}
+
+uint Multiscale::numberOfParticles() const
+{
+    return LatticeDiffusion::numberOfParticles() + OfflatticeMonteCarlo::numberOfParticles();
+}
+
+void Multiscale::insertRandomParticle()
+{
+
+}
+
+void Multiscale::removeRandomParticle()
+{
+
 }
 
 double Multiscale::calculateLocalRateOverD(const uint x, const uint y, const uint n) const

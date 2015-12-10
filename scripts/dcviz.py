@@ -2417,7 +2417,11 @@ class LatticediffSpeeds(DCVizPlotter):
 
         return p
 
-
+    def reshape(self, a):
+        if np.rank(a) == 1:
+            return a.reshape(1, len(a))
+        else:
+            return a
 
     def plot(self, data):
 
@@ -2426,6 +2430,11 @@ class LatticediffSpeeds(DCVizPlotter):
         all_times = self.get_family_member_data(data, "times")
         all_conc = self.get_family_member_data(data, "concentrations")
         lengths = self.get_family_member_data(data, "lengths")
+
+        all_heights = self.reshape(all_heights)
+        all_times = self.reshape(all_times)
+        all_conc = self.reshape(all_conc)
+
 
         if "cheatcorr" in self.argv:
 
@@ -2461,6 +2470,7 @@ class LatticediffSpeeds(DCVizPlotter):
         for i in range(len(lengths)):
 
             l = lengths[i]
+
             t_end = all_times[i, l-1]
 
             if i == 0:

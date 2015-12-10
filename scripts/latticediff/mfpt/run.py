@@ -14,7 +14,8 @@ def main():
 
     supersaturation_values = ParameterSet(cfg, "supersaturation\s*\=\s*(.*)\;")
     super_saturation = np.linspace(-4./5, 4./5, 5)
-    supersaturation_values.initialize_set(super_saturation)
+    # supersaturation_values.initialize_set(super_saturation)
+    supersaturation_values.initialize_set([0.])
 
     n = 10
 

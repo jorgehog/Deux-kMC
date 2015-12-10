@@ -67,3 +67,8 @@ double ConcentrationProfile::concentration() const
     return solver().concentration();
 }
 
+bool ConcentrationProfile::hasDiscreteParticles() const
+{
+    return false;
+}
+

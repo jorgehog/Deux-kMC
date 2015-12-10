@@ -7,7 +7,7 @@
 
 FixedPointTimeStepping::FixedPointTimeStepping(SOSSolver &solver, const double maxdt) :
     Diffusion(solver, "FixedPoint"),
-    OfflatticeMonteCarlo(solver, maxdt),
+    OfflatticeMonteCarlo(solver, maxdt, 0),
     m_mutexSolver(solver)
 {
 

@@ -46,7 +46,6 @@ def main():
         supersaturation = data.attrs["supersaturation"]\
 
         heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
-        heights -= heights[0]
 
         conc = parser.get_ignis_data(data, "Concentration")[::every].copy()
 

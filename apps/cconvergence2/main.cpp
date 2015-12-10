@@ -22,7 +22,7 @@ int main()
 
     const double maxdt = 0.1;
     const double c = 0.05;
-    FirstPassageContinuum diffusion(solver, maxdt, c);
+    FirstPassageContinuum diffusion(solver, maxdt, 3, c);
 
     Lattice lattice;
         lattice.enableOutput(false);

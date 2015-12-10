@@ -32,7 +32,11 @@ SOURCES += \
     Events/diffusion/confinedconstantconcentration.cpp \
     Events/confiningsurface/constantconfinement.cpp \
     Events/diffusion/latticediffusionconstantn.cpp \
-    observers.cpp
+    observers.cpp \
+    particlenumberconservator.cpp \
+    /home/jorgehog/code/astarcpp/pathfinder.cpp \
+    /home/jorgehog/code/astarcpp/point3d.cpp \
+    /home/jorgehog/code/astarcpp/searchnode.cpp
 
 HEADERS += \
     Events/equilibriater.h \
@@ -64,7 +68,13 @@ HEADERS += \
     Events/confiningsurface/constantconfinement.h \
     Events/diffusion/latticediffusionconstantn.h \
     observers.h \
-    subjects.h
+    subjects.h \
+    particlenumberconservator.h \
+    /home/jorgehog/code/astarcpp/pathfinder.h \
+    /home/jorgehog/code/astarcpp/point3d.h \
+    /home/jorgehog/code/astarcpp/searchnode.h \
+    /home/jorgehog/code/astarcpp/world.h \
+    /home/jorgehog/code/astarcpp/minheap.h
 
 LIBS += -lkMC
 

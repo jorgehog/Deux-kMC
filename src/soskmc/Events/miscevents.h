@@ -145,6 +145,11 @@ public:
     void execute();
 
     double getValue() const;
+
+private:
+
+    double m_h0;
+
 };
 
 

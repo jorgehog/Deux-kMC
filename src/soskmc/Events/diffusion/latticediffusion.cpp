@@ -612,6 +612,26 @@ double LatticeDiffusion::concentration() const
     return m_diffusionReactionsMap.size()/solver().freeVolume();
 }
 
+bool LatticeDiffusion::hasDiscreteParticles() const
+{
+    return true;
+}
+
+uint LatticeDiffusion::numberOfParticles() const
+{
+    return numberOfDiffusionReactions();
+}
+
+void LatticeDiffusion::insertRandomParticle()
+{
+    addRandomParticles(1, true);
+}
+
+void LatticeDiffusion::removeRandomParticle()
+{
+    removeRandomParticles(1);
+}
+
 void LatticeDiffusion::notifyObserver(const Subjects &subject)
 {
     if (subject == Subjects::SOLVER)

@@ -35,6 +35,13 @@ public:
 
     virtual double concentration() const = 0;
 
+    virtual bool hasDiscreteParticles() const = 0;
+
+    virtual uint numberOfParticles() const;
+
+    virtual void insertRandomParticle() {}
+    virtual void removeRandomParticle() {}
+
     const SOSSolver &solver() const
     {
         return m_solver;

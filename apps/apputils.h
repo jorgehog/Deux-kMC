@@ -458,21 +458,34 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         Diffusion *conc;
         ConfiningSurface *conf;
         uint nc;
+        ParticleNumberConservator pnc(thermSolver);
+
+        conf = new ConstantConfinement(thermSolver, solver.confiningSurfaceEvent().height());
 
         bool onlattice = diffusionInt == 2 || diffusionInt == 7;
 
         if (onlattice)
         {
-            conf = new ConstantConfinement(thermSolver, solver.confiningSurfaceEvent().height());
-            conc = new LatticeDiffusionConstantN(thermSolver);
+            conc = new LatticeDiffusion(thermSolver);
             nc = 100000;
+        }
+
+        else if (diffusionInt == 4)
+        {
+            FirstPassageContinuum *fpce = dynamic_cast<FirstPassageContinuum*>(&solver.diffusionEvent());
+            conc = new FirstPassageContinuum(thermSolver, 0.01, fpce->depositionBoxHalfSize(), fpce->c());
+            nc = 10000;
         }
 
         else
         {
-            conf = new ConstantConfinement(thermSolver, solver.confiningSurfaceEvent().height());
             conc = new ConstantConcentration(thermSolver);
             nc = 10000;
+        }
+
+        if (conc->hasDiscreteParticles())
+        {
+            thermSolver.registerObserver(&pnc);
         }
 
         setBoundariesFromIDs(&thermSolver, {0,0,0,0}, L, W);
@@ -489,6 +502,11 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
 
         lattice.eventLoop(nc);
 
+        const double &hPrev = solver.confiningSurfaceEvent().height();
+        const double hMean = accu(thermSolver.heights())/double(L*W);
+
+        solver.confiningSurfaceEvent().setHeight(hPrev + hMean);
+
         solver.setHeights(thermSolver.heights(), false);
 
         if (onlattice)
@@ -501,10 +519,18 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
             }
         }
 
-        const double &hPrev = solver.confiningSurfaceEvent().height();
-        const double hMean = accu(thermSolver.heights())/double(L*W);
+        else if (diffusionInt == 4)
+        {
+            FirstPassageContinuum *fpces = dynamic_cast<FirstPassageContinuum*>(&solver.diffusionEvent());
+            FirstPassageContinuum *fpce = dynamic_cast<FirstPassageContinuum*>(conc);
 
-        solver.confiningSurfaceEvent().setHeight(hPrev + hMean);
+            for (uint n = 0; n < fpce->numberOfParticles(); ++n)
+            {
+                fpces->insertParticle(fpce->particlePositions(0, n),
+                                      fpce->particlePositions(1, n),
+                                      fpce->particlePositions(2, n));
+            }
+        }
 
         delete conc;
         delete conf;

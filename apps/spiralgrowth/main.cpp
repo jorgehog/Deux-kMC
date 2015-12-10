@@ -70,6 +70,7 @@ int main(int argv, char** argc)
 
     const uint &diffuseInt = getSetting<uint>(root, "diffuse");
     const double &maxdt = getSetting<double>(root, "maxdt");
+    const int &depositionBoxHalfSize = getSetting<int>(root, "depositionBoxHalfSize");
     const double &depRateConstant = getSetting<double>(root, "c");
 
     const uint &autoCorrelationInt = getSetting<uint>(root, "autocorrelation");
@@ -174,7 +175,7 @@ int main(int argv, char** argc)
     }
     else if (diffuseInt == 4)
     {
-        diffusion = new FirstPassageContinuum(solver, maxdt, depRateConstant);
+        diffusion = new FirstPassageContinuum(solver, maxdt, depositionBoxHalfSize, depRateConstant);
     }
     else if (diffuseInt == 5)
     {
@@ -277,7 +278,7 @@ int main(int argv, char** argc)
         lattice.addEvent(autoCorrelation);
     }
 
-    initializeSurface(solver, initialSurfaceType);
+    initializeSurface(solver, initialSurfaceType, diffuseInt);
 
     //---End explicit implementation
     //---Running simulation
@@ -354,6 +355,7 @@ int main(int argv, char** argc)
 
     simRoot["diffuse"] = diffuseInt;
     simRoot["maxdt"] = maxdt;
+    simRoot["depositionBoxHalfSize"] = depositionBoxHalfSize;
     simRoot["depRateConstant"] = depRateConstant;
 
     simRoot["autoCorrelationInt"] = autoCorrelationInt;

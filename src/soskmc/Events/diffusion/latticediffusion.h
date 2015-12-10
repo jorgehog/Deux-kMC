@@ -121,6 +121,10 @@ public:
     void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
     bool isBlockedPosition(const uint x, const uint y, const int z) const;
     double concentration() const;
+    bool hasDiscreteParticles() const;
+    uint numberOfParticles() const;
+    void insertRandomParticle();
+    void removeRandomParticle();
 
 
     // kMC::Observer interface

@@ -34,6 +34,5 @@ void LatticeDiffusionConstantN::initializeObserver(const Subjects &subject)
     LatticeDiffusion::initializeObserver(subject);
 
     m_targetNParticles = numberOfDiffusionReactions();
-    m_targetSeparation = solver().confiningSurfaceEvent().height() - solver().averageHeight();
 
 }
