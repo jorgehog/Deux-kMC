@@ -23,7 +23,7 @@ void FirstPassageContinuum::setc(const double c)
 {
     m_c = c;
 
-    calculateLocalRates();
+    calculateLocalRatesAndUpdateDepositionRates();
 }
 
 

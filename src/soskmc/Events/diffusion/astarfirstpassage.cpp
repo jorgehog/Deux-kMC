@@ -38,7 +38,7 @@ AStarFirstPassage::~AStarFirstPassage()
 }
 
 
-void AStarFirstPassage::calculateLocalRates()
+void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 {
     for (uint x = 0; x < solver().length(); ++x)
     {
@@ -181,35 +181,6 @@ void AStarFirstPassage::calculateLocalRates()
         //        writer.finalize();
         //        surf.finalize();
     }
-
-    return;
-
-    //    DissolutionDeposition *r;
-    //    for (uint _x = 0; _x < solver().length(); ++_x)
-    //    {
-    //        for (uint _y = 0; _y < solver().width(); ++_y)
-    //        {
-    //            r = &solver().surfaceReaction(_x, _y);
-
-    //            const double newDepositionRate = depositionRate(_x, _y);
-
-    //            r->setDepositionRate(newDepositionRate);
-    ////            r->changeRate(newDepositionRate + r->dissolutionRate());
-    //        }
-    //    }
-
-    //    for (uint x = 0; x < solver().length(); ++x)
-    //    {
-    //        for (uint y = 0; y < solver().width(); ++y)
-    //        {
-    //            for (uint n = 0; n < nOfflatticeParticles(); ++n)
-    //            {
-    //                m_localRates(x, y, n) = calculateLocalRateOverD(x, y, n);
-    //            }
-    //        }
-    //    }
-
-    //    selectDepositionReactants();
 }
 
 

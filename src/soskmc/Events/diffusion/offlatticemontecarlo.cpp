@@ -315,7 +315,7 @@ void OfflatticeMonteCarlo::diffuseFull(const double dtFull)
 
     diffuse(dtFull - N*maxdt());
 
-    calculateLocalRates();
+    calculateLocalRatesAndUpdateDepositionRates();
 }
 
 void OfflatticeMonteCarlo::removeParticle(const uint n)
@@ -552,5 +552,5 @@ void OfflatticeMonteCarlo::initializeObserver(const Subjects &subject)
         initializeParticleMatrices(N);
     }
 
-    calculateLocalRates();
+    calculateLocalRatesAndUpdateDepositionRates();
 }

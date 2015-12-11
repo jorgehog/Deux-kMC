@@ -30,7 +30,7 @@ void RadialFirstPassage::execute()
 {
 }
 
-void RadialFirstPassage::calculateLocalRates()
+void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 {
     for (uint x = 0; x < solver().length(); ++x)
     {

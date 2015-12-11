@@ -99,7 +99,7 @@ void FixedPointTimeStepping::calculateTimeStep(bool calculateDissolutionRate)
             prevTimeSteps.push_back(m_currentTimeStep);
         }
 
-        calculateLocalRates();
+        calculateLocalRatesAndUpdateDepositionRates();
 
     } while (eps > m_eps);
 
@@ -183,6 +183,6 @@ double FixedPointTimeStepping::calculateLocalRateOverD(const uint x, const uint 
 
 
 
-void FixedPointTimeStepping::calculateLocalRates()
+void FixedPointTimeStepping::calculateLocalRatesAndUpdateDepositionRates()
 {
 }

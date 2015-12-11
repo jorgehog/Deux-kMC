@@ -43,5 +43,5 @@ public:
 
     // OfflatticeMonteCarlo interface
 public:
-    void calculateLocalRates();
+    void calculateLocalRatesAndUpdateDepositionRates();
 };
