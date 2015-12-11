@@ -133,7 +133,7 @@ TEST_F(CDiffTest, dissolutionDeposition)
     EXPECT_EQ(0, m_cdiffusionEvent->nOfflatticeParticles());
 
     m_solver->registerHeightChange(1, 1, -1);
-    m_cdiffusionEvent->calculateLocalRates();
+    m_cdiffusionEvent->calculateLocalRatesAndUpdateDepositionRates();
 
     EXPECT_EQ(1, m_cdiffusionEvent->nOfflatticeParticles());
 
@@ -151,7 +151,7 @@ TEST_F(CDiffTest, diffusion)
         for (uint y = 0; y < m_W; ++y)
         {
             solver().registerHeightChange(x, y, -1);
-            m_cdiffusionEvent->calculateLocalRates();
+            m_cdiffusionEvent->calculateLocalRatesAndUpdateDepositionRates();
 
             EXPECT_NEAR(m_cdiffusionEvent->c(), m_cdiffusionEvent->localRates(x, y, m_cdiffusionEvent->nOfflatticeParticles()-1), 1E-3);
 
