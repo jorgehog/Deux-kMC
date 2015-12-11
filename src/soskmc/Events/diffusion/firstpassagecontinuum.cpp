@@ -7,8 +7,9 @@ FirstPassageContinuum::FirstPassageContinuum(SOSSolver &solver,
                                              const int depositionBoxHalfSize,
                                              const double c) :
     Diffusion(solver, "FirstPassage"),
-    OfflatticeMonteCarlo(solver, maxdt, depositionBoxHalfSize),
-    m_c(c)
+    OfflatticeMonteCarlo(solver, maxdt),
+    m_c(c),
+    m_depositionBoxHalfSize(depositionBoxHalfSize)
 {
 
 }
@@ -25,24 +26,8 @@ void FirstPassageContinuum::setc(const double c)
     calculateLocalRates();
 }
 
-void FirstPassageContinuum::execute()
-{
-    setValue(acceptanceRatio());
-}
 
-double FirstPassageContinuum::calculateLocalRateOverD(const uint x, const uint y, const uint n) const
-{
-    const int z = solver().height(x, y) + 1;
-
-    const double dr2 = solver().closestSquareDistance(x, y, z,
-                                                      particlePositions(0, n),
-                                                      particlePositions(1, n),
-                                                      particlePositions(2, n));
-
-    return calculateLocalRateOverD(dr2);
-}
-
-double FirstPassageContinuum::calculateLocalRateOverD(const double rSquared) const
+double FirstPassageContinuum::localRateOverD(const double rSquared) const
 {
     return m_c/(rSquared*rSquared);
 }

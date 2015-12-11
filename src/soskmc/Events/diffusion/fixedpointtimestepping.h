@@ -35,5 +35,9 @@ public:
 public:
     void initializeObserver(const Subjects &subject);
     void notifyObserver(const Subjects &subject);
+
+    // OfflatticeMonteCarlo interface
+public:
+    void calculateLocalRates();
 };
 

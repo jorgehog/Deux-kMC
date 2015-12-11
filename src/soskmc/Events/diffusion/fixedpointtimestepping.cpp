@@ -181,3 +181,8 @@ double FixedPointTimeStepping::calculateLocalRateOverD(const uint x, const uint 
     return calculateLocalRateOverD(x, y, n, m_currentTimeStep);
 }
 
+
+
+void FixedPointTimeStepping::calculateLocalRates()
+{
+}

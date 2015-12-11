@@ -72,6 +72,8 @@ int main(int argv, char** argc)
     const double &maxdt = getSetting<double>(root, "maxdt");
     const int &depositionBoxHalfSize = getSetting<int>(root, "depositionBoxHalfSize");
     const double &depRateConstant = getSetting<double>(root, "c");
+    const uint &constantNInt = getSetting<uint>(root, "constantN");
+    const bool constantN = constantNInt == 1;
 
     const uint &autoCorrelationInt = getSetting<uint>(root, "autocorrelation");
     const uint &xCorrSpan = getSetting<uint>(root, "xCorrSpan");
@@ -171,11 +173,11 @@ int main(int argv, char** argc)
     }
     else if (diffuseInt == 3)
     {
-        diffusion = new FixedPointTimeStepping(solver, maxdt);
+        diffusion = new RadialFirstPassage(solver, maxdt, depositionBoxHalfSize, depRateConstant);
     }
     else if (diffuseInt == 4)
     {
-        diffusion = new FirstPassageContinuum(solver, maxdt, depositionBoxHalfSize, depRateConstant);
+        diffusion = new AStarFirstPassage(solver, maxdt, depositionBoxHalfSize, depRateConstant);
     }
     else if (diffuseInt == 5)
     {
@@ -193,10 +195,6 @@ int main(int argv, char** argc)
     {
         diffusion = new ConfinedConstantConcentration(solver);
     }
-    else if (diffuseInt == 7)
-    {
-        diffusion = new LatticeDiffusionConstantN(solver);
-    }
     else
     {
         cout << "Invalid diffusion: " << diffuseInt << endl;
@@ -204,6 +202,12 @@ int main(int argv, char** argc)
     }
 
     diffusion->setDependency(confiningSurface);
+
+    if (constantN)
+    {
+        ParticleNumberConservator pnc(solver);
+        solver.registerObserver(&pnc);
+    }
 
     lattice.addEvent(solver);
     lattice.addEvent(confiningSurface);
@@ -357,6 +361,7 @@ int main(int argv, char** argc)
     simRoot["maxdt"] = maxdt;
     simRoot["depositionBoxHalfSize"] = depositionBoxHalfSize;
     simRoot["depRateConstant"] = depRateConstant;
+    simRoot["constantN"] = constantNInt;
 
     simRoot["autoCorrelationInt"] = autoCorrelationInt;
     simRoot["xCorrSpan"] = xCorrSpan;

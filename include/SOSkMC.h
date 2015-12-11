@@ -13,10 +13,10 @@
 #include "../src/soskmc/Events/diffusion/constantconcentration.h"
 #include "../src/soskmc/Events/diffusion/latticediffusion.h"
 #include "../src/soskmc/Events/diffusion/fixedpointtimestepping.h"
-#include "../src/soskmc/Events/diffusion/firstpassagecontinuum.h"
+#include "../src/soskmc/Events/diffusion/astarfirstpassage.h"
+#include "../src/soskmc/Events/diffusion/radialfirstpassage.h"
 #include "../src/soskmc/Events/diffusion/multiscale.h"
 #include "../src/soskmc/Events/diffusion/confinedconstantconcentration.h"
-#include "../src/soskmc/Events/diffusion/latticediffusionconstantn.h"
 
 #include "../src/soskmc/Events/eqmu.h"
 #include "../src/soskmc/Events/equilibriater.h"

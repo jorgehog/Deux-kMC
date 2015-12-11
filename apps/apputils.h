@@ -470,11 +470,18 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
             nc = 100000;
         }
 
+        else if (diffusionInt == 3)
+        {
+            RadialFirstPassage *fpce = dynamic_cast<RadialFirstPassage*>(&solver.diffusionEvent());
+            conc = new RadialFirstPassage(thermSolver, 0.01, fpce->depositionBoxHalfSize(), fpce->c());
+            nc = 1000;
+        }
+
         else if (diffusionInt == 4)
         {
-            FirstPassageContinuum *fpce = dynamic_cast<FirstPassageContinuum*>(&solver.diffusionEvent());
-            conc = new FirstPassageContinuum(thermSolver, 0.01, fpce->depositionBoxHalfSize(), fpce->c());
-            nc = 10000;
+            AStarFirstPassage *fpce = dynamic_cast<AStarFirstPassage*>(&solver.diffusionEvent());
+            conc = new AStarFirstPassage(thermSolver, 0.01, fpce->depositionBoxHalfSize(), fpce->c());
+            nc = 1000;
         }
 
         else
@@ -496,8 +503,8 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
 
         initializeSurface(thermSolver, "random");
 
-        lattice.enableOutput(false);
-        lattice.enableProgressReport(false);
+        lattice.enableOutput(true, nc/10);
+        lattice.enableProgressReport();
         lattice.enableEventValueStorage(false, false);
 
         lattice.eventLoop(nc);
@@ -512,7 +519,7 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         if (onlattice)
         {
             LatticeDiffusion* diffEvent = dynamic_cast<LatticeDiffusion*>(&solver.diffusionEvent());
-            for (const auto &m : dynamic_cast<LatticeDiffusionConstantN*>(conc)->diffusionReactionsMap())
+            for (const auto &m : dynamic_cast<LatticeDiffusion*>(conc)->diffusionReactionsMap())
             {
                 SOSDiffusionReaction *r = m.second;
                 diffEvent->addDiffusionReactant(r->x(), r->y(), r->z());

@@ -7,7 +7,8 @@ class FirstPassageContinuum : public OfflatticeMonteCarlo
 {
 public:
     FirstPassageContinuum(SOSSolver &solver,
-                          const double maxdt, const int depositionBoxHalfSize,
+                          const double maxdt,
+                          const int depositionBoxHalfSize,
                           const double c);
 
     ~FirstPassageContinuum();
@@ -19,16 +20,17 @@ public:
         return m_c;
     }
 
+    const int &depositionBoxHalfSize() const
+    {
+        return m_depositionBoxHalfSize;
+    }
+
+    double localRateOverD(const double rSquared) const;
+
 private:
     double m_c;
 
-    // Event interface
-public:
-    virtual void execute();
+    const int m_depositionBoxHalfSize;
 
-    // OfflatticeMonteCarlo interface
-public:
-    virtual double calculateLocalRateOverD(const uint x, const uint y, const uint n) const;
-    virtual double calculateLocalRateOverD(const double rSquared) const;
 };
 

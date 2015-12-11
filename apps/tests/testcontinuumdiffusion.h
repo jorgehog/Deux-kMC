@@ -24,7 +24,7 @@ public:
         m_solver = new SOSSolver(m_L, m_W, m_alpha, m_mu);
         setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, m_L, m_W);
         m_pressureWallEvent = new FixedSurface(*m_solver, m_height);
-        m_cdiffusionEvent = new FirstPassageContinuum(*m_solver, maxdt, 3, 0.038);
+        m_cdiffusionEvent = new RadialFirstPassage(*m_solver, maxdt, 3, 0.038);
 
         m_diffusionEvent = m_cdiffusionEvent;
         SetUp_yo();
@@ -49,7 +49,7 @@ public:
     double m_mu;
     double m_height;
 
-    FirstPassageContinuum *m_cdiffusionEvent;
+    RadialFirstPassage *m_cdiffusionEvent;
 };
 
 TEST_F(CDiffTest, scan)
@@ -179,7 +179,7 @@ TEST_F(CDiffTest, diffusion)
         {
             for (uint n = 0; n < m_cdiffusionEvent->nOfflatticeParticles(); ++n)
             {
-                EXPECT_NEAR(m_cdiffusionEvent->calculateLocalRateOverD(x, y, n),
+                EXPECT_NEAR(m_cdiffusionEvent->localRateOverD(x, y, n),
                             m_cdiffusionEvent->localRates(x, y, n), 1E-3);
             }
         }

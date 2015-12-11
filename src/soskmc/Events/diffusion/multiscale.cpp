@@ -12,7 +12,7 @@ Multiscale::Multiscale(SOSSolver &solver,
                        const double dt,
                        const uint boundarySpacing) :
     Diffusion(solver, "MCDiffBoundary"),
-    OfflatticeMonteCarlo(solver, 0, dt),
+    OfflatticeMonteCarlo(solver, dt),
     LatticeDiffusion(solver),
     m_boundarySpacing(boundarySpacing)
 {

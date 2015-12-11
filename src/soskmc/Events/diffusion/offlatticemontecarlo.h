@@ -2,37 +2,18 @@
 
 #include "diffusion.h"
 
-namespace Tests
-{
-class World;
-class PathFinder;
-}
-
-struct PathFindingJazz
-{
-    uint xTrans;
-    uint yTrans;
-    int xEnd;
-    int yEnd;
-    int zEnd;
-};
 
 class OfflatticeMonteCarlo : public virtual Diffusion
 {
 public:
     OfflatticeMonteCarlo(SOSSolver &solver,
                          const double maxdt,
-                         const int depositionBoxHalfSize,
                          string type = "",
                          string unit = "",
                          bool hasOutput = false,
                          bool storeValue = false);
 
     virtual ~OfflatticeMonteCarlo();
-
-    virtual double calculateLocalRateOverD(const double rSquared) const = 0;
-
-    virtual double calculateLocalRateOverD(const uint x, const uint y, const uint n) const = 0;
 
     void diffuse(const double dt);
 
@@ -51,11 +32,6 @@ public:
     const double &maxdt() const
     {
         return m_maxdt;
-    }
-
-    const int &depositionBoxHalfSize() const
-    {
-        return m_depositionBoxHalfSize;
     }
 
     double acceptanceRatio() const
@@ -102,36 +78,24 @@ public:
 
     void clearDiffusingParticles();
 
-    void calculateLocalRates();
+    virtual void calculateLocalRatesAndUpdateDepositionRates() = 0;
 
     double totalParticleDepositionRate(const uint n) const;
 
-    void selectDepositionReactants();
-    void selectDepositionReactant(uint &xSelected, uint &ySelected, const uint n);
-
     bool isInLineOfSight(const uint n, const uint x, const uint y) const;
+
+protected:
+    cube m_localRates;
 
 private:
 
     const double m_maxdt;
-    const int m_depositionBoxHalfSize;
-    const int m_boxSize;
-
-    Tests::World *m_world;
-    Tests::PathFinder *m_pathFinder;
-    vector<PathFindingJazz*> m_pathFindingJazzes;
-    uint m_nPathFinds;
 
     mat m_particlePositions;
     mat m_F;
-    cube m_localRates;
     vec m_localRatesForSite;
 
     uint m_nParticles;
-
-    //tmp
-    vec m_selectedDepositionRates;
-    umat m_particleDepositionLocations;
 
     long double m_accepted;
     long double m_trials;
@@ -159,10 +123,6 @@ public:
     uint numberOfParticles() const;
     void insertRandomParticle();
     void removeRandomParticle();
-
-    // Event interface
-public:
-    void execute();
 
     // kMC::Observer interface
 public:
