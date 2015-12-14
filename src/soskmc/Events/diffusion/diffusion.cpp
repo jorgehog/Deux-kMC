@@ -22,7 +22,18 @@ Diffusion::~Diffusion()
 
 void Diffusion::dump(const uint frameNumber, const string path) const
 {
-    const double &h = solver().confiningSurfaceEvent().height();
+    double h;
+
+    if (solver().confiningSurfaceEvent().hasSurface())
+    {
+        h = solver().confiningSurfaceEvent().height();
+    }
+
+    else
+    {
+        h = solver().heights().max();
+    }
+
     const int zMin = solver().heights().min();
 
     lammpswriter surfacewriter(5, "surfaces", path);
@@ -88,12 +99,12 @@ uint Diffusion::numberOfParticles() const
 
 double Diffusion::DUnscaled() const
 {
-    return 1/solver().c0();
+    return 1.;
 }
 
 double Diffusion::DScaled() const
 {
-    return DUnscaled()/solver().timeUnit();
+    return DUnscaled()*solver().timeUnit();
 }
 
 

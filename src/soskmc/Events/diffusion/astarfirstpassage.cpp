@@ -3,7 +3,7 @@
 #include "../../sossolver.h"
 #include "dissolutiondeposition.h"
 
-#include "/home/jorgehog/code/astarcpp/astarcpp.h"
+#include "astarcpp/astarcpp.h"
 
 using namespace Tests;
 
@@ -97,6 +97,10 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
         const double dy = iy - yp;
         const double dz = iz - zp;
 
+        const double x0w = (l-dx);
+        const double y0w = (l-dy);
+        const double z0w = (l-dz);
+
         //Should find shortest path between xp yp zp and all heights inside a 2l+1 cube
         //Setup the cube first?
         //Yes.. then find all the paths and keep only those who have a total path length < l
@@ -148,13 +152,25 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             int &yw = pfj->yEnd;
             int &zw = pfj->zEnd;
 
-            r2 = dx*dx + dy*dy + dz*dz;
+            r2 = 0;
             const SearchNode *crumb = m_pathFinder->findPath(l, l, l, xw, yw, zw);
             //            writer << 3+i << crumb->position->X << crumb->position->Y << crumb->position->Z;
             if (crumb == nullptr)
             {
                 continue;
             }
+
+            //first crumb is start pos. We skip this
+            //and calculate distance between the first and second node
+            //explicitly using the double position starting point
+            //x0w y0w z0w instead
+            crumb = crumb->next;
+
+            const double r2FirstX = (crumb->x-x0w)*(crumb->x-x0w);
+            const double r2FirstY = (crumb->y-y0w)*(crumb->y-y0w);
+            const double r2FirstZ = (crumb->z-z0w)*(crumb->z-z0w);
+
+            r2 += r2FirstX + r2FirstY + r2FirstZ;
 
             while (crumb->next != nullptr)
             {

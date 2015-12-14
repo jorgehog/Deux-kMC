@@ -390,6 +390,33 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         }
     }
 
+    else if (type == "flat")
+    {
+        solver.setHeights(zeros<imat>(solver.length(), solver.width()), false);
+    }
+
+    else if (type == "singlestep")
+    {
+        for (uint x = 0; x < L; ++x)
+        {
+            for (uint y = 0; y < W; ++y)
+            {
+                if (x < L/10 ||
+                        x > (9*L)/10 ||
+                        y < W/10 ||
+                        y > (9*W)/10)
+                {
+                    solver.setHeight(x, y, 1, false);
+                }
+
+                else
+                {
+                    solver.setHeight(x, y, 0, false);
+                }
+            }
+        }
+    }
+
     else if (type == "random")
     {
 

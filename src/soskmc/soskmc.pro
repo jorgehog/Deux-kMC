@@ -70,11 +70,11 @@ HEADERS += \
     observers.h \
     subjects.h \
     particlenumberconservator.h \
-    /home/jorgehog/code/astarcpp/pathfinder.h \
-    /home/jorgehog/code/astarcpp/point3d.h \
-    /home/jorgehog/code/astarcpp/searchnode.h \
-    /home/jorgehog/code/astarcpp/world.h \
-    /home/jorgehog/code/astarcpp/minheap.h \
+    astarcpp/pathfinder.h \
+    astarcpp/point3d.h \
+    astarcpp/searchnode.h \
+    astarcpp/world.h \
+    astarcpp/minheap.h \
     Events/diffusion/astarfirstpassage.h \
     Events/diffusion/radialfirstpassage.h
 

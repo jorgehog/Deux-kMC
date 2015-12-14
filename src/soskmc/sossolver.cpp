@@ -892,8 +892,8 @@ void SOSSolver::setGamma(const double gamma)
 
         if (concentrationIsZero())
         {
-            recalculateAllRates();
             m_concentrationIsZero = false;
+            recalculateAllRates();
         }
 
         else
@@ -1104,10 +1104,10 @@ double SOSSolver::timeUnit() const
         return 1.;
     }
 
-    //divide rates by c/c0 gives multiplication of timestep by same factor
+    //divide rates by c gives multiplication of timestep by same factor
     else
     {
-        return m_expGamma;
+        return 1./concentration();
     }
 }
 

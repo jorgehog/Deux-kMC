@@ -132,12 +132,6 @@ int main(int argv, char** argc)
     if (confinementInt == 1)
     {
         confiningSurface = new NoConfinement(solver);
-
-        if (diffuseInt != 1 && diffuseInt != 5)
-        {
-            cout << "Diffusion without confinement is not implemented." << endl;
-            return 1;
-        }
     }
     else if (confinementInt == 2)
     {
@@ -181,14 +175,10 @@ int main(int argv, char** argc)
     }
     else if (diffuseInt == 5)
     {
-        diffusion = new ConcentrationProfile(solver, [&L, &gamma] (const uint x, const uint y)
+        diffusion = new ConcentrationProfile(solver, [&] (const uint x, const uint y)
         {
-            (void) y;
-
-            static constexpr double c0 = 3.0;
-            static constexpr double c1 = 1.0;
-
-            return c0-(c0 - c1)/(L-1.)*x;
+            constexpr double c0 = 0.5;
+            return 1 + c0*((x-L/2)*(x-L/2)/(L*L/4.) + (y-W/2)*(y-W/2)/(W*W/4.));
         });
     }
     else if (diffuseInt == 6)
@@ -203,9 +193,9 @@ int main(int argv, char** argc)
 
     diffusion->setDependency(confiningSurface);
 
+    ParticleNumberConservator pnc(solver);
     if (constantN)
     {
-        ParticleNumberConservator pnc(solver);
         solver.registerObserver(&pnc);
     }
 

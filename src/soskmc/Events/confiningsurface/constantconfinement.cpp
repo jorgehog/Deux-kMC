@@ -28,20 +28,13 @@ void ConstantConfinement::notifyObserver(const Subjects &subject)
 
     BADAssEqual(maxHeight, solver().height(xi, yi));
 
+    //there is no good solution if this criteria is violated.
+    //we might rearrange the surface, but then we will decrease the mean height and
+    //this function will be call repeatadly, and in some cases indefenetely.
     if (maxHeight <= newHeight - 1)
     {
-//        cout << "changing height "<< newHeight << endl;
         setHeight(newHeight);
-//        cout << "height changed." << endl;
-//        cout << "it crashes because the surface has been shifted down before the particle has been released, so it is not 'cleaned up' by the notification from the confined surface." << endl;
     }
-
-//    else
-//    {
-//        cout << "need to dissolve!" << setprecision(16) << fixed << height() << endl;
-//        BADAss(maxHeight, <=, height() - 1);
-//        mutexSolver().registerHeightChange(xi, yi, -1);
-//    }
 }
 
 

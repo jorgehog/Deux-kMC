@@ -89,6 +89,7 @@ public:
 
     void recalculateAllRates();
 
+    //!All rates have been multiplied by this number
     virtual double timeUnit() const;
 
 private:

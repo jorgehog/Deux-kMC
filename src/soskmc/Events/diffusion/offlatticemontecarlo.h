@@ -19,11 +19,18 @@ public:
 
     void diffuseFull(const double dtFull);
 
+    void diffuseSingleParticle(const uint n, const double dt, const double prefac);
+
+    void diffuseSingleParticle(const uint n, const double dt)
+    {
+        diffuseSingleParticle(n, dt, sqrt(2*DUnscaled()*dt));
+    }
+
     void removeParticle(const uint n);
 
     void insertParticle(const double x, const double y, const double z);
 
-    void initializeParticleMatrices(const uint N);
+    void insertRandomParticles(const uint N);
 
     void scan(const uint n, const uint dim, const double dr, const uint maxSteps = 100);
 
@@ -84,10 +91,15 @@ public:
 
     bool isInLineOfSight(const uint n, const uint x, const uint y) const;
 
+    void releaseLockedParticle();
+
 protected:
     cube m_localRates;
 
 private:
+
+    bool m_particleIsLocked;
+    uint m_lockedParticle;
 
     const double m_maxdt;
 
