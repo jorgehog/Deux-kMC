@@ -13,7 +13,7 @@ void ConfinedConstantConcentration::notifyObserver(const Subjects &subject)
 {
     (void) subject;
 
-    if (solver().currentSurfaceChange().type == ChangeTypes::Double)
+    if (solver().currentSurfaceChange().type == ChangeTypes::Single)
     {
         m_deltaSum += solver().currentSurfaceChange().value;
     }

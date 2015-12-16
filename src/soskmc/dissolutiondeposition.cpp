@@ -52,6 +52,7 @@ double SurfaceReaction::calculateEscapeRate() const
 
     else
     {
+        BADAssEqual(solver().numberOfSurroundingSites(x(), y()), 6 - nNeighbors());
         return solver().numberOfSurroundingSites(x(), y())*escapeRateSingle;
     }
 }
@@ -159,8 +160,9 @@ void SurfaceReaction::executeAndUpdate()
     }
     else
     {
-        solver().registerHeightChange(x(), y(), -1);
-        return;
+//        solver().registerHeightChange(x(), y(), -1);
+//        return;
+
         //now we have to decide weather it is dissolution
         //or surface diffusion
 
@@ -182,10 +184,9 @@ void SurfaceReaction::executeAndUpdate()
                                           y() + dy,
                                           zNew);
 
-        if (solver().isSurfaceSite(xNew, yNew, zNew))
+        if ((dz == 0) && solver().isSurfaceSite(xNew, yNew, zNew))
         {
-            solver().registerSurfaceTransition(x(), y(),
-                                               xNew, yNew);
+            solver().registerSurfaceTransition(x(), y(), xNew, yNew);
         }
 
         else

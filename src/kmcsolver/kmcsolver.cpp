@@ -140,7 +140,10 @@ void KMCSolver::getCumsumAndTotalRate()
         i++;
     }
 
-    BADAss(m_totalRate, >, 0);
+    if (m_totalRate == 0)
+    {
+        terminateLoop("No more reactions to execute.");
+    }
 
 }
 

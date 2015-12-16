@@ -24,12 +24,12 @@ double ConcentrationProfile::depositionRate(const uint x, const uint y) const
         return 0;
     }
 
-    return m_profileFunction(x, y);
+    return (6 - solver().nNeighbors(x, y))*m_profileFunction(x, y);
 }
 
 bool ConcentrationProfile::countPaths() const
 {
-    return false;
+    return true;
 }
 
 
