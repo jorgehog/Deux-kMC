@@ -15,19 +15,25 @@ using namespace arma;
 using std::pair;
 using std::unordered_set;
 
-class DissolutionDeposition;
+class SurfaceReaction;
 class ConcentrationBoundaryReaction;
 class ConfiningSurface;
 class Diffusion;
+
+enum class ChangeTypes
+{
+    Single,
+    Double
+};
 
 struct CurrentSurfaceChange
 {
     uint x;
     uint y;
+    uint x1;
+    uint y1;
+    ChangeTypes type;
     int value;
-
-    std::vector<DissolutionDeposition*> affectedSurfaceReactions;
-    uint n;
 };
 
 class SOSSolver : public KMCSolver, public Subject<Subjects>, public Observer<Subjects>
@@ -45,7 +51,11 @@ public:
 
     void registerHeightChange(const uint x, const uint y, const int value);
 
+    void registerSurfaceTransition(const uint x0, const uint y0, const int x1, const int y1);
+
     void registerChangedSite(const uint x, const uint y);
+
+    void registerChangedAround(const uint x, const uint y);
 
     void setNNeighbors(const uint x, const uint y);
 
@@ -155,6 +165,8 @@ public:
         return calculateNNeighbors(x, y, height(x, y));
     }
 
+    uint numberOfSurroundingSites(const uint x, const uint y);
+
     uint numberOfSurroundingSolutionSites(const uint x, const uint y, const int h) const;
 
     uint numberOfSurroundingSolutionSites(const uint x, const uint y) const
@@ -226,14 +238,6 @@ public:
     int boundaryLatticeTransformSingle(const int x, const int y, const int z, uint dim, const int shift = 0) const;
     double boundaryContinousTransformSingle(const double x, const double y, const double z, uint dim, const double shift = 0) const;
 
-//    void boundaryTransformXY(double &xTrans, double &yTrans, const double x, const double y, const double z) const;
-
-//    double boundaryTransform(const double x, const double y, const double z, const uint dim) const;
-
-//    double boundaryTransform(const double x, const double y, const double z, const double dxi, const uint dim) const;
-
-//    const Boundary *closestBoundary(const double x, const uint dim) const;
-
     void addConcentrationBoundary(const uint dim, const Boundary::orientations orientation);
 
     bool isBlockedPosition(const double x, const double y, const double z) const;
@@ -244,12 +248,12 @@ public:
 
     bool isSurfaceSite(const uint x, const uint y, const int z) const;
 
-    DissolutionDeposition &surfaceReaction(const uint x, const uint y)
+    SurfaceReaction &surfaceReaction(const uint x, const uint y)
     {
         return *m_surfaceReactions(x, y);
     }
 
-    const DissolutionDeposition &surfaceReaction(const uint x, const uint y) const
+    const SurfaceReaction &surfaceReaction(const uint x, const uint y) const
     {
         return *m_surfaceReactions(x, y);
     }
@@ -264,8 +268,6 @@ public:
     {
         return m_changedSurfaceSites;
     }
-
-    void updateConcentrationBoundaryIfOnBoundary(const uint x, const uint y);
 
     const vector<ConcentrationBoundaryReaction*> &concentrationBoundaryReactions() const
     {
@@ -324,7 +326,7 @@ private:
     double m_averageHeight;
 
 
-    field<DissolutionDeposition*> m_surfaceReactions;
+    field<SurfaceReaction*> m_surfaceReactions;
 
     vector<ConcentrationBoundaryReaction*> m_concentrationBoundaryReactions;
 

@@ -159,3 +159,40 @@ double ConcentrationBoundaryReaction::rateExpression()
 {
     return _rateExpression(freeBoundaryArea());
 }
+
+
+void ConcentrationBoundaryReaction::initializeObserver(const Subjects &subject)
+{
+    (void) subject;
+}
+
+void ConcentrationBoundaryReaction::notifyObserver(const Subjects &subject)
+{
+    if (subject == Subjects::SOLVER)
+    {
+        const uint &x = solver().currentSurfaceChange().x;
+        const uint &y = solver().currentSurfaceChange().y;
+
+        bool onBoundary = pointIsOnBoundary(x, y);
+
+        if (solver().currentSurfaceChange().type == ChangeTypes::Double)
+        {
+            const uint &x1 = solver().currentSurfaceChange().x1;
+            const uint &y1 = solver().currentSurfaceChange().y1;
+
+            onBoundary = onBoundary || pointIsOnBoundary(x1, y1);
+        }
+
+        if (onBoundary)
+        {
+            m_solver.registerAffectedReaction(this);
+        }
+    }
+
+    else
+    {
+        const double heightChange = solver().confiningSurfaceEvent().height() -
+                solver().confiningSurfaceEvent().currentConfinementChange().prevHeight;
+        changeRate(rate() + _rateExpression(heightChange*span()));
+    }
+}

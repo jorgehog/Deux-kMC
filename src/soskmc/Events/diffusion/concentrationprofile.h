@@ -26,7 +26,7 @@ public:
     // Diffusion interface
 public:
     virtual double depositionRate(const uint x, const uint y) const;
-    virtual uint dissolutionPaths(const uint x, const uint y) const;
+    virtual bool countPaths() const;
     virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
     virtual void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const;

@@ -376,7 +376,8 @@ AutoCorrelationHeight::AutoCorrelationHeight(const SOSSolver &solver, const uint
     m_xSpan(xSpan == 0 ? solver.length()/2 : xSpan),
     m_ySpan(ySpan == 0 ? solver.width()/2 : ySpan),
     m_autoCorrelationQuadrant(m_xSpan, m_ySpan),
-    m_autoCorrelationSubQuadrant(m_xSpan - 1, m_ySpan - 1)
+    m_autoCorrelationSubQuadrant(m_xSpan == 0 ? 0 : m_xSpan - 1,
+                                 m_ySpan == 0 ? 0 : m_ySpan - 1)
 {
     if (m_ySpan > solver.width() || m_xSpan > solver.length())
     {

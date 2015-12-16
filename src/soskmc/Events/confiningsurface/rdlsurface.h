@@ -2,7 +2,7 @@
 
 #include "confiningsurface.h"
 
-class DissolutionDeposition;
+class SurfaceReaction;
 
 class RDLSurface : public virtual ConfiningSurface
 {
@@ -22,7 +22,7 @@ public:
 
     void findNewHeight();
 
-    void updateRatesFor(DissolutionDeposition &reaction);
+    void updateRatesFor(SurfaceReaction &reaction);
 
     double bruteForceThetaRatio() const;
 

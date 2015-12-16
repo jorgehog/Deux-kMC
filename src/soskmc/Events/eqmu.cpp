@@ -35,7 +35,7 @@ void EqGamma::update()
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            localDissolutionRate += solver().surfaceReaction(x, y).dissolutionRate();
+            localDissolutionRate += solver().surfaceReaction(x, y).escapeRate();
         }
     }
 

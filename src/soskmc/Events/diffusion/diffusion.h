@@ -25,7 +25,7 @@ public:
 
     virtual double depositionRate(const uint x, const uint y) const = 0;
 
-    virtual uint dissolutionPaths(const uint x, const uint y) const = 0;
+    virtual bool countPaths() const = 0;
 
     virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z) = 0;
 

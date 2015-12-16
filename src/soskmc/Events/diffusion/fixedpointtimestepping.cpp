@@ -23,12 +23,12 @@ void FixedPointTimeStepping::calculateTimeStep(bool calculateDissolutionRate)
         {
             if (calculateDissolutionRate)
             {
-                totalDissolutionRate += solver().surfaceReaction(x, y).calculateDissolutionRate();
+                totalDissolutionRate += solver().surfaceReaction(x, y).calculateEscapeRate();
             }
 
             else
             {
-                totalDissolutionRate += solver().surfaceReaction(x, y).dissolutionRate();
+                totalDissolutionRate += solver().surfaceReaction(x, y).escapeRate();
             }
         }
     }
@@ -165,13 +165,13 @@ void FixedPointTimeStepping::notifyObserver(const Subjects &subject)
 
     calculateTimeStep();
 
-    DissolutionDeposition *r;
+    SurfaceReaction *r;
     for (uint _x = 0; _x < solver().length(); ++_x)
     {
         for (uint _y = 0; _y < solver().width(); ++_y)
         {
             r = &m_mutexSolver.surfaceReaction(_x, _y);
-            r->setDepositionRate(r->calculateDepositionRate());
+            r->setEscapeRate(r->calculateDepositionRate());
         }
     }
 }

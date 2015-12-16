@@ -36,9 +36,9 @@ public:
         return LatticeDiffusion::depositionRate(x, y);
     }
 
-    uint dissolutionPaths(const uint x, const uint y) const
+    bool countPaths() const
     {
-        return OfflatticeMonteCarlo::dissolutionPaths(x, y);
+        return true;
     }
 
     void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);

@@ -267,7 +267,7 @@ int main(int argv, char** argc)
     lattice.addEvent(size);
     lattice.addEvent(var);
 
-    if (autoCorrelationInt == 1)
+    if (autoCorrelationInt == 1 && solver.surfaceDim() == 2)
     {
         lattice.addEvent(autoCorrelation);
     }

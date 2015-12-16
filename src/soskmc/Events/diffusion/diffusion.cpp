@@ -73,7 +73,7 @@ void Diffusion::dump(const uint frameNumber, const string path) const
 
             if (solver().surfaceReaction(x, y).isAllowed())
             {
-                surfacewriter << solver().surfaceReaction(x, y).dissolutionRate();
+                surfacewriter << solver().surfaceReaction(x, y).escapeRate();
             }
 
             else

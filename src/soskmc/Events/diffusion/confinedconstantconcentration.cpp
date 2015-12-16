@@ -13,7 +13,10 @@ void ConfinedConstantConcentration::notifyObserver(const Subjects &subject)
 {
     (void) subject;
 
-    m_deltaSum += solver().currentSurfaceChange().value;
+    if (solver().currentSurfaceChange().type == ChangeTypes::Double)
+    {
+        m_deltaSum += solver().currentSurfaceChange().value;
+    }
 }
 
 void ConfinedConstantConcentration::initializeObserver(const Subjects &subject)
@@ -28,7 +31,6 @@ void ConfinedConstantConcentration::initializeObserver(const Subjects &subject)
 
 void ConfinedConstantConcentration::reset()
 {
-
     if (m_deltaSum < m_N0 && m_deltaSum < m_V0)
     {
         solver().setConcentration((m_N0 - m_deltaSum)/(m_V0 - m_deltaSum));

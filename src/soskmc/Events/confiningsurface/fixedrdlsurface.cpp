@@ -25,5 +25,13 @@ void FixedRDLSurface::notifyObserver(const Subjects &subject)
 
     RDLSurface::recalculateRDLEnergy(x, y);
 
+    if (solver().currentSurfaceChange().type == ChangeTypes::Double)
+    {
+        const uint &x1 = solver().currentSurfaceChange().x1;
+        const uint &y1 = solver().currentSurfaceChange().y1;
+
+        RDLSurface::recalculateRDLEnergy(x1, y1);
+    }
+
     FixedSurface::notifyObserver(subject);
 }

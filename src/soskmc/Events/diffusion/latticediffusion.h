@@ -116,7 +116,7 @@ public:
 public:
     virtual void dump(const uint frameNumber, const string path = "/tmp") const;
     double depositionRate(const uint x, const uint y) const;
-    uint dissolutionPaths(const uint x, const uint y) const;
+    bool countPaths() const;
     void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
     void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
     bool isBlockedPosition(const uint x, const uint y, const int z) const;

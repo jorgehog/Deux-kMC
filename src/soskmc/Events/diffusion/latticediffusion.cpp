@@ -49,7 +49,8 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
 
     solver().removeReaction(reaction);
 
-    solver().updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
+    //have to observe lattice diffusion as well.
+    //    solver().updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
 
     registerAffectedAround(reaction->x(), reaction->y(), reaction->z());
 
@@ -345,50 +346,81 @@ vector<SOSDiffusionReaction *> LatticeDiffusion::particlesSurrounding(const uint
 
 void LatticeDiffusion::onHeightChanged()
 {
-    const uint &x = solver().currentSurfaceChange().x;
-    const uint &y = solver().currentSurfaceChange().y;
-    const int &value = solver().currentSurfaceChange().value;
+    const CurrentSurfaceChange &csc = solver().currentSurfaceChange();
 
-    //position particle on random surrounding site
-    //add one to solution site heights because at this stage height(x,y) is already updated
-    if (value == -1)
+    const uint &x = csc.x;
+    const uint &y = csc.y;
+
+    if (csc.type == ChangeTypes::Double)
     {
-        const int h = solver().height(x, y)+1;
+        const uint &x1 = csc.x1;
+        const uint &y1 = csc.y1;
 
-        int dx, dy, dz;
-        solver().getRandomSolutionSite(x, y, h, dx, dy, dz);
-
-//        const uint xNew = solver().boundaryTransform(x, y, h, dx, 0);
-//        const uint yNew = solver().boundaryTransform(x, y, h, dy, 1);
-        int xNew;
-        int yNew;
-
-        solver().boundaryLatticeTransform(xNew, yNew, x + dx, y + dy, h);
-
-        const int zNew = h + dz;
-
-        BADAssBool(!solver().isSurfaceSite(xNew, yNew, zNew), "adding diff reaction to surface.", [&] ()
-        {
-            int hp = solver().height(x, y);
-            int hNew = solver().height(xNew, yNew);
-            BADAssSimpleDump(x, y, hp, xNew, yNew, zNew, hNew);
-        });
-
-        addDiffusionReactant(xNew, yNew, zNew);
-
+        const int h = solver().height(x, y) + 1;
         registerAffectedAround(x, y, h);
+
+        BADAssEqual(h, solver().height(x1, y1));
+
+        if (isBlockedPosition(x1, y1, h+1))
+        {
+            attachToSurface(x1, y1, h+1);
+        }
+        else
+        {
+            registerAffectedAround(x1, y1, h);
+        }
     }
 
-    //this can occur if the surface is changed so that it connects to a particle in the solution.
     else
     {
-        registerAffectedAround(x, y, solver().height(x, y));
+        const int &value = csc.value;
+
+        //position particle on random surrounding site
+        //add one to solution site heights because at this stage height(x,y) is already updated
+        if (value == -1)
+        {
+            const int h = solver().height(x, y)+1;
+
+            int dx, dy, dz;
+            solver().getRandomSolutionSite(x, y, h, dx, dy, dz);
+
+            int xNew;
+            int yNew;
+
+            solver().boundaryLatticeTransform(xNew, yNew, x + dx, y + dy, h);
+
+            const int zNew = h + dz;
+
+            BADAssBool(!solver().isSurfaceSite(xNew, yNew, zNew), "adding diff reaction to surface.", [&] ()
+            {
+                int hp = solver().height(x, y);
+                int hNew = solver().height(xNew, yNew);
+                BADAssSimpleDump(x, y, hp, xNew, yNew, zNew, hNew);
+            });
+
+            addDiffusionReactant(xNew, yNew, zNew);
+
+            registerAffectedAround(x, y, h);
+        }
+
+        //this can occur if the surface is changed so that it connects to a particle in the solution.
+        else
+        {
+            registerAffectedAround(x, y, solver().height(x, y));
+        }
     }
 }
 
 void LatticeDiffusion::onConfiningHeightChanged()
 {
     const double &h = solver().confiningSurfaceEvent().height();
+
+    //we have expanded: no reactions are blocked
+    if (h > solver().confiningSurfaceEvent().currentConfinementChange().prevHeight)
+    {
+        return;
+    }
+
     const int surfaceContactHeight = h - 1;
 
     vector<SOSDiffusionReaction *> blockedReactions;
@@ -447,7 +479,8 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
 
     solver().addReaction(reaction);
 
-    solver().updateConcentrationBoundaryIfOnBoundary(x, y);
+    //have to observe lattice diffusion
+    //    solver().updateConcentrationBoundaryIfOnBoundary(x, y);
 
     reaction->setNumberOfFreePaths();
 
@@ -575,11 +608,12 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
     }
 
 
-    if (!(xOld == ux && yOld == uy))
-    {
-        solver().updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
-        solver().updateConcentrationBoundaryIfOnBoundary(ux, uy);
-    }
+    //have to observe lattice diffusion
+    //    if (!(xOld == ux && yOld == uy))
+    //    {
+    //        solver().updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
+    //        solver().updateConcentrationBoundaryIfOnBoundary(ux, uy);
+    //    }
 }
 
 void LatticeDiffusion::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
@@ -657,11 +691,10 @@ double LatticeDiffusion::depositionRate(const uint x, const uint y) const
     return 0;
 }
 
-uint LatticeDiffusion::dissolutionPaths(const uint x, const uint y) const
+bool LatticeDiffusion::countPaths() const
 {
-    return solver().numberOfSurroundingSolutionSites(x, y);
+    return true;
 }
-
 
 indices::indices(const SOSDiffusionReaction *r) :
     m_x(r->x()),

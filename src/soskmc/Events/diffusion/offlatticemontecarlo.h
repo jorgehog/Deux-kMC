@@ -125,7 +125,7 @@ public:
     // Diffusion interface
 public:
     virtual void dump(const uint frameNumber, const string path = "/tmp") const;
-    uint dissolutionPaths(const uint x, const uint y) const;
+    bool countPaths() const;
     virtual double depositionRate(const uint x, const uint y) const;
     virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
     virtual void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);

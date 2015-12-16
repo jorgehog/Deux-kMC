@@ -26,6 +26,8 @@ ConfiningSurface::~ConfiningSurface()
 
 void ConfiningSurface::setHeight(const double height)
 {
+    m_ccc.prevHeight = height;
+
     m_height = height;
 
     notifyObservers(Subjects::CONFININGSURFACE);

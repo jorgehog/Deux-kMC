@@ -7,16 +7,14 @@
 
 #include "Events/confiningsurface/confiningsurface.h"
 
-double DissolutionDeposition::calculateDissolutionRate() const
+double SurfaceReaction::calculateEscapeRate() const
 {
     if (solver().confiningSurfaceEvent().hasSurface())
     {
         if (solver().height(x(), y()) >= solver().confiningSurfaceEvent().height() - 1)
         {
-            uint nnBelow = solver().calculateNNeighbors(x(), y(), solver().height(x(), y()) - 1);
-
             //no paths
-            if (nnBelow == 5)
+            if (solver().nNeighbors(x(), y()) == 5)
             {
                 return 0;
             }
@@ -30,7 +28,6 @@ double DissolutionDeposition::calculateDissolutionRate() const
 
     double gammaTerm;
     double shift;
-
 
     if (solver().concentrationIsZero())
     {
@@ -46,12 +43,21 @@ double DissolutionDeposition::calculateDissolutionRate() const
         shift = (int)solver().surfaceDim() - 5;
     }
 
-    return solver().diffusionEvent().dissolutionPaths(x(), y())*std::exp(-solver().alpha()*(E+shift) - gammaTerm);
+    const double escapeRateSingle = std::exp(-solver().alpha()*(E+shift) - gammaTerm);
+
+    if (!solver().diffusionEvent().countPaths())
+    {
+        return escapeRateSingle;
+    }
+
+    else
+    {
+        return solver().numberOfSurroundingSites(x(), y())*escapeRateSingle;
+    }
 }
 
-double DissolutionDeposition::calculateDepositionRate() const
+double SurfaceReaction::calculateDepositionRate() const
 {
-    //derp when wall moves away, this reaction should have its rate changed back. Very rare?
     if (solver().confiningSurfaceEvent().hasSurface())
     {
         if (solver().height(x(), y()) + 1 > solver().confiningSurfaceEvent().height() - 1)
@@ -60,15 +66,90 @@ double DissolutionDeposition::calculateDepositionRate() const
         }
     }
 
-    if (!solver().diffusionEvent().hasStarted())
-    {
-        return 1.0;
-    }
+    BADAssBool(solver().diffusionEvent().hasStarted());
 
     return solver().diffusionEvent().depositionRate(x(), y());
 }
 
-void DissolutionDeposition::executeAndUpdate()
+void SurfaceReaction::getEscapePath(const uint path, int &dx, int &dy, int &dz) const
+{
+    bool connectedLeft, connectedRight,
+            connectedBottom, connectedTop;
+
+    solver().findConnections(x(), y(),
+                             connectedLeft,
+                             connectedRight,
+                             connectedBottom,
+                             connectedTop,
+                             false);
+    uint n = 0;
+
+    if (!connectedLeft)
+    {
+        if (n == path)
+        {
+            dx = -1;
+            dy = 0;
+            dz = 0;
+
+            return;
+        }
+
+        n++;
+    }
+
+    if (!connectedRight)
+    {
+        if (n == path)
+        {
+            dx = 1;
+            dy = 0;
+            dz = 0;
+
+            return;
+        }
+
+        n++;
+    }
+
+    if (!connectedBottom)
+    {
+        if (n == path)
+        {
+            dx = 0;
+            dy = -1;
+            dz = 0;
+
+            return;
+        }
+
+        n++;
+    }
+
+    if (!connectedTop)
+    {
+        if (n == path)
+        {
+            dx = 0;
+            dy = 1;
+            dz = 0;
+
+            return;
+        }
+
+        n++;
+    }
+
+    //this leaves up the only option
+    dx = 0;
+    dy = 0;
+    dz = 1;
+
+    BADAssBool(!solver().isBlockedPosition(x(), y(), solver().height(x(), y()) + 1));
+
+}
+
+void SurfaceReaction::executeAndUpdate()
 {
     double r = rate()*rng.uniform();
 
@@ -79,15 +160,47 @@ void DissolutionDeposition::executeAndUpdate()
     else
     {
         solver().registerHeightChange(x(), y(), -1);
+        return;
+        //now we have to decide weather it is dissolution
+        //or surface diffusion
+
+        int dx, dy, dz;
+
+        const uint nPaths = solver().numberOfSurroundingSites(x(), y());
+
+        BADAss(nPaths, !=, 0u);
+
+        const uint path = rng.uniform()*nPaths;
+
+        getEscapePath(path, dx, dy, dz);
+
+        int xNew, yNew;
+        const int zNew = solver().height(x(), y()) + dz;
+
+        solver().boundaryLatticeTransform(xNew, yNew,
+                                          x() + dx,
+                                          y() + dy,
+                                          zNew);
+
+        if (solver().isSurfaceSite(xNew, yNew, zNew))
+        {
+            solver().registerSurfaceTransition(x(), y(),
+                                               xNew, yNew);
+        }
+
+        else
+        {
+            solver().registerHeightChange(x(), y(), -1);
+        }
     }
 
 }
 
-double DissolutionDeposition::rateExpression()
+double SurfaceReaction::rateExpression()
 {
     m_depositionRate = calculateDepositionRate();
-    m_dissolutionRate = calculateDissolutionRate();
+    m_escapeRate = calculateEscapeRate();
 
-    return m_depositionRate + m_dissolutionRate;
+    return m_depositionRate + m_escapeRate;
 }
 

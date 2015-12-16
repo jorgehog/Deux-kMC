@@ -3,7 +3,14 @@
 #include "sossolver.h"
 #include "../kmcsolver/reaction.h"
 
-class ConcentrationBoundaryReaction : public kMC::Reaction
+#include "observers.h"
+#include "subjects.h"
+
+using kMC::Reaction;
+using kMC::Observer;
+using kMC::Subjects;
+
+class ConcentrationBoundaryReaction : public Reaction, public Observer<Subjects>
 {
 public:
     ConcentrationBoundaryReaction(const uint dim, const uint orientation, SOSSolver &solver);
@@ -64,5 +71,10 @@ public:
     bool isAllowed() const;
     void executeAndUpdate();
     double rateExpression();
+
+    // Observer interface
+public:
+    void initializeObserver(const Subjects &subject);
+    void notifyObserver(const Subjects &subject);
 };
 

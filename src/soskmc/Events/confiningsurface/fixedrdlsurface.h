@@ -32,7 +32,6 @@ public:
         return true;
     }
 
-    void notifyObserver(const Subjects &subject);
 
     double confinementEnergy(const uint x, const uint y)
     {
@@ -59,5 +58,7 @@ public:
 
         RDLSurface::recalculateAllRDLEnergies();
     }
+
+    void notifyObserver(const Subjects &subject);
 
 };

@@ -203,7 +203,7 @@ void SOSDiffusionReaction::executeAndUpdate()
 
     BADAss(nPaths, !=, 0u);
 
-    uint path = rng.uniform()*nPaths;
+    const uint path = rng.uniform()*nPaths;
 
     getDiffusionPath(path, dx, dy, dz);
 

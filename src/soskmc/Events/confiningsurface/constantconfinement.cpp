@@ -21,6 +21,11 @@ void ConstantConfinement::notifyObserver(const Subjects &subject)
 {
     (void) subject;
 
+    if (solver().currentSurfaceChange().type == ChangeTypes::Double)
+    {
+        return;
+    }
+
     double newHeight = solver().averageHeight() + m_h;
 
     uint xi, yi;

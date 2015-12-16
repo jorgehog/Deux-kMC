@@ -487,7 +487,15 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         uint nc;
         ParticleNumberConservator pnc(thermSolver);
 
-        conf = new ConstantConfinement(thermSolver, solver.confiningSurfaceEvent().height());
+        if (solver.confiningSurfaceEvent().hasSurface())
+        {
+            conf = new ConstantConfinement(thermSolver, solver.confiningSurfaceEvent().height());
+        }
+
+        else
+        {
+            conf = new NoConfinement(thermSolver);
+        }
 
         bool onlattice = diffusionInt == 2 || diffusionInt == 7;
 
@@ -536,10 +544,13 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
 
         lattice.eventLoop(nc);
 
-        const double &hPrev = solver.confiningSurfaceEvent().height();
-        const double hMean = accu(thermSolver.heights())/double(L*W);
+        if (solver.confiningSurfaceEvent().hasSurface())
+        {
+            const double &hPrev = solver.confiningSurfaceEvent().height();
+            const double hMean = accu(thermSolver.heights())/double(L*W);
 
-        solver.confiningSurfaceEvent().setHeight(hPrev + hMean);
+            solver.confiningSurfaceEvent().setHeight(hPrev + hMean);
+        }
 
         solver.setHeights(thermSolver.heights(), false);
 

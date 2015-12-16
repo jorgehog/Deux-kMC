@@ -28,13 +28,11 @@ SOSSolver::SOSSolver(const uint length,
     m_nNeighbors(length, width),
     m_surfaceReactions(length, width)
 {
-    m_currentSurfaceChange.affectedSurfaceReactions.resize(5);
-
     for (uint x = 0; x < length; ++x)
     {
         for (uint y = 0; y < width; ++y)
         {
-            m_surfaceReactions(x, y) = new DissolutionDeposition(x, y, *this);
+            m_surfaceReactions(x, y) = new SurfaceReaction(x, y, *this);
             addReaction(m_surfaceReactions(x, y));
         }
     }
@@ -69,65 +67,38 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
     registerChangedSite(x, y);
 
     m_averageHeight += value/double(area());
-
     BADAssClose(averageHeight(), accu(heights())/double(area()), 1E-3);
 
-    const uint left = leftSite(x, y, m_heights(x, y));
-    const uint right = rightSite(x, y, m_heights(x, y));
-    const uint bottom = bottomSite(x, y, m_heights(x, y));
-    const uint top = topSite(x, y, m_heights(x, y));
-
-    uint n = 0;
-
-    vector<DissolutionDeposition *> &affectedSurfaceReactions = m_currentSurfaceChange.affectedSurfaceReactions;
-
-    affectedSurfaceReactions.at(n) = &surfaceReaction(x, y);
-    n++;
-
-    if (!isOutsideBoxSingle(left, 0))
-    {
-        setNNeighbors(left, y);
-        affectedSurfaceReactions.at(n) = &surfaceReaction(left, y);
-        n++;
-    }
-
-    if (!isOutsideBoxSingle(right, 0))
-    {
-        setNNeighbors(right, y);
-        affectedSurfaceReactions.at(n) = &surfaceReaction(right, y);
-        n++;
-    }
-
-    if (!isOutsideBoxSingle(top, 1))
-    {
-        setNNeighbors(x, top);
-        affectedSurfaceReactions.at(n) = &surfaceReaction(x, top);
-        n++;
-    }
-
-    if (!isOutsideBoxSingle(bottom, 1))
-    {
-        setNNeighbors(x, bottom);
-        affectedSurfaceReactions.at(n) = &surfaceReaction(x, bottom);
-        n++;
-    }
+    registerChangedAround(x, y);
 
     m_currentSurfaceChange.x = x;
     m_currentSurfaceChange.y = y;
     m_currentSurfaceChange.value = value;
-    m_currentSurfaceChange.n = n;
-
-    BADAss(m_currentSurfaceChange.value, ==, value);
+    m_currentSurfaceChange.type = ChangeTypes::Single;
 
     notifyObservers(Subjects::SOLVER);
+}
 
-    //recalcuate rates for neighbor reactions.
-    for (uint i = 1; i < n; ++i)
-    {
-        registerAffectedReaction(affectedSurfaceReactions.at(i));
-    }
+void SOSSolver::registerSurfaceTransition(const uint x0, const uint y0, const int x1, const int y1)
+{
+    BADAssBool(!isOutsideBox(x0, y0), "invalid site.");
+    BADAssBool(!isOutsideBox(x1, y1), "this should be checked in surface site.");
 
-    updateConcentrationBoundaryIfOnBoundary(x, y);
+    m_heights(x0, y0) -= 1;
+    registerChangedSite(x0, y0);
+    registerChangedAround(x0, y0);
+
+    m_heights(x1, y1) += 1;
+    registerChangedSite(x1, y1);
+    registerChangedAround(x1, y1);
+
+    m_currentSurfaceChange.x = x0;
+    m_currentSurfaceChange.y = y0;
+    m_currentSurfaceChange.x1 = x1;
+    m_currentSurfaceChange.y1 = y1;
+    m_currentSurfaceChange.type = ChangeTypes::Double;
+
+    notifyObservers(Subjects::SOLVER);
 }
 
 void SOSSolver::registerChangedSite(const uint x, const uint y)
@@ -135,6 +106,38 @@ void SOSSolver::registerChangedSite(const uint x, const uint y)
     m_changedSurfaceSites.insert(make_pair(x, y));
     setNNeighbors(x, y);
     registerAffectedReaction(&surfaceReaction(x, y));
+}
+
+void SOSSolver::registerChangedAround(const uint x, const uint y)
+{
+    const uint left = leftSite(x, y, m_heights(x, y));
+    const uint right = rightSite(x, y, m_heights(x, y));
+    const uint bottom = bottomSite(x, y, m_heights(x, y));
+    const uint top = topSite(x, y, m_heights(x, y));
+
+    if (!isOutsideBoxSingle(left, 0))
+    {
+        setNNeighbors(left, y);
+        registerAffectedReaction(&surfaceReaction(left, y));
+    }
+
+    if (!isOutsideBoxSingle(right, 0))
+    {
+        setNNeighbors(right, y);
+        registerAffectedReaction(&surfaceReaction(right, y));
+    }
+
+    if (!isOutsideBoxSingle(top, 1))
+    {
+        setNNeighbors(x, top);
+        registerAffectedReaction(&surfaceReaction(x, top));
+    }
+
+    if (!isOutsideBoxSingle(bottom, 1))
+    {
+        setNNeighbors(x, bottom);
+        registerAffectedReaction(&surfaceReaction(x, bottom));
+    }
 }
 
 void SOSSolver::setNNeighbors(const uint x, const uint y)
@@ -244,6 +247,58 @@ uint SOSSolver::calculateNNeighbors(const uint x, const uint y, const int h) con
     if (connectedBottom)
     {
         n++;
+    }
+
+    return n;
+
+}
+
+uint SOSSolver::numberOfSurroundingSites(const uint x, const uint y)
+{
+    bool connectedLeft, connectedRight,
+            connectedTop, connectedBottom;
+
+    findConnections(x, y,
+                    connectedLeft,
+                    connectedRight,
+                    connectedBottom,
+                    connectedTop,
+                    false);
+
+    const int &h = height(x, y);
+
+    bool connectedAbove = diffusionEvent().isBlockedPosition(x, y, h+1);
+
+    if (confiningSurfaceEvent().hasSurface())
+    {
+        connectedAbove = connectedAbove || isBlockedPosition(x, y, h+1);
+    }
+
+    uint n = 5;
+
+    if (connectedLeft)
+    {
+        n--;
+    }
+
+    if (connectedRight)
+    {
+        n--;
+    }
+
+    if (connectedBottom)
+    {
+        n--;
+    }
+
+    if (connectedTop)
+    {
+        n--;
+    }
+
+    if (connectedAbove)
+    {
+        n--;
     }
 
     return n;
@@ -806,6 +861,8 @@ void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orienta
     m_concentrationBoundaryReactions.push_back(concReaction);
 
     addReaction(concReaction);
+
+    registerObserver(concReaction);
 }
 
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
@@ -818,13 +875,21 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
     //to enable round arond 0 and length to have same room as othes we let particles
     //go from -0.5 to l-0.5. Boundaries should not suggest these moves
     //if they are illegal.
-    bool isOutSideBox_x = (x <= -0.5) || (x >= length() - 0.5);
+    const bool isOutSideBox_x = (x <= -0.5) || (x >= length() - 0.5);
 
-    bool isOutSideBox_y = (y <= -0.5) || (y >= width() - 0.5);
+    const bool isOutSideBox_y = (y <= -0.5) || (y >= width() - 0.5);
 
     //center of conf surf is at confSE().height(), such that it extends to confSE().height() - 0.5
     //which makes a particle of radius 0.5 collide if z is larger than cse.h() - 1
-    bool isOutSideBox_z = (z > confiningSurfaceEvent().height() - 1) && confiningSurfaceEvent().hasSurface();
+    bool isOutSideBox_z;
+    if (confiningSurfaceEvent().hasSurface())
+    {
+        isOutSideBox_z = (z > confiningSurfaceEvent().height() - 1);
+    }
+    else
+    {
+        isOutSideBox_z = false;
+    }
 
     if (isOutSideBox_x || isOutSideBox_y || isOutSideBox_z)
     {
@@ -906,8 +971,8 @@ void SOSSolver::setGamma(const double gamma)
             {
                 for (uint y = 0; y < width(); ++y)
                 {
-                    DissolutionDeposition &_reaction = surfaceReaction(x, y);
-                    _reaction.setDissolutionRate(_reaction.dissolutionRate()*expFac);
+                    SurfaceReaction &_reaction = surfaceReaction(x, y);
+                    _reaction.setDissolutionRate(_reaction.escapeRate()*expFac);
                 }
             }
         }
@@ -925,17 +990,6 @@ void SOSSolver::setConcentration(const double concentration)
 void SOSSolver::shiftConcentration(const double dc)
 {
     setConcentration(concentration() + dc);
-}
-
-void SOSSolver::updateConcentrationBoundaryIfOnBoundary(const uint x, const uint y)
-{
-    for (ConcentrationBoundaryReaction *r : m_concentrationBoundaryReactions)
-    {
-        if (r->pointIsOnBoundary(x, y))
-        {
-            r->calculateRate();
-        }
-    }
 }
 
 double SOSSolver::closestSquareDistance(const uint x, const uint y, const int z,

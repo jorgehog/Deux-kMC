@@ -9,6 +9,11 @@ using kMC::Subject;
 using kMC::Observer;
 using kMC::Subjects;
 
+struct CurrentConfinementChange
+{
+    double prevHeight;
+};
+
 class ConfiningSurface : public ignis::LatticeEvent, public Observer<Subjects>, public Subject<Subjects>
 {
 public:
@@ -43,13 +48,18 @@ public:
         return m_solver;
     }
 
+    const CurrentConfinementChange &currentConfinementChange() const
+    {
+        return m_ccc;
+    }
+
 private:
+
+    CurrentConfinementChange m_ccc;
 
     double m_height;
 
     SOSSolver &m_solver;
-
-
 
 protected:
 

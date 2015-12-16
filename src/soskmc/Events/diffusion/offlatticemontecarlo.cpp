@@ -32,18 +32,9 @@ void OfflatticeMonteCarlo::dump(const uint frameNumber, const string path) const
     dumpDiffusingParticles(frameNumber, path);
 }
 
-uint OfflatticeMonteCarlo::dissolutionPaths(const uint x, const uint y) const
+bool OfflatticeMonteCarlo::countPaths() const
 {
-    return solver().numberOfSurroundingSolutionSites(x, y);
-
-    bool lockedIn = solver().nNeighbors(x, y) == 5;
-    bool closedTop = (solver().confiningSurfaceEvent().height() - solver().height(x, y)) <= 1;
-    if ( lockedIn && closedTop )
-    {
-        return 0u;
-    }
-
-    return 1u;
+    return true;
 }
 
 void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
@@ -55,44 +46,47 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
         return;
     }
 
-    const uint &x = solver().currentSurfaceChange().x;
-    const uint &y = solver().currentSurfaceChange().y;
-    const int &value = solver().currentSurfaceChange().value;
-
-    //Remove particle based on the probability of it being the deposited
-    if (value == 1)
+    if (solver().currentSurfaceChange().type == ChangeTypes::Single)
     {
-        double Rtot = 0;
-        for (uint n = 0; n < nOfflatticeParticles(); ++n)
+        const uint &x = solver().currentSurfaceChange().x;
+        const uint &y = solver().currentSurfaceChange().y;
+        const int &value = solver().currentSurfaceChange().value;
+
+        //Remove particle based on the probability of it being the deposited
+        if (value == 1)
         {
-            //use old rates to calculate probability of depositing
-            m_localRatesForSite(n) = localRates(x, y, n);
-            Rtot += m_localRatesForSite(n);
+            double Rtot = 0;
+            for (uint n = 0; n < nOfflatticeParticles(); ++n)
+            {
+                //use old rates to calculate probability of depositing
+                m_localRatesForSite(n) = localRates(x, y, n);
+                Rtot += m_localRatesForSite(n);
+            }
+
+            const uint N = chooseFromTotalRate(m_localRatesForSite.memptr(), nOfflatticeParticles(), Rtot);
+
+            removeParticle(N);
         }
 
-        const uint N = chooseFromTotalRate(m_localRatesForSite.memptr(), nOfflatticeParticles(), Rtot);
+        //Add a particle on a unit sphere around the site;
+        else
+        {
+            int dx, dy, dz;
+            int x1, y1, z1;
 
-        removeParticle(N);
-    }
+            const int &z = solver().height(x, y) + 1;
 
-    //Add a particle on a unit sphere around the site;
-    else
-    {
-        int dx, dy, dz;
-        int x1, y1, z1;
+            solver().getRandomSolutionSite(x, y, z, dx, dy, dz);
 
-        const int &z = solver().height(x, y) + 1;
+            solver().boundaryLatticeTransform(x1, y1, x + dx, y + dy, z);
 
-        solver().getRandomSolutionSite(x, y, z, dx, dy, dz);
+            z1 = z + dz;
 
-        solver().boundaryLatticeTransform(x1, y1, x + dx, y + dy, z);
+            insertParticle(x1, y1, z1);
 
-        z1 = z + dz;
-
-        insertParticle(x1, y1, z1);
-
-        m_particleIsLocked = true;
-        m_lockedParticle = nOfflatticeParticles() - 1;
+            m_particleIsLocked = true;
+            m_lockedParticle = nOfflatticeParticles() - 1;
+        }
     }
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
@@ -111,9 +105,7 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
             scanForDisplacement(n, dim, delta);
             m_particlePositions(dim, n) += delta;
         }
-
     }
-
 }
 
 double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const

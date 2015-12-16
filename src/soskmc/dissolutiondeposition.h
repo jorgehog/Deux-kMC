@@ -2,7 +2,7 @@
 
 #include "sosreaction.h"
 
-class DissolutionDeposition : public SOSReaction
+class SurfaceReaction : public SOSReaction
 {
 public:
     using SOSReaction::SOSReaction;
@@ -12,27 +12,31 @@ public:
         return m_depositionRate;
     }
 
-    const double &dissolutionRate() const
+    const double &escapeRate() const
     {
-        return m_dissolutionRate;
+        return m_escapeRate;
     }
 
     void setDissolutionRate(const double newRate)
     {
-        m_dissolutionRate = newRate;
-        changeRate(m_dissolutionRate + m_depositionRate);
+        m_escapeRate = newRate;
+        changeRate(m_escapeRate + m_depositionRate);
     }
 
-    void setDepositionRate(const double newRate)
+    void setEscapeRate(const double newRate)
     {
         m_depositionRate = newRate;
-        changeRate(m_dissolutionRate + m_depositionRate);
+        changeRate(m_escapeRate + m_depositionRate);
     }
 
-    double calculateDissolutionRate() const;
+    double calculateEscapeRate() const;
 
     double calculateDepositionRate() const;
 
+    void getEscapePath(const uint path,
+                       int &dx,
+                       int &dy,
+                       int &dz) const;
 
     // Reaction interface
 public:
@@ -42,5 +46,5 @@ public:
 
 private:
     double m_depositionRate;
-    double m_dissolutionRate;
+    double m_escapeRate;
 };

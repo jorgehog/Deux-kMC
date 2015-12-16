@@ -27,13 +27,11 @@ double ConcentrationProfile::depositionRate(const uint x, const uint y) const
     return m_profileFunction(x, y);
 }
 
-uint ConcentrationProfile::dissolutionPaths(const uint x, const uint y) const
+bool ConcentrationProfile::countPaths() const
 {
-    (void) x;
-    (void) y;
-
-    return 1u;
+    return false;
 }
+
 
 void ConcentrationProfile::notifyObserver(const Subjects &subject)
 {

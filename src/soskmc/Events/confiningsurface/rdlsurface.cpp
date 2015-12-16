@@ -95,7 +95,7 @@ void RDLSurface::findNewHeight()
     m_ratioPartialSums*=m_expFac;
 }
 
-void RDLSurface::updateRatesFor(DissolutionDeposition &reaction)
+void RDLSurface::updateRatesFor(SurfaceReaction &reaction)
 {
     const uint x = reaction.x();
     const uint y = reaction.y();
@@ -105,7 +105,7 @@ void RDLSurface::updateRatesFor(DissolutionDeposition &reaction)
     //For every affected particle we update only those who include the pressure term.
     //Vector is set up in initialize based on virtual reaction function isPressureAffected().
 
-    double prevDiffRate = reaction.dissolutionRate();
+    double prevDiffRate = reaction.escapeRate();
     reaction.setDissolutionRate(prevDiffRate*rateChange);
 
     m_RDLEnergy(x, y) *= m_expFac;
@@ -115,7 +115,7 @@ void RDLSurface::updateRatesFor(DissolutionDeposition &reaction)
         BADAssSimpleDump(cycle(), x, y, rateChange, RDLEnergy(x, y), m_expFac, m_heightChange);
     });
 
-    BADAssClose(reaction.dissolutionRate(), reaction.calculateDissolutionRate(), 1E-5, "incorrect rate update", [&] ()
+    BADAssClose(reaction.escapeRate(), reaction.calculateEscapeRate(), 1E-5, "incorrect rate update", [&] ()
     {
         double lp = RDLEnergy(x, y);
         int h = solver().height(x, y);
@@ -262,38 +262,27 @@ void RDLSurface::notifyObserver(const Subjects &subject)
 
     const uint &x = csc.x;
     const uint &y = csc.y;
-    const uint &n = csc.n;
-    const vector<DissolutionDeposition*> &affectedSurfaceReactions = csc.affectedSurfaceReactions;
-
-    auto start = affectedSurfaceReactions.begin();
-    auto end = start + n;
 
     m_ratioPartialSums(x, y) = partialThetaRatio(x, y);
 
-    findNewHeight();
 
-    for (uint i = 0; i < n; ++i)
+    if (csc.type == ChangeTypes::Double)
     {
-        DissolutionDeposition *reaction = affectedSurfaceReactions.at(i);
-        recalculateRDLEnergy(reaction->x(), reaction->y());
+        const uint &x1 = csc.x1;
+        const uint &y1 = csc.y1;
+
+        m_ratioPartialSums(x1, y1) = partialThetaRatio(x, y);
     }
+
+    findNewHeight();
 
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            DissolutionDeposition &reaction = mutexSolver().surfaceReaction(x, y);
-
-            if (std::find(start, end, &reaction) == end)
-            {
-                updateRatesFor(reaction);
-            }
+            SurfaceReaction &reaction = mutexSolver().surfaceReaction(x, y);
+            updateRatesFor(reaction);
         }
-    }
-
-    for (ConcentrationBoundaryReaction *br : solver().concentrationBoundaryReactions())
-    {
-        br->changeRate(br->rate() + br->_rateExpression(m_heightChange*br->span()));
     }
 }
 

@@ -48,7 +48,7 @@ int main()
             {
                 for (uint y = 0; y < W; ++y)
                 {
-                    meanDissolutionRate += solver.surfaceReaction(x, y).dissolutionRate();
+                    meanDissolutionRate += solver.surfaceReaction(x, y).escapeRate();
                 }
             }
 
