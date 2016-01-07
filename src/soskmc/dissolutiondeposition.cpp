@@ -160,8 +160,8 @@ void SurfaceReaction::executeAndUpdate()
     }
     else
     {
-//        solver().registerHeightChange(x(), y(), -1);
-//        return;
+        solver().registerHeightChange(x(), y(), -1);
+        return;
 
         //now we have to decide weather it is dissolution
         //or surface diffusion

@@ -19,3 +19,6 @@
 [submodule "utils/intercombinatorzor"]
 	path = utils/intercombinatorzor
 	url = https://github.com/jorgehog/intercombinatorzor
+[submodule "utils/micropather"]
+	path = utils/micropather
+	url = https://github.com/leethomason/MicroPather

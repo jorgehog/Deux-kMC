@@ -3,11 +3,7 @@
 #include "firstpassagecontinuum.h"
 
 
-namespace Tests
-{
-class World;
 class PathFinder;
-}
 
 struct PathFindingJazz
 {
@@ -31,8 +27,7 @@ public:
 private:
     const int m_boxSize;
 
-    Tests::World *m_world;
-    Tests::PathFinder *m_pathFinder;
+    PathFinder *m_pathFinder;
     vector<PathFindingJazz*> m_pathFindingJazzes;
     uint m_nPathFinds;
 

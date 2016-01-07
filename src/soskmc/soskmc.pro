@@ -33,11 +33,11 @@ SOURCES += \
     Events/confiningsurface/constantconfinement.cpp \
     observers.cpp \
     particlenumberconservator.cpp \
-    /home/jorgehog/code/astarcpp/pathfinder.cpp \
-    /home/jorgehog/code/astarcpp/point3d.cpp \
-    /home/jorgehog/code/astarcpp/searchnode.cpp \
     Events/diffusion/astarfirstpassage.cpp \
-    Events/diffusion/radialfirstpassage.cpp
+    Events/diffusion/radialfirstpassage.cpp \
+    Events/diffusion/pathfinder.cpp \
+    $$UTILS/micropather/micropather.cpp
+
 
 HEADERS += \
     Events/equilibriater.h \
@@ -70,13 +70,10 @@ HEADERS += \
     observers.h \
     subjects.h \
     particlenumberconservator.h \
-    astarcpp/pathfinder.h \
-    astarcpp/point3d.h \
-    astarcpp/searchnode.h \
-    astarcpp/world.h \
-    astarcpp/minheap.h \
     Events/diffusion/astarfirstpassage.h \
-    Events/diffusion/radialfirstpassage.h
+    Events/diffusion/radialfirstpassage.h \
+    Events/diffusion/pathfinder.h \
+    $$UTILS/micropather/micropather.h
 
 LIBS += -lkMC
 
