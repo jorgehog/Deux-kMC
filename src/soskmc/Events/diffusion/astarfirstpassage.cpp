@@ -5,6 +5,8 @@
 
 #include "pathfinder.h"
 
+#include "Events/confiningsurface/confiningsurface.h"
+
 AStarFirstPassage::AStarFirstPassage(SOSSolver &solver,
                                      const double maxdt,
                                      const int depositionBoxHalfSize,
@@ -35,11 +37,11 @@ AStarFirstPassage::~AStarFirstPassage()
 
 void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 {
-    for (uint x = 0; x < solver().length(); ++x)
+    for (uint _x = 0; _x < solver().length(); ++_x)
     {
-        for (uint y = 0; y < solver().width(); ++y)
+        for (uint _y = 0; _y < solver().width(); ++_y)
         {
-            solver().surfaceReaction(x, y).setEscapeRate(0);
+            solver().surfaceReaction(_x, _y).setEscapeRate(0);
         }
     }
 
@@ -48,6 +50,9 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     int xTrans;
     int yTrans;
 
+    int x, y, z;
+    double r2;
+
     SurfaceReaction *r;
     double localRate;
 
@@ -55,10 +60,17 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 
     const double D = DScaled();
 
-    //    lammpswriter writer(4, "astar", "/tmp");
-    //    lammpswriter surf(3, "surf", "/tmp");
-    //    surf.setSystemSize(2*l+1, 2*l+1, 2*l+1);
-    //    writer.setSystemSize(2*l+1, 2*l+1, 2*l+1);
+    //
+    bool dump = false;
+    lammpswriter writer(4, "astar", "/tmp");
+    lammpswriter surf(3, "surf", "/tmp");
+    //
+
+    if (dump)
+    {
+        surf.setSystemSize(2*l+1, 2*l+1, 2*l+1);
+        writer.setSystemSize(2*l+1, 2*l+1, 2*l+1);
+    }
 
     std::vector<void *> path;
     float cost;
@@ -66,17 +78,20 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
         m_nPathFinds = 0;
+        m_pathFinder->reset();
 
-        for (uint x = 0; x < solver().length(); ++x)
+        for (uint _x = 0; _x < solver().length(); ++_x)
         {
-            for (uint y = 0; y < solver().width(); ++y)
+            for (uint _y = 0; _y < solver().width(); ++_y)
             {
-                m_localRates(x, y, n) = 0;
+                m_localRates(_x, _y, n) = 0;
             }
         }
 
         const double &zp = particlePositions(2, n);
 
+        //if the particle is outside the pathfinding box of the
+        //highest surface site it is not involved in any pathings.
         if (zp > hmax + l + 1)
         {
             continue;
@@ -100,9 +115,13 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
         //Should find shortest path between xp yp zp and all heights inside a 2l+1 cube
         //Setup the cube first?
         //Yes.. then find all the paths and keep only those who have a total path length < l
-        //        writer.initializeNewFile(n);
-        //        surf.initializeNewFile(n);
-        //        writer << 0 << l << l << l;
+
+        if (dump)
+        {
+            writer.initializeNewFile(n);
+            surf.initializeNewFile(n);
+            writer << 0 << l << l << l;
+        }
 
         for (int xscan = -l; xscan <= l; ++xscan)
         {
@@ -112,9 +131,15 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 
                 const int &h = solver().height(xTrans, yTrans);
 
+                //if there is no room to deposit.
+                if (h > solver().confiningSurfaceEvent().height() - 1)
+                {
+                    continue;
+                }
+
                 const double dz2 = (h+1-zp)*(h+1-zp);
 
-
+                //if the surface site is outside the pathfinding box we skip it.
                 if (dz2 < l*l)
                 {
                     const int xw = xscan + l;
@@ -124,14 +149,25 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                     for (int zwIter = 0; zwIter <= zw; ++zwIter)
                     {
                         m_pathFinder->markBlockedPosition(xw, yw, zwIter);
-                        //                        surf << xw << yw << zwIter;
+
+                        if (dump)
+                        {
+                            surf << xw << yw << zwIter;
+                        }
                     }
+
+                    //                    //we mark the site above as blocked as well since
+                    //                    //we do not allow particles to deposit along the way
+                    //                    //to the site. When pathfinding to site x,y,z will
+                    //                    //be executed, we will unblock the target site.
+                    //                    m_pathFinder->markBlockedPosition(xw, yw, zw+1);
+
 
                     m_pathFindingJazzes[m_nPathFinds]->xTrans = xTrans;
                     m_pathFindingJazzes[m_nPathFinds]->yTrans = yTrans;
                     m_pathFindingJazzes[m_nPathFinds]->xEnd = xw;
                     m_pathFindingJazzes[m_nPathFinds]->yEnd = yw;
-                    m_pathFindingJazzes[m_nPathFinds]->zEnd = zw;
+                    m_pathFindingJazzes[m_nPathFinds]->zEnd = zw+1;
                     m_nPathFinds++;
                 }
             }
@@ -152,10 +188,23 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                                                 l, l, l,
                                                 xw, yw, zw);
 
-            //            writer << 3+i << crumb->position->X << crumb->position->Y << crumb->position->Z;
             if (exitValue == micropather::MicroPather::NO_SOLUTION)
             {
+                if (dump)
+                {
+                    writer << 3+i << l << l << l;
+                }
+
                 continue;
+            }
+
+            if (dump)
+            {
+                for (void* state : path)
+                {
+                    m_pathFinder->getXYZ(x, y, z, state);
+                    writer << 3+i << x << y << z;
+                }
             }
 
             //We skip the start position
@@ -163,22 +212,30 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             //explicitly using the double position starting point
             //x0w y0w z0w instead
 
-            int x, y, z;
-            m_pathFinder->getXYZ(x, y, z, path.at(1));
+            if (exitValue == micropather::MicroPather::START_END_SAME)
+            {
+                r2 = dx*dx + dy*dy + dz*dz;
+            }
+            else
+            {
+                m_pathFinder->getXYZ(x, y, z, path.at(1));
 
-            const double r2FirstX = (x-x0w)*(x-x0w);
-            const double r2FirstY = (y-y0w)*(y-y0w);
-            const double r2FirstZ = (z-z0w)*(z-z0w);
+                const double r2FirstXp = (x-l)*(x-l);
+                const double r2FirstYp = (y-l)*(y-l);
+                const double r2FirstZp = (z-l)*(z-l);
 
-            const double r2FirstXp = (x-l)*(x-l);
-            const double r2FirstYp = (y-l)*(y-l);
-            const double r2FirstZp = (z-l)*(z-l);
+                const double rFirstP = sqrt(r2FirstXp + r2FirstYp + r2FirstZp);
 
-            const double rFirst = sqrt(r2FirstX + r2FirstY + r2FirstZ);
-            const double rFirstP = sqrt(r2FirstXp + r2FirstYp + r2FirstZp);
+                const double r2FirstX = (x-x0w)*(x-x0w);
+                const double r2FirstY = (y-y0w)*(y-y0w);
+                const double r2FirstZ = (z-z0w)*(z-z0w);
 
-            const double rSingle = cost - rFirstP + rFirst;
-            const double r2 = rSingle*rSingle;
+                const double rFirst = sqrt(r2FirstX + r2FirstY + r2FirstZ);
+
+                const double rSingle = cost - rFirstP + rFirst;
+
+                r2 = rSingle*rSingle;
+            }
 
             r = &solver().surfaceReaction(xTrans, yTrans);
             localRate = localRateOverD(r2);
@@ -186,15 +243,18 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             r->setEscapeRate(r->depositionRate() + localRate*D);
         }
 
+        if (dump)
+        {
 
+            if (surf.valueCounter() == 0)
+            {
+                surf << 0 << 0 << 0;
+            }
 
-        //        if (surf.valueCounter() == 0)
-        //        {
-        //            surf << 0 << 0 << 0;
-        //        }
+            writer.finalize();
+            surf.finalize();
 
-        //        writer.finalize();
-        //        surf.finalize();
+        }
     }
 }
 

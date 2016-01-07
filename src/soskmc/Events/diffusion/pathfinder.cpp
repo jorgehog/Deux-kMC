@@ -36,13 +36,18 @@ void PathFinder::getXYZ(int &x, int &y, int &z, void *state) const
     x = xyIndex - y*m_N;
 }
 
-int PathFinder::solve(std::vector<void *> path,
+int PathFinder::solve(std::vector<void *> &path,
                       float &cost,
                       const int x0, const int y0, const int z0,
                       const int x1, const int y1, const int z1)
 {
-    m_pather->Reset();
     return m_pather->Solve(area(x0, y0, z0), area(x1, y1, z1), &path, &cost);
+}
+
+void PathFinder::reset()
+{
+    m_pather->Reset();
+    m_blocked.zeros();
 }
 
 float PathFinder::LeastCostEstimate(void *stateStart, void *stateEnd)

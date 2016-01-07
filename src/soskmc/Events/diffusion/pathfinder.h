@@ -37,7 +37,9 @@ public:
         return m_blocked(x, y, z) == 1;
     }
 
-    int solve(std::vector<void *> path, float &cost, const int x0, const int y0, const int z0, const int x1, const int y1, const int z1);
+    int solve(std::vector<void *> &path, float &cost, const int x0, const int y0, const int z0, const int x1, const int y1, const int z1);
+
+    void reset();
 
     // Graph interface
 public:
