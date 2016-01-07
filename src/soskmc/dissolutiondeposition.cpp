@@ -52,7 +52,6 @@ double SurfaceReaction::calculateEscapeRate() const
 
     else
     {
-        BADAssEqual(solver().numberOfSurroundingSites(x(), y()), 6 - nNeighbors());
         return solver().numberOfSurroundingSites(x(), y())*escapeRateSingle;
     }
 }
@@ -160,38 +159,44 @@ void SurfaceReaction::executeAndUpdate()
     }
     else
     {
-        solver().registerHeightChange(x(), y(), -1);
-        return;
 
-        //now we have to decide weather it is dissolution
-        //or surface diffusion
-
-        int dx, dy, dz;
-
-        const uint nPaths = solver().numberOfSurroundingSites(x(), y());
-
-        BADAss(nPaths, !=, 0u);
-
-        const uint path = rng.uniform()*nPaths;
-
-        getEscapePath(path, dx, dy, dz);
-
-        int xNew, yNew;
-        const int zNew = solver().height(x(), y()) + dz;
-
-        solver().boundaryLatticeTransform(xNew, yNew,
-                                          x() + dx,
-                                          y() + dy,
-                                          zNew);
-
-        if ((dz == 0) && solver().isSurfaceSite(xNew, yNew, zNew))
+        if (!solver().surfaceDiffusion())
         {
-            solver().registerSurfaceTransition(x(), y(), xNew, yNew);
+            solver().registerHeightChange(x(), y(), -1);
         }
 
         else
         {
-            solver().registerHeightChange(x(), y(), -1);
+            //now we have to decide weather it is dissolution
+            //or surface diffusion
+
+            int dx, dy, dz;
+
+            const uint nPaths = solver().numberOfSurroundingSites(x(), y());
+
+            BADAss(nPaths, !=, 0u);
+
+            const uint path = rng.uniform()*nPaths;
+
+            getEscapePath(path, dx, dy, dz);
+
+            int xNew, yNew;
+            const int zNew = solver().height(x(), y()) + dz;
+
+            solver().boundaryLatticeTransform(xNew, yNew,
+                                              x() + dx,
+                                              y() + dy,
+                                              zNew);
+
+            if ((dz == 0) && solver().isSurfaceSite(xNew, yNew, zNew))
+            {
+                solver().registerSurfaceTransition(x(), y(), xNew, yNew);
+            }
+
+            else
+            {
+                solver().registerHeightChange(x(), y(), -1);
+            }
         }
     }
 

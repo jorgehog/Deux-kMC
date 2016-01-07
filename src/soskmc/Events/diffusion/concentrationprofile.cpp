@@ -17,19 +17,26 @@ ConcentrationProfile::~ConcentrationProfile()
 
 double ConcentrationProfile::depositionRate(const uint x, const uint y) const
 {
-
     //since profile function gives dep rate in unit concentration, we have to check for this.
     if (solver().concentrationIsZero())
     {
         return 0;
     }
 
-    return (6 - solver().nNeighbors(x, y))*m_profileFunction(x, y);
+    if (solver().surfaceDiffusion())
+    {
+        return (6 - solver().nNeighbors(x, y))*m_profileFunction(x, y);
+    }
+
+    else
+    {
+        return m_profileFunction(x, y);
+    }
 }
 
 bool ConcentrationProfile::countPaths() const
 {
-    return true;
+    return solver().surfaceDiffusion();
 }
 
 

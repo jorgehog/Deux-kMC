@@ -49,6 +49,9 @@ int main(int argv, char** argc)
 
     const string &initialSurfaceType = getSetting<string>(root, "initialSurfaceType");
 
+    const uint &surfaceDiffusionInt = getSetting<uint>(root, "surfaceDiffusion");
+    const bool surfaceDiffusion = surfaceDiffusionInt == 1;
+
     const Setting &boundarySettings = getSetting(root, "boundaries");
     const uint rightBoundaryID = boundarySettings[0][0];
     const uint leftBoundaryID = boundarySettings[0][1];
@@ -107,7 +110,7 @@ int main(int argv, char** argc)
     //---End default config loading
     //---Start ignis environment and solver creation
     Lattice lattice;
-    SOSSolver solver(L, W, alpha, gamma);
+    SOSSolver solver(L, W, alpha, gamma, surfaceDiffusion);
 
     if (zeroConcentration)
     {
@@ -329,6 +332,8 @@ int main(int argv, char** argc)
     simRoot["supersaturation"] = supersaturation;
 
     simRoot["initialSurfaceType"] = initialSurfaceType;
+
+    simRoot["surfaceDiffusion"] = surfaceDiffusionInt;
 
     simRoot["rightBoundaryID"] = rightBoundaryID;
     simRoot["leftBoundaryID"] = leftBoundaryID;

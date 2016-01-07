@@ -481,7 +481,7 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
     else if (type == "thermalized")
     {
         Lattice lattice;
-        SOSSolver thermSolver(L, W, solver.alpha(), solver.gamma());
+        SOSSolver thermSolver(L, W, solver.alpha(), solver.gamma(), solver.surfaceDiffusion());
         Diffusion *conc;
         ConfiningSurface *conf;
         uint nc;

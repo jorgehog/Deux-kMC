@@ -45,7 +45,8 @@ public:
     SOSSolver(const uint length,
               const uint width,
               const double alpha,
-              const double gamma);
+              const double gamma,
+              const bool surfaceDiffusion = false);
 
     virtual ~SOSSolver();
 
@@ -299,12 +300,18 @@ public:
         return m_currentSurfaceChange;
     }
 
+    const bool &surfaceDiffusion() const
+    {
+        return m_surfaceDiffusion;
+    }
 
 private:
 
+    const bool m_surfaceDiffusion;
+
     CurrentSurfaceChange m_currentSurfaceChange;
 
-    bool m_heights_set;
+    bool m_heightsSet;
 
     const uint m_surfaceDim;
     ConfiningSurface *m_confiningSurfaceEvent;

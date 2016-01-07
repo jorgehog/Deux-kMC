@@ -9,10 +9,12 @@
 SOSSolver::SOSSolver(const uint length,
                      const uint width,
                      const double alpha,
-                     const double gamma) :
+                     const double gamma,
+                     const bool surfaceDiffusion) :
     KMCSolver(),
     Subject(),
-    m_heights_set(false),
+    m_surfaceDiffusion(surfaceDiffusion),
+    m_heightsSet(false),
     m_surfaceDim((( length == 1 ) || ( width == 1 ) ) ? 1 : 2),
     m_confiningSurfaceEvent(nullptr),
     m_diffusionEvent(nullptr),
@@ -147,9 +149,9 @@ void SOSSolver::setNNeighbors(const uint x, const uint y)
 
 void SOSSolver::setHeight(const uint x, const uint y, const int value, const bool iteratively)
 {
-    if (!m_heights_set)
+    if (!m_heightsSet)
     {
-        m_heights_set = true;
+        m_heightsSet = true;
     }
 
     if (!iteratively)
@@ -1127,7 +1129,7 @@ void SOSSolver::execute()
 
 void SOSSolver::initialize()
 {
-    if (!m_heights_set)
+    if (!m_heightsSet)
     {
         m_heights.zeros();
     }
