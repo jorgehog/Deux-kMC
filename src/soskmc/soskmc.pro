@@ -35,8 +35,9 @@ SOURCES += \
     particlenumberconservator.cpp \
     Events/diffusion/astarfirstpassage.cpp \
     Events/diffusion/radialfirstpassage.cpp \
-    Events/diffusion/pathfinder.cpp \
-    $$UTILS/MicroPather/micropather.cpp
+    Events/diffusion/astarcpp/pathfinder.cpp \
+    Events/diffusion/astarcpp/point3d.cpp \
+    Events/diffusion/astarcpp/searchnode.cpp
 
 
 HEADERS += \
@@ -72,8 +73,11 @@ HEADERS += \
     particlenumberconservator.h \
     Events/diffusion/astarfirstpassage.h \
     Events/diffusion/radialfirstpassage.h \
-    Events/diffusion/pathfinder.h \
-    $$UTILS/MicroPather/micropather.h
+    Events/diffusion/astarcpp/pathfinder.h \
+    Events/diffusion/astarcpp/point3d.h \
+    Events/diffusion/astarcpp/searchnode.h \
+    Events/diffusion/astarcpp/world.h \
+    Events/diffusion/astarcpp/minheap.h
 
 LIBS += -lkMC
 
