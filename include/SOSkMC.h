@@ -2,6 +2,8 @@
 
 #include "kMC.h"
 
+static_assert(sizeof(arma::sword) == 4, "64 bit armadillo is not supported.");
+
 #include "../src/soskmc/sossolver.h"
 
 #include "../src/soskmc/Events/confiningsurface/noconfinement.h"

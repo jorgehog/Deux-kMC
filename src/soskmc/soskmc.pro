@@ -36,7 +36,7 @@ SOURCES += \
     Events/diffusion/astarfirstpassage.cpp \
     Events/diffusion/radialfirstpassage.cpp \
     Events/diffusion/pathfinder.cpp \
-    $$UTILS/micropather/micropather.cpp
+    $$UTILS/MicroPather/micropather.cpp
 
 
 HEADERS += \
@@ -73,7 +73,7 @@ HEADERS += \
     Events/diffusion/astarfirstpassage.h \
     Events/diffusion/radialfirstpassage.h \
     Events/diffusion/pathfinder.h \
-    $$UTILS/micropather/micropather.h
+    $$UTILS/MicroPather/micropather.h
 
 LIBS += -lkMC
 

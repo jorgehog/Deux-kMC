@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstring>
-#include <micropather/micropather.h>
+#include <MicroPather/micropather.h>
 
 #include <armadillo>
 

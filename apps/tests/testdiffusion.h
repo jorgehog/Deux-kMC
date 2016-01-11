@@ -904,8 +904,8 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
     return;
 #endif
 
-    const uint L = 10;
-    const uint W = 10;
+    const uint L = 20;
+    const uint W = 20;
     const double alpha = 1.0;
     const double mu = 0;
     const double height = 10;
@@ -915,8 +915,6 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
-
-    rng.initialize(10);
 
     SetUp_yo();
 
@@ -933,7 +931,7 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
         }
     }
 
-    const uint nc = 10000;
+    const uint nc = 20000;
     const uint ns = 3;
 
     double measuredSurfaceConcentration = 0;
@@ -1032,9 +1030,9 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
 
     const double c = solver().concentration();
 
-    EXPECT_NEAR(0, fabs(measuredOver - c)/c , 1E-3);
-    EXPECT_NEAR(0, fabs(measuredConcentration - c)/c, 1E-3);
-    EXPECT_NEAR(0, fabs(c - measuredSurfaceConcentration)/c, 1E-3);
+    EXPECT_NEAR(0, fabs(measuredOver - c)/c , 1E-3) << measuredOver << " " << c << endl;
+    EXPECT_NEAR(0, fabs(measuredConcentration - c)/c, 1E-3) << measuredConcentration << " " << c << endl;
+    EXPECT_NEAR(0, fabs(c - measuredSurfaceConcentration)/c, 1E-3) << measuredSurfaceConcentration << " " << c << endl;
 
     cout << endl;
 
