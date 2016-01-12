@@ -916,8 +916,6 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
     LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
     m_diffusionEvent = diffusionEvent;
 
-    rng.initialize(10);
-
     SetUp_yo();
 
     primeSolver();
