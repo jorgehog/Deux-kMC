@@ -1,9 +1,10 @@
 #pragma once
 
-#include <cstring>
-#include <micropather/micropather.h>
-
 #include <armadillo>
+
+
+#include <cstring>
+#include <MicroPather/micropather.h>
 
 using micropather::Graph;
 using micropather::StateCost;

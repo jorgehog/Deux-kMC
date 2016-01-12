@@ -509,14 +509,14 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         {
             RadialFirstPassage *fpce = dynamic_cast<RadialFirstPassage*>(&solver.diffusionEvent());
             conc = new RadialFirstPassage(thermSolver, 0.01, fpce->depositionBoxHalfSize(), fpce->c());
-            nc = 1000;
+            nc = 10000;
         }
 
         else if (diffusionInt == 4)
         {
             AStarFirstPassage *fpce = dynamic_cast<AStarFirstPassage*>(&solver.diffusionEvent());
             conc = new AStarFirstPassage(thermSolver, 0.01, fpce->depositionBoxHalfSize(), fpce->c());
-            nc = 1000;
+            nc = 10000;
         }
 
         else

@@ -3,9 +3,12 @@
 #include "../../sossolver.h"
 #include "dissolutiondeposition.h"
 
-#include "pathfinder.h"
+#include "astarcpp/astarcpp.h"
 
 #include "Events/confiningsurface/confiningsurface.h"
+
+using namespace Tests;
+
 
 AStarFirstPassage::AStarFirstPassage(SOSSolver &solver,
                                      const double maxdt,
@@ -14,7 +17,8 @@ AStarFirstPassage::AStarFirstPassage(SOSSolver &solver,
     Diffusion(solver, "AStarFirstPassage"),
     FirstPassageContinuum(solver, maxdt, depositionBoxHalfSize, c),
     m_boxSize(depositionBoxHalfSize*2 + 1),
-    m_pathFinder(new PathFinder(m_boxSize, m_boxSize, m_boxSize)),
+    m_world(new World(m_boxSize, m_boxSize, m_boxSize)),
+    m_pathFinder(new PathFinder(*m_world)),
     m_pathFindingJazzes(m_boxSize*m_boxSize)
 {
     for (int i = 0; i < m_boxSize*m_boxSize; ++i)
@@ -26,6 +30,7 @@ AStarFirstPassage::AStarFirstPassage(SOSSolver &solver,
 
 AStarFirstPassage::~AStarFirstPassage()
 {
+    delete m_world;
     delete m_pathFinder;
 
     for (PathFindingJazz *pfj : m_pathFindingJazzes)
@@ -37,11 +42,11 @@ AStarFirstPassage::~AStarFirstPassage()
 
 void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 {
-    for (uint _x = 0; _x < solver().length(); ++_x)
+    for (uint x = 0; x < solver().length(); ++x)
     {
-        for (uint _y = 0; _y < solver().width(); ++_y)
+        for (uint y = 0; y < solver().width(); ++y)
         {
-            solver().surfaceReaction(_x, _y).setEscapeRate(0);
+            solver().surfaceReaction(x, y).setEscapeRate(0);
         }
     }
 
@@ -50,7 +55,6 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     int xTrans;
     int yTrans;
 
-    int x, y, z;
     double r2;
 
     SurfaceReaction *r;
@@ -72,19 +76,16 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
         writer.setSystemSize(2*l+1, 2*l+1, 2*l+1);
     }
 
-    std::vector<void *> path;
-    float cost;
-
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
         m_nPathFinds = 0;
-        m_pathFinder->reset();
+        m_world->ResetBlocks();
 
-        for (uint _x = 0; _x < solver().length(); ++_x)
+        for (uint x = 0; x < solver().length(); ++x)
         {
-            for (uint _y = 0; _y < solver().width(); ++_y)
+            for (uint y = 0; y < solver().width(); ++y)
             {
-                m_localRates(_x, _y, n) = 0;
+                m_localRates(x, y, n) = 0;
             }
         }
 
@@ -148,7 +149,7 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 
                     for (int zwIter = 0; zwIter <= zw; ++zwIter)
                     {
-                        m_pathFinder->markBlockedPosition(xw, yw, zwIter);
+                        m_world->MarkPosition(xw, yw, zwIter, true);
 
                         if (dump)
                         {
@@ -156,11 +157,11 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                         }
                     }
 
-                    //                    //we mark the site above as blocked as well since
-                    //                    //we do not allow particles to deposit along the way
-                    //                    //to the site. When pathfinding to site x,y,z will
-                    //                    //be executed, we will unblock the target site.
-                    //                    m_pathFinder->markBlockedPosition(xw, yw, zw+1);
+//                    //we mark the site above as blocked as well since
+//                    //we do not allow particles to deposit along the way
+//                    //to the site. When pathfinding to site x,y,z will
+//                    //be executed, we will unblock the target site.
+//                    m_pathFinder->markBlockedPosition(xw, yw, zw+1);
 
 
                     m_pathFindingJazzes[m_nPathFinds]->xTrans = xTrans;
@@ -184,11 +185,11 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             int &yw = pfj->yEnd;
             int &zw = pfj->zEnd;
 
-            int exitValue = m_pathFinder->solve(path, cost,
-                                                l, l, l,
-                                                xw, yw, zw);
+            r2 = 0;
+            const SearchNode *crumb = m_pathFinder->findPath(l, l, l, xw, yw, zw);
 
-            if (exitValue == micropather::MicroPather::NO_SOLUTION)
+            //no solution
+            if (crumb == nullptr)
             {
                 if (dump)
                 {
@@ -198,44 +199,33 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                 continue;
             }
 
-            if (dump)
-            {
-                for (void* state : path)
-                {
-                    m_pathFinder->getXYZ(x, y, z, state);
-                    writer << 3+i << x << y << z;
-                }
-            }
-
             //We skip the start position
             //and calculate distance between the first and second node
-            //explicitly using the double position starting point
-            //x0w y0w z0w instead
+            //explicitly
+            crumb = crumb->next;
 
-            if (exitValue == micropather::MicroPather::START_END_SAME)
+            const double r2FirstX = (crumb->x-x0w)*(crumb->x-x0w);
+            const double r2FirstY = (crumb->y-y0w)*(crumb->y-y0w);
+            const double r2FirstZ = (crumb->z-z0w)*(crumb->z-z0w);
+
+            r2 += r2FirstX + r2FirstY + r2FirstZ;
+
+            while (crumb->next != nullptr)
             {
-                r2 = dx*dx + dy*dy + dz*dz;
+                r2 += crumb->GetDistanceSquared(crumb->next->x, crumb->next->y, crumb->next->z);
+                if (dump)
+                {
+                    writer << 3+i << crumb->x << crumb->y << crumb->z;
+                }
+
+                crumb = crumb->next;
             }
-            else
+
+            if (dump)
             {
-                m_pathFinder->getXYZ(x, y, z, path.at(1));
-
-                const double r2FirstXp = (x-l)*(x-l);
-                const double r2FirstYp = (y-l)*(y-l);
-                const double r2FirstZp = (z-l)*(z-l);
-
-                const double rFirstP = sqrt(r2FirstXp + r2FirstYp + r2FirstZp);
-
-                const double r2FirstX = (x-x0w)*(x-x0w);
-                const double r2FirstY = (y-y0w)*(y-y0w);
-                const double r2FirstZ = (z-z0w)*(z-z0w);
-
-                const double rFirst = sqrt(r2FirstX + r2FirstY + r2FirstZ);
-
-                const double rSingle = cost - rFirstP + rFirst;
-
-                r2 = rSingle*rSingle;
+                writer << 3+i << crumb->x << crumb->y << crumb->z;
             }
+
 
             r = &solver().surfaceReaction(xTrans, yTrans);
             localRate = localRateOverD(r2);

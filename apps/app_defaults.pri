@@ -8,14 +8,14 @@ INCLUDEPATH  += $$TOP_PWD/include $$PWD
 LIBS += -lkMC \
         -lSOSkMC \
         -L$$UTILS_OUT/HDF5Wrapper/lib -lHDF5Wrapper \
-        -L/usr/local/hdf5/lib -lhdf5_cpp -lhdf5
+        -L/usr/local/hdf5/lib -lhdf5_cpp -lhdf5 \
+        -larmadillo
 
 DIRS = outfiles
 
 for(DIR, DIRS) {
      mkcommands += $$OUT_PWD/$$DIR
 }
-
 
 QMAKE_EXTRA_TARGETS += first
 
