@@ -48,6 +48,7 @@ int main(int argv, char** argc)
     const double gamma = log(1 + supersaturation);
 
     const string &initialSurfaceType = getSetting<string>(root, "initialSurfaceType");
+    const uint &surfaceThermCycles = getSetting<uint>(root, "surfaceThermCycles");
 
     const uint &surfaceDiffusionInt = getSetting<uint>(root, "surfaceDiffusion");
     const bool surfaceDiffusion = surfaceDiffusionInt == 1;
@@ -275,7 +276,7 @@ int main(int argv, char** argc)
         lattice.addEvent(autoCorrelation);
     }
 
-    initializeSurface(solver, initialSurfaceType, diffuseInt);
+    initializeSurface(solver, initialSurfaceType, diffuseInt, surfaceThermCycles);
 
     //---End explicit implementation
     //---Running simulation

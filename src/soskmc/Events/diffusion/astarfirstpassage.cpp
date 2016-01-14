@@ -19,12 +19,17 @@ AStarFirstPassage::AStarFirstPassage(SOSSolver &solver,
     m_boxSize(depositionBoxHalfSize*2 + 1),
     m_world(new World(m_boxSize, m_boxSize, m_boxSize)),
     m_pathFinder(new PathFinder(*m_world)),
-    m_pathFindingJazzes(m_boxSize*m_boxSize)
+    m_pathFindingJazzes(m_boxSize*m_boxSize),
+    m_rootsOfInts(3)
 {
     for (int i = 0; i < m_boxSize*m_boxSize; ++i)
     {
         m_pathFindingJazzes[i] = new PathFindingJazz;
     }
+
+    m_rootsOfInts(0) = 1;
+    m_rootsOfInts(1) = sqrt(2);
+    m_rootsOfInts(2) = sqrt(3);
 }
 
 
@@ -46,7 +51,7 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            solver().surfaceReaction(x, y).setEscapeRate(0);
+            solver().surfaceReaction(x, y).setDepositionRate(0);
         }
     }
 
@@ -55,9 +60,9 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     int xTrans;
     int yTrans;
 
-    double r2;
+    double r;
 
-    SurfaceReaction *r;
+    SurfaceReaction *reaction;
     double localRate;
 
     const int hmax = solver().heights().max();
@@ -185,7 +190,7 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             int &yw = pfj->yEnd;
             int &zw = pfj->zEnd;
 
-            r2 = 0;
+            r = 0;
             const SearchNode *crumb = m_pathFinder->findPath(l, l, l, xw, yw, zw);
 
             //no solution
@@ -208,11 +213,20 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             const double r2FirstY = (crumb->y-y0w)*(crumb->y-y0w);
             const double r2FirstZ = (crumb->z-z0w)*(crumb->z-z0w);
 
-            r2 += r2FirstX + r2FirstY + r2FirstZ;
+            r += sqrt(r2FirstX + r2FirstY + r2FirstZ);
 
             while (crumb->next != nullptr)
             {
-                r2 += crumb->GetDistanceSquared(crumb->next->x, crumb->next->y, crumb->next->z);
+                double pathR2 = crumb->GetDistanceSquared(crumb->next->x,
+                                                          crumb->next->y,
+                                                          crumb->next->z);
+                double pathR = m_rootsOfInts(pathR2 - 1);
+
+                //so we don't calculate sqrt2 and sqrt3 over and over
+                r += pathR;
+
+                BADAssClose(pathR, sqrt(pathR2), 1E-10);
+
                 if (dump)
                 {
                     writer << 3+i << crumb->x << crumb->y << crumb->z;
@@ -227,10 +241,10 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             }
 
 
-            r = &solver().surfaceReaction(xTrans, yTrans);
-            localRate = localRateOverD(r2);
+            reaction = &solver().surfaceReaction(xTrans, yTrans);
+            localRate = localRateOverD(r*r);
             m_localRates(xTrans, yTrans, n) = localRate;
-            r->setEscapeRate(r->depositionRate() + localRate*D);
+            reaction->setDepositionRate(reaction->depositionRate() + localRate*D);
         }
 
         if (dump)

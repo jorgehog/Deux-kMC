@@ -36,6 +36,7 @@ private:
     vector<PathFindingJazz*> m_pathFindingJazzes;
     uint m_nPathFinds;
 
+    vec m_rootsOfInts;
 
     // Event interface
 public:

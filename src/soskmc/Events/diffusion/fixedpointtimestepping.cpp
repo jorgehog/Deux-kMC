@@ -171,7 +171,7 @@ void FixedPointTimeStepping::notifyObserver(const Subjects &subject)
         for (uint _y = 0; _y < solver().width(); ++_y)
         {
             r = &m_mutexSolver.surfaceReaction(_x, _y);
-            r->setEscapeRate(r->calculateDepositionRate());
+            r->setDepositionRate(r->calculateDepositionRate());
         }
     }
 }

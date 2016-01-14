@@ -36,7 +36,7 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     {
         for (uint y = 0; y < solver().width(); ++y)
         {
-            solver().surfaceReaction(x, y).setEscapeRate(0);
+            solver().surfaceReaction(x, y).setDepositionRate(0);
         }
     }
 
@@ -100,7 +100,7 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                     r = &solver().surfaceReaction(xTrans, yTrans);
                     localRate = FirstPassageContinuum::localRateOverD(r2);
                     m_localRates(xTrans, yTrans, n) = localRate;
-                    r->setEscapeRate(r->depositionRate() + localRate*D);
+                    r->setDepositionRate(r->depositionRate() + localRate*D);
                 }
             }
         }
