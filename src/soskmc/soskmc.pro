@@ -37,7 +37,9 @@ SOURCES += \
     Events/diffusion/radialfirstpassage.cpp \
     Events/diffusion/astarcpp/pathfinder.cpp \
     Events/diffusion/astarcpp/point3d.cpp \
-    Events/diffusion/astarcpp/searchnode.cpp
+    Events/diffusion/astarcpp/searchnode.cpp \
+    localpotential.cpp \
+    Events/confiningsurface/rdlpotential.cpp
 
 
 HEADERS += \
@@ -77,7 +79,9 @@ HEADERS += \
     Events/diffusion/astarcpp/point3d.h \
     Events/diffusion/astarcpp/searchnode.h \
     Events/diffusion/astarcpp/world.h \
-    Events/diffusion/astarcpp/minheap.h
+    Events/diffusion/astarcpp/minheap.h \
+    localpotential.h \
+    Events/confiningsurface/rdlpotential.h
 
 LIBS += -lkMC
 

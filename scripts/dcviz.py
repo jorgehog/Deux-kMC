@@ -2431,6 +2431,12 @@ class LatticediffSpeeds(DCVizPlotter):
         all_conc = self.get_family_member_data(data, "concentrations")
         lengths = self.get_family_member_data(data, "lengths")
 
+        # n = all_heights.shape[1]
+        #
+        # all_heights = all_heights[:n/3]
+        # all_times = all_times[:n/3]
+        # all_conc = all_conc[:n/3]
+
         all_heights = self.reshape(all_heights)
         all_times = self.reshape(all_times)
         all_conc = self.reshape(all_conc)

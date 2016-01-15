@@ -13,6 +13,7 @@ ConfiningSurface::ConfiningSurface(SOSSolver &solver,
     ignis::LatticeEvent(type, unit, hasOutput, storeValue),
     Observer(),
     Subject(),
+    m_ccc(new CurrentConfinementChange()),
     m_height(0),
     m_solver(solver)
 {
@@ -21,12 +22,12 @@ ConfiningSurface::ConfiningSurface(SOSSolver &solver,
 
 ConfiningSurface::~ConfiningSurface()
 {
-
+    delete m_ccc;
 }
 
 void ConfiningSurface::setHeight(const double height)
 {
-    m_ccc.prevHeight = height;
+    m_ccc->prevHeight = height;
 
     m_height = height;
 

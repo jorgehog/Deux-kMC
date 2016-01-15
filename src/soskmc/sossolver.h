@@ -19,6 +19,7 @@ class SurfaceReaction;
 class ConcentrationBoundaryReaction;
 class ConfiningSurface;
 class Diffusion;
+class LocalPotential;
 
 enum class ChangeTypes
 {
@@ -305,6 +306,16 @@ public:
         return m_surfaceDiffusion;
     }
 
+    void addLocalPotential(const LocalPotential *localPotential)
+    {
+        m_localPotentials.push_back(localPotential);
+    }
+
+    const vector<const LocalPotential*> &localPotentials() const
+    {
+        return m_localPotentials;
+    }
+
 private:
 
     const bool m_surfaceDiffusion;
@@ -338,6 +349,8 @@ private:
     vector<ConcentrationBoundaryReaction*> m_concentrationBoundaryReactions;
 
     set_type m_changedSurfaceSites;
+
+    vector<const LocalPotential*> m_localPotentials;
 
     // Event interface
 public:
