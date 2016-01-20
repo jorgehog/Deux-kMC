@@ -1,14 +1,15 @@
 #include "extraneighbor.h"
 
 ExtraNeighbor::ExtraNeighbor(SOSSolver &solver) :
-    LocalPotential(solver),
-    m_potentialValues(solver.length(), solver.width(), fill::zeros)
+    LocalCachedPotential(solver)
 {
 
 }
 
 double ExtraNeighbor::energyFunction(const double dh) const
 {
+    BADAss(dh, >=, 1);
+
     if (dh > 2)
     {
         return 0;
@@ -16,29 +17,8 @@ double ExtraNeighbor::energyFunction(const double dh) const
 
     else
     {
-        return 5*(2-dh);
-    }
-}
-
-double ExtraNeighbor::energyFunction(const uint x, const uint y) const
-{
-    const double &h = solver().confiningSurfaceEvent().height();
-    const int &hi = solver().height(x, y);
-
-    return energyFunction(h - hi);
-}
-
-void ExtraNeighbor::initializeObserver(const Subjects &subject)
-{
-    if (subject == Subjects::SOLVER)
-    {
-        for (uint x = 0; x < solver().length(); ++x)
-        {
-            for (uint y = 0; y < solver().width(); ++y)
-            {
-                m_potentialValues(x, y) = energyFunction(x, y);
-            }
-        }
+        const double dh2 = dh*dh;
+        return m_scaling*(1/(dh2*dh2*dh2) - m_shift);
     }
 }
 
@@ -65,7 +45,7 @@ void ExtraNeighbor::notifyObserver(const Subjects &subject)
             else
             {
                 BADAssEqual(m_potentialValues(x, y), 0);
-                m_potentialValues(x, y) = energyFunction(x, y);
+                m_potentialValues(x, y) = potentialFunction(x, y);
                 r.setEscapeRate(r.escapeRate() + m_potentialValues(x, y));
             }
         }
@@ -86,26 +66,19 @@ void ExtraNeighbor::notifyObserver(const Subjects &subject)
                 SurfaceReaction &r = solver().surfaceReaction(x, y);
                 const double prevRate = m_potentialValues(x, y);
 
-                m_potentialValues(x, y) = energyFunction(x, y);
+                m_potentialValues(x, y) = potentialFunction(x, y);
 
                 r.setEscapeRate(r.escapeRate() - prevRate + m_potentialValues(x, y));
             }
         }
     }
 
-#ifndef NDEBUG
-    for (uint x = 0; x < solver().length(); ++x)
-    {
-        for (uint y = 0; y < solver().width(); ++y)
-        {
-            BADAssClose(m_potentialValues(x, y), energyFunction(x, y), 1E-10);
-        }
-    }
-#endif
-
 }
 
-double ExtraNeighbor::energy(const uint x, const uint y) const
+double ExtraNeighbor::potentialFunction(const uint x, const uint y) const
 {
-    return m_potentialValues(x, y);
+    const double &h = solver().confiningSurfaceEvent().height();
+    const int &hi = solver().height(x, y);
+
+    return energyFunction(h - hi);
 }

@@ -3,8 +3,6 @@
 #include "rdlsurface.h"
 
 
-
-
 RDLPotential::RDLPotential(SOSSolver &solver, RDLSurface &surface) :
     LocalPotential(solver),
     m_surface(surface)
@@ -12,7 +10,7 @@ RDLPotential::RDLPotential(SOSSolver &solver, RDLSurface &surface) :
 
 }
 
-double RDLPotential::energy(const uint x, const uint y) const
+double RDLPotential::potential(const uint x, const uint y) const
 {
     return m_surface.RDLEnergy(x, y);
 }

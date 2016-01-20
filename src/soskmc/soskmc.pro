@@ -39,7 +39,8 @@ SOURCES += \
     Events/diffusion/astarcpp/point3d.cpp \
     Events/diffusion/astarcpp/searchnode.cpp \
     localpotential.cpp \
-    Events/confiningsurface/rdlpotential.cpp
+    Events/confiningsurface/rdlpotential.cpp \
+    localcachedpotential.cpp
 
 
 HEADERS += \
@@ -81,7 +82,8 @@ HEADERS += \
     Events/diffusion/astarcpp/world.h \
     Events/diffusion/astarcpp/minheap.h \
     localpotential.h \
-    Events/confiningsurface/rdlpotential.h
+    Events/confiningsurface/rdlpotential.h \
+    localcachedpotential.h
 
 LIBS += -lkMC
 

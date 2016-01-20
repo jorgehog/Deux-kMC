@@ -28,7 +28,7 @@ double SurfaceReaction::calculateEscapeRate() const
 
     for (const LocalPotential *localPotential : solver().localPotentials())
     {
-        E += localPotential->energy(x(), y());
+        E += localPotential->potential(x(), y());
     }
 
     double gammaTerm;

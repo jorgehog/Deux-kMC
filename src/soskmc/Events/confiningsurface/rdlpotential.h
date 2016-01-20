@@ -15,5 +15,5 @@ private:
 
     // LocalPotential interface
 public:
-    double energy(const uint x, const uint y) const;
+    double potential(const uint x, const uint y) const;
 };

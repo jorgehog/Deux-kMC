@@ -1,7 +1,9 @@
 include(../app_defaults.pri)
 
 SOURCES += main.cpp \
-    extraneighbor.cpp
+    extraneighbor.cpp \
+    rdlrepulsion.cpp
 
 HEADERS += \
-    extraneighbor.h
+    extraneighbor.h \
+    rdlrepulsion.h

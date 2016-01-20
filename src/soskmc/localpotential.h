@@ -11,7 +11,7 @@ public:
     //this does not add the potential to the solver.
     LocalPotential(SOSSolver &solver);
 
-    virtual double energy(const uint x, const uint y) const = 0;
+    virtual double potential(const uint x, const uint y) const = 0;
 
 protected:
 

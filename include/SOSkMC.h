@@ -35,3 +35,4 @@ static_assert(sizeof(arma::sword) == 4, "64 bit armadillo is not supported.");
 
 #include "../src/soskmc/particlenumberconservator.h"
 #include "../src/soskmc/localpotential.h"
+#include "../src/soskmc/localcachedpotential.h"

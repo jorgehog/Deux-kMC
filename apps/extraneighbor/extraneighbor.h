@@ -2,24 +2,22 @@
 
 #include <SOSkMC.h>
 
-class ExtraNeighbor : public LocalPotential, public Observer<Subjects>
+class ExtraNeighbor : public LocalCachedPotential
 {
 public:
     ExtraNeighbor(SOSSolver &solver);
 
     double energyFunction(const double dh) const;
-    double energyFunction(const uint x, const uint y) const;
 
-private:
-    mat m_potentialValues;
+    static constexpr double m_shift = pow(2, -6.);
+    static constexpr double m_scaling = 1./(1 - m_shift);
 
     // Observer interface
 public:
-    void initializeObserver(const Subjects &subject);
     void notifyObserver(const Subjects &subject);
 
-    // LocalPotential interface
+    // LocalCachedPotential interface
 public:
-    double energy(const uint x, const uint y) const;
+    double potentialFunction(const uint x, const uint y) const;
 };
 
