@@ -974,7 +974,7 @@ void SOSSolver::setGamma(const double gamma)
                 for (uint y = 0; y < width(); ++y)
                 {
                     SurfaceReaction &_reaction = surfaceReaction(x, y);
-                    _reaction.setDissolutionRate(_reaction.escapeRate()*expFac);
+                    _reaction.setEscapeRate(_reaction.escapeRate()*expFac);
                 }
             }
         }

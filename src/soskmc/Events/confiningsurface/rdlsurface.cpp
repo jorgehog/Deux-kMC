@@ -106,7 +106,7 @@ void RDLSurface::updateRatesFor(SurfaceReaction &reaction)
     //Vector is set up in initialize based on virtual reaction function isPressureAffected().
 
     double prevDiffRate = reaction.escapeRate();
-    reaction.setDissolutionRate(prevDiffRate*rateChange);
+    reaction.setEscapeRate(prevDiffRate*rateChange);
 
     m_RDLEnergy(x, y) *= m_expFac;
 

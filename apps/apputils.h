@@ -349,7 +349,9 @@ void setBoundariesFromIDs(SOSSolver *solver,
                            {bottomBoundary, topBoundary}});
 }
 
-void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt = 0)
+void initializeSurface(SOSSolver &solver, const string type,
+                       const uint diffusionInt = 0,
+                       const uint surfaceThermCycles = 10000)
 {
     int maxSpan;
 
@@ -484,7 +486,6 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
         SOSSolver thermSolver(L, W, solver.alpha(), solver.gamma(), solver.surfaceDiffusion());
         Diffusion *conc;
         ConfiningSurface *conf;
-        uint nc;
         ParticleNumberConservator pnc(thermSolver);
 
         if (solver.confiningSurfaceEvent().hasSurface())
@@ -497,32 +498,28 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
             conf = new NoConfinement(thermSolver);
         }
 
-        bool onlattice = diffusionInt == 2 || diffusionInt == 7;
+        bool onlattice = diffusionInt == 2;
 
         if (onlattice)
         {
             conc = new LatticeDiffusion(thermSolver);
-            nc = 100000;
         }
 
         else if (diffusionInt == 3)
         {
             RadialFirstPassage *fpce = dynamic_cast<RadialFirstPassage*>(&solver.diffusionEvent());
-            conc = new RadialFirstPassage(thermSolver, 0.01, fpce->depositionBoxHalfSize(), fpce->c());
-            nc = 10000;
+            conc = new RadialFirstPassage(thermSolver, fpce->maxdt(), fpce->depositionBoxHalfSize(), fpce->c());
         }
 
         else if (diffusionInt == 4)
         {
             AStarFirstPassage *fpce = dynamic_cast<AStarFirstPassage*>(&solver.diffusionEvent());
-            conc = new AStarFirstPassage(thermSolver, 0.01, fpce->depositionBoxHalfSize(), fpce->c());
-            nc = 10000;
+            conc = new AStarFirstPassage(thermSolver, fpce->maxdt(), fpce->depositionBoxHalfSize(), fpce->c());
         }
 
         else
         {
             conc = new ConstantConcentration(thermSolver);
-            nc = 10000;
         }
 
         if (conc->hasDiscreteParticles())
@@ -538,11 +535,11 @@ void initializeSurface(SOSSolver &solver, const string type, uint diffusionInt =
 
         initializeSurface(thermSolver, "random");
 
-        lattice.enableOutput(true, nc/10);
+        lattice.enableOutput(true, surfaceThermCycles/10);
         lattice.enableProgressReport();
         lattice.enableEventValueStorage(false, false);
 
-        lattice.eventLoop(nc);
+        lattice.eventLoop(surfaceThermCycles);
 
         if (solver.confiningSurfaceEvent().hasSurface())
         {

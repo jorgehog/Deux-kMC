@@ -17,13 +17,13 @@ public:
         return m_escapeRate;
     }
 
-    void setDissolutionRate(const double newRate)
+    void setEscapeRate(const double newRate)
     {
         m_escapeRate = newRate;
         changeRate(m_escapeRate + m_depositionRate);
     }
 
-    void setEscapeRate(const double newRate)
+    void setDepositionRate(const double newRate)
     {
         m_depositionRate = newRate;
         changeRate(m_escapeRate + m_depositionRate);
