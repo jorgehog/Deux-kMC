@@ -213,6 +213,8 @@ double SOSSolver::volume() const
 
 double SOSSolver::confinementEnergy(const uint x, const uint y) const
 {
+    BADAssBreak("Deprecated.");
+
     if (!m_confiningSurfaceEvent->hasStarted())
     {
         return 0;

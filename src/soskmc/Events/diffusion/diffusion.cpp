@@ -35,6 +35,7 @@ void Diffusion::dump(const uint frameNumber, const string path) const
     }
 
     const int zMin = solver().heights().min();
+    int cutfactor = 1000;
 
     lammpswriter surfacewriter(5, "surfaces", path);
     surfacewriter.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
@@ -53,7 +54,7 @@ void Diffusion::dump(const uint frameNumber, const string path) const
                               << 0;
             }
 
-            int cut = solver().height(x, y) - 11;
+            int cut = solver().height(x, y) - cutfactor;
 
             int start = cut > zMin ? cut : zMin;
 

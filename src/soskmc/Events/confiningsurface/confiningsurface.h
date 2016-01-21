@@ -50,12 +50,12 @@ public:
 
     const CurrentConfinementChange &currentConfinementChange() const
     {
-        return m_ccc;
+        return *m_ccc;
     }
 
 private:
 
-    CurrentConfinementChange m_ccc;
+    CurrentConfinementChange *m_ccc;
 
     double m_height;
 

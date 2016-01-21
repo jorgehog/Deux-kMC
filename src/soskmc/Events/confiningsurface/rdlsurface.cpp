@@ -115,12 +115,12 @@ void RDLSurface::updateRatesFor(SurfaceReaction &reaction)
         BADAssSimpleDump(cycle(), x, y, rateChange, RDLEnergy(x, y), m_expFac, m_heightChange);
     });
 
-    BADAssClose(reaction.escapeRate(), reaction.calculateEscapeRate(), 1E-5, "incorrect rate update", [&] ()
-    {
-        double lp = RDLEnergy(x, y);
-        int h = solver().height(x, y);
-        BADAssSimpleDump(cycle(), x, y, rateChange, prevDiffRate, lp, m_expFac, m_heightChange, h, height());
-    });
+//    BADAssClose(reaction.escapeRate(), reaction.calculateEscapeRate(), 1E-5, "incorrect rate update", [&] ()
+//    {
+//        double lp = RDLEnergy(x, y);
+//        int h = solver().height(x, y);
+//        BADAssSimpleDump(cycle(), x, y, rateChange, prevDiffRate, lp, m_expFac, m_heightChange, h, height());
+//    });
 
 }
 
@@ -230,7 +230,6 @@ void RDLSurface::initialize()
 
 void RDLSurface::reset()
 {
-
     _validateStoredEnergies();
 
     BADAssClose(RDLEnergySum(), -m_E0, 1E-3);
@@ -264,23 +263,37 @@ void RDLSurface::notifyObserver(const Subjects &subject)
     const uint &y = csc.y;
 
     m_ratioPartialSums(x, y) = partialThetaRatio(x, y);
-
+    m_RDLEnergy(x, y) = evaluateRDLEnergy(x, y);
 
     if (csc.type == ChangeTypes::Double)
     {
         const uint &x1 = csc.x1;
         const uint &y1 = csc.y1;
 
-        m_ratioPartialSums(x1, y1) = partialThetaRatio(x, y);
+        m_ratioPartialSums(x1, y1) = partialThetaRatio(x1, y1);
+        m_RDLEnergy(x1, y1) = evaluateRDLEnergy(x1, y1);
     }
 
     findNewHeight();
 
-    for (uint x = 0; x < solver().length(); ++x)
+    for (uint _x = 0; _x < solver().length(); ++_x)
     {
-        for (uint y = 0; y < solver().width(); ++y)
+        for (uint _y = 0; _y < solver().width(); ++_y)
         {
-            SurfaceReaction &reaction = mutexSolver().surfaceReaction(x, y);
+            if (_x == x && y == _y)
+            {
+                continue;
+            }
+
+            else if (csc.type == ChangeTypes::Double)
+            {
+                if (_x == csc.x1 && _y == csc.y1)
+                {
+                    continue;
+                }
+            }
+
+            SurfaceReaction &reaction = mutexSolver().surfaceReaction(_x, _y);
             updateRatesFor(reaction);
         }
     }

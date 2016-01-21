@@ -12,6 +12,8 @@ static_assert(sizeof(arma::sword) == 4, "64 bit armadillo is not supported.");
 #include "../src/soskmc/Events/confiningsurface/rdlsurface.h"
 #include "../src/soskmc/Events/confiningsurface/fixedrdlsurface.h"
 
+#include "../src/soskmc/Events/confiningsurface/rdlpotential.h"
+
 #include "../src/soskmc/Events/diffusion/constantconcentration.h"
 #include "../src/soskmc/Events/diffusion/latticediffusion.h"
 #include "../src/soskmc/Events/diffusion/fixedpointtimestepping.h"
@@ -32,3 +34,5 @@ static_assert(sizeof(arma::sword) == 4, "64 bit armadillo is not supported.");
 #include "../src/soskmc/dissolutiondeposition.h"
 
 #include "../src/soskmc/particlenumberconservator.h"
+#include "../src/soskmc/localpotential.h"
+#include "../src/soskmc/localcachedpotential.h"

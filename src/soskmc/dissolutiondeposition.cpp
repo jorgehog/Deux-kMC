@@ -1,4 +1,3 @@
-
 #include "dissolutiondeposition.h"
 
 #include "sossolver.h"
@@ -6,6 +5,9 @@
 #include "Events/diffusion/diffusion.h"
 
 #include "Events/confiningsurface/confiningsurface.h"
+
+#include "localpotential.h"
+
 
 double SurfaceReaction::calculateEscapeRate() const
 {
@@ -21,10 +23,13 @@ double SurfaceReaction::calculateEscapeRate() const
         }
     }
 
-    const double &Ew = solver().confinementEnergy(x(), y());
+    //we always have the neighbor interaction
+    double E = nNeighbors();
 
-    //this ensures that the expression goes as exp(-alpha*(n - 2 or 3))
-    const double E = (int)nNeighbors() + Ew;
+    for (const LocalPotential *localPotential : solver().localPotentials())
+    {
+        E += localPotential->potential(x(), y());
+    }
 
     double gammaTerm;
     double shift;
