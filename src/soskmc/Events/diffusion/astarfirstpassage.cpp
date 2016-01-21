@@ -162,11 +162,11 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                         }
                     }
 
-//                    //we mark the site above as blocked as well since
-//                    //we do not allow particles to deposit along the way
-//                    //to the site. When pathfinding to site x,y,z will
-//                    //be executed, we will unblock the target site.
-//                    m_pathFinder->markBlockedPosition(xw, yw, zw+1);
+                    //we mark the site above as blocked as well since
+                    //we do not allow particles to deposit along the way
+                    //to the site. When pathfinding to site x,y,z will
+                    //be executed, we will unblock the target site.
+                    m_world->MarkPosition(xw, yw, zw+1, true);
 
 
                     m_pathFindingJazzes[m_nPathFinds]->xTrans = xTrans;
@@ -186,12 +186,18 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             xTrans = pfj->xTrans;
             yTrans = pfj->yTrans;
 
-            int &xw = pfj->xEnd;
-            int &yw = pfj->yEnd;
-            int &zw = pfj->zEnd;
+            int &xEnd = pfj->xEnd;
+            int &yEnd = pfj->yEnd;
+            int &zEnd = pfj->zEnd;
+
+            //makes the current end point the only end point accessible.
+            m_world->MarkPosition(xEnd, yEnd, zEnd, false);
 
             r = 0;
-            const SearchNode *crumb = m_pathFinder->findPath(l, l, l, xw, yw, zw);
+            const SearchNode *crumb = m_pathFinder->findPath(l, l, l, xEnd, yEnd, zEnd);
+
+            //makes the current end point inaccessible for the next path.
+            m_world->MarkPosition(xEnd, yEnd, zEnd, true);
 
             //no solution
             if (crumb == nullptr)
@@ -259,6 +265,7 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             surf.finalize();
 
         }
+
     }
 }
 
