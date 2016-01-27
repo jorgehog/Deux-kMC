@@ -62,9 +62,9 @@ class SteadyState(DCVizPlotter):
         start = 1
         transform = False
 
-        rmslabel=r"\sigma(h)"
+        rmslabel=r"\sigma(\mathbf{h})"
         sslabel=r"\sigma(s)"
-        whlabel=r"\langle \delta h_l \rangle"
+        whlabel=r"\langle d_i \rangle"
 
         sfigs = [self.subfigure1, self.subfigure2, self.subfigure3, self.subfigure4]
 
@@ -206,7 +206,7 @@ class SteadyState(DCVizPlotter):
             slopes.append(slope)
 
 
-        self.dh_fig.set_xlabel(r"$t\, [\nu]$")
+        self.dh_fig.set_xlabel(r"$t\, [1/\nu]$")
 
         self.srms_fig.axes.set_xscale('log')
         self.rms_fig.axes.set_xscale('log')
@@ -1843,7 +1843,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
                                   rotation=rotation)
 
         self.gammaslopes.set_xlabel(r"$\alpha = E_b/kT$")
-        self.gammaslopes.set_ylabel(r"$\gamma_\mathrm{eq} = \ln c_\mathrm{eq}/c_0$")
+        self.gammaslopes.set_ylabel(r"$\gamma_\mathrm{eq} = \log c_\mathrm{eq}/c_0$")
 
         self.E0slopes.errorbar(E0s, slopes,
                                yerr=errors,
