@@ -1997,7 +1997,7 @@ class SOS_pressure_sizes(DCVizPlotter):
         self.subfigure3.axes.xaxis.set_minor_formatter(FuncFormatter(self.axisFormat))
         self.subfigure3.set_ylabel(r"$\alpha^2\sigma(s_{\uparrow\downarrow})^2/L^2$")
         ax3 = self.subfigure3.axes.twinx()
-        ax3.set_ylabel(r"$C_V/k$", labelpad=15)
+        ax3.set_ylabel(r"$C_V/kL^2$", labelpad=15)
         ax3.yaxis.set_ticks([])
         ax3.yaxis.set_ticklabels([])
         # self.subfigure3.legend(numpoints=1, handlelength=1, loc="upper right")
