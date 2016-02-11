@@ -555,22 +555,24 @@ void LatticeDiffusion::execute()
 
 void LatticeDiffusion::initializeObserver(const Subjects &subject)
 {
-    BADAss(subject, ==, Subjects::SOLVER, "Solver should be the only subject initializing diffusion.");
-
-    (void) subject;
-
-    //already initialized particles
-    if (numberOfDiffusionReactions() != 0)
+    //when subject is SOLVER it is not certain that confining surface is initialized.
+    //Now we know that it is.
+    if (subject == Subjects::CONFININGSURFACE)
     {
-        return;
+
+        //already initialized particles
+        if (numberOfDiffusionReactions() != 0)
+        {
+            return;
+        }
+
+        //subtract area from volume since we do not initiate surface particles
+        //add a random number such that if we get 3.3 particles, there is a 0.3 chance to get 3 + 1.
+        const uint nLatticeParticles = solver().freeVolume()*solver().concentration() + rng.uniform();
+
+        addRandomParticles(nLatticeParticles);
+
     }
-
-    //subtract area from volume since we do not initiate surface particles
-    //add a random number such that if we get 3.3 particles, there is a 0.3 chance to get 3 + 1.
-    const uint nLatticeParticles = solver().freeVolume()*solver().concentration() + rng.uniform();
-
-    addRandomParticles(nLatticeParticles);
-
 }
 
 

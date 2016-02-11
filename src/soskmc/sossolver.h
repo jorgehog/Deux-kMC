@@ -158,8 +158,6 @@ public:
         return volume() - area();
     }
 
-    double confinementEnergy(const uint x, const uint y) const;
-
     uint calculateNNeighbors(const uint x, const uint y, const int h) const;
 
     uint calculateNNeighbors(const uint x, const uint y) const
@@ -286,8 +284,6 @@ public:
     {
         return m_averageHeight;
     }
-
-    double calculateVolumeCorrection() const;
 
     void setZeroConcentration();
 

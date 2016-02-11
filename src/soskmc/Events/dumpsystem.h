@@ -20,10 +20,13 @@ private:
 
     const string m_path;
 
+    void dump(const uint n);
+
     // Event interface
 public:
     void initialize();
     void execute();
+    void reset();
 };
 
 }

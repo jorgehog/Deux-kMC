@@ -25,7 +25,7 @@ class Subject
 public:
     using ObserverType = Observer<IDType>;
 
-    Subject() {}
+    Subject() : m_initialized(false) {}
 
     virtual ~Subject() {}
 
@@ -46,10 +46,17 @@ public:
         {
             observer->initializeObserver(ID);
         }
+
+        m_initialized = true;
     }
 
     void notifyObservers(const IDType &ID)
     {
+        if (!m_initialized)
+        {
+            return;
+        }
+
         for (ObserverType *observer : m_observers)
         {
             observer->notifyObserver(ID);
@@ -58,6 +65,7 @@ public:
 
 private:
     std::vector<ObserverType* > m_observers;
+    bool m_initialized;
 
 };
 

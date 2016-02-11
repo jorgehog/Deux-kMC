@@ -211,18 +211,6 @@ double SOSSolver::volume() const
     return (m_confiningSurfaceEvent->height() - 1)*area() - arma::accu(m_heights);
 }
 
-double SOSSolver::confinementEnergy(const uint x, const uint y) const
-{
-    BADAssBreak("Deprecated.");
-
-    if (!m_confiningSurfaceEvent->hasStarted())
-    {
-        return 0;
-    }
-
-    return m_confiningSurfaceEvent->confinementEnergy(x, y);
-}
-
 uint SOSSolver::calculateNNeighbors(const uint x, const uint y, const int h) const
 {    
     bool connectedLeft, connectedRight,
@@ -1076,37 +1064,6 @@ double SOSSolver::absSquareDistance(const uint x, const uint y, const int z,
     return dx*dx + dy*dy + dz*dz;
 }
 
-double SOSSolver::calculateVolumeCorrection() const
-{
-    return 0;
-
-    //    //The volume at which we can place particles
-    //    //is this correction smaller than the volume of the box
-    //    //since particles have a half lattice unit size.
-
-    //    double correction = 0;
-
-    //    const double &h = confiningSurfaceEvent().height();
-
-    //    for (uint x = 1; x < m_length - 1; ++x)
-    //    {
-    //        correction += 0.5*((h - height(x, 0) - 2) + (h - height(x, m_width-1) - 2));
-    //    }
-
-    //    for (uint y = 1; y < m_width - 1; ++y)
-    //    {
-    //        correction += 0.5*((h - height(0, y) - 2) + (h - height(m_length-1, y) - 2));
-    //    }
-
-    //    correction += 3./4*((h - height(0, 0) - 2) +
-    //                        (h - height(0, m_width - 1) - 2) +
-    //                        (h - height(m_length - 1, 0) - 2) +
-    //                        (h - height(m_length - 1, m_width - 1) - 2));
-
-    //    return correction;
-
-}
-
 void SOSSolver::setZeroConcentration()
 {
     m_concentrationIsZero = true;
@@ -1146,7 +1103,18 @@ void SOSSolver::initialize()
         }
     }
 
+    //initialize surface on top of the current surface as default.
+    if (confiningSurfaceEvent().hasSurface())
+    {
+        const int maxHeight = m_heights.max();
+        if (confiningSurfaceEvent().height() == 0 && maxHeight > 0)
+        {
+            confiningSurfaceEvent().setHeight(maxHeight + 2);
+        }
+    }
+
     initializeObservers(Subjects::SOLVER);
+    confiningSurfaceEvent().initializeObservers(Subjects::CONFININGSURFACE);
 
     KMCSolver::initialize();
 
@@ -1172,8 +1140,6 @@ double SOSSolver::timeUnit() const
 void SOSSolver::initializeObserver(const Subjects &subject)
 {
     (void) subject;
-
-    BADAssBreak("This should never happen.");
 }
 
 void SOSSolver::notifyObserver(const Subjects &subject)
@@ -1181,15 +1147,13 @@ void SOSSolver::notifyObserver(const Subjects &subject)
     (void) subject;
 
     const double &h = confiningSurfaceEvent().height();
-    const int surfaceContactHeight = h - 1;
-
-    //very slow... uvec xy = arma::find(m_heights == surfaceContactHeight);
+    const int surfaceContactHeight = floor(h) - 1;
 
     for (uint x = 0; x < length(); ++x)
     {
         for (uint y = 0; y < width(); ++y)
         {
-            if (height(x, y) == surfaceContactHeight)
+            if (height(x, y) == surfaceContactHeight || height(x, y) == surfaceContactHeight - 1)
             {
                 registerAffectedReaction(m_surfaceReactions(x, y));
             }

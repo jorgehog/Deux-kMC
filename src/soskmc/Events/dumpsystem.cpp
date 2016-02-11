@@ -26,18 +26,27 @@ uint DumpSystem::dumpInterval() const
     return m_dumpInterval;
 }
 
+void DumpSystem::dump(const uint n)
+{
+    solver().diffusionEvent().dump(n, m_path);
+    m_nDumps++;
+}
+
 void DumpSystem::initialize()
 {
     m_nDumps = 0;
+    dump(0);
 }
 
 void DumpSystem::execute()
 {
-    if (cycle() % dumpInterval() == 0)
-    {
-        solver().diffusionEvent().dump(cycle()/dumpInterval(), m_path);
-        m_nDumps++;
-    }
-
     setValue(m_nDumps);
+}
+
+void DumpSystem::reset()
+{
+    if ((cycle()+1) % dumpInterval() == 0)
+    {
+        dump((cycle()+1)/dumpInterval());
+    }
 }

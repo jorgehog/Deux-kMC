@@ -68,7 +68,7 @@ int main(int argv, char** argc)
     const uint &confinementInt = getSetting<uint>(root, "confinement");
 
     const double &confiningSurfaceHeight = getSetting<double>(root, "confiningSurfaceHeight");
-    const double &E0 = getSetting<double>(root, "E0dA")*L*W;
+    const double &Pl = getSetting<double>(root, "E0dA");
     const double &lD = getSetting<double>(root, "lD");
     const double &sigma0 = getSetting<double>(root, "sigma0");
 
@@ -127,6 +127,8 @@ int main(int argv, char** argc)
                                    topBoundaryID},
                          L, W, boundaryHeight, averageHeightDepth);
 
+    RDLPotential rdlPotential(solver, sigma0, lD);
+
     if (concentrationBoundary == 1)
     {
         solver.addConcentrationBoundary(0, Boundary::orientations::FIRST);
@@ -143,11 +145,14 @@ int main(int argv, char** argc)
     }
     else if (confinementInt == 3)
     {
-        confiningSurface = new FixedRDLSurface(solver, sigma0, lD, confiningSurfaceHeight);
+        cout << "DEPRECATED CONFINING SURFACE" << endl;
+        return 1;
+//        confiningSurface = new FixedRDLSurface(solver, sigma0, lD, confiningSurfaceHeight);
     }
     else if (confinementInt == 4)
     {
-        confiningSurface = new RDLSurface(solver, E0, sigma0, lD);
+        confiningSurface = new RDLSurface(solver, rdlPotential, Pl);
+        solver.addLocalPotential(&rdlPotential);
     }
     else if (confinementInt == 5)
     {
@@ -351,7 +356,7 @@ int main(int argv, char** argc)
     simRoot["confiningSurfaceHeight"] = confiningSurfaceHeight;
     simRoot["sigma0"] = sigma0;
     simRoot["r0"] = lD;
-    simRoot["E0"] = E0;
+    simRoot["E0"] = Pl*L*W;
 
     simRoot["diffuse"] = diffuseInt;
     simRoot["maxdt"] = maxdt;

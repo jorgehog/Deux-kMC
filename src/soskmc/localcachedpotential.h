@@ -21,6 +21,11 @@ public:
 
     virtual double potentialFunction(const uint x, const uint y) const = 0;
 
+    const double &potentialValue(const uint x, const uint y) const
+    {
+        return m_potentialValues(x, y);
+    }
+
 protected:
 
     mat m_potentialValues;

@@ -27,7 +27,7 @@ ConfiningSurface::~ConfiningSurface()
 
 void ConfiningSurface::setHeight(const double height)
 {
-    m_ccc->prevHeight = height;
+    m_ccc->prevHeight = m_height;
 
     m_height = height;
 

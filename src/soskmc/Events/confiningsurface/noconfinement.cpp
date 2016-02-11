@@ -27,14 +27,6 @@ void NoConfinement::notifyObserver(const Subjects &subject)
     (void) subject;
 }
 
-double NoConfinement::confinementEnergy(const uint x, const uint y)
-{
-    (void) x;
-    (void) y;
-
-    return 0;
-}
-
 bool NoConfinement::acceptDiffusionMove(const double x0, const double y0, const double z0,
                                         const double x1, const double y1, const double z1) const
 {

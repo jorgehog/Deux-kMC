@@ -27,8 +27,6 @@ public:
 
     virtual bool hasSurface() const = 0;
 
-    virtual double confinementEnergy(const uint x, const uint y) = 0;
-
     virtual bool acceptDiffusionMove(const double x0, const double y0, const double z0,
                                      const double x1, const double y1, const double z1) const = 0;
 
@@ -63,7 +61,7 @@ private:
 
 protected:
 
-    SOSSolver &mutexSolver() const
+    SOSSolver &solver()
     {
         return m_solver;
     }

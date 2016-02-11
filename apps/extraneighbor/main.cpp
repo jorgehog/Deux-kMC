@@ -3,45 +3,46 @@
 #include "../apputils.h"
 
 #include "extraneighbor.h"
+#include "rdlextraneighborsurface.h"
 
 using ignis::Lattice;
 
 int main()
 {
-    const uint L = 256;
+    const uint L = 50;
     const uint W = 1;
 
     const double alpha = 1.0;
     const double supersaturation = 0.01;
+
+    const double ld = 4.0;
+    const double s0 = 1.0;
+    const double Pl = 0.1;
+
     const double gamma = log(1 + supersaturation);
 
     SOSSolver solver(L, W, alpha, gamma);
 
     setBoundariesFromIDs(&solver, {0,0,0,0}, L, W);
 
-    RDLSurface confiningSurface(solver, 0.01*L*W, 0.05, 10.0);
-    RDLPotential rdlpotential(solver, confiningSurface);
+    RDLPotential rdlpotential(solver, s0, ld);
     solver.addLocalPotential(&rdlpotential);
 
-    ConstantConcentration diffusionEvent(solver);
-
-    solver.setConfiningSurfaceEvent(confiningSurface);
-    solver.setDiffusionEvent(diffusionEvent);
-
-    const uint interval = 1000;
-    DumpSystem dumper(solver, interval);
-
-    ExtraNeighbor extraNeighbor(solver);
-
+    ExtraNeighbor extraNeighbor(solver, s0);
     solver.addLocalPotential(&extraNeighbor);
-    solver.registerObserver(&extraNeighbor);
+
+    RDLExtraNeighborSurface rdlSurface(solver, rdlpotential, extraNeighbor, Pl);
+    ConstantConcentration constantConcentration(solver);
+
+    const uint interval = 1;
+    DumpSystem dumper(solver, interval);
 
     Lattice lattice;
 
     lattice.addEvent(solver);
-    lattice.addEvent(confiningSurface);
-    lattice.addEvent(diffusionEvent);
-    lattice.addEvent(dumper);
+    lattice.addEvent(rdlSurface);
+    lattice.addEvent(constantConcentration);
+//    lattice.addEvent(dumper);
 
 #ifndef NDEBUG
     RateChecker checker(solver);
@@ -58,7 +59,9 @@ int main()
 
     initializeSurface(solver, "random");
 
-    lattice.eventLoop(10000000);
+    lattice.eventLoop(10000);
+
+    cout << rdlSurface.height() << endl;
 
     return 0;
 }

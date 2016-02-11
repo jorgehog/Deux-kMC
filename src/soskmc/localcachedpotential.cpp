@@ -18,14 +18,16 @@ double LocalCachedPotential::potential(const uint x, const uint y) const
 
 void LocalCachedPotential::initializeObserver(const Subjects &subject)
 {
-    if (subject == Subjects::SOLVER)
+
+    (void) subject;
+
+    //this will be called for every subject... not ideal, but fine since
+    //it is called only once per subject, unlike notify
+    for (uint x = 0; x < solver().length(); ++x)
     {
-        for (uint x = 0; x < solver().length(); ++x)
+        for (uint y = 0; y < solver().width(); ++y)
         {
-            for (uint y = 0; y < solver().width(); ++y)
-            {
-                m_potentialValues(x, y) = potentialFunction(x, y);
-            }
+            m_potentialValues(x, y) = potentialFunction(x, y);
         }
     }
 }

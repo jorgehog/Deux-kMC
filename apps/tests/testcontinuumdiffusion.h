@@ -200,8 +200,6 @@ TEST_F(CDiffTest, volume)
     const int zMin = solver().heights().min();
     const double zSpan = solver().confiningSurfaceEvent().height() - zMin;
 
-    const double correction = solver().calculateVolumeCorrection();
-
     for (uint n = 0; n < N; ++n)
     {
         const double x = rng.uniform()*m_L - 0.5;
@@ -220,11 +218,11 @@ TEST_F(CDiffTest, volume)
 
     const double soluteVolume = solver().freeVolume();
 
-    const double estimatedVolume = frac*fullBoxVolume + correction;
+    const double estimatedVolume = frac*fullBoxVolume;
 
     const double relErr = fabs(estimatedVolume - soluteVolume)/soluteVolume;
 
-    EXPECT_NEAR(soluteVolume, estimatedVolume, soluteVolume/100.) << correction << " " << soluteVolume << " " << frac*fullBoxVolume;
+    EXPECT_NEAR(soluteVolume, estimatedVolume, soluteVolume/100.) << soluteVolume << " " << frac*fullBoxVolume;
     EXPECT_NEAR(0, relErr, 1E-3);
 
     cout << "err: " << relErr << endl;

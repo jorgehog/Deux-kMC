@@ -18,8 +18,6 @@ public:
     {
         return false;
     }
-    double confinementEnergy(const uint x,
-                             const uint y);
     bool acceptDiffusionMove(const double x0,
                              const double y0,
                              const double z0,

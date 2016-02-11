@@ -11,7 +11,8 @@ RDLRepulsion::RDLRepulsion(SOSSolver &solver, const double s0, const double ld, 
 
 void RDLRepulsion::notifyObserver(const Subjects &subject)
 {
-
+    (void) subject;
+    BADAssBreak("not implemented");
 }
 
 double RDLRepulsion::potentialFunction(const uint x, const uint y) const

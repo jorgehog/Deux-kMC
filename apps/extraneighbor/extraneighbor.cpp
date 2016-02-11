@@ -1,9 +1,10 @@
 #include "extraneighbor.h"
 
-ExtraNeighbor::ExtraNeighbor(SOSSolver &solver) :
-    LocalCachedPotential(solver)
+ExtraNeighbor::ExtraNeighbor(SOSSolver &solver, const double energyShift) :
+    LocalCachedPotential(solver),
+    m_energyShift(energyShift)
 {
-
+    solver.registerObserver(this);
 }
 
 double ExtraNeighbor::energyFunction(const double dh) const
@@ -18,7 +19,7 @@ double ExtraNeighbor::energyFunction(const double dh) const
     else
     {
         const double dh2 = dh*dh;
-        return m_scaling*(1/(dh2*dh2*dh2) - m_shift);
+        return m_scaling*(1/(dh2*dh2*dh2) - m_shift)*(1+m_energyShift);
     }
 }
 
@@ -36,7 +37,7 @@ void ExtraNeighbor::notifyObserver(const Subjects &subject)
             const int &value = csc.value;
             SurfaceReaction &r = solver().surfaceReaction(x, y);
 
-            if (value < 1)
+            if (value == -1)
             {
                 r.setEscapeRate(r.escapeRate() - m_potentialValues(x, y));
                 m_potentialValues(x, y) = 0;
@@ -44,9 +45,10 @@ void ExtraNeighbor::notifyObserver(const Subjects &subject)
 
             else
             {
-                BADAssEqual(m_potentialValues(x, y), 0);
+                double prevRate = m_potentialValues(x, y);
                 m_potentialValues(x, y) = potentialFunction(x, y);
-                r.setEscapeRate(r.escapeRate() + m_potentialValues(x, y));
+
+                r.setEscapeRate(r.escapeRate() - prevRate + m_potentialValues(x, y));
             }
         }
 
