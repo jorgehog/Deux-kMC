@@ -10,6 +10,11 @@ LocalCachedPotential::LocalCachedPotential(SOSSolver &solver) :
 
 }
 
+double LocalCachedPotential::sum() const
+{
+    return arma::accu(m_potentialValues);
+}
+
 double LocalCachedPotential::potential(const uint x, const uint y) const
 {
     BADAssClose(m_potentialValues(x, y), potentialFunction(x, y), 1E-5);
@@ -18,7 +23,6 @@ double LocalCachedPotential::potential(const uint x, const uint y) const
 
 void LocalCachedPotential::initializeObserver(const Subjects &subject)
 {
-
     (void) subject;
 
     //this will be called for every subject... not ideal, but fine since

@@ -24,6 +24,8 @@ public:
         return m_s0;
     }
 
+    double rdlEnergy(const double dh) const;
+
     static double expSmallArg(double arg);
 
     static constexpr int m_shift = 1; //tmp

@@ -21,6 +21,9 @@ private:
 
     double iteratingExpression(const double hPrev) const;
 
+    //!Returns zero when in mechanical equilibrium and nonzero elsewize.
+    double mechanicalEquilibriumCondition(const double hl) const;
+
     // Observer interface
 public:
     void initializeObserver(const Subjects &subject);

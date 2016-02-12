@@ -19,7 +19,9 @@ double ExtraNeighbor::energyFunction(const double dh) const
     else
     {
         const double dh2 = dh*dh;
-        return m_scaling*(1/(dh2*dh2*dh2) - m_shift)*(1+m_energyShift);
+        const double dh6 = dh2*dh2*dh2;
+
+        return (3*dh + 64/dh6 - 7)*(1 + m_energyShift)/60;
     }
 }
 
@@ -32,10 +34,11 @@ void ExtraNeighbor::notifyObserver(const Subjects &subject)
         const uint &x = csc.x;
         const uint &y = csc.y;
 
-        if (csc.type == ChangeTypes::Single)
+        SurfaceReaction &r = solver().surfaceReaction(x, y);
+
+        if (csc.type == ChangeTypes::Double)
         {
             const int &value = csc.value;
-            SurfaceReaction &r = solver().surfaceReaction(x, y);
 
             if (value == -1)
             {
@@ -49,13 +52,24 @@ void ExtraNeighbor::notifyObserver(const Subjects &subject)
                 m_potentialValues(x, y) = potentialFunction(x, y);
 
                 r.setEscapeRate(r.escapeRate() - prevRate + m_potentialValues(x, y));
-            }
+            }   
         }
 
         else
         {
-            BADAssBreak("Extra neighbors and surface diff is not supported.");
+            const uint &xEnd = csc.x1;
+            const uint &yEnd = csc.y1;
+
+            SurfaceReaction &rEnd = solver().surfaceReaction(xEnd, yEnd);
+
+            r.setEscapeRate(r.escapeRate() - m_potentialValues(x, y));
+            m_potentialValues(x, y) = 0;
+
+            double prevRate = m_potentialValues(xEnd, yEnd);
+            m_potentialValues(xEnd, yEnd) = potentialFunction(xEnd, yEnd);
+            rEnd.setEscapeRate(rEnd.escapeRate() - prevRate + m_potentialValues(xEnd, yEnd));
         }
+
     }
 
     //confining surface

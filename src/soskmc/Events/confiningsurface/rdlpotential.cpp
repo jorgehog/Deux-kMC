@@ -13,6 +13,11 @@ RDLPotential::RDLPotential(SOSSolver &solver,
     solver.registerObserver(this);
 }
 
+double RDLPotential::rdlEnergy(const double dh) const
+{
+    return -m_s0*std::exp(-(dh-m_shift)/m_lD);
+}
+
 double RDLPotential::expSmallArg(double arg)
 {
     if (arg > 0.1 || arg < -0.1)
@@ -97,5 +102,5 @@ double RDLPotential::potentialFunction(const uint x, const uint y) const
     const double &h = solver().confiningSurfaceEvent().height();
     const int &hi = solver().height(x, y);
 
-    return -m_s0*std::exp(-(h-hi-m_shift)/m_lD);
+    return rdlEnergy(h - hi);
 }

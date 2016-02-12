@@ -26,6 +26,8 @@ public:
         return m_potentialValues(x, y);
     }
 
+    double sum() const;
+
 protected:
 
     mat m_potentialValues;

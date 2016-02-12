@@ -166,19 +166,14 @@ void KMCSolver::initialize()
     m_nextRandomLogNumber = getRandomLogNumber();
 
     initializeReactions();
+
+    getCumsumAndTotalRate();
 }
 
 
 void KMCSolver::execute()
 {
-    m_nextRandomLogNumber = getRandomLogNumber();
-
-    getCumsumAndTotalRate();
-
-    updateTime();
-
     BADAss(m_cumsumRates.size(), >=, numberOfReactions());
-
     uint choice = chooseFromTotalRate(m_cumsumRates, m_totalRate, numberOfReactions());
 
     m_selectedReaction = getReaction(choice);
@@ -190,6 +185,12 @@ void KMCSolver::execute()
 
 void KMCSolver::reset()
 {
+    m_nextRandomLogNumber = getRandomLogNumber();
+
+    updateTime();
+
     m_selectedReaction->executeAndUpdate();
+
+    getCumsumAndTotalRate();
 }
 

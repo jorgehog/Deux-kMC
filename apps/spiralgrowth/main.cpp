@@ -145,9 +145,8 @@ int main(int argv, char** argc)
     }
     else if (confinementInt == 3)
     {
-        cout << "DEPRECATED CONFINING SURFACE" << endl;
-        return 1;
-//        confiningSurface = new FixedRDLSurface(solver, sigma0, lD, confiningSurfaceHeight);
+        confiningSurface = new FixedSurface(solver, confiningSurfaceHeight);
+        solver.addLocalPotential(&rdlPotential);
     }
     else if (confinementInt == 4)
     {
