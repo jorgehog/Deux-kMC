@@ -36,7 +36,7 @@ void ExtraNeighbor::notifyObserver(const Subjects &subject)
 
         SurfaceReaction &r = solver().surfaceReaction(x, y);
 
-        if (csc.type == ChangeTypes::Double)
+        if (csc.type == ChangeTypes::Single)
         {
             const int &value = csc.value;
 

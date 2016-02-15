@@ -1,4 +1,5 @@
 #DCVIZ
+from curses.ascii import DC1
 
 from DCViz_sup import DCVizPlotter
 
@@ -2642,10 +2643,14 @@ class ignisSOS(DCVizPlotter):
 
     def scan_for_name(self, data, targetname, names):
 
-        for _data, name in zip(data, names):
+        if len(data.shape) == 1:
+            if targetname == names[0]:
+                return data
+        else:
+            for _data, name in zip(data, names):
 
-            if name == targetname:
-                return _data
+                if name == targetname:
+                    return _data
 
         raise RuntimeError("No match: %s in %s" % (targetname, str(names)))
 
@@ -2672,7 +2677,24 @@ class SizeTest(DCVizPlotter):
         self.subfigure.legend(loc="upper right", numpoints=1, handlelength=0.5, ncol=4, columnspacing=0.25, handletextpad=0.25, borderaxespad=0.1)
 
 
+class MechEq(DCVizPlotter):
 
+    nametag = "mechEq(.*)\.arma"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    def plot(self, data):
+
+        hls = self.get_family_member_data(data, "Hls");
+        Fs = self.get_family_member_data(data, "Fs");
+
+        self.subfigure.plot(hls, Fs)
+
+        print Fs.min()
+
+        self.subfigure.set_ylim(-0.5, 0.5)
 
 
 

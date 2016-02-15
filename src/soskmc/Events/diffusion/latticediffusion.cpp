@@ -1,5 +1,4 @@
 #include "latticediffusion.h"
-
 #include "../confiningsurface/confiningsurface.h"
 
 #include "../kmcsolver/boundary/boundary.h"

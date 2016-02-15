@@ -10,12 +10,17 @@ public:
                             RDLPotential &rdlPotential,
                             ExtraNeighbor &extraNeighborPotential, const double Pl);
 
+    double getRdlEquilibrium();
+
+    void dumpProfile() const;
+
 private:
 
     const RDLPotential &m_rdlPotential;
     const ExtraNeighbor &m_extraNeighborPotential;
 
     const double m_Pl;
+    const double m_nFactor;
 
     void findNewHeight();
 
@@ -23,6 +28,16 @@ private:
 
     //!Returns zero when in mechanical equilibrium and nonzero elsewize.
     double mechanicalEquilibriumCondition(const double hl) const;
+
+    double totalRepulsion() const;
+    double totalAttraction() const;
+
+    void fixPointIteration();
+
+    void bisection();
+    double bisect(const double min, const double max, double fmin,
+                  const double eps=1E-12,
+                  const uint nMax = std::numeric_limits<uint>::max()) const;
 
     // Observer interface
 public:

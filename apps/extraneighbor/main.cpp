@@ -9,34 +9,34 @@ using ignis::Lattice;
 
 int main()
 {
-    rng.initialize(time(nullptr));
+//    rng.initialize(time(nullptr));
+    rng.initialize(10000);
 
     const uint L = 100;
     const uint W = 1;
 
-    const double alpha = 2.0;
-    const double supersaturation = 0.85;
+    const double alpha = 1.0;
 
-    const double ld = 4.0;
-    const double s0 = 1.0;
-    const double Pl = 0.3;
+    const double ld = 5.0;
+    const double s0 = 0.5;
+    const double Pl = 0.2;
 
-    const double gamma = log(1 + supersaturation);
+    const double gamma = alpha*Pl/(ld*(1-exp(-1/ld)));
 
     SOSSolver solver(L, W, alpha, gamma, true);
 
-    setBoundariesFromIDs(&solver, {0,0,2,2}, L, W);
+    setBoundariesFromIDs(&solver, {0,0,0,0}, L, W);
 
     RDLPotential rdlpotential(solver, s0, ld);
     solver.addLocalPotential(&rdlpotential);
 
-    ExtraNeighbor extraNeighbor(solver, s0);
+    ExtraNeighbor extraNeighbor(solver, s0/(L*W));
     solver.addLocalPotential(&extraNeighbor);
 
     RDLExtraNeighborSurface rdlSurface(solver, rdlpotential, extraNeighbor, Pl);
     ConstantConcentration constantConcentration(solver);
 
-    const uint interval = 1000;
+    const uint interval = 1;
     DumpSystem dumper(solver, interval);
 
     Lattice lattice;
@@ -45,6 +45,9 @@ int main()
     lattice.addEvent(rdlSurface);
     lattice.addEvent(constantConcentration);
     lattice.addEvent(dumper);
+
+    AverageHeight avgH(solver);
+    lattice.addEvent(avgH);
 
 #ifndef NDEBUG
     RateChecker checker(solver);
@@ -61,7 +64,9 @@ int main()
 
     initializeSurface(solver, "random");
 
-    lattice.eventLoop(1000000);
+    rdlSurface.setHeight(rdlSurface.getRdlEquilibrium());
+
+    lattice.eventLoop(1000);
 
     cout << rdlSurface.height() << endl;
 
