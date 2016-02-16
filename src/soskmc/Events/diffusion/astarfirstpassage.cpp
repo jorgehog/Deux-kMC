@@ -69,17 +69,13 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 
     const double D = DScaled();
 
-    //
-    bool dump = false;
+#ifdef dumpastar
     lammpswriter writer(4, "astar", "/tmp");
     lammpswriter surf(3, "surf", "/tmp");
-    //
 
-    if (dump)
-    {
-        surf.setSystemSize(2*l+1, 2*l+1, 2*l+1);
-        writer.setSystemSize(2*l+1, 2*l+1, 2*l+1);
-    }
+    surf.setSystemSize(2*l+1, 2*l+1, 2*l+1);
+    writer.setSystemSize(2*l+1, 2*l+1, 2*l+1);
+#endif
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
@@ -122,12 +118,11 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
         //Setup the cube first?
         //Yes.. then find all the paths and keep only those who have a total path length < l
 
-        if (dump)
-        {
-            writer.initializeNewFile(n);
-            surf.initializeNewFile(n);
-            writer << 0 << l << l << l;
-        }
+#ifdef dumpastar
+        writer.initializeNewFile(n);
+        surf.initializeNewFile(n);
+        writer << 0 << l << l << l;
+#endif
 
         for (int xscan = -l; xscan <= l; ++xscan)
         {
@@ -156,10 +151,9 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                     {
                         m_world->MarkPosition(xw, yw, zwIter, true);
 
-                        if (dump)
-                        {
-                            surf << xw << yw << zwIter;
-                        }
+#ifdef dumpastar
+                        surf << xw << yw << zwIter;
+#endif
                     }
 
                     //we mark the site above as blocked as well since
@@ -202,10 +196,9 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             //no solution
             if (crumb == nullptr)
             {
-                if (dump)
-                {
-                    writer << 3+i << l << l << l;
-                }
+#ifdef dumpastar
+                writer << 3+i << l << l << l;
+#endif
 
                 continue;
             }
@@ -233,19 +226,16 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 
                 BADAssClose(pathR, sqrt(pathR2), 1E-10);
 
-                if (dump)
-                {
-                    writer << 3+i << crumb->x << crumb->y << crumb->z;
-                }
+#ifdef dumpastar
+                writer << 3+i << crumb->x << crumb->y << crumb->z;
+#endif
 
                 crumb = crumb->next;
             }
 
-            if (dump)
-            {
-                writer << 3+i << crumb->x << crumb->y << crumb->z;
-            }
-
+#ifdef dumpastar
+            writer << 3+i << crumb->x << crumb->y << crumb->z;
+#endif
 
             reaction = &solver().surfaceReaction(xTrans, yTrans);
             localRate = localRateOverD(r*r);
@@ -253,18 +243,15 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             reaction->setDepositionRate(reaction->depositionRate() + localRate*D);
         }
 
-        if (dump)
+#ifdef dumpastar
+        if (surf.valueCounter() == 0)
         {
-
-            if (surf.valueCounter() == 0)
-            {
-                surf << 0 << 0 << 0;
-            }
-
-            writer.finalize();
-            surf.finalize();
-
+            surf << 0 << 0 << 0;
         }
+
+        writer.finalize();
+        surf.finalize();
+#endif
 
     }
 }

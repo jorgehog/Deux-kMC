@@ -28,23 +28,4 @@ private:
 
 };
 
-class MutexSOSEvent : public SOSEvent
-{
-public:
-
-    MutexSOSEvent(SOSSolver &solver,
-                  string type = "Event",
-                  string unit = "",
-                  bool hasOutput=false,
-                  bool storeValue=false);
-
-    SOSSolver &solver() const
-    {
-        return m_mutexSolver;
-    }
-
-private:
-
-    SOSSolver &m_mutexSolver;
-};
 

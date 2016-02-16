@@ -6,27 +6,28 @@
 using namespace kMC;
 
 ParticleNumberConservator::ParticleNumberConservator(SOSSolver &solver) :
+    LatticeEvent("NConservator", "", true),
     m_solver(solver)
 {
+    BADAssBool(solver.diffusionEventIsSet(), "Diffusion event need to be set before this object can be constructed.");
 
+    setDependency(solver.diffusionEvent());
 }
 
-
-
-void ParticleNumberConservator::initializeObserver(const Subjects &subject)
+void ParticleNumberConservator::initialize()
 {
-    (void) subject;
-
     BADAssBool(m_solver.diffusionEvent().hasDiscreteParticles());
 
     m_targetN = m_solver.diffusionEvent().numberOfParticles();
-
 }
 
-void ParticleNumberConservator::notifyObserver(const Subjects &subject)
+void ParticleNumberConservator::execute()
 {
-    (void) subject;
+    setValue(solver().diffusionEvent().numberOfParticles());
+}
 
+void ParticleNumberConservator::reset()
+{
     int particleDifference = (int)m_solver.diffusionEvent().numberOfParticles() - (int)m_targetN;
 
     if (particleDifference < 0)

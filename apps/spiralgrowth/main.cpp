@@ -202,14 +202,15 @@ int main(int argv, char** argc)
     diffusion->setDependency(confiningSurface);
 
     ParticleNumberConservator pnc(solver);
-    if (constantN)
-    {
-        solver.registerObserver(&pnc);
-    }
 
     lattice.addEvent(solver);
     lattice.addEvent(confiningSurface);
     lattice.addEvent(diffusion);
+
+    if (constantN && diffusion->hasDiscreteParticles())
+    {
+        lattice.addEvent(pnc);
+    }
 
     //
 

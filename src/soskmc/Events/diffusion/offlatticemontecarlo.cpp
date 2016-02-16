@@ -39,73 +39,98 @@ bool OfflatticeMonteCarlo::countPaths() const
 
 void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
 {
-    (void) subject;
 
     if (!hasStarted())
     {
         return;
     }
 
-    if (solver().currentSurfaceChange().type == ChangeTypes::Single)
+    if (subject == Subjects::SOLVER)
     {
-        const uint &x = solver().currentSurfaceChange().x;
-        const uint &y = solver().currentSurfaceChange().y;
-        const int &value = solver().currentSurfaceChange().value;
-
-        //Remove particle based on the probability of it being the deposited
-        if (value == 1)
+        if (solver().currentSurfaceChange().type == ChangeTypes::Single)
         {
-            double Rtot = 0;
-            for (uint n = 0; n < nOfflatticeParticles(); ++n)
+            const uint &x = solver().currentSurfaceChange().x;
+            const uint &y = solver().currentSurfaceChange().y;
+            const int &value = solver().currentSurfaceChange().value;
+
+            //Remove particle based on the probability of it being the deposited
+            if (value == 1)
             {
-                //use old rates to calculate probability of depositing
-                m_localRatesForSite(n) = localRates(x, y, n);
-                Rtot += m_localRatesForSite(n);
+                double Rtot = 0;
+                for (uint n = 0; n < nOfflatticeParticles(); ++n)
+                {
+                    //use old rates to calculate probability of depositing
+                    m_localRatesForSite(n) = localRates(x, y, n);
+                    Rtot += m_localRatesForSite(n);
+                }
+
+                const uint N = chooseFromTotalRate(m_localRatesForSite.memptr(), nOfflatticeParticles(), Rtot);
+
+                removeParticle(N);
             }
 
-            const uint N = chooseFromTotalRate(m_localRatesForSite.memptr(), nOfflatticeParticles(), Rtot);
+            //Add a particle on a unit sphere around the site;
+            else
+            {
+                int dx, dy, dz;
+                int x1, y1, z1;
 
-            removeParticle(N);
-        }
+                const int &z = solver().height(x, y) + 1;
 
-        //Add a particle on a unit sphere around the site;
-        else
-        {
-            int dx, dy, dz;
-            int x1, y1, z1;
+                solver().getRandomSolutionSite(x, y, z, dx, dy, dz);
 
-            const int &z = solver().height(x, y) + 1;
+                solver().boundaryLatticeTransform(x1, y1, x + dx, y + dy, z);
 
-            solver().getRandomSolutionSite(x, y, z, dx, dy, dz);
+                z1 = z + dz;
 
-            solver().boundaryLatticeTransform(x1, y1, x + dx, y + dy, z);
+                insertParticle(x1, y1, z1);
 
-            z1 = z + dz;
+                m_particleIsLocked = true;
+                m_lockedParticle = nOfflatticeParticles() - 1;
+            }
 
-            insertParticle(x1, y1, z1);
+            for (uint n = 0; n < nOfflatticeParticles(); ++n)
+            {
+                const double &x0 = particlePositions(0, n);
+                const double &y0 = particlePositions(1, n);
+                const double &z0 = particlePositions(2, n);
 
-            m_particleIsLocked = true;
-            m_lockedParticle = nOfflatticeParticles() - 1;
+                //if the height change made the particle blocked,
+                //we shift it a little and recalculate the rates
+                if (solver().isBlockedPosition(x0, y0, z0))
+                {
+                    uint dim;
+                    double delta;
+
+                    scanForDisplacement(n, dim, delta);
+                    m_particlePositions(dim, n) += delta;
+                }
+            }
         }
     }
-
-    for (uint n = 0; n < nOfflatticeParticles(); ++n)
+    
+    else
     {
-        const double &x0 = particlePositions(0, n);
-        const double &y0 = particlePositions(1, n);
-        const double &z0 = particlePositions(2, n);
+//        const double &h = solver().confiningSurfaceEvent().height();
+//        const CurrentConfinementChange &ccc = solver().confiningSurfaceEvent().currentConfinementChange();
 
-        //if the height change made the particle blocked,
-        //we shift it a little and recalculate the rates
-        if (solver().isBlockedPosition(x0, y0, z0))
-        {
-            uint dim;
-            double delta;
+//        const double dh = h - ccc.prevHeight;
+        
+//        for (uint n = 0; n < nOfflatticeParticles(); ++n)
+//        {
+//            const uint xi = round(particlePositions(0, n));
+//            const uint yi = round(particlePositions(1, n));
+//            const int hi = solver().height(xi, yi);
 
-            scanForDisplacement(n, dim, delta);
-            m_particlePositions(dim, n) += delta;
-        }
+//            const double dhi = particlePositions(2, n) - hi;
+//            const double dhiScaled = (1 + dh/(ccc.prevHeight - hi))*dhi;
+
+//            m_particlePositions(2, n) = hi + dhiScaled;
+//        }
+        
     }
+
+
 }
 
 double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
@@ -380,12 +405,11 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
         }
     }
 
-    uint minLoc;
+    uint minLoc = 0;
 
     m_scanAbsDeltas.min(minLoc);
     delta = m_scanDeltas(minLoc);
     dim = minLoc/2;
-
 }
 
 void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber, const string path) const
@@ -518,6 +542,8 @@ void OfflatticeMonteCarlo::initializeObserver(const Subjects &subject)
     if (numberOfParticles() == 0)
     {
         const double V = solver().freeVolume();
+
+        BADAss(V, >=, 0);
 
         const uint N = V*solver().concentration() + rng.uniform();
 

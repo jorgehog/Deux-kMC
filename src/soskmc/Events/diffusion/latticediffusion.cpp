@@ -414,11 +414,11 @@ void LatticeDiffusion::onConfiningHeightChanged()
 {
     const double &h = solver().confiningSurfaceEvent().height();
 
-    //we have expanded: no reactions are blocked
-    if (h > solver().confiningSurfaceEvent().currentConfinementChange().prevHeight)
-    {
-        return;
-    }
+//    //we have expanded: no reactions are blocked
+//    if (h > solver().confiningSurfaceEvent().currentConfinementChange().prevHeight)
+//    {
+//        return;
+//    }
 
     const int surfaceContactHeight = h - 1;
 

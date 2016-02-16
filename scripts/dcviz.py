@@ -1,5 +1,4 @@
 #DCVIZ
-from curses.ascii import DC1
 
 from DCViz_sup import DCVizPlotter
 
@@ -2285,14 +2284,21 @@ class LatticediffSpeeds(DCVizPlotter):
               "f5" : "subfigure6",
               "f6" : "subfigure7"}
 
-    #plotOnly = ["f0"]
+    plotOnly = ["f0"]
+
+    legend=True
 
     def adjust(self):
-        self.adjust_maps["f0"]["top"] = 0.96
+
+        if self.legend:
+            self.adjust_maps["f0"]["top"] = 0.89
+        else:
+            self.adjust_maps["f0"]["top"] = 0.95
         self.adjust_maps["f0"]["bottom"] = 0.13
         # self.adjust_maps["f0"]["top"] = 0.86
         self.adjust_maps["f0"]["right"] = 0.95
         self.adjust_maps["f0"]["hspace"] = 0.15
+        self.adjust_maps["f0"]["left"] = 0.185
 
     fig_size = [6, 6]
 
@@ -2536,7 +2542,7 @@ class LatticediffSpeeds(DCVizPlotter):
             #self.subfigure.text(1.05*t_end, point, label, verticalalignment='center')
 
             SS = all_supersaturations[i, :l][I]
-            self.subfigure2.plot(T, SS, "r-")
+            self.subfigure2.plot(T, SS, "r-", label=_label)
 
             if abs(supersaturation) > 0.1:
                 self.subfigure4.plot(self.k_convert(sfac*H[1:], T[1:], s0)[1:], label=label)
@@ -2563,7 +2569,7 @@ class LatticediffSpeeds(DCVizPlotter):
             # kval = 0.4*(supersaturation < 0) + 0.6*(supersaturation > 0)
             if self.plot_analytical:
                 self.subfigure.plot(T, self.analytical(T, s0, kval), "k--", label=_labela)
-                self.subfigure2.plot(T, self.analytical_ss(T, s0, kval), "k--")
+                self.subfigure2.plot(T, self.analytical_ss(T, s0, kval), "k--", label=_labela)
                 #self.subfigure.scatter(T[ls], 0, s=20)
                 #self.subfigure2.scatter(T[ls], 0, s=20)
 
@@ -2588,13 +2594,38 @@ class LatticediffSpeeds(DCVizPlotter):
         self.subfigure.set_ylabel(r"$h(t)/l_0$")
         self.subfigure.xaxis.set_ticks([])
 
-        # lg = self.subfigure.axes.legend(loc="upper center", ncol=2, numpoints=1, handlelength=0.8, columnspacing=0.5, handletextpad=0.5, borderaxespad=0.0, bbox_to_anchor=(0.5, 1.35))
-        # lg.get_frame().set_fill(not (self.toFile and self.transparent))
+        if self.legend:
+            lg = self.subfigure2.axes.legend(loc="upper center",
+                                             numpoints=1,
+                                             ncol=1,
+                                             handlelength=1.0,
+                                             borderpad=0.2,
+                                             labelspacing=0.2,
+                                             columnspacing=1.25,
+                                             handletextpad=0.25,
+                                             borderaxespad=0.0,
+                                             frameon=False,
+                                             fontsize=20,
+                                             bbox_to_anchor=(0.77, 0.9))
+            #bbox_to_anchor=(0.5, 1.25)
+            lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
 
         self.subfigure2.set_xlim(0, t_min)
         self.subfigure2.set_xlabel(time_label)
         self.subfigure2.set_ylabel(r"$\Omega(t)$")
+
+        s1ylim = max([abs(x) for x in self.subfigure.get_ylim()])
+        self.subfigure.set_ylim([-s1ylim, s1ylim])
+
+        lowSS = round(min(all_supersaturations[:, 0]), 1)
+        highSS = round(max(all_supersaturations[:, 0]), 1)
+
+        lim2 = max(abs(lowSS), abs(highSS))
+
+        self.subfigure2.set_ylim(-lim2, lim2)
+
+
 
         if not self.plot_analytical:
             return

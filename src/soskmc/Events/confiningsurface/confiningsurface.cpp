@@ -14,7 +14,7 @@ ConfiningSurface::ConfiningSurface(SOSSolver &solver,
     Observer(),
     Subject(),
     m_ccc(new CurrentConfinementChange()),
-    m_height(0),
+    m_height(solver.heights().max() + 1),
     m_solver(solver)
 {
     solver.setConfiningSurfaceEvent(*this);
@@ -33,7 +33,7 @@ void ConfiningSurface::setHeight(const double height)
 
     notifyObservers(Subjects::CONFININGSURFACE);
 
-    BADAss(solver().heights().max(), <=, height - 1);
+    BADAssBool((!hasSurface()) || (solver().heights().max() <= height - 1));
 }
 
 

@@ -20,15 +20,3 @@ SOSEvent::SOSEvent(const SOSSolver &solver,
     setDependency(solver.confiningSurfaceEvent());
     setDependency(solver.diffusionEvent());
 }
-
-
-MutexSOSEvent::MutexSOSEvent(SOSSolver &solver,
-                             string type,
-                             string unit,
-                             bool hasOutput,
-                             bool storeValue) :
-    SOSEvent(solver, type, unit, hasOutput, storeValue),
-    m_mutexSolver(solver)
-{
-
-}

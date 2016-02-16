@@ -141,6 +141,11 @@ public:
         return m_confiningSurfaceEvent != nullptr;
     }
 
+    bool diffusionEventIsSet() const
+    {
+        return m_diffusionEvent != nullptr;
+    }
+
     ConfiningSurface &confiningSurfaceEvent() const
     {
         return *m_confiningSurfaceEvent;

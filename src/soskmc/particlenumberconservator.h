@@ -1,15 +1,10 @@
 #pragma once
 
-#include "observers.h"
-
-#include "subjects.h"
-
-using kMC::Observer;
-using kMC::Subjects;
+#include "Events/sosevent.h"
 
 class SOSSolver;
 
-class ParticleNumberConservator : public Observer<Subjects>
+class ParticleNumberConservator : public LatticeEvent
 {
 public:
     ParticleNumberConservator(SOSSolver &solver);
@@ -19,8 +14,14 @@ private:
     SOSSolver &m_solver;
     uint m_targetN;
 
-    // Observer interface
+    SOSSolver &solver() const
+    {
+        return m_solver;
+    }
+
+    // Event interface
 public:
-    void initializeObserver(const Subjects &subject);
-    void notifyObserver(const Subjects &subject);
+    void execute();
+    void initialize();
+    void reset();
 };

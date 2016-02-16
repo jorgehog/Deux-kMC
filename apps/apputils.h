@@ -486,7 +486,6 @@ void initializeSurface(SOSSolver &solver, const string type,
         SOSSolver thermSolver(L, W, solver.alpha(), solver.gamma(), solver.surfaceDiffusion());
         Diffusion *conc;
         ConfiningSurface *conf;
-        ParticleNumberConservator pnc(thermSolver);
 
         if (solver.confiningSurfaceEvent().hasSurface())
         {
@@ -522,10 +521,7 @@ void initializeSurface(SOSSolver &solver, const string type,
             conc = new ConstantConcentration(thermSolver);
         }
 
-        if (conc->hasDiscreteParticles())
-        {
-            thermSolver.registerObserver(&pnc);
-        }
+        conf->registerObserver(conc);
 
         setBoundariesFromIDs(&thermSolver, {0,0,0,0}, L, W);
 
@@ -533,23 +529,30 @@ void initializeSurface(SOSSolver &solver, const string type,
         lattice.addEvent(conf);
         lattice.addEvent(conc);
 
+        ParticleNumberConservator pnc(thermSolver);
+        if (conc->hasDiscreteParticles())
+        {
+            lattice.addEvent(pnc);
+        }
+
         initializeSurface(thermSolver, "random");
 
-        lattice.enableOutput(true, surfaceThermCycles/10);
+        const uint every = surfaceThermCycles/10;
+        lattice.enableOutput(true, every);
         lattice.enableProgressReport();
         lattice.enableEventValueStorage(false, false);
 
         lattice.eventLoop(surfaceThermCycles);
 
+        solver.setHeights(thermSolver.heights(), false);
+
         if (solver.confiningSurfaceEvent().hasSurface())
         {
             const double &hPrev = solver.confiningSurfaceEvent().height();
-            const double hMean = accu(thermSolver.heights())/double(L*W);
+            const double hMean = thermSolver.averageHeight();
 
             solver.confiningSurfaceEvent().setHeight(hPrev + hMean);
         }
-
-        solver.setHeights(thermSolver.heights(), false);
 
         if (onlattice)
         {
@@ -561,17 +564,19 @@ void initializeSurface(SOSSolver &solver, const string type,
             }
         }
 
-        else if (diffusionInt == 4)
+        else if (diffusionInt == 4 || diffusionInt == 3)
         {
-            FirstPassageContinuum *fpces = dynamic_cast<FirstPassageContinuum*>(&solver.diffusionEvent());
-            FirstPassageContinuum *fpce = dynamic_cast<FirstPassageContinuum*>(conc);
+            OfflatticeMonteCarlo *solverOfflattice = dynamic_cast<OfflatticeMonteCarlo*>(&solver.diffusionEvent());
+            OfflatticeMonteCarlo *thermOfflattice = dynamic_cast<OfflatticeMonteCarlo*>(conc);
 
-            for (uint n = 0; n < fpce->numberOfParticles(); ++n)
+            for (uint n = 0; n < thermOfflattice->numberOfParticles(); ++n)
             {
-                fpces->insertParticle(fpce->particlePositions(0, n),
-                                      fpce->particlePositions(1, n),
-                                      fpce->particlePositions(2, n));
+                solverOfflattice->insertParticle(thermOfflattice->particlePositions(0, n),
+                                                 thermOfflattice->particlePositions(1, n),
+                                                 thermOfflattice->particlePositions(2, n));
             }
+
+            BADAssEqual(solverOfflattice->numberOfParticles(), thermOfflattice->numberOfParticles());
         }
 
         delete conc;
