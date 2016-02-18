@@ -147,11 +147,13 @@ int main(int argv, char** argc)
     {
         confiningSurface = new FixedSurface(solver, confiningSurfaceHeight);
         solver.addLocalPotential(&rdlPotential);
+        solver.registerObserver(&rdlPotential);
     }
     else if (confinementInt == 4)
     {
         confiningSurface = new RDLSurface(solver, rdlPotential, Pl);
         solver.addLocalPotential(&rdlPotential);
+        solver.registerObserver(&rdlPotential);
     }
     else if (confinementInt == 5)
     {

@@ -10,7 +10,7 @@ RDLPotential::RDLPotential(SOSSolver &solver,
     m_s0(s0),
     m_lD(lD)
 {
-    solver.registerObserver(this);
+
 }
 
 double RDLPotential::rdlEnergy(const double dh) const

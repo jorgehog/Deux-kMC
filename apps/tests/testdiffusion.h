@@ -951,7 +951,7 @@ TEST_F(SOSkMCTest, SOS_diff_continuumlimit)
 
         for (uint cycle = 0; cycle < nc; ++cycle)
         {
-            diffusionEvent->initializeObserver(Subjects::SOLVER);
+            diffusionEvent->initializeObserver(Subjects::CONFININGSURFACE);
 
             for (uint x = 0; x < L; ++x)
             {
@@ -1076,7 +1076,7 @@ TEST_F(SOSkMCTest, SOS_diff_initial_supersat)
         double meanConcentration = 0;
         for (uint cycle = 0; cycle < cyclesPerSaturationLevel; ++cycle)
         {
-            m_diffusionEvent->initializeObserver(Subjects::SOLVER);
+            m_diffusionEvent->initializeObserver(Subjects::CONFININGSURFACE);
             meanConcentration += m_diffusionEvent->concentration();
             diffusionEvent->clearDiffusionReactions();
 

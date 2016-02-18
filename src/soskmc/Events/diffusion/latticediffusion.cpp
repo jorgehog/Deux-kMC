@@ -405,7 +405,7 @@ void LatticeDiffusion::onHeightChanged()
         //this can occur if the surface is changed so that it connects to a particle in the solution.
         else
         {
-            registerAffectedAround(x, y, solver().height(x, y));
+            //registerAffectedAround(x, y, solver().height(x, y));
         }
     }
 }

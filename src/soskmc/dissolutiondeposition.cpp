@@ -13,7 +13,7 @@ double SurfaceReaction::calculateEscapeRate() const
 {
     if (solver().confiningSurfaceEvent().hasSurface())
     {
-        if (solver().height(x(), y()) >= solver().confiningSurfaceEvent().height() - 1)
+        if (solver().height(x(), y()) > solver().confiningSurfaceEvent().height() - 2)
         {
             //no paths
             if (solver().nNeighbors(x(), y()) == 5)
@@ -57,7 +57,15 @@ double SurfaceReaction::calculateEscapeRate() const
 
     else
     {
-        return solver().numberOfSurroundingSites(x(), y())*escapeRateSingle;
+        if (solver().surfaceDiffusion())
+        {
+            return solver().numberOfSurroundingSites(x(), y())*escapeRateSingle;
+        }
+
+        else
+        {
+            return solver().numberOfSurroundingSolutionSites(x(), y())*escapeRateSingle;
+        }
     }
 }
 
