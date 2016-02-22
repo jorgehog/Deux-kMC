@@ -2736,10 +2736,14 @@ class mftpc(DCVizPlotter):
 
     hugifyFonts = True
 
+    fig_size = [6, 4]
+
+    c = r"\kappa"
+
     def adjust(self):
 
-        self.adjust_maps["figure"]["top"] = 0.96
-        self.adjust_maps["figure"]["bottom"] = 0.14
+        self.adjust_maps["figure"]["top"] = 0.95
+        self.adjust_maps["figure"]["bottom"] = 0.20
         self.adjust_maps["figure"]["right"] = 0.96
         self.adjust_maps["figure"]["left"] = 0.16
 
@@ -2773,12 +2777,12 @@ class mftpc(DCVizPlotter):
         ymin = self.subfigure.get_ylim()[0]
         self.subfigure.plot([cinvEq, cinvEq], [ymin, 0], "k-.")
 
-        self.subfigure.set_xlabel(r"$1/c$")
+        self.subfigure.set_xlabel(r"$1/%s$" % self.c)
         self.subfigure.set_ylabel(r"$\Delta \langle h\rangle/\Delta T [l_0 \nu/10^3]$")
 
         print cinvEq**-1*np.pi
 
-        self.subfigure.text(cinvEq+3, ymin+0.5, r"$1/c' \sim 31$", verticalalignment="bottom", horizontalalignment="left", fontsize=20)
+        self.subfigure.text(cinvEq+3, ymin+0.5, r"$1/%s' \sim 31$" % self.c, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
 
 
