@@ -263,7 +263,7 @@ public:
 
     void initialize()
     {
-        m_T0 = m_event.solver().currentTime() - m_event.solver().currentTimeStep();
+        m_T0 = m_event.solver().currentTime();
         m_sum = 0;
     }
 

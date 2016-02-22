@@ -166,13 +166,16 @@ void KMCSolver::initialize()
     m_nextRandomLogNumber = getRandomLogNumber();
 
     initializeReactions();
-
-    getCumsumAndTotalRate();
 }
 
 
 void KMCSolver::execute()
 {
+    //we put the calculation of cumsums and totalrates here
+    //since that gives events a chance to fiddle with rates in the
+    //reset/initialize function.
+    getCumsumAndTotalRate();
+
     BADAss(m_cumsumRates.size(), >=, numberOfReactions());
     uint choice = chooseFromTotalRate(m_cumsumRates, m_totalRate, numberOfReactions());
 
@@ -190,7 +193,5 @@ void KMCSolver::reset()
     updateTime();
 
     m_selectedReaction->executeAndUpdate();
-
-    getCumsumAndTotalRate();
 }
 

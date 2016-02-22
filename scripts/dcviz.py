@@ -2728,7 +2728,57 @@ class MechEq(DCVizPlotter):
         self.subfigure.set_ylim(-0.5, 0.5)
 
 
+class mftpc(DCVizPlotter):
 
+    nametag = "mfptc_(.*)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    def adjust(self):
+
+        self.adjust_maps["figure"]["top"] = 0.96
+        self.adjust_maps["figure"]["bottom"] = 0.14
+        self.adjust_maps["figure"]["right"] = 0.96
+        self.adjust_maps["figure"]["left"] = 0.16
+
+    def plot(self, data):
+
+        cs = self.get_family_member_data(data, "cs")
+        speeds = self.get_family_member_data(data, "growthspeeds")
+
+        cs, speeds = [np.array(x) for x in zip(*sorted(zip(cs, speeds), key=lambda x: x[0]))]
+
+        csinv = 1./cs
+
+        I = np.where(csinv > 20)
+
+        logscale = 3
+
+        slope, intercept, _, _, _ = linregress(csinv[I], speeds[I])
+
+        self.subfigure.plot(csinv, (intercept + slope*csinv)*10**logscale, "r-", linewidth=3)
+
+
+        self.subfigure.plot(csinv, speeds*10**logscale, "ks",
+                            markersize=7,
+                            markeredgewidth=1.5,
+                            linewidth=1,
+                            fillstyle="none")
+
+        cinvEq = -intercept/slope
+        self.subfigure.plot([0, cinvEq], [0, 0], "k-.")
+
+        ymin = self.subfigure.get_ylim()[0]
+        self.subfigure.plot([cinvEq, cinvEq], [ymin, 0], "k-.")
+
+        self.subfigure.set_xlabel(r"$1/c$")
+        self.subfigure.set_ylabel(r"$\Delta \langle h\rangle/\Delta T [l_0 \nu/10^3]$")
+
+        print cinvEq**-1*np.pi
+
+        self.subfigure.text(cinvEq+3, ymin+0.5, r"$1/c' \sim 31$", verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
 
 
