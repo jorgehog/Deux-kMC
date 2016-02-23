@@ -19,6 +19,17 @@ fig_4_x = 0.05
 fig_4_y = 0.85
 fig_4_fs = 30
 
+my_props = {
+
+    "ks" : {
+            "markersize" : 7,
+            "markeredgewidth" : 1.5,
+            "linewidth" : 1,
+            "fillstyle" : "none"
+    }
+
+}
+
 class SteadyState(DCVizPlotter):
 
     nametag = "steadystate\_(.*)"
@@ -2277,30 +2288,42 @@ class LatticediffSpeeds(DCVizPlotter):
     h0c = h0 - 2
     plot_analytical = True
 
-    figMap = {"f0": ["subfigure", "subfigure2"],
-              "f2" : "subfigure3",
+    figMap = {"f0" : ["subfigure", "subfigure2", "errfigH"],
+              "f2" : ["subfigure3","subfigure6"],
               "f3" : "subfigure4",
               "f4" : "subfigure5",
-              "f5" : "subfigure6",
               "f6" : "subfigure7"}
 
-    plotOnly = ["f0"]
+    # plotOnly = ["errfig"]
 
     legend=True
 
     def adjust(self):
 
-        if self.legend:
-            self.adjust_maps["f0"]["top"] = 0.89
-        else:
-            self.adjust_maps["f0"]["top"] = 0.95
-        self.adjust_maps["f0"]["bottom"] = 0.13
+        # if self.legend or False:
+        #     self.adjust_maps["f0"]["top"] = 0.89
+        # else:
+        self.adjust_maps["f0"]["top"] = 0.97
+        self.adjust_maps["f0"]["bottom"] = 0.09
         # self.adjust_maps["f0"]["top"] = 0.86
         self.adjust_maps["f0"]["right"] = 0.95
         self.adjust_maps["f0"]["hspace"] = 0.15
         self.adjust_maps["f0"]["left"] = 0.185
 
+        self.adjust_maps["f2"]["top"] = 0.96
+        self.adjust_maps["f2"]["bottom"] = 0.13
+        self.adjust_maps["f2"]["right"] = 0.95
+        self.adjust_maps["f2"]["hspace"] = 0.16
+        self.adjust_maps["f2"]["left"] = 0.15
+
+        # self.adjust_maps["errfig"]["top"] = 0.93
+        # self.adjust_maps["errfig"]["bottom"] = 0.25
+        # self.adjust_maps["errfig"]["right"] = 0.97
+        # self.adjust_maps["errfig"]["left"] = 0.14
+
+
     fig_size = [6, 6]
+    specific_fig_size = {"f0": [6, 9]}
 
     ceq_override = None
 
@@ -2438,37 +2461,27 @@ class LatticediffSpeeds(DCVizPlotter):
         all_conc = self.get_family_member_data(data, "concentrations")
         lengths = self.get_family_member_data(data, "lengths")
 
-        # n = all_heights.shape[1]
-        #
-        # all_heights = all_heights[:n/3]
-        # all_times = all_times[:n/3]
-        # all_conc = all_conc[:n/3]
-
         all_heights = self.reshape(all_heights)
         all_times = self.reshape(all_times)
         all_conc = self.reshape(all_conc)
-
-
-        if "cheatcorr" in self.argv:
-
-            I0 = list(supersaturations).index(0)
-            l0 = lengths[I0]
-            h0 = all_heights[I0, :l0]
-            t0 = all_times[I0, :l0]
-            c0 = all_conc[I0, 0]
-
-            a = h0[(3*l0)/5:(4*l0)/5].mean()
-
-            print self.ceq()
-            self.ceq_override = self.ceq_from_asympt(a, c0)
-            print self.ceq()
-
 
         if len(self.argv) > 1:
             self.h0 = float(self.argv[0])
             self.alpha = float(self.argv[1])
 
             self.h0c = self.h0 - 2
+
+        if "ls" in self.argv:
+            idx = self.argv.index("ls")
+            lsfac = float(self.argv[idx+1])
+        else:
+            lsfac = 2./3
+
+        if "tmax" in self.argv:
+            idx = self.argv.index("tmax") + 1
+            tmax = float(self.argv[idx])
+        else:
+            tmax = None
 
         all_supersaturations = all_conc/self.ceq() - 1
 
@@ -2479,6 +2492,8 @@ class LatticediffSpeeds(DCVizPlotter):
         all_ss = []
         all_k = []
         all_ceq = []
+
+        max_l = lengths.max()
 
         for i in range(len(lengths)):
 
@@ -2492,12 +2507,20 @@ class LatticediffSpeeds(DCVizPlotter):
                 if t_end < t_min:
                     t_min = t_end
 
-        T_END = 1.5*t_end
+        if tmax is not None:
+            if t_min > tmax:
+                t_min = tmax
+
+
+
+        mean_errh = np.zeros(max_l)
+        mean_errss = np.zeros(max_l)
+        mean_Ts = np.zeros(max_l)
+        mean_cs = np.zeros(max_l)
 
         for i, supersaturation in enumerate(supersaturations):
 
             l = lengths[i]
-            ls = (2*l)/3
 
             if "corr" in self.argv:
                 self.ceq_override = all_conc[i, (2*l)/3:(9*l)/10].mean()
@@ -2518,28 +2541,21 @@ class LatticediffSpeeds(DCVizPlotter):
             else:
                 sfac = 1
 
-            asympt = self.asympt(s0)
-            point = sfac*asympt
-
             T = all_times[i, :l]
             I = np.where(T <= t_min)
             T = T[I]
 
-
             H = sfac*all_heights[i, :l][I]
             label = r"$\Omega(0)=%.2f$" % s0
 
-            all_asympts.append(sfac*H[ls:].mean())
+            all_asympts.append(sfac*H[(2*len(H))/3:].mean())
 
-            #self.subfigure.scatter(0.9*m, point)
             if i == 0:
                 _label = r"$\mathrm{KMC}$"
             else:
                 _label = None
 
             self.subfigure.plot(T, H, "r-", label=_label)
-
-            #self.subfigure.text(1.05*t_end, point, label, verticalalignment='center')
 
             SS = all_supersaturations[i, :l][I]
             self.subfigure2.plot(T, SS, "r-", label=_label)
@@ -2556,37 +2572,58 @@ class LatticediffSpeeds(DCVizPlotter):
             else:
                 _labela = None
 
-            # dh = np.diff(all_heights[i, :l], 1)
-            # dh /= T[1:] - T[:-1]
-            # self.subfigure5.plot(SS[:-1], dh)
-
-
+            ls = int(lsfac*l)
             kval1 = self.find_k(sfac*H[1:ls], T[1:ls], s0)
             kval2 = self.find_k2(SS[1:ls], T[1:ls], s0)
 
             kval = 0.5*(kval1 + kval2)
 
-            # kval = 0.4*(supersaturation < 0) + 0.6*(supersaturation > 0)
             if self.plot_analytical:
-                self.subfigure.plot(T, self.analytical(T, s0, kval), "k--", label=_labela)
-                self.subfigure2.plot(T, self.analytical_ss(T, s0, kval), "k--", label=_labela)
-                #self.subfigure.scatter(T[ls], 0, s=20)
-                #self.subfigure2.scatter(T[ls], 0, s=20)
+                analytical_h = self.analytical(T, s0, kval)
+                analytical_ss = self.analytical_ss(T, s0, kval)
+                self.subfigure.plot(T, analytical_h, "k--", label=_labela)
+                self.subfigure2.plot(T, analytical_ss, "k--", label=_labela)
+
+                errH = analytical_h - H
+                errSS = analytical_ss - SS
+
+                mean_errh[:l][I] += errH
+                mean_errss[:l][I] += errSS
+                mean_Ts[:l][I] += T
+                mean_cs[:l][I] += 1
+
+
 
             all_k.append(kval)
 
         time_label = r"$\nu t$"
 
+        cI = np.where(mean_cs >= 1)
+        mean_errh = mean_errh[cI]/mean_cs[cI]
+        mean_errss = mean_errss[cI]/mean_cs[cI]
+        mean_Ts = mean_Ts[cI]/mean_cs[cI]
+
+        self.errfigH.plot(mean_Ts[:len(mean_errh)], 1000*mean_errh/len(all_supersaturations), label=r"$h(t)/l_0$")
+        self.errfigH.plot(mean_Ts[:len(mean_errss)], 1000*mean_errss/len(all_supersaturations), label=r"$\Omega(t)$")
+        self.errfigH.set_xlabel(time_label)
+        self.errfigH.set_ylabel(r"$10^3\epsilon$", labelpad=33)
+        self.errfigH.legend(loc="center",
+                            numpoints=1,
+                            ncol=2,
+                            handlelength=1.0,
+                            borderpad=0.2,
+                            labelspacing=0.2,
+                            columnspacing=1.0,
+                            handletextpad=0.25,
+                            borderaxespad=0.0,
+                            frameon=False,
+                            fontsize=20,
+                            bbox_to_anchor=(0.7, 0.10)).get_frame().set_fill(not (self.toFile and self.transparent))
+
         self.subfigure7.plot(all_ss, all_ceq, 'k^')
         self.subfigure7.set_xlabel(r"$\Omega(0)$")
         self.subfigure7.set_ylabel(r"$\epsilon_\mathrm{eq} [\%]$")
-
-
         self.subfigure4.legend()
-        self.subfigure3.plot(all_ss, all_asympts, "k*")
-
-        ss = np.linspace(supersaturations.min(), supersaturations.max())
-        self.subfigure3.plot(ss, self.asympt(ss), "r--")
 
         self.subfigure.set_xlim(0, t_min)
         #self.subfigure.set_ylim(self.subfigure.get_ylim()[0]*1.1, self.subfigure.get_ylim()[1]*1.1)
@@ -2612,8 +2649,9 @@ class LatticediffSpeeds(DCVizPlotter):
 
 
         self.subfigure2.set_xlim(0, t_min)
-        self.subfigure2.set_xlabel(time_label)
+        # self.subfigure2.set_xlabel(time_label)
         self.subfigure2.set_ylabel(r"$\Omega(t)$")
+        self.subfigure2.xaxis.set_ticks([])
 
         s1ylim = max([abs(x) for x in self.subfigure.get_ylim()])
         self.subfigure.set_ylim([-s1ylim, s1ylim])
@@ -2625,16 +2663,51 @@ class LatticediffSpeeds(DCVizPlotter):
 
         self.subfigure2.set_ylim(-lim2, lim2)
 
-
-
         if not self.plot_analytical:
             return
 
-        self.subfigure6.plot(all_ss, all_k, "kx")
-        self.subfigure6.set_xlabel(r"$\Omega$")
-        self.subfigure6.set_ylabel("k")
+        ss = np.linspace(supersaturations.min(), supersaturations.max())
+
+        self.subfigure3.plot(ss, self.asympt(ss), "r--", label=r"$\Omega(0)h_l/(1/c_\mathrm{eq} - 1)$")
+        self.subfigure3.plot(all_ss, all_asympts, "ks", label=r"$\mathrm{KMC}$", **my_props["ks"])
+
+        self.subfigure3.yaxis.set_major_formatter(FuncFormatter(self.axisFormat))
+        self.subfigure3.xaxis.set_ticks([-1, -0.5, 0, 0.5, 1])
+        self.subfigure3.set_xbound(-1)
+        self.subfigure3.xaxis.set_ticklabels([])
+        self.subfigure3.set_ylabel(r"$h(t\to\infty)/l_0$")
+
+        lg = self.subfigure3.axes.legend(loc="center",
+                                             numpoints=1,
+                                             ncol=1,
+                                             handlelength=1.0,
+                                             borderpad=0.2,
+                                             labelspacing=0.2,
+                                             columnspacing=1.25,
+                                             handletextpad=0.25,
+                                             borderaxespad=0.0,
+                                             frameon=False,
+                                             fontsize=20,
+                                             bbox_to_anchor=(0.32, 0.75))
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+
+
+        self.subfigure6.plot(all_ss, all_k, "ks", **my_props["ks"])
+        self.subfigure6.set_xlabel(r"$\Omega(0)$")
+        self.subfigure6.set_ylabel(r"$k$")
         self.subfigure6.set_ybound(0)
-        self.subfigure6.set_xlim(-1, 1)
+        self.subfigure6.set_xbound(-1)
+        self.subfigure6.xaxis.set_ticks([-1, -0.5, 0, 0.5, 1])
+
+    @staticmethod
+    def axisFormat(value, index):
+
+        if int(value) == value:
+            return r'$%d$' % value
+        else:
+            return ''
+
 
 class ignisSOS(DCVizPlotter):
 
@@ -2765,11 +2838,7 @@ class mftpc(DCVizPlotter):
         self.subfigure.plot(csinv, (intercept + slope*csinv)*10**logscale, "r-", linewidth=3)
 
 
-        self.subfigure.plot(csinv, speeds*10**logscale, "ks",
-                            markersize=7,
-                            markeredgewidth=1.5,
-                            linewidth=1,
-                            fillstyle="none")
+        self.subfigure.plot(csinv, speeds*10**logscale, "ks", **my_props["ks"])
 
         cinvEq = -intercept/slope
         self.subfigure.plot([0, cinvEq], [0, 0], "k-.")
