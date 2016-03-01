@@ -105,7 +105,7 @@ private:
 
     mat m_particlePositions;
     mat m_F;
-    vec m_localRatesForSite;
+    vec m_accuRatesForSite;
 
     uint m_nParticles;
 

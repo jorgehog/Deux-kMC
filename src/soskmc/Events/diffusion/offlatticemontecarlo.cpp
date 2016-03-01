@@ -14,7 +14,7 @@ OfflatticeMonteCarlo::OfflatticeMonteCarlo(SOSSolver &solver,
     m_maxdt(maxdt),
     m_particlePositions(3, 100),
     m_F(3, 100, fill::zeros),
-    m_localRatesForSite(100),
+    m_accuRatesForSite(100),
     m_nParticles(0)
 {
 
@@ -60,11 +60,13 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
                 for (uint n = 0; n < nOfflatticeParticles(); ++n)
                 {
                     //use old rates to calculate probability of depositing
-                    m_localRatesForSite(n) = localRates(x, y, n);
-                    Rtot += m_localRatesForSite(n);
+                    Rtot += localRates(x, y, n);
+                    m_accuRatesForSite(n) = Rtot;
                 }
 
-                const uint N = chooseFromTotalRate(m_localRatesForSite.memptr(), nOfflatticeParticles(), Rtot);
+                const uint N = chooseFromTotalRate(m_accuRatesForSite.memptr(), nOfflatticeParticles(), Rtot);
+
+                BADAss(localRates(x, y, N), !=, 0);
 
                 removeParticle(N);
             }
@@ -348,7 +350,7 @@ void OfflatticeMonteCarlo::insertParticle(const double x, const double y, const 
 
         m_localRates.resize(solver().length(), solver().width(), m_nParticles*2);
 
-        m_localRatesForSite.resize(m_nParticles*2);
+        m_accuRatesForSite.resize(m_nParticles*2);
     }
 
     m_particlePositions(0, m_nParticles) = x;

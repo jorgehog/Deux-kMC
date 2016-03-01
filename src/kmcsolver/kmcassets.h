@@ -89,10 +89,8 @@ inline uint binarySearchForInterval(const double target, const vec &intervals)
     return binarySearchForInterval(target, intervals.memptr(), intervals.size());
 }
 
-inline uint chooseFromTotalRate(const double *accuRates, const uint size, const double totalRate)
+inline uint binarySearchAndScan(const double *accuRates, const uint size, const double R)
 {
-    double R = rng.uniform()*totalRate;
-
     uint choice = binarySearchForInterval(R, accuRates, size);
 
     //this makes sure that reactions with 0 rate is not selected.
@@ -101,11 +99,21 @@ inline uint chooseFromTotalRate(const double *accuRates, const uint size, const 
         while (accuRates[choice] == accuRates[choice-1])
         {
             choice--;
+
+            BADAss(choice, !=, 0, "failure locating reaction.");
         }
     }
 
     return choice;
+}
 
+inline uint chooseFromTotalRate(const double *accuRates, const uint size, const double totalRate)
+{
+    BADAssClose(accuRates[size-1], totalRate, 1E-10, "Invalid accuRates.");
+
+    double R = rng.uniform()*totalRate;
+
+    return binarySearchAndScan(accuRates, size, R);
 }
 
 inline uint chooseFromTotalRate(const vec &accuRates, const double totalRate, uint size = 0)
