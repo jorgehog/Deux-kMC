@@ -2491,6 +2491,7 @@ class LatticediffSpeeds(DCVizPlotter):
         all_asympts = []
         all_ss = []
         all_k = []
+        all_kss = []
         all_ceq = []
 
         max_l = lengths.max()
@@ -2593,8 +2594,9 @@ class LatticediffSpeeds(DCVizPlotter):
                 mean_cs[:l][I] += 1
 
 
-
-            all_k.append(kval)
+            if supersaturation != sorted(supersaturations)[len(supersaturations)/2]:
+                all_k.append(kval)
+                all_kss.append(s0)
 
         time_label = r"$\nu t$"
 
@@ -2606,7 +2608,10 @@ class LatticediffSpeeds(DCVizPlotter):
         self.errfigH.plot(mean_Ts[:len(mean_errh)], 1000*mean_errh/len(all_supersaturations), label=r"$h(t)/l_0$")
         self.errfigH.plot(mean_Ts[:len(mean_errss)], 1000*mean_errss/len(all_supersaturations), label=r"$\Omega(t)$")
         self.errfigH.set_xlabel(time_label)
-        self.errfigH.set_ylabel(r"$10^3\epsilon$", labelpad=33)
+        self.errfigH.set_ylabel(r"$10^3\epsilon$")
+        y0, y1 = self.errfigH.get_ylim()
+        self.errfigH.set_ybound(y0-0.25*(y1 - y0))
+
         self.errfigH.legend(loc="center",
                             numpoints=1,
                             ncol=2,
@@ -2692,11 +2697,13 @@ class LatticediffSpeeds(DCVizPlotter):
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
 
+        m = sum(all_k)/len(all_k)
+        kscaled = np.array(all_k)/m
 
-        self.subfigure6.plot(all_ss, all_k, "ks", **my_props["ks"])
+        self.subfigure6.plot(all_kss, kscaled, "ks", **my_props["ks"])
         self.subfigure6.set_xlabel(r"$\Omega(0)$")
-        self.subfigure6.set_ylabel(r"$k$")
-        self.subfigure6.set_ybound(0)
+        self.subfigure6.set_ylabel(r"$k/\langle k\rangle$")
+        self.subfigure6.set_ylim(0, max(kscaled)*1.1)
         self.subfigure6.set_xbound(-1)
         self.subfigure6.xaxis.set_ticks([-1, -0.5, 0, 0.5, 1])
 

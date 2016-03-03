@@ -13,7 +13,7 @@ def main():
     controller, path, app, cfg, n_procs = parse_input(sys.argv)
 
     c_values = ParameterSet(cfg, "c\s*\=\s*(.*)\;")
-    csinv = np.linspace(1, 100, 40)
+    csinv = np.linspace(1, 50, 10)
     c_values.initialize_set(1/csinv)
     # supersaturation_values.initialize_set([0.])
 

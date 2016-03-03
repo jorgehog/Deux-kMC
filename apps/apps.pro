@@ -4,6 +4,7 @@ CONFIG -= qt
 
 SUBDIRS += spiralgrowth \
     tests \
-    extraneighbor
-    #cconvergence \
-    #cconvergence2
+    extraneighbor \
+    cconvergence3
+#    cconvergence \
+#    cconvergence2 \
