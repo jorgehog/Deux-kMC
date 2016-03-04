@@ -8,7 +8,7 @@
 #include "Events/confiningsurface/confiningsurface.h"
 
 using namespace Tests;
-
+//#define dumpastar
 
 AStarFirstPassage::AStarFirstPassage(SOSSolver &solver,
                                      const double maxdt,
@@ -73,7 +73,7 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     lammpswriter writer(4, "astar", "/tmp");
     lammpswriter surf(3, "surf", "/tmp");
 
-    surf.setSystemSize(2*l+1, 2*l+1, 2*l+1);
+    surf.setSystemSize(2*l+1, 2*l+1, 2*l+1, 0, 0, -1);
     writer.setSystemSize(2*l+1, 2*l+1, 2*l+1);
 #endif
 
@@ -122,6 +122,14 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
         writer.initializeNewFile(n);
         surf.initializeNewFile(n);
         writer << 0 << l << l << l;
+
+        for (int xwr = 0; xwr < 2*l+1; ++xwr)
+        {
+            for (int ywr = 0; ywr < 2*l+1; ++ywr)
+            {
+                surf << xwr << ywr << -1;
+            }
+        }
 #endif
 
         for (int xscan = -l; xscan <= l; ++xscan)

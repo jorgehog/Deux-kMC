@@ -16,7 +16,7 @@ def main():
     super_saturation = np.linspace(-4./5, 4./5, 9)
     supersaturation_values.initialize_set(super_saturation)
 
-    n = 20
+    n = 100
 
     controller.register_parameter_set(supersaturation_values)
     controller.set_repeats(n)

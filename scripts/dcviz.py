@@ -2825,7 +2825,7 @@ class mftpc(DCVizPlotter):
         self.adjust_maps["figure"]["top"] = 0.95
         self.adjust_maps["figure"]["bottom"] = 0.20
         self.adjust_maps["figure"]["right"] = 0.96
-        self.adjust_maps["figure"]["left"] = 0.16
+        self.adjust_maps["figure"]["left"] = 0.18
 
     def plot(self, data):
 
@@ -2834,31 +2834,43 @@ class mftpc(DCVizPlotter):
 
         cs, speeds = [np.array(x) for x in zip(*sorted(zip(cs, speeds), key=lambda x: x[0]))]
 
-        csinv = 1./cs
-
-        I = np.where(csinv > 20)
-
+        logcsinv = np.log(1./cs)
         logscale = 3
 
-        slope, intercept, _, _, _ = linregress(csinv[I], speeds[I])
+        if "radial" in self.filename or "radial" in self.filepath:
+            textlabel = "Radial"
+        else:
+            textlabel = "Pathfinding"
 
-        self.subfigure.plot(csinv, (intercept + slope*csinv)*10**logscale, "r-", linewidth=3)
 
+        if self.argv:
+            kmin = float(self.argv[0])
+            kmax = float(self.argv[1])
 
-        self.subfigure.plot(csinv, speeds*10**logscale, "ks", **my_props["ks"])
+            I = np.where(logcsinv > kmin)
+            J = np.where(logcsinv[I] < kmax)
 
-        cinvEq = -intercept/slope
-        self.subfigure.plot([0, cinvEq], [0, 0], "k-.")
+            slope, intercept, _, _, _ = linregress(logcsinv[I][J], speeds[I][J])
+            self.subfigure.plot(logcsinv, (intercept + slope*logcsinv)*10**logscale, "r-", linewidth=3)
 
+            print -intercept/slope
+
+        self.subfigure.plot(logcsinv, speeds*10**logscale, "ks", **my_props["ks"])
         ymin = self.subfigure.get_ylim()[0]
-        self.subfigure.plot([cinvEq, cinvEq], [ymin, 0], "k-.")
 
-        self.subfigure.set_xlabel(r"$1/%s$" % self.c)
+        if len(self.argv) > 2:
+            cinvEq = float(self.argv[2])
+
+            self.subfigure.plot([0, cinvEq], [0, 0], "k-.")
+            self.subfigure.plot([cinvEq, cinvEq], [ymin, 0], "k-.")
+            self.subfigure.text(cinvEq*1.05, ymin+0.75, r"$\log 1/%s' \sim %.2f$" % (self.c, round(cinvEq, 2)), verticalalignment="bottom", horizontalalignment="left", fontsize=20)
+
+
+        self.subfigure.text(0.75, 0.75, r"$\mathrm{%s}$" % textlabel, transform=self.subfigure.axes.transAxes, horizontalalignment="center")
+
+        self.subfigure.set_xlabel(r"$\log 1/%s$" % self.c)
         self.subfigure.set_ylabel(r"$\Delta \langle h\rangle/\Delta T [l_0 \nu/10^3]$")
 
-        print cinvEq**-1*np.pi
-
-        self.subfigure.text(cinvEq+3, ymin+0.5, r"$1/%s' \sim 31$" % self.c, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
 
 
