@@ -207,13 +207,13 @@ int main(int argv, char** argc)
 
     lattice.addEvent(solver);
     lattice.addEvent(confiningSurface);
-    lattice.addEvent(diffusion);
 
     if (constantN && diffusion->hasDiscreteParticles())
     {
         lattice.addEvent(pnc);
     }
 
+    lattice.addEvent(diffusion);
     //
 
     ConcentrationTracker conc(solver);

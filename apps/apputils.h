@@ -52,7 +52,7 @@ string addProcEnding(int argv, char** argc, string filename, string ending)
     return s.str();
 }
 
-string getCfgName(int argv, char** argc)
+string getCfgName(int argv, char** argc, string name = "spiralgrowth")
 {
     string cfgName;
 
@@ -65,7 +65,9 @@ string getCfgName(int argv, char** argc)
 
     else
     {
-        cfgName = "infiles/spiralgrowth.cfg";
+        stringstream ss;
+        ss << "infiles/" << name << ".cfg";
+        cfgName = ss.str();
     }
 
     return cfgName;
@@ -521,19 +523,21 @@ void initializeSurface(SOSSolver &solver, const string type,
             conc = new ConstantConcentration(thermSolver);
         }
 
+        ParticleNumberConservator pnc(thermSolver);
+
         conf->registerObserver(conc);
 
         setBoundariesFromIDs(&thermSolver, {0,0,0,0}, L, W);
 
         lattice.addEvent(thermSolver);
         lattice.addEvent(conf);
-        lattice.addEvent(conc);
 
-        ParticleNumberConservator pnc(thermSolver);
         if (conc->hasDiscreteParticles())
         {
             lattice.addEvent(pnc);
         }
+
+        lattice.addEvent(conc);
 
         initializeSurface(thermSolver, "random");
 
