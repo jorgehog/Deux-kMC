@@ -24,7 +24,7 @@ def main():
     controller.register_parameter_set(alpha_values)
     controller.register_parameter_set(h_values)
 
-    success = controller.run(run_kmc, path, app, cfg, ask=not controller.use_mpi, n_procs=n_procs)
+    success = controller.run(run_kmc, path, app, cfg, ask=not controller.use_mpi, n_procs=n_procs, shuffle=True)
 
     if success != 0:
         return

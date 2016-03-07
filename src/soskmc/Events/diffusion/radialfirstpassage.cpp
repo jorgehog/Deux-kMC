@@ -3,7 +3,6 @@
 #include "../../sossolver.h"
 #include "dissolutiondeposition.h"
 
-
 RadialFirstPassage::RadialFirstPassage(SOSSolver &solver,
                                        const double maxdt,
                                        const int depositionBoxHalfSize,
@@ -74,9 +73,8 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
         const double &xp = particlePositions(0, n);
         const double &yp = particlePositions(1, n);
 
-        const int ix = int(round(xp));
-        const int iy = int(round(yp));
-        const int iz = int(round(zp));
+        const int ix = roundfast(xp);
+        const int iy = roundfast(yp);
 
         const double dx = ix - xp;
         const double dy = iy - yp;
@@ -85,7 +83,7 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
         {
             for (int yscan = -l; yscan <= l; ++yscan)
             {
-                solver().boundaryLatticeTransform(xTrans, yTrans, ix + xscan, iy + yscan, iz);
+                getTrans(xTrans, yTrans, ix, iy, xscan, yscan);
 
                 const int &h = solver().height(xTrans, yTrans);
 
