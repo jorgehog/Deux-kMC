@@ -2733,6 +2733,11 @@ class ignisSOS(DCVizPlotter):
         else:
             every = 1
 
+        if "-nonzero" in self.argv:
+            nonzero = True
+        else:
+            nonzero = False
+
         if yname in names:
             data_y = self.scan_for_name(data, yname, names)
 
@@ -2746,7 +2751,15 @@ class ignisSOS(DCVizPlotter):
             except:
                 data_x = np.arange(0, len(data_y))
 
-            self.subfigure.plot(data_x[::every], data_y[::every])
+            data_x = data_x[::every]
+            data_y = data_y[::every]
+
+            if nonzero:
+                I = np.where(data_y != 0)
+                data_x = data_x[I]
+                data_y = data_y[I]
+
+            self.subfigure.plot(data_x, data_y)
             self.subfigure.set_ylabel(yname)
 
         else:
@@ -2873,10 +2886,36 @@ class mftpc(DCVizPlotter):
 
 
 
+class cconv(DCVizPlotter):
 
+    nametag = "cconv_(.*)\.npy"
 
+    isFamilyMember = True
 
+    hugifyFonts = True
 
+    def plotsingle(self, heights, set, col='b'):
+
+        hrads = []
+        crads = []
+        err = []
+        for alpha, a, b, c, i in set:
+            h = heights[i]
+
+            if alpha == 1:
+                hrads.append(h)
+                crads.append(c)
+                err.append(b-c)
+
+        self.subfigure.errorbar(hrads, crads, err, ecolor=col)
+
+    def plot(self, data):
+
+        heights = self.get_family_member_data(data, "heights")
+        radial = self.get_family_member_data(data, "radial")
+        pathfind = self.get_family_member_data(data, "pathfind")
+
+        self.plotsingle(heights, radial)
 
 
 

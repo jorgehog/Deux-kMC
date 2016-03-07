@@ -353,7 +353,8 @@ void setBoundariesFromIDs(SOSSolver *solver,
 
 void initializeSurface(SOSSolver &solver, const string type,
                        const uint diffusionInt = 0,
-                       const uint surfaceThermCycles = 10000)
+                       const uint surfaceThermCycles = 10000,
+                       const bool output = true)
 {
     int maxSpan;
 
@@ -542,7 +543,7 @@ void initializeSurface(SOSSolver &solver, const string type,
         initializeSurface(thermSolver, "random");
 
         const uint every = surfaceThermCycles/10;
-        lattice.enableOutput(true, every);
+        lattice.enableOutput(output, every);
         lattice.enableProgressReport();
         lattice.enableEventValueStorage(false, false);
 

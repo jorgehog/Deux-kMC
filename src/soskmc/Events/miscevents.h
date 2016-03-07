@@ -33,7 +33,7 @@ class GrowthSpeed : public SOSEvent
 public:
 
     GrowthSpeed(const SOSSolver &solver) :
-        SOSEvent(solver, "GrowthSpeed", "", true)
+        SOSEvent(solver, "GrowthSpeed", "", true, true)
     {
 
     }

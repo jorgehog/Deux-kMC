@@ -335,12 +335,12 @@ void SurfaceVariance::execute()
 void GrowthSpeed::initialize()
 {
     m_T0 = solver().currentTime();
-    m_h0 = dependency<AverageHeight>("AverageHeight")->value();
+    m_h0 = solver().averageHeight();
 }
 
 void GrowthSpeed::execute()
 {
-    const double &h = dependency<AverageHeight>("AverageHeight")->value();
+    const double &h = solver().averageHeight();
 
     if (cycle() != 0)
     {
@@ -351,7 +351,7 @@ void GrowthSpeed::execute()
 
 void HeightRMS::execute()
 {
-    const double &mh = dependency<AverageHeight>("AverageHeight")->value();
+    const double &mh = solver().averageHeight();
 
     double rms = 0;
 

@@ -267,7 +267,6 @@ int main(int argv, char** argc)
     NNeighbors nNeighbors(solver);
 
     GrowthSpeed speed(solver);
-    speed.setDependency(averageHeight);
 
     lattice.addEvent(conc);
     lattice.addEvent(currentTime);

@@ -262,6 +262,11 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 #endif
 
     }
+
+#ifdef dumpastar
+    if (cycle() == 10) exit(0);
+#endif
+
 }
 
 
