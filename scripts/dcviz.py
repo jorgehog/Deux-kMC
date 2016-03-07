@@ -2902,21 +2902,35 @@ class cconv(DCVizPlotter):
 
         heightFMT = ['o', '^', 's', 'd']
 
+        all_alpha = []
+
         for j, (alpha, a, b, i) in enumerate(set):
             h = heights[i]
+
+            if alpha > 2:
+                continue
+
+            if alpha not in all_alpha:
+                all_alpha.append(alpha)
 
             xvals[i, j] = alpha
             crads[i, j] = (a+b)/2
             err[i, j] = (b-a)/2
 
+        all_alpha = sorted(all_alpha)
+
+        counts = np.zeros(len(all_alpha))
+        avgs = np.zeros_like(counts)
+
+        mH = 0
+        mA = 0
         for i, height in enumerate(heights):
 
-            if height == 30:
-                continue
+            I = np.where(xvals[i, :] != 0)
 
-            self.subfigure.errorbar(xvals[i, :],
-                                    crads[i, :],
-                                    err[i, :],
+            self.subfigure.errorbar(xvals[i, :][I],
+                                    crads[i, :][I],
+                                    err[i, :][I],
                                     fmt=heightFMT[int(i)],
                                     ecolor=col,
                                     linestyle="none",
@@ -2924,17 +2938,45 @@ class cconv(DCVizPlotter):
 
             print height, heightFMT[int(i)]
 
+            X, Y = zip(*sorted(zip(xvals[i, :], crads[i, :]), key=lambda x: x[0]))
+
+            for k, a in enumerate(X):
+                if a != 0:
+                    j = all_alpha.index(a)
+                    counts[j] += 1
+                    avgs[j] += Y[k]
+
+        J = np.where(counts != 0)
+
+        _X = np.array(all_alpha)[J]
+        _Y = avgs[J]/counts[J]
+
+        self.subfigure.plot(_X, _Y)
+
+
+        f = lambda x, a: a*np.ones_like(x)
+
+        print "lols"
+
+        K = np.where(_X < 1.75)
+        popt, _ = curve_fit(f, _X[K], _Y[K])
+
+        _x = np.linspace(_X.min(), _X.max())
+        self.subfigure.plot(_x, f(_x, *popt))
+
+        print popt
+
 
 
     def plot(self, data):
 
         heights = self.get_family_member_data(data, "heights")
 
-        try:
-            radial = self.get_family_member_data(data, "radial")
-            self.plotsingle(heights, radial, 'b')
-        except RuntimeError:
-            pass
+       # try:
+        radial = self.get_family_member_data(data, "radial")
+        self.plotsingle(heights, radial, 'b')
+      #  except RuntimeError:
+      #      pass
 
         try:
             pathfind = self.get_family_member_data(data, "pathfind")
