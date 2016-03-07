@@ -2896,26 +2896,52 @@ class cconv(DCVizPlotter):
 
     def plotsingle(self, heights, set, col='b'):
 
-        hrads = []
-        crads = []
-        err = []
-        for alpha, a, b, c, i in set:
+        xvals = np.zeros((len(heights), len(set)))
+        crads = np.zeros_like(xvals)
+        err = np.zeros_like(xvals)
+
+        heightFMT = ['o', '^', 's', 'd']
+
+        for j, (alpha, a, b, i) in enumerate(set):
             h = heights[i]
 
-            if alpha == 1:
-                hrads.append(h)
-                crads.append(c)
-                err.append(b-c)
+            xvals[i, j] = alpha
+            crads[i, j] = (a+b)/2
+            err[i, j] = (b-a)/2
 
-        self.subfigure.errorbar(hrads, crads, err, ecolor=col)
+        for i, height in enumerate(heights):
+
+            if height == 30:
+                continue
+
+            self.subfigure.errorbar(xvals[i, :],
+                                    crads[i, :],
+                                    err[i, :],
+                                    fmt=heightFMT[int(i)],
+                                    ecolor=col,
+                                    linestyle="none",
+                                    label=r"$h_l = %.1f$" % height)
+
+            print height, heightFMT[int(i)]
+
+
 
     def plot(self, data):
 
         heights = self.get_family_member_data(data, "heights")
-        radial = self.get_family_member_data(data, "radial")
-        pathfind = self.get_family_member_data(data, "pathfind")
 
-        self.plotsingle(heights, radial)
+        try:
+            radial = self.get_family_member_data(data, "radial")
+            self.plotsingle(heights, radial, 'b')
+        except RuntimeError:
+            pass
+
+        try:
+            pathfind = self.get_family_member_data(data, "pathfind")
+            self.plotsingle(heights, pathfind, 'r')
+        except RuntimeError:
+            pass
+
 
 
 

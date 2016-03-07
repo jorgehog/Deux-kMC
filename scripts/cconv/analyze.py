@@ -21,7 +21,6 @@ def main():
     n = 0
     for data, _, _, _ in parser:
 
-        c = data.attrs["c"]
         h0 = data.attrs["h0"]
         alpha = data.attrs["alpha"]
         type = data.attrs["type"]
@@ -34,9 +33,9 @@ def main():
         i = heights.index(h0)
 
         if type == 0:
-            radial.append(np.array([alpha, a, b, c, i]))
+            radial.append(np.array([alpha, a, b, i]))
         else:
-            pathfind.append(np.array([alpha, a, b, c, i]))
+            pathfind.append(np.array([alpha, a, b, i]))
 
         n += 1
 
@@ -47,8 +46,11 @@ def main():
     radial = np.array(radial)
 
     np.save("/tmp/cconv_heights.npy", heights)
-    np.save("/tmp/cconv_pathfind.npy", pathfind)
-    np.save("/tmp/cconv_radial.npy", radial)
+
+    if len(pathfind) != 0:
+        np.save("/tmp/cconv_pathfind.npy", pathfind)
+    if len(radial) != 0:
+        np.save("/tmp/cconv_radial.npy", radial)
 
 if __name__ == "__main__":
     main()

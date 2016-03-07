@@ -84,16 +84,14 @@ public:
             const double h0,
             const int type,
             const uint nThermCycles,
-            const uint nCyclesPerEquilibrium,
-            const uint nSurfaceThermCycles) :
+            const uint nCyclesPerEquilibrium) :
         m_L(L),
         m_W(W),
         m_alpha(alpha),
         m_h0(h0),
         m_type(type),
         m_nThermCycles(nThermCycles),
-        m_nCyclesPerEquilibrium(nCyclesPerEquilibrium),
-        m_nSurfaceThermCycles(nSurfaceThermCycles)
+        m_nCyclesPerEquilibrium(nCyclesPerEquilibrium)
     {
 
     }
@@ -151,7 +149,6 @@ public:
 
     const uint m_nThermCycles;
     const uint m_nCyclesPerEquilibrium;
-    const uint m_nSurfaceThermCycles;
 
     double estimateSpeed(const double c)
     {
@@ -227,12 +224,11 @@ int main(int argv, char **argc)
     const string path = getSetting<string>(cfgRoot, "path") + "/";
     const int type = getSetting<int>(cfgRoot, "type");
 
-    const uint nSurfaceThermCycles = getSetting<uint>(cfgRoot, "nSurfaceThermCycles");
     const uint nThermCycles = getSetting<uint>(cfgRoot, "nThermCycles");
     const uint nCyclesPerEquilibrium = getSetting<uint>(cfgRoot, "nCyclesPerEquilibrium");
-    const uint maxIterations = getSetting<uint>(cfgRoot, "maxIterations");
-    const double c0 = getSetting<double>(cfgRoot, "c0");
-    const double delta = getSetting<double>(cfgRoot, "delta");
+
+    const double a0 = getSetting<double>(cfgRoot, "a");
+    const double b0 = getSetting<double>(cfgRoot, "b");
 
     const int halfSize = getSetting<int>(cfgRoot, "halfSize");
     const double maxdt = getSetting<double>(cfgRoot, "maxdt");
@@ -243,10 +239,11 @@ int main(int argv, char **argc)
     const double alpha = getSetting<double>(cfgRoot, "alpha");
 
     BisectC bc(L, W, alpha, h0, type,
-               nThermCycles, nCyclesPerEquilibrium, nSurfaceThermCycles);
+               nThermCycles, nCyclesPerEquilibrium);
 
-    double a = 0.01;
-    double b = 0.15;
+    double a = a0;
+    double b = b0;
+
     bc.bisect(a, b);
 
     cout << (a + b)/2 << endl;
@@ -273,8 +270,6 @@ int main(int argv, char **argc)
 
     simRoot["nThermCycles"] = nThermCycles;
     simRoot["nCyclesPerEquilibrium"] = nCyclesPerEquilibrium;
-    simRoot["c0"] = c0;
-    simRoot["delta"] = delta;
 
     simRoot["halfSize"] = halfSize;
     simRoot["maxdt"] = maxdt;
