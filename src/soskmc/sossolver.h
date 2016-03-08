@@ -163,6 +163,8 @@ public:
         return volume() - area();
     }
 
+    void calculateHeightDependentValues();
+
     uint calculateNNeighbors(const uint x, const uint y, const int h) const;
 
     uint calculateNNeighbors(const uint x, const uint y) const

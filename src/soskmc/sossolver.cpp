@@ -211,6 +211,19 @@ double SOSSolver::volume() const
     return (m_confiningSurfaceEvent->height() - 1)*area() - arma::accu(m_heights);
 }
 
+void SOSSolver::calculateHeightDependentValues()
+{
+    m_averageHeight = arma::accu(m_heights)/double(area());
+
+    for (uint x = 0; x < m_length; ++x)
+    {
+        for (uint y = 0; y < m_width; ++y)
+        {
+            setNNeighbors(x, y);
+        }
+    }
+}
+
 uint SOSSolver::calculateNNeighbors(const uint x, const uint y, const int h) const
 {    
     bool connectedLeft, connectedRight,
@@ -1093,15 +1106,7 @@ void SOSSolver::initialize()
         m_heights.zeros();
     }
 
-    m_averageHeight = arma::accu(m_heights)/double(area());
-
-    for (uint x = 0; x < m_length; ++x)
-    {
-        for (uint y = 0; y < m_width; ++y)
-        {
-            setNNeighbors(x, y);
-        }
-    }
+    calculateHeightDependentValues();
 
     //initialize surface on top of the current surface as default.
     if (confiningSurfaceEvent().hasSurface())
