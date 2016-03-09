@@ -1,5 +1,6 @@
 #include "averageheightboundary.h"
 #include "dissolutiondeposition.h"
+#include "Events/diffusion/diffusion.h"
 
 
 AverageHeightBoundary::AverageHeightBoundary(SOSSolver &solver,
@@ -10,7 +11,6 @@ AverageHeightBoundary::AverageHeightBoundary(SOSSolver &solver,
                                              Boundary::orientations orientation,
                                              const double location) :
     SOSBoundary(solver, orientation),
-    m_mutexSolver(solver),
     m_averageHeightDepth(averageHeightDepth == 0 ? span : averageHeightDepth),
     m_dim(dim),
     m_span(span),
@@ -34,19 +34,19 @@ void AverageHeightBoundary::affectSurfaceSites()
     {
         if (m_dim == 0)
         {
-            m_mutexSolver.registerChangedSite(m_location, y);
+            solver().registerChangedSite(m_location, y);
         }
 
         else
         {
-            m_mutexSolver.registerChangedSite(y, m_location);
+            solver().registerChangedSite(y, m_location);
         }
     }
 }
 
 void AverageHeightBoundary::affectSolutionSites(const int z)
 {
-    throw std::runtime_error("what!");
+    BADAssBool(!solver().diffusionEvent().hasDiscreteParticles());
     (void) z;
     //derp
 }
@@ -181,9 +181,31 @@ void AverageHeightBoundary::notifyObserver(const Subjects &subject)
     const uint &y = solver().currentSurfaceChange().y;
     const int &value = solver().currentSurfaceChange().value;
 
-    if (isInsideCutoff(x, y))
+    if (solver().currentSurfaceChange().type == ChangeTypes::Single)
     {
-        m_average += double(value)/cutoffArea();
+        if (isInsideCutoff(x, y))
+        {
+            m_average += double(value)/cutoffArea();
+        }
+    }
+
+    else
+    {
+        const uint &x1 = solver().currentSurfaceChange().x1;
+        const uint &y1 = solver().currentSurfaceChange().y1;
+
+        const bool startInside = isInsideCutoff(x, y);
+        const bool endInside = isInsideCutoff(x1, y1);
+
+        if (startInside && !endInside)
+        {
+            m_average -= 1./cutoffArea();
+        }
+
+        else if (!startInside && endInside)
+        {
+            m_average += 1./cutoffArea();
+        }
     }
 
     BADAssClose(m_average, calcAverage(), 1E-3);
@@ -202,8 +224,16 @@ void AverageHeightBoundary::initializeObserver(const Subjects &subject)
 
     m_average = calcAverage();
 
-    double prevPrev = m_prevAverage;
+    double prev;
+    if (solver().cycle() == 0)
+    {
+        prev = m_average-1;
+    }
+    else
+    {
+        prev = m_prevAverage;
+    }
     m_prevAverage = m_average;
 
-    updateSites(round(m_prevAverage), round(prevPrev));
+    updateSites(round(m_prevAverage), round(prev));
 }

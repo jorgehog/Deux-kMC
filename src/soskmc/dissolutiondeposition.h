@@ -5,7 +5,7 @@
 class SurfaceReaction : public SOSReaction
 {
 public:
-    using SOSReaction::SOSReaction;
+    SurfaceReaction(const uint x, const uint y, SOSSolver &solver);
 
     const double &depositionRate() const
     {
@@ -38,6 +38,13 @@ public:
                        int &dy,
                        int &dz) const;
 
+    void freeze();
+
+    void smelt()
+    {
+        m_isFrozen = false;
+    }
+
     // Reaction interface
 public:
     bool isAllowed() const {return true;}
@@ -47,4 +54,7 @@ public:
 private:
     double m_depositionRate;
     double m_escapeRate;
+
+    bool m_isFrozen;
+    int m_freezeHeight;
 };

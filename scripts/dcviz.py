@@ -21,7 +21,7 @@ fig_4_fs = 30
 
 my_props = {
 
-    "ks" : {
+    "fmt" : {
             "markersize" : 7,
             "markeredgewidth" : 1.5,
             "linewidth" : 1,
@@ -2674,7 +2674,7 @@ class LatticediffSpeeds(DCVizPlotter):
         ss = np.linspace(supersaturations.min(), supersaturations.max())
 
         self.subfigure3.plot(ss, self.asympt(ss), "r--", label=r"$\Omega(0)h_l/(1/c_\mathrm{eq} - 1)$")
-        self.subfigure3.plot(all_ss, all_asympts, "ks", label=r"$\mathrm{KMC}$", **my_props["ks"])
+        self.subfigure3.plot(all_ss, all_asympts, "ks", label=r"$\mathrm{KMC}$", **my_props["fmt"])
 
         self.subfigure3.yaxis.set_major_formatter(FuncFormatter(self.axisFormat))
         self.subfigure3.xaxis.set_ticks([-1, -0.5, 0, 0.5, 1])
@@ -2700,7 +2700,7 @@ class LatticediffSpeeds(DCVizPlotter):
         m = sum(all_k)/len(all_k)
         kscaled = np.array(all_k)/m
 
-        self.subfigure6.plot(all_kss, kscaled, "ks", **my_props["ks"])
+        self.subfigure6.plot(all_kss, kscaled, "ks", **my_props["fmt"])
         self.subfigure6.set_xlabel(r"$\Omega(0)$")
         self.subfigure6.set_ylabel(r"$k/\langle k\rangle$")
         self.subfigure6.set_ylim(0, max(kscaled)*1.1)
@@ -2868,7 +2868,7 @@ class mftpc(DCVizPlotter):
 
             print -intercept/slope
 
-        self.subfigure.plot(logcsinv, speeds*10**logscale, "ks", **my_props["ks"])
+        self.subfigure.plot(logcsinv, speeds*10**logscale, "ks", **my_props["fmt"])
         ymin = self.subfigure.get_ylim()[0]
 
         if len(self.argv) > 2:
@@ -2893,6 +2893,12 @@ class cconv(DCVizPlotter):
     isFamilyMember = True
 
     hugifyFonts = True
+
+    def adjust(self):
+        self.adjust_maps["figure"]["top"] = 0.97
+        self.adjust_maps["figure"]["bottom"] = 0.18
+        self.adjust_maps["figure"]["right"] = 0.98
+        self.adjust_maps["figure"]["left"] = 0.15
 
     def plotsingle(self, heights, set, col='b'):
 
@@ -2922,8 +2928,8 @@ class cconv(DCVizPlotter):
         counts = np.zeros(len(all_alpha))
         avgs = np.zeros_like(counts)
 
-        mH = 0
-        mA = 0
+        heights = sorted(heights)
+
         for i, height in enumerate(heights):
 
             I = np.where(xvals[i, :] != 0)
@@ -2931,10 +2937,11 @@ class cconv(DCVizPlotter):
             self.subfigure.errorbar(xvals[i, :][I],
                                     crads[i, :][I],
                                     err[i, :][I],
-                                    fmt=heightFMT[int(i)],
-                                    ecolor=col,
+                                    fmt="k"+heightFMT[int(i)],
+                                    ecolor='k',
                                     linestyle="none",
-                                    label=r"$h_l = %.1f$" % height)
+                                    label=r"$h_l = %.1f$" % height,
+                                    **my_props["fmt"])
 
             print height, heightFMT[int(i)]
 
@@ -2951,21 +2958,26 @@ class cconv(DCVizPlotter):
         _X = np.array(all_alpha)[J]
         _Y = avgs[J]/counts[J]
 
-        self.subfigure.plot(_X, _Y)
+        self.subfigure.plot(_X, _Y, "r--")
+        self.subfigure.set_ybound(0)
 
+        self.subfigure.set_xlabel(r"$\alpha$")
+        self.subfigure.set_xlim(0.4, 2.1)
+        self.subfigure.legend(loc="lower center",
+                              numpoints=1,
+                              ncol=2,
+                              handlelength=1.0,
+                              borderpad=0.2,
+                              labelspacing=0.2,
+                              columnspacing=1.25,
+                              handletextpad=0.25,
+                              borderaxespad=0.0,
+                              frameon=False,
+                              fontsize=20,
+                              bbox_to_anchor=(0.65, 0.02)) \
+            .get_frame().set_fill(not (self.toFile and self.transparent))
 
-        f = lambda x, a: a*np.ones_like(x)
-
-        print "lols"
-
-        K = np.where(_X < 1.75)
-        popt, _ = curve_fit(f, _X[K], _Y[K])
-
-        _x = np.linspace(_X.min(), _X.max())
-        self.subfigure.plot(_x, f(_x, *popt))
-
-        print popt
-
+        self.subfigure.set_ylabel(r"$\kappa$")
 
 
     def plot(self, data):

@@ -319,6 +319,8 @@ public:
         return m_localPotentials;
     }
 
+    void freezeSurfaceParticle(const uint x, const uint y);
+
 private:
 
     const bool m_surfaceDiffusion;

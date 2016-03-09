@@ -29,12 +29,15 @@ private:
     {
         m_currentLevel += 1;
 
-        for (uint x = solver().length()-m_size; x < solver().length(); ++x)
+        for (uint x = 0; x < m_size; ++x)
         {
-            for (uint y = 0; y < m_size; ++y)
+            const uint yr = round(sqrt(m_size*m_size - x*x));
+
+            for (uint y = 0; y < yr; ++y)
             {
-                m_solver.setHeight(x, y, m_currentLevel, false);
+                solver().setHeight(x, y, m_currentLevel, false);
             }
+
         }
 
         m_solver.calculateHeightDependentValues();
@@ -75,8 +78,8 @@ public:
 
 int main(int argv, char **argc)
 {
-    rng.initialize(time(nullptr));
-    //    rng.initialize(139444);
+    //    rng.initialize(time(nullptr));
+    rng.initialize(139444);
 
     string cfgName = getCfgName(argv, argc, "felixexp");
 
@@ -95,6 +98,8 @@ int main(int argv, char **argc)
     const double h0 = getSetting<double>(cfgRoot, "h0");
     const double alpha = getSetting<double>(cfgRoot, "alpha");
 
+    const double cBath = getSetting<double>(cfgRoot, "cBath");
+
     const uint size = getSetting<uint>(cfgRoot, "size");
     const uint interval = getSetting<uint>(cfgRoot, "interval");
 
@@ -103,14 +108,29 @@ int main(int argv, char **argc)
     const uint nCycles = getSetting<uint>(cfgRoot, "nCycles");
 
 
-    SOSSolver solver(L, W, alpha, 0);
+    SOSSolver solver(L, W, alpha, 0, true);
 
-    setBoundariesFromIDs(&solver, {5, 5, 5, 5}, L, W, 0, boundaryDepth);
+    AverageHeightBoundary leftBoundary(solver, boundaryDepth, 0, L, W, Boundary::orientations::FIRST, 0);
+    ConstantHeight rightBoundary(0, L-1, Boundary::orientations::LAST);
 
-    const double cBath = 2.0;
-    ConcentrationProfile concProfile(solver, [&L, &cBath] (const uint x, const uint y)
+//    Periodic leftBoundary(L, Boundary::orientations::FIRST);
+//    Periodic rightBoundary(L, Boundary::orientations::LAST);
+
+
+//    LongestStripBoundary bottomBoundary(solver, 1, Boundary::orientations::FIRST);
+//    LongestStripBoundary topBoundary(solver, 1, Boundary::orientations::LAST);
+//    ConstantHeight bottomBoundary(0, 0, Boundary::orientations::FIRST);
+//    ConstantHeight topBoundary(0, W-1, Boundary::orientations::LAST);
+    AverageHeightLineBoundary bottomBoundary(solver, Boundary::orientations::FIRST, 1, boundaryDepth);
+    AverageHeightLineBoundary topBoundary(solver, Boundary::orientations::LAST, 1, boundaryDepth);
+
+
+    solver.setBoundaries({{&leftBoundary, &rightBoundary}, {&bottomBoundary, &topBoundary}});
+
+    ConcentrationProfile concProfile(solver, [&W, &cBath] (const uint x, const uint y)
     {
-        return cBath - (cBath - 1)*x/(L-1);
+        (void) x;
+        return cBath - (cBath - 1)*y/(W-1);
     });
 
     ConstantConfinement confinement(solver, h0);
@@ -118,15 +138,35 @@ int main(int argv, char **argc)
     InsertStep insertStep(solver, interval, size);
 
     Lattice lattice;
+    lattice.enableProgressReport();
+
     lattice.addEvent(solver);
-    lattice.addEvent(insertStep);
+    //    lattice.addEvent(insertStep);
     lattice.addEvent(confinement);
     lattice.addEvent(concProfile);
 
-    DumpSystem dumper(solver, 1, path);
+
+    DumpSystem dumper(solver, 1000, path);
 
     lattice.addEvent(dumper);
 
+        for (uint x = 0; x < size; ++x)
+        {
+//            const uint ym = sqrt(size*size - x*x);
+
+//            for (uint y = 0; y < ym; ++y)
+//            {
+//                solver.setHeight(x, y, 1, false);
+//                solver.setHeight(L-x-1, y, 1, false);
+//            }
+//            solver.freezeSurfaceParticle(x, 0);
+//            solver.freezeSurfaceParticle(L-x-1, 0);
+
+            for (uint y = 0; y < W; ++y)
+            {
+                solver.setHeight(x, y, 1, false);
+            }
+        }
 
     //
     lattice.eventLoop(nCycles);
@@ -150,6 +190,8 @@ int main(int argv, char **argc)
     simRoot["W"] = W;
     simRoot["alpha"] = alpha;
     simRoot["h0"] = h0;
+
+    simRoot["cBath"] = cBath;
 
     simRoot["halfSize"] = halfSize;
     simRoot["maxdt"] = maxdt;

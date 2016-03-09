@@ -8,7 +8,7 @@ using namespace kMC;
 class SOSBoundary : public Boundary
 {
 public:
-    SOSBoundary(const SOSSolver &solver,
+    SOSBoundary(SOSSolver &solver,
                 const Boundary::orientations orientation) :
         Boundary(orientation),
         m_solver(solver)
@@ -23,8 +23,15 @@ public:
         return m_solver;
     }
 
+protected:
+
+    SOSSolver &solver()
+    {
+        return m_solver;
+    }
+
 private:
 
-    const SOSSolver &m_solver;
+    SOSSolver &m_solver;
 
 };

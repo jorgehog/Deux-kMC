@@ -9,8 +9,25 @@
 #include "localpotential.h"
 
 
+SurfaceReaction::SurfaceReaction(const uint x, const uint y, SOSSolver &solver) :
+    SOSReaction(x, y, solver),
+    m_isFrozen(false)
+{
+
+}
+
 double SurfaceReaction::calculateEscapeRate() const
 {
+    if (m_isFrozen)
+    {
+        BADAss(solver().height(x(), y()), >=, m_freezeHeight);
+
+        if (solver().height(x(), y()) == m_freezeHeight)
+        {
+            return 0;
+        }
+    }
+
     if (solver().confiningSurfaceEvent().hasSurface())
     {
         if (solver().height(x(), y()) > solver().confiningSurfaceEvent().height() - 2)
@@ -160,6 +177,12 @@ void SurfaceReaction::getEscapePath(const uint path, int &dx, int &dy, int &dz) 
 
     BADAssBool(!solver().isBlockedPosition(x(), y(), solver().height(x(), y()) + 1));
 
+}
+
+void SurfaceReaction::freeze()
+{
+    m_isFrozen = true;
+    m_freezeHeight = solver().height(x(), y());
 }
 
 void SurfaceReaction::executeAndUpdate()

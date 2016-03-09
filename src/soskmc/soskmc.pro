@@ -40,7 +40,9 @@ SOURCES += \
     Events/diffusion/astarcpp/searchnode.cpp \
     localpotential.cpp \
     Events/confiningsurface/rdlpotential.cpp \
-    localcachedpotential.cpp
+    localcachedpotential.cpp \
+    longeststripboundary.cpp \
+    averageheightlineboundary.cpp
 
 
 HEADERS += \
@@ -83,7 +85,9 @@ HEADERS += \
     Events/diffusion/astarcpp/minheap.h \
     localpotential.h \
     Events/confiningsurface/rdlpotential.h \
-    localcachedpotential.h
+    localcachedpotential.h \
+    longeststripboundary.h \
+    averageheightlineboundary.h
 
 LIBS += -lkMC
 

@@ -222,6 +222,19 @@ void SOSSolver::calculateHeightDependentValues()
             setNNeighbors(x, y);
         }
     }
+
+    //initialize surface on top of the current surface as default.
+    if (confiningSurfaceEvent().hasSurface())
+    {
+        const int maxHeight = m_heights.max();
+        if (confiningSurfaceEvent().height() == 0 && maxHeight > 0)
+        {
+            confiningSurfaceEvent().setHeight(maxHeight + 2);
+        }
+    }
+
+    initializeObservers(Subjects::SOLVER);
+    confiningSurfaceEvent().initializeObservers(Subjects::CONFININGSURFACE);
 }
 
 uint SOSSolver::calculateNNeighbors(const uint x, const uint y, const int h) const
@@ -1091,6 +1104,11 @@ void SOSSolver::setZeroConcentration()
     }
 }
 
+void SOSSolver::freezeSurfaceParticle(const uint x, const uint y)
+{
+    m_surfaceReactions(x, y)->freeze();
+}
+
 void SOSSolver::execute()
 {
     KMCSolver::execute();
@@ -1107,19 +1125,6 @@ void SOSSolver::initialize()
     }
 
     calculateHeightDependentValues();
-
-    //initialize surface on top of the current surface as default.
-    if (confiningSurfaceEvent().hasSurface())
-    {
-        const int maxHeight = m_heights.max();
-        if (confiningSurfaceEvent().height() == 0 && maxHeight > 0)
-        {
-            confiningSurfaceEvent().setHeight(maxHeight + 2);
-        }
-    }
-
-    initializeObservers(Subjects::SOLVER);
-    confiningSurfaceEvent().initializeObservers(Subjects::CONFININGSURFACE);
 
     KMCSolver::initialize();
 

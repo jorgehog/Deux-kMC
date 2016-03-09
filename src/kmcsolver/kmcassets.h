@@ -100,7 +100,7 @@ inline uint binarySearchAndScan(const double *accuRates, const uint size, const 
         {
             choice--;
 
-            BADAss(choice, !=, 0, "failure locating reaction.");
+            BADAss(choice, !=, 0l, "failure locating reaction.");
         }
     }
 

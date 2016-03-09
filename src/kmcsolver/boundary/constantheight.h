@@ -54,10 +54,10 @@ bool ConstantHeight::blockedFunction(const T &xi, const T &xj, const T &xk) cons
 template<typename T>
 const T &ConstantHeight::transformFunction(const T &xi, const T &xj, const T &xk) const
 {
-    (void) xi;
     (void) xj;
+    (void) xk;
 
-    return xk;
+    return xi;
 }
 
 }

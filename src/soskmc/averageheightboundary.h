@@ -53,8 +53,6 @@ private:
     uint m_x1;
     uint m_y1;
 
-    SOSSolver &m_mutexSolver;
-
     const uint m_averageHeightDepth;
 
     const uint m_dim;
