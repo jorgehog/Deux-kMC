@@ -72,7 +72,7 @@ def main():
         n += 1
 
     from matplotlib.pylab import *
-    plot(sorted(r_ids), "o")
+    plot(sorted(p_ids), "o")
     show()
 
     print "Parsed", n, "entries. Extracted", len(r_ids), len(p_ids), "values."

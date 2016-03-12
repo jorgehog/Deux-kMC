@@ -28,13 +28,4 @@ SearchNode::~SearchNode()
     refCounter--;
 }
 
-void SearchNode::set(const int x, const int y, const int z, int cost, int pathCost, SearchNode *next)
-{
-    this->x = x;
-    this->y = y;
-    this->z = z;
-    this->cost = cost;
-    this->pathCost = pathCost;
-    this->next = next;
-    this->nextListElem = nullptr;
-}
+

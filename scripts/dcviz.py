@@ -2984,11 +2984,11 @@ class cconv(DCVizPlotter):
 
         heights = self.get_family_member_data(data, "heights")
 
-       # try:
-        radial = self.get_family_member_data(data, "radial")
-        self.plotsingle(heights, radial, 'b')
-      #  except RuntimeError:
-      #      pass
+        try:
+            radial = self.get_family_member_data(data, "radial")
+            self.plotsingle(heights, radial, 'b')
+        except RuntimeError:
+            pass
 
         try:
             pathfind = self.get_family_member_data(data, "pathfind")
