@@ -2204,11 +2204,11 @@ class shifts(DCVizPlotter):
 
 class AutoCorrelation(DCVizPlotter):
 
-    nametag = "autocorr(\d+)\.arma"
+    nametag = "autocorr\.arma"
 
     figMap = {"figure": ["subfigure"], "figure3D": [], "figure_projections" : "proj"}
 
-    isFamilyMember = True
+    # isFamilyMember = True
     # loadSequential = True
     #loadLatest = True
     #ziggyMagicNumber = 100
@@ -2217,113 +2217,109 @@ class AutoCorrelation(DCVizPlotter):
 
     specific_fig_size = {"figure_projections": [15, 10]}
 
-    def plot(self, _data):
+    def plot(self, data):
 
         # data = sum(_data)/len(_data)
 
-        #data -= data.min()
+        if not self.argv:
+            self.lim = exp(-2)
+        else:
+            self.lim = float(self.argv[0])
 
-        pls = []
-        pws = []
-        p1s = []
-        p2s = []
-        xs = []
+        data/= data.max()
 
-        N = 100000
-        for i, data in enumerate(_data[::N]):
+        Lm, Wm = data.shape
 
-            xs.append(self.getNumberForSort(self.familyFileNames[N*i]))
+        L = (Lm - 1)/2
+        W = (Wm - 1)/2
 
-            data/= data.max()
+        # ax = self.subfigure.imshow(data, extent=[-L, L, -W, W], origin="lower", aspect="auto", interpolation="none", cmap="Blues")
+        # self.subfigure.set_xlabel(r"$\delta x$")
+        # self.subfigure.set_ylabel(r"$\delta y$")
+        # #self.figure.colorbar(ax)
+        # #
+        # ax = Axes3D(self.figure3D)
+        #
+        # elements = Lm*Wm
+        #
+        # xpos, ypos = np.meshgrid(np.arange(Lm), np.arange(Wm))
+        #
+        # ax.plot_surface(xpos, ypos, data, cstride=1, rstride=1)
+        #
+        d1 = np.diag(data)
+        d2 = np.diag(np.flipud(data))
+        #
+        # for i in range(Lm):
+        #     for j in range(Wm):
+        #         print "%.2f" % data[i, j],
+        #     print
+        #
+        # print
+        # print
+        #
+        # for d in d1:
+        #     print "%.2f" % d,
+        # print
+        #
+        # for d in d2:
+        #     print "%.2f" % d,
+        # print
+        #
 
-            Lm, Wm = data.shape
+        xl = np.linspace(-L, L, Lm)
+        xw = np.linspace(-W, W, Wm)
 
-            L = (Lm + 1)/2
-            W = (Wm + 1)/2
+        x1 = np.sqrt(2)*xl
+        x2 = np.sqrt(2)*xw
 
-            # ax = self.subfigure.imshow(data, extent=[-L, L, -W, W], origin="lower", aspect="auto", interpolation="none", cmap="Blues")
-            # self.subfigure.set_xlabel(r"$\delta x$")
-            # self.subfigure.set_ylabel(r"$\delta y$")
-            # #self.figure.colorbar(ax)
-            # #
-            # ax = Axes3D(self.figure3D)
-            #
-            # elements = Lm*Wm
-            #
-            # xpos, ypos = np.meshgrid(np.arange(Lm), np.arange(Wm))
-            #
-            # ax.plot_surface(xpos, ypos, data, cstride=1, rstride=1)
-            #
-            d1 = np.diag(data)
-            d2 = np.diag(np.flipud(data))
-            #
-            # for i in range(Lm):
-            #     for j in range(Wm):
-            #         print "%.2f" % data[i, j],
-            #     print
-            #
-            # print
-            # print
-            #
-            # for d in d1:
-            #     print "%.2f" % d,
-            # print
-            #
-            # for d in d2:
-            #     print "%.2f" % d,
-            # print
-            #
+        dl = data[L, :]
+        dw = data[:, W]
 
-            xl = np.linspace(-L, L, Lm)
-            xw = np.linspace(-W, W, Wm)
+        # f = lambda x, a, b: a*exp(-abs(x)/b)
+        #
+        # p0 = (1., 1.)
+        # pl, _ = curve_fit(f, xl, dl, p0)
+        # pw, _ = curve_fit(f, xw, dw, p0)
+        # p1, _ = curve_fit(f, x1, d1, p0)
+        # p2, _ = curve_fit(f, x2, d2, p0)
 
-            x1 = np.sqrt(2)*xl
-            x2 = np.sqrt(2)*xw
+        # self.proj.plot(xl, self.trans(dl), '-o', label="X")
+        # self.proj.plot(xw, self.trans(dw), '-^', label="Y")
+        # self.proj.plot(x1, self.trans(d1), '-d', label="11 diag")
+        # self.proj.plot(x2, self.trans(d2), '-s', label="-11 diag")
 
-            dl = data[L-1, :]
-            dw = data[:, W-1]
+        print self.find_corrl(xl, dl, '-o', "X")
+        print self.find_corrl(xw, dw, '-^', "Y")
+        print self.find_corrl(x1, d1, '-d', "11 diag")
+        print self.find_corrl(x2, d2, '-s', "-11 diag")
 
-            # self.proj.plot(xl, self.trans(dl), '-o', label="X")
-            # self.proj.plot(xw, self.trans(dw), '-^', label="Y")
-            # self.proj.plot(x1, self.trans(d1), '-d', label="11 diag")
-            # self.proj.plot(x2, self.trans(d2), '-s', label="-11 diag")
-            # self.proj.legend()
-            # self.proj.set_xlabel(r"$\delta r$")
-            # self.proj.set_ylabel("corr")
-            # self.proj.set_title(self.filename)
+        # print pl, pw, p1, p2
 
-            f = lambda x, a, b, c: a*exp(-abs(x)/b)+c
+        # self.proj.plot(xl, f(xl, *pl))
+        # self.proj.plot(xw, f(xw, *pw))
+        # self.proj.plot(x1, f(x1, *p1))
+        # self.proj.plot(x2, f(x2, *p2))
+        #
+        # print pl[1], pw[1]
+        # print p1[1], p2[1]
 
-            p0 = (1., 1., 1.)
-            pl, _ = curve_fit(f, xl, dl, p0)
-            pw, _ = curve_fit(f, xw, dw, p0)
-            p1, _ = curve_fit(f, x1, d1, p0)
-            p2, _ = curve_fit(f, x2, d2, p0)
+        self.proj.legend()
+        self.proj.set_xlabel(r"$\delta r$")
+        self.proj.set_ylabel("corr")
+        # self.proj.set_title(self.filename)
+        self.proj.plot(x1, np.zeros_like(x1), 'k--')
 
-            # print pl, pw, p1, p2
+    def find_corrl(self, x, y, c, l):
+        I = np.where(y > self.lim)
 
-            # self.proj.plot(xl, f(xl, *pl))
-            # self.proj.plot(xw, f(xw, *pw))
-            # self.proj.plot(x1, f(x1, *p1))
-            # self.proj.plot(x2, f(x2, *p2))
+        self.proj.plot(x[I], y[I], c, label=l)
 
-            pls.append(pl[1])
-            pws.append(pw[1])
-            p1s.append(p1[1])
-            p2s.append(p2[1])
+        f = lambda x, b: exp(-abs(x)/b)
 
-            # print pl[1], pw[1]
-            # print p1[1], p2[1]
+        p0 = (1.)
+        pl, _ = curve_fit(f, x[I], y[I], p0)
 
-        self.proj.plot(xs, pls)
-        self.proj.plot(xs, pws)
-        self.proj.plot(xs, p1s)
-        self.proj.plot(xs, p2s)
-
-    def trans(self, y):
-        return y
-        return np.sign(y)*np.log(abs(y))
-
+        return pl[0]
 
 class LatticediffSpeeds(DCVizPlotter):
 
@@ -3050,6 +3046,29 @@ class cconv(DCVizPlotter):
             self.plotsingle(heights, pathfind)
         except RuntimeError:
             pass
+
+
+class AutoCorrWoot(DCVizPlotter):
+
+    nametag = "acf_(.*)\.npy"
+
+    isFamilyMember = True
+
+    figMap = {"fig" : ['RMSfig', 'CFig']}
+
+    def plot(self, data):
+
+        alphas = self.get_family_member_data(data, "alphas")
+        RMSes = self.get_family_member_data(data, "RMSes")
+        Cs = self.get_family_member_data(data, "Cs")
+
+        self.RMSfig.plot(alphas, RMSes, 'ks', **my_props["fmt"])
+
+        self.CFig.plot(alphas, Cs[:, 0], 'x')
+        self.CFig.plot(alphas, Cs[:, 1], 'o')
+        self.CFig.plot(alphas, Cs[:, 2], '^')
+        self.CFig.plot(alphas, Cs[:, 3], 'd')
+
 
 
 

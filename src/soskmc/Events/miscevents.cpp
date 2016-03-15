@@ -375,9 +375,9 @@ AutoCorrelationHeight::AutoCorrelationHeight(const SOSSolver &solver, const uint
     SOSEvent(solver),
     m_xSpan(xSpan == 0 ? solver.length()/2 : xSpan),
     m_ySpan(ySpan == 0 ? solver.width()/2 : ySpan),
-    m_autoCorrelationQuadrant(m_xSpan, m_ySpan),
-    m_autoCorrelationSubQuadrant(m_xSpan == 0 ? 0 : m_xSpan - 1,
-                                 m_ySpan == 0 ? 0 : m_ySpan - 1)
+    m_autoCorrelationQuadrant(m_xSpan+1, m_ySpan+1),
+    m_autoCorrelationSubQuadrant(m_xSpan == 0 ? 0 : m_xSpan,
+                                 m_ySpan == 0 ? 0 : m_ySpan)
 {
     if (m_ySpan > solver.width() || m_xSpan > solver.length())
     {
@@ -387,30 +387,30 @@ AutoCorrelationHeight::AutoCorrelationHeight(const SOSSolver &solver, const uint
 
 mat AutoCorrelationHeight::autoCorrelation() const
 {
-    mat autocorrelation(2*m_xSpan - 1, 2*m_ySpan - 1, fill::zeros);
+    mat autocorrelation(2*m_xSpan + 1, 2*m_ySpan + 1, fill::zeros);
 
-    uint weight = m_xSpan*m_ySpan*(cycle() + 1);
+    uint weight = solver().area()*(cycle() + 1);
 
     //implement symmetry for 11 10 01 and -1-1 -10 0-1 steps
-    for (uint dx = 0; dx < m_xSpan; ++dx)
+    for (uint dx = 0; dx <= m_xSpan; ++dx)
     {
-        for (uint dy = 0; dy < m_ySpan; ++dy)
+        for (uint dy = 0; dy <= m_ySpan; ++dy)
         {
-            autocorrelation(m_xSpan - dx - 1, m_ySpan - dy - 1)
-                    = autocorrelation(m_xSpan + dx - 1, m_ySpan + dy - 1)
+            autocorrelation(m_xSpan - (int)dx, m_ySpan - (int)dy)
+                    = autocorrelation(m_xSpan + dx, m_ySpan + dy)
                     = m_autoCorrelationQuadrant(dx, dy)/weight;
         }
     }
 
-    uint subweight = (m_xSpan - 1)*(m_ySpan - 1)*(cycle() + 1);
+    uint subweight = solver().area()*(cycle() + 1);
 
     //implement symmetry for 1-1 and -11
-    for (uint dx = 1; dx < m_xSpan; ++dx)
+    for (uint dx = 1; dx <= m_xSpan; ++dx)
     {
-        for (uint dy = 1; dy < m_ySpan; ++dy)
+        for (uint dy = 1; dy <= m_ySpan; ++dy)
         {
-            autocorrelation(m_xSpan + dx - 1, m_ySpan - dy - 1)
-                    = autocorrelation(m_xSpan - dx - 1, m_ySpan + dy - 1)
+            autocorrelation(m_xSpan + dx, m_ySpan - (int)dy)
+                    = autocorrelation(m_xSpan - (int)dx, m_ySpan + dy)
                     = m_autoCorrelationSubQuadrant(dx - 1, dy - 1)/subweight;
         }
     }
@@ -426,6 +426,7 @@ void AutoCorrelationHeight::execute()
 
     const double &hMean = solver().averageHeight();
 
+    //First we loop over all x,y that will create unique correlation pairs
     for (uint x = 0; x < solver().length(); ++x)
     {
         for (uint y = 0; y < solver().width(); ++y)
@@ -435,39 +436,32 @@ void AutoCorrelationHeight::execute()
             //correlate the point (x, y) with the rest of the system
 
             //positive directions
-            for (uint dx = 0; dx < m_xSpan; ++dx)
+            for (uint dx = 0; dx <= m_xSpan; ++dx)
             {
-                for (uint dy = 0; dy < m_ySpan; ++dy)
+                for (uint dy = 0; dy <= m_ySpan; ++dy)
                 {
                     solver().boundaryLatticeTransform(xn, yn, x + dx, y + dy, h);
 
-                    if (!solver().isOutsideBox(xn, yn))
-                    {
-                        const int &hn = solver().height(xn, yn);
+                    BADAssBool(!solver().isOutsideBox(xn, yn));
 
-                        m_autoCorrelationQuadrant(dx, dy) += (hn-hMean)*(h-hMean);
+                    const int &hn = solver().height(xn, yn);
 
-                        //derp: if something is outside box, weighting is no longer area*cycles
-                    }
-
+                    m_autoCorrelationQuadrant(dx, dy) += (hn-hMean)*(h-hMean);
                 }
             }
 
             //diagonal downwards
-            for (uint dx = 1; dx < m_xSpan; ++dx)
+            for (uint dx = 1; dx <= m_xSpan; ++dx)
             {
-                for (uint dy = 1; dy < m_ySpan; ++dy)
+                for (uint dy = 1; dy <= m_ySpan; ++dy)
                 {
                     solver().boundaryLatticeTransform(xn, yn, x + dx, y - (int)dy, h);
 
-                    if (!solver().isOutsideBox(xn, yn))
-                    {
-                        const int &hn = solver().height(xn, yn);
+                    BADAssBool(!solver().isOutsideBox(xn, yn));
 
-                        m_autoCorrelationSubQuadrant(dx-1, dy-1) += (hn-hMean)*(h-hMean);
+                    const int &hn = solver().height(xn, yn);
 
-                        //derp: if something is outside box, weighting is no longer area*cycles
-                    }
+                    m_autoCorrelationSubQuadrant(dx-1, dy-1) += (hn-hMean)*(h-hMean);
                 }
             }
 
@@ -476,7 +470,7 @@ void AutoCorrelationHeight::execute()
 
     //#ifndef NDEBUG
     mat autocorr = autoCorrelation();
-    autocorr.save("/tmp/autocorr" + to_string(cycle()) + ".arma");
+    autocorr.save("/tmp/autocorr.arma");
     //#endif
 }
 
