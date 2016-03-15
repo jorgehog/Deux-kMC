@@ -120,9 +120,9 @@ int main(int argv, char **argc)
 //    LongestStripBoundary bottomBoundary(solver, 1, Boundary::orientations::FIRST);
 //    LongestStripBoundary topBoundary(solver, 1, Boundary::orientations::LAST);
 //    ConstantHeight bottomBoundary(0, 0, Boundary::orientations::FIRST);
-//    ConstantHeight topBoundary(0, W-1, Boundary::orientations::LAST);
+    ConstantHeight topBoundary(0, W-1, Boundary::orientations::LAST);
     AverageHeightLineBoundary bottomBoundary(solver, Boundary::orientations::FIRST, 1, boundaryDepth);
-    AverageHeightLineBoundary topBoundary(solver, Boundary::orientations::LAST, 1, boundaryDepth);
+//    AverageHeightLineBoundary topBoundary(solver, Boundary::orientations::LAST, 1, boundaryDepth);
 
 
     solver.setBoundaries({{&leftBoundary, &rightBoundary}, {&bottomBoundary, &topBoundary}});
