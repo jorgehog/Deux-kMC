@@ -87,8 +87,28 @@ private:
     vector<SearchNode*> m_allSearchNodes;
     unsigned int nSearchNodes;
 
-    SearchNode *makeNewSearchNode(int newX, int newY, int newZ, int cost, int pathCost, SearchNode *current);
+    inline SearchNode *makeNewSearchNode(const int &newX, const int &newY, const int &newZ, const int &cost, const int &pathCost, SearchNode *current);
 
 };
+
+SearchNode *PathFinder::makeNewSearchNode(const int &newX, const int &newY, const int &newZ, const int &cost, const int &pathCost, SearchNode *current)
+{
+    SearchNode *nsn;
+
+    if (nSearchNodes < m_allSearchNodes.size())
+    {
+        nsn = m_allSearchNodes[nSearchNodes];
+        nsn->set(newX, newY, newZ, cost, pathCost, current);
+    }
+    else
+    {
+        nsn = new SearchNode(newX, newY, newZ, cost, pathCost, current);
+        m_allSearchNodes.push_back(nsn);
+    }
+
+    nSearchNodes++;
+
+    return nsn;
+}
 
 }

@@ -66,23 +66,4 @@ const SearchNode *PathFinder::FindPathReversed(const int x0, const int y0, const
     return nullptr; //no path found
 }
 
-SearchNode* PathFinder::makeNewSearchNode(int newX, int newY, int newZ, int cost, int pathCost, SearchNode *current)
-{
-    SearchNode *nsn;
-
-    if (nSearchNodes < m_allSearchNodes.size())
-    {
-        nsn = m_allSearchNodes[nSearchNodes];
-        nsn->set(newX, newY, newZ, cost, pathCost, current);
-    }
-    else
-    {
-        nsn = new SearchNode(newX, newY, newZ, cost, pathCost, current);
-        m_allSearchNodes.push_back(nsn);
-    }
-
-    nSearchNodes++;
-
-    return nsn;
-}
 

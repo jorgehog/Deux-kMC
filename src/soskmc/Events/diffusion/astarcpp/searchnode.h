@@ -28,8 +28,8 @@ public:
 
     static int refCounter;
 
-    void set(const int x, const int y, const int z,
-             int cost, int pathCost, SearchNode* next);
+    inline void set(const int &x, const int &y, const int &z,
+             const int &cost, const int &pathCost, SearchNode* next);
 
     string ToString() const
     {
@@ -49,5 +49,16 @@ public:
         return (dx * dx) + (dy * dy) + (dz * dz);
     }
 };
+
+void SearchNode::set(const int &x, const int &y, const int &z, const int &cost, const int &pathCost, SearchNode *next)
+{
+    this->x = x;
+    this->y = y;
+    this->z = z;
+    this->cost = cost;
+    this->pathCost = pathCost;
+    this->next = next;
+    this->nextListElem = nullptr;
+}
 
 }

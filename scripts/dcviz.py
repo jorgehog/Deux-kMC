@@ -2204,75 +2204,125 @@ class shifts(DCVizPlotter):
 
 class AutoCorrelation(DCVizPlotter):
 
-    nametag = "autocorr\.arma"
+    nametag = "autocorr(\d+)\.arma"
 
     figMap = {"figure": ["subfigure"], "figure3D": [], "figure_projections" : "proj"}
 
+    isFamilyMember = True
+    # loadSequential = True
+    #loadLatest = True
+    #ziggyMagicNumber = 100
+
     tight = False
 
-    def plot(self, data):
+    specific_fig_size = {"figure_projections": [15, 10]}
 
-        data -= data.min()
+    def plot(self, _data):
 
+        # data = sum(_data)/len(_data)
 
-        Lm, Wm = data.shape
+        #data -= data.min()
 
-        L = (Lm + 1)/2
-        W = (Wm + 1)/2
+        pls = []
+        pws = []
+        p1s = []
+        p2s = []
+        xs = []
 
-        ax = self.subfigure.imshow(data, extent=[-L, L, -W, W], origin="lower", aspect="auto", interpolation="none", cmap="Blues")
-        self.subfigure.set_xlabel(r"$\delta x$")
-        self.subfigure.set_ylabel(r"$\delta y$")
-        #self.figure.colorbar(ax)
-        #
-        ax = Axes3D(self.figure3D)
+        N = 100000
+        for i, data in enumerate(_data[::N]):
 
-        elements = Lm*Wm
+            xs.append(self.getNumberForSort(self.familyFileNames[N*i]))
 
-        xpos, ypos = np.meshgrid(np.arange(Lm), np.arange(Wm))
+            data/= data.max()
 
-        xpos = xpos.flatten()
-        ypos = ypos.flatten()
-        zpos = np.zeros(elements)
-        dx = np.ones_like(zpos)
-        dy = dx.copy()
-        dz = data.flatten()
+            Lm, Wm = data.shape
 
-        ax.bar3d(xpos, ypos, zpos, dx, dy, dz, linewidth=0)
+            L = (Lm + 1)/2
+            W = (Wm + 1)/2
 
-        d1 = np.diag(data)
-        d2 = np.diag(np.flipud(data))
+            # ax = self.subfigure.imshow(data, extent=[-L, L, -W, W], origin="lower", aspect="auto", interpolation="none", cmap="Blues")
+            # self.subfigure.set_xlabel(r"$\delta x$")
+            # self.subfigure.set_ylabel(r"$\delta y$")
+            # #self.figure.colorbar(ax)
+            # #
+            # ax = Axes3D(self.figure3D)
+            #
+            # elements = Lm*Wm
+            #
+            # xpos, ypos = np.meshgrid(np.arange(Lm), np.arange(Wm))
+            #
+            # ax.plot_surface(xpos, ypos, data, cstride=1, rstride=1)
+            #
+            d1 = np.diag(data)
+            d2 = np.diag(np.flipud(data))
+            #
+            # for i in range(Lm):
+            #     for j in range(Wm):
+            #         print "%.2f" % data[i, j],
+            #     print
+            #
+            # print
+            # print
+            #
+            # for d in d1:
+            #     print "%.2f" % d,
+            # print
+            #
+            # for d in d2:
+            #     print "%.2f" % d,
+            # print
+            #
 
-        for i in range(Lm):
-            for j in range(Wm):
-                print "%.2f" % data[i, j],
-            print
+            xl = np.linspace(-L, L, Lm)
+            xw = np.linspace(-W, W, Wm)
 
-        print
-        print
+            x1 = np.sqrt(2)*xl
+            x2 = np.sqrt(2)*xw
 
-        for d in d1:
-            print "%.2f" % d,
-        print
+            dl = data[L-1, :]
+            dw = data[:, W-1]
 
-        for d in d2:
-            print "%.2f" % d,
-        print
+            # self.proj.plot(xl, self.trans(dl), '-o', label="X")
+            # self.proj.plot(xw, self.trans(dw), '-^', label="Y")
+            # self.proj.plot(x1, self.trans(d1), '-d', label="11 diag")
+            # self.proj.plot(x2, self.trans(d2), '-s', label="-11 diag")
+            # self.proj.legend()
+            # self.proj.set_xlabel(r"$\delta r$")
+            # self.proj.set_ylabel("corr")
+            # self.proj.set_title(self.filename)
 
+            f = lambda x, a, b, c: a*exp(-abs(x)/b)+c
 
-        xl = np.linspace(-L, L, Lm)
-        xw = np.linspace(-W, W, Wm)
+            p0 = (1., 1., 1.)
+            pl, _ = curve_fit(f, xl, dl, p0)
+            pw, _ = curve_fit(f, xw, dw, p0)
+            p1, _ = curve_fit(f, x1, d1, p0)
+            p2, _ = curve_fit(f, x2, d2, p0)
 
-        x1 = np.sqrt(2)*xl
-        x2 = np.sqrt(2)*xw
+            # print pl, pw, p1, p2
 
-        self.proj.plot(xl, data[L-1, :], label="X")
-        self.proj.plot(xw, data[:, W-1], label="Y")
-        self.proj.plot(x1, d1, label="11 diag")
-        self.proj.plot(x2, d2, label="-11 diag")
-        self.proj.legend()
-        self.proj.set_xlabel(r"$\delta r$")
-        self.proj.set_ylabel("corr")
+            # self.proj.plot(xl, f(xl, *pl))
+            # self.proj.plot(xw, f(xw, *pw))
+            # self.proj.plot(x1, f(x1, *p1))
+            # self.proj.plot(x2, f(x2, *p2))
+
+            pls.append(pl[1])
+            pws.append(pw[1])
+            p1s.append(p1[1])
+            p2s.append(p2[1])
+
+            # print pl[1], pw[1]
+            # print p1[1], p2[1]
+
+        self.proj.plot(xs, pls)
+        self.proj.plot(xs, pws)
+        self.proj.plot(xs, p1s)
+        self.proj.plot(xs, p2s)
+
+    def trans(self, y):
+        return y
+        return np.sign(y)*np.log(abs(y))
 
 
 class LatticediffSpeeds(DCVizPlotter):
@@ -2900,7 +2950,7 @@ class cconv(DCVizPlotter):
         self.adjust_maps["figure"]["right"] = 0.98
         self.adjust_maps["figure"]["left"] = 0.15
 
-    def plotsingle(self, heights, set, col='b'):
+    def plotsingle(self, heights, set):
 
         xvals = np.zeros((len(heights), len(set)))
         crads = np.zeros_like(xvals)
@@ -2921,7 +2971,7 @@ class cconv(DCVizPlotter):
 
             xvals[i, j] = alpha
             crads[i, j] = (a+b)/2
-            err[i, j] = (b-a)/2
+            err[i, j] = -np.log(b/a)/2
 
         all_alpha = sorted(all_alpha)
 
@@ -2935,13 +2985,13 @@ class cconv(DCVizPlotter):
             I = np.where(xvals[i, :] != 0)
 
             self.subfigure.errorbar(xvals[i, :][I],
-                                    crads[i, :][I],
-                                    err[i, :][I],
-                                    fmt="k"+heightFMT[int(i)],
-                                    ecolor='k',
-                                    linestyle="none",
-                                    label=r"$h_l = %.1f$" % height,
-                                    **my_props["fmt"])
+                                -np.log(crads[i, :][I]),
+                                err[i, :][I],
+                                fmt="k"+heightFMT[int(i)],
+                                ecolor="k",
+                                linestyle="none",
+                                label=r"$h_l = %.1f$" % height,
+                                **my_props["fmt"])
 
             print height, heightFMT[int(i)]
 
@@ -2958,8 +3008,8 @@ class cconv(DCVizPlotter):
         _X = np.array(all_alpha)[J]
         _Y = avgs[J]/counts[J]
 
-        self.subfigure.plot(_X, _Y, "r--")
-        self.subfigure.set_ybound(0)
+        self.subfigure.plot(_X, -np.log(_Y), "r--")
+        self.subfigure.set_ylim(0, 3)
 
         self.subfigure.set_xlabel(r"$\alpha$")
         self.subfigure.set_xlim(0.4, 2.1)
@@ -2977,22 +3027,27 @@ class cconv(DCVizPlotter):
                               bbox_to_anchor=(0.65, 0.02)) \
             .get_frame().set_fill(not (self.toFile and self.transparent))
 
-        self.subfigure.set_ylabel(r"$\kappa$")
+        self.subfigure.set_ylabel(r"$\log(1/\kappa)$")
+
 
 
     def plot(self, data):
 
         heights = self.get_family_member_data(data, "heights")
 
-       # try:
-        radial = self.get_family_member_data(data, "radial")
-        self.plotsingle(heights, radial, 'b')
-      #  except RuntimeError:
-      #      pass
+        try:
+            radial = self.get_family_member_data(data, "radial")
+            self.plotsingle(heights, radial)
+        except RuntimeError:
+            pass
 
         try:
             pathfind = self.get_family_member_data(data, "pathfind")
-            self.plotsingle(heights, pathfind, 'r')
+
+            if "corr_smaug" in self.argv:
+                pathfind = np.insert(pathfind, -1, (1.16666666667, 0.0711719, 0.0700391, list(heights).index(5)), 0)
+
+            self.plotsingle(heights, pathfind)
         except RuntimeError:
             pass
 

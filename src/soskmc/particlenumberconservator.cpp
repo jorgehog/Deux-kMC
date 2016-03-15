@@ -11,7 +11,10 @@ ParticleNumberConservator::ParticleNumberConservator(SOSSolver &solver) :
 {
     BADAssBool(solver.diffusionEventIsSet(), "Diffusion event need to be set before this object can be constructed.");
 
-    solver.diffusionEvent().setDependency(this);
+    if (solver.diffusionEvent().hasDiscreteParticles())
+    {
+        solver.diffusionEvent().setDependency(this);
+    }
 }
 
 void ParticleNumberConservator::initialize()
