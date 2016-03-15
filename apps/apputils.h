@@ -798,7 +798,11 @@ inline double getMFPTConstant(const double h0, const double alpha, const int typ
     }
     else
     {
-        throw std::runtime_error("hmm");
+        c0 = valueMap->at({ih, ia});
+        c1 = valueMap->at({ih, ia+1});
+
+        da = alpha - knownAlphas(ia);
+        daa = knownAlphas(ia+1) - knownAlphas(ia);
     }
 
     return c0 + (c1-c0)*da/daa;
