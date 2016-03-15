@@ -77,6 +77,7 @@ int main(int argv, char** argc)
     const int &depositionBoxHalfSize = getSetting<int>(root, "depositionBoxHalfSize");
     const double &depRateConstant = getSetting<double>(root, "c");
     const uint &constantNInt = getSetting<uint>(root, "constantN");
+    const uint &cFromMap = getSetting<uint>(root, "cFromMap");
     const bool constantN = constantNInt == 1;
 
     const uint &autoCorrelationInt = getSetting<uint>(root, "autocorrelation");
@@ -166,6 +167,16 @@ int main(int argv, char** argc)
     }
     //
 
+    double cMFPT;
+    if (cFromMap == 1)
+    {
+        cMFPT = getMFPTConstant(confiningSurface->height(), alpha, diffuseInt - 3);
+    }
+    else
+    {
+        cMFPT = depRateConstant;
+    }
+
     //selection diffusion model
     if (diffuseInt == 1)
     {
@@ -177,11 +188,11 @@ int main(int argv, char** argc)
     }
     else if (diffuseInt == 3)
     {
-        diffusion = new RadialFirstPassage(solver, maxdt, depositionBoxHalfSize, depRateConstant);
+        diffusion = new RadialFirstPassage(solver, maxdt, depositionBoxHalfSize, cMFPT);
     }
     else if (diffuseInt == 4)
     {
-        diffusion = new AStarFirstPassage(solver, maxdt, depositionBoxHalfSize, depRateConstant);
+        diffusion = new AStarFirstPassage(solver, maxdt, depositionBoxHalfSize, cMFPT);
     }
     else if (diffuseInt == 5)
     {
@@ -220,7 +231,7 @@ int main(int argv, char** argc)
 
     AverageHeight averageHeight(solver);
 
-    AutoCorrelationHeight autoCorrelation(solver, xCorrSpan, yCorrSpan);
+    AutoCorrelationHeight autoCorrelation(solver, 0, 0);
     autoCorrelation.setOnsetTime(thermalization);
 
     EqGamma eqGamma(solver);
@@ -277,7 +288,7 @@ int main(int argv, char** argc)
     lattice.addEvent(size);
     lattice.addEvent(var);
 
-    if (autoCorrelationInt == 1 && solver.surfaceDim() == 2)
+    if (autoCorrelationInt == 1)
     {
         lattice.addEvent(autoCorrelation);
     }
@@ -363,6 +374,7 @@ int main(int argv, char** argc)
     simRoot["maxdt"] = maxdt;
     simRoot["depositionBoxHalfSize"] = depositionBoxHalfSize;
     simRoot["depRateConstant"] = depRateConstant;
+    simRoot["cFromMap"] = cFromMap;
     simRoot["constantN"] = constantNInt;
 
     simRoot["autoCorrelationInt"] = autoCorrelationInt;
@@ -396,7 +408,7 @@ int main(int argv, char** argc)
 
     if (autoCorrelationInt == 1)
     {
-        simRoot["RACF"] = autoCorrelation.autoCorrelation();
+        simRoot["autocorrelation"] = autoCorrelation.autoCorrelation();
     }
 
     //---End data dump

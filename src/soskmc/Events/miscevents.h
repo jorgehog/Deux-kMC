@@ -284,10 +284,10 @@ public:
 
 private:
 
-   const SOSEvent &m_event;
+    const SOSEvent &m_event;
 
-   double m_T0;
-   double m_sum;
+    double m_T0;
+    double m_sum;
 
 };
 
@@ -308,6 +308,50 @@ private:
 
 };
 
+class AutoCorrelation1D : public SOSEvent
+{
+public:
+    AutoCorrelation1D(const SOSSolver &solver);
+
+    vec autoCorrelation() const;
+
+private:
+    vec m_acf;
+
+    // Event interface
+public:
+    void execute();
+
+    void initialize();
+
+};
+
+class AutoCorrelationHeightBF : public SOSEvent
+{
+public:
+    AutoCorrelationHeightBF(const SOSSolver &solver,
+                            const uint xSpan,
+                            const uint ySpan,
+                            const uint interval);
+
+    mat autoCorrelation() const;
+
+private:
+
+    const uint m_xSpan;
+    const uint m_ySpan;
+
+    const uint m_interval;
+
+    mat m_autoCorrelation;
+    uint m_count;
+
+    // Event interface
+public:
+    void execute();
+
+    void initialize();
+};
 
 class AutoCorrelationHeight : public SOSEvent
 {

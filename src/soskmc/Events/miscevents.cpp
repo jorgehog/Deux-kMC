@@ -476,7 +476,7 @@ void AutoCorrelationHeight::execute()
 
     //#ifndef NDEBUG
     mat autocorr = autoCorrelation();
-    autocorr.save("/tmp/autocorr.arma");
+    autocorr.save("/tmp/autocorr" + to_string(cycle()) + ".arma");
     //#endif
 }
 
@@ -490,4 +490,102 @@ void AutoCorrelationHeight::initialize()
 void ConcentrationTracker::execute()
 {
     setValue(solver().diffusionEvent().concentration());
+}
+
+
+AutoCorrelationHeightBF::AutoCorrelationHeightBF(const SOSSolver &solver,
+                                                 const uint xSpan,
+                                                 const uint ySpan,
+                                                 const uint interval) :
+    SOSEvent(solver, "autocorr", "", true),
+    m_xSpan(xSpan == 0 ? solver.length()/2 : xSpan),
+    m_ySpan(ySpan == 0 ? solver.width()/2 : ySpan),
+    m_interval(interval),
+    m_autoCorrelation(2*m_xSpan+1, 2*m_ySpan+1)
+{
+
+}
+
+mat AutoCorrelationHeightBF::autoCorrelation() const
+{
+    return m_autoCorrelation/(m_count*solver().area());
+}
+
+void AutoCorrelationHeightBF::execute()
+{
+    setValue(m_count);
+
+    if (cycle() % m_interval != 0)
+    {
+        return;
+    }
+
+    const double &hm = solver().averageHeight();
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            const int &h = solver().height(x, y);
+
+            for (int dx = -int(m_xSpan); dx <= int(m_xSpan); ++dx)
+            {
+                for (int dy = -int(m_ySpan); dy <= int(m_ySpan); ++dy)
+                {
+                    int xt, yt;
+                    solver().boundaryLatticeTransform(xt, yt, int(x)+dx, int(y)+dy, h);
+
+                    const int &ht = solver().height(xt, yt);
+
+                    m_autoCorrelation(m_xSpan + dx, m_ySpan + dy) += (h-hm)*(ht-hm);
+                }
+            }
+        }
+    }
+
+    m_count++;
+
+    //#ifndef NDEBUG
+    mat autocorr = autoCorrelation();
+    autocorr.save("/tmp/autocorr" + to_string(m_count-1) + ".arma");
+    //#endif
+}
+
+void AutoCorrelationHeightBF::initialize()
+{
+    m_autoCorrelation.zeros();
+    m_count = 0;
+}
+
+
+AutoCorrelation1D::AutoCorrelation1D(const SOSSolver &solver) :
+    SOSEvent(solver),
+    m_acf(solver.length()/2)
+{
+
+}
+
+vec AutoCorrelation1D::autoCorrelation() const
+{
+    return m_acf/((cycle()+1)*solver().length()/2);
+}
+
+void AutoCorrelation1D::execute()
+{
+    const double &mh = solver().averageHeight();
+
+    for (uint dx = 0; dx < solver().length()/2; ++dx)
+    {
+        for (uint x = 0; x < solver().length()/2; ++x)
+        {
+            m_acf(dx) += (solver().height(x, 0) - mh)*(solver().height(x+dx,0) - mh);
+        }
+    }
+
+    m_acf.save("/tmp/acf.arma");
+}
+
+void AutoCorrelation1D::initialize()
+{
+    m_acf.zeros();
 }
