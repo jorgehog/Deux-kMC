@@ -1,4 +1,3 @@
-from mercurial.ignore import ignore
 import sys
 import os
 import re

@@ -24,22 +24,44 @@ def find_corrl(x, y):
 
     return pl[0]
 
-def main():
+def analyze(input_file, typeint, typestr):
 
     input_file = sys.argv[1]
 
     parser = ParseKMCHDF5(input_file)
 
     alphas = []
-    RMSes = []
-    Cs = []
+    heights = []
 
-    n = 0
     for data, L, W, run_id in parser:
 
-        alpha = data.attrs["alpha"]
+        if data.attrs["diffuse"] != typeint:
+            continue
 
-        alphas.append(alpha)
+        alpha = data.attrs["alpha"]
+        height = data.attrs["confiningSurfaceHeight"]
+
+        if alpha not in alphas:
+            alphas.append(alpha)
+
+        if height not in heights:
+            heights.append(height)
+
+
+    autocorrs = np.zeros(shape=(len(heights), len(alphas), L+1, W+1))
+    RMSes = np.zeros(shape=(len(heights), len(alphas)))
+    counts = np.zeros_like(RMSes)
+
+    for data, L, W, run_id in parser:
+
+        if data.attrs["diffuse"] != typeint:
+            continue
+
+        alpha = data.attrs["alpha"]
+        height = data.attrs["confiningSurfaceHeight"]
+
+        ia = alphas.index(alpha)
+        ih = heights.index(height)
 
         xl = np.linspace(-L/2, L/2, L + 1)
         xw = np.linspace(-W/2, W/2, W + 1)
@@ -48,39 +70,59 @@ def main():
         x2 = sqrt(2)*xw
 
         autocorr = np.array(data["autocorrelation"])
-        autocorr /= autocorr.max()
 
-        dl = autocorr[:, W/2]
-        dw = autocorr[L/2, :]
-
-        d1 = np.diag(autocorr)
-        d2 = np.diag(np.flipud(autocorr))
-
-        cl = find_corrl(xl, dl)
-        cw = find_corrl(xw, dw)
-        c1 = find_corrl(x1, d1)
-        c2 = find_corrl(x2, d2)
-
-        Cs.append([cl, cw, c1, c2])
+        autocorrs[ih, ia, :, :] += autocorr
 
         labels = data["ignisEventDescriptions"]
         i = list(list(labels)[0]).index("HeightRMS@MainMesh")
         RMS = data["ignisData"][i, :]
         rms = (RMS[len(RMS)/2:]).mean()
 
-        RMSes.append(rms)
+        RMSes[ih, ia] += rms
+        counts[ih, ia] += 1
 
-        n += 1
+    RMSes /= counts
 
-    print "Parsed", n, "entries."
+    for j, height in enumerate(heights):
 
-    alphas = np.array(alphas)
-    RMSes = np.array(RMSes)
-    Cs = np.array(Cs)
+        Cs = []
 
-    np.save("/tmp/acf_alphas.npy", alphas)
-    np.save("/tmp/acf_RMSes.npy", RMSes)
-    np.save("/tmp/acf_Cs.npy", Cs)
+        for i in range(len(alphas)):
+
+            autocorr = autocorrs[j, i, :, :]
+
+            autocorr /= autocorr.max()
+
+            dl = autocorr[:, W/2]
+            dw = autocorr[L/2, :]
+
+            d1 = np.diag(autocorr)
+            d2 = np.diag(np.flipud(autocorr))
+
+            cl = find_corrl(xl, dl)
+            cw = find_corrl(xw, dw)
+            c1 = find_corrl(x1, d1)
+            c2 = find_corrl(x2, d2)
+
+            Cs.append([(cl + cw)/2., (c1 + c2)/2.])
+
+        alphas = np.array(alphas)
+        Cs = np.array(Cs)
+
+        np.save("/tmp/acf_h%d_%s_alphas.npy" % (j, typestr), alphas)
+        np.save("/tmp/acf_h%d_%s_RMSes.npy" % (j, typestr), RMSes[j, :])
+        np.save("/tmp/acf_h%d_%s_Cs.npy" % (j, typestr), Cs)
+
+    np.save("/tmp/acf_heights.npy", np.array(heights))
+
+def main():
+
+    input_file = sys.argv[1]
+
+    analyze(input_file, 6, "uniform")
+    analyze(input_file, 2, "lattice")
+    analyze(input_file, 3, "radial")
+    analyze(input_file, 4, "pathfind")
 
 
 if __name__ == "__main__":

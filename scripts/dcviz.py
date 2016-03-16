@@ -304,7 +304,11 @@ class SteadyState(DCVizPlotter):
             sfig.axes.yaxis.set_major_formatter(majorFormatter)
             sfig.set_ylabel(r"$%s$" % rmslabel, labelpad=labelpads[i])
             sfig.set_ybound(0)
-            sfig.text(1-0.1, 0.5, r"$\mathrm{(%s)}$" % labels2[i], horizontalalignment="left", verticalalignment="center", fontsize=30, transform=sfig.axes.transAxes)
+            sfig.text(1-0.1, 0.5, r"$\mathrm{(%s)}$" % labels2[i],
+                      horizontalalignment="left",
+                      verticalalignment="center",
+                      fontsize=30,
+                      transform=sfig.axes.transAxes)
 
             if i != len(sfigs) - 1:
                 sfig.axes.xaxis.set_ticklabels([])
@@ -3054,22 +3058,152 @@ class AutoCorrWoot(DCVizPlotter):
 
     isFamilyMember = True
 
-    figMap = {"fig" : ['RMSfig', 'CFig']}
+    figMap = {"figure" : ['RMSfig1', 'RMSfig2', 'CFig1', 'CFig2']}
+
+    styles = ["s", "o", "^", "d"]
+    colors = ["k", "r", "b", "g"]
+
+    names = {"uniform"  : "Uniform",
+             "lattice"  : "Lattice",
+             "radial"   : "Radial MFPT",
+             "pathfind" : "Pathfind MFPT"}
+
+    prios = {"uniform"  : 0,
+             "lattice"  : 1,
+             "radial"   : 2,
+             "pathfind" : 3}
+
+    hugifyFonts = True
+
+    def adjust(self):
+        self.adjust_maps["figure"]["top"] = 0.98
+        self.adjust_maps["figure"]["bottom"] = 0.08
+        self.adjust_maps["figure"]["right"] = 0.87
+        self.adjust_maps["figure"]["left"] = 0.14
+        self.adjust_maps["figure"]["hspace"] = 0.14
+
+    fig_size = [5, 10]
 
     def plot(self, data):
 
-        alphas = self.get_family_member_data(data, "alphas")
-        RMSes = self.get_family_member_data(data, "RMSes")
-        Cs = self.get_family_member_data(data, "Cs")
+        heights = self.get_family_member_data(data, "heights")
 
-        self.RMSfig.plot(alphas, RMSes, 'ks', **my_props["fmt"])
+        types = []
+        for name in self.familyFileNames:
 
-        self.CFig.plot(alphas, Cs[:, 0], 'x')
-        self.CFig.plot(alphas, Cs[:, 1], 'o')
-        self.CFig.plot(alphas, Cs[:, 2], '^')
-        self.CFig.plot(alphas, Cs[:, 3], 'd')
+            if "alphas" in name:
+                _ih, type = re.findall(r"acf_h(\d+)\_(\w+)\_alphas\.npy", name)[0]
 
+                if int(_ih) != 0:
+                    continue
 
+                types.append(type)
+
+        types = sorted(types, key=lambda x: self.prios[x])
+
+        Rfs = [self.RMSfig1, self.RMSfig2]
+        Cfs = [self.CFig1, self.CFig2]
+
+        for ih, height in enumerate(heights):
+
+            if ih > 1:
+                continue
+
+            for i, type in enumerate(types):
+                alphas = self.get_family_member_data(data, "h%d_%s_alphas" % (ih, type))
+                RMSes = self.get_family_member_data(data, "h%d_%s_RMSes" % (ih, type))
+                Cs = self.get_family_member_data(data, "h%d_%s_Cs" % (ih, type))
+
+                s = self.colors[i] + self.styles[i]
+
+                Rfs[ih].plot(alphas, RMSes, s, label=self.names[type], **my_props["fmt"])
+
+                Cfs[ih].plot(alphas, 0.5*(Cs[:, 0] + Cs[:, 1]), s, **my_props["fmt"])
+                # self.CFig_diag.plot(alphas, Cs[:, 1], s, label=type, **my_props["fmt"])
+
+        self.RMSfig1.set_ylabel(r"$\sigma(\mathbf{h})$")
+        self.RMSfig1.xaxis.set_ticks([0.5, 1, 1.5, 2])
+        self.RMSfig1.yaxis.set_ticks([0, 1, 2, 3])
+        self.RMSfig1.set_xlim(0.4, 2.1)
+
+        self.RMSfig2.set_ylabel(r"$\sigma(\mathbf{h})$")
+        self.RMSfig2.xaxis.set_ticks([0.5, 1, 1.5, 2])
+        self.RMSfig2.yaxis.set_ticks([0, 1, 2, 3])
+        self.RMSfig2.set_xlim(0.4, 2.1)
+
+        self.CFig1.set_ylabel(r"$\xi$")
+        self.CFig1.yaxis.set_ticks([0, 1, 2, 3])
+        self.CFig1.xaxis.set_ticks([0.5, 1, 1.5, 2])
+        self.CFig1.set_xlim(0.4, 2.1)
+        self.CFig1.set_ylim(0, 3.5)
+
+        self.CFig2.set_ylabel(r"$\xi$")
+        self.CFig2.yaxis.set_ticks([0, 1, 2, 3])
+        self.CFig2.set_xlim(0.4, 2.1)
+        self.CFig2.set_ylim(0, 3.5)
+
+        label = r"\langle d_i\rangle"
+
+        ax = self.RMSfig1.axes.twinx()
+        ax.set_ylabel(r"$%s=%.1f$" % (label, heights[0]), labelpad=15)
+        ax.yaxis.set_ticks([])
+        ax.yaxis.set_ticklabels([])
+
+        ax = self.RMSfig2.axes.twinx()
+        ax.set_ylabel(r"$%s=%.1f$" % (label, heights[1]), labelpad=15)
+        ax.yaxis.set_ticks([])
+        ax.yaxis.set_ticklabels([])
+
+        ax = self.CFig1.axes.twinx()
+        ax.set_ylabel(r"$%s=%.1f$" % (label, heights[0]), labelpad=15)
+        ax.yaxis.set_ticks([])
+        ax.yaxis.set_ticklabels([])
+
+        ax = self.CFig2.axes.twinx()
+        ax.set_ylabel(r"$%s=%.1f$" % (label, heights[1]), labelpad=15)
+        ax.yaxis.set_ticks([])
+        ax.yaxis.set_ticklabels([])
+
+        self.CFig2.set_xlabel(r"$\alpha$")
+        self.CFig2.xaxis.set_ticks([0.5, 1, 1.5, 2])
+
+        def format_func0(v, i):
+            return ""
+
+        formatter = FuncFormatter(format_func0)
+        self.RMSfig1.axes.xaxis.set_major_formatter(formatter)
+        self.RMSfig2.axes.xaxis.set_major_formatter(formatter)
+        self.CFig1.axes.xaxis.set_major_formatter(formatter)
+
+        # self.CFig.text(0.05, 0.75, r"$\langle d_i \rangle = %.1f$" % float(height),
+        #                horizontalalignment="left",
+        #                verticalalignment="center",
+        #                fontsize=24,
+        #                transform=self.CFig.axes.transAxes)
+
+        def format_func(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            else:
+                return ""
+
+        formatter = FuncFormatter(format_func)
+        self.CFig1.axes.yaxis.set_major_formatter(formatter)
+        self.CFig2.axes.yaxis.set_major_formatter(formatter)
+
+        self.RMSfig1.axes.legend(loc="center",
+                                 numpoints=1,
+                                 ncol=2,
+                                 handlelength=1.0,
+                                 borderpad=0.2,
+                                 labelspacing=0.2,
+                                 columnspacing=0.3,
+                                 handletextpad=0.25,
+                                 borderaxespad=0.0,
+                                 frameon=False,
+                                 fontsize=12,
+                                 bbox_to_anchor=(0.63, 0.76)) \
+            .get_frame().set_fill(not (self.toFile and self.transparent))
 
 
 
