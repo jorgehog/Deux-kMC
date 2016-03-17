@@ -24,6 +24,21 @@ def find_corrl(x, y):
 
     return pl[0]
 
+def find_corrl2(x, y):
+    J = np.where(x > 0)
+    K = np.where(x[J] <= 8)
+
+    X = x[J][K]
+    Y = np.log((y[J][K]))
+
+    f = lambda x, a, b: a*x + b
+
+    p0 = (-1., -1.)
+
+    pl, cl = curve_fit(f, X, Y, p0)
+
+    return -1./pl[0]
+
 def analyze(input_file, typeint, typestr):
 
     input_file = sys.argv[1]
@@ -99,10 +114,10 @@ def analyze(input_file, typeint, typestr):
             d1 = np.diag(autocorr)
             d2 = np.diag(np.flipud(autocorr))
 
-            cl = find_corrl(xl, dl)
-            cw = find_corrl(xw, dw)
-            c1 = find_corrl(x1, d1)
-            c2 = find_corrl(x2, d2)
+            cl = find_corrl2(xl, dl)
+            cw = find_corrl2(xw, dw)
+            c1 = find_corrl2(x1, d1)
+            c2 = find_corrl2(x2, d2)
 
             Cs.append([(cl + cw)/2., (c1 + c2)/2.])
 

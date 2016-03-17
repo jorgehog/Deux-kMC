@@ -83,6 +83,7 @@ int main(int argv, char** argc)
     const uint &autoCorrelationInt = getSetting<uint>(root, "autocorrelation");
     const uint &xCorrSpan = getSetting<uint>(root, "xCorrSpan");
     const uint &yCorrSpan = getSetting<uint>(root, "yCorrSpan");
+    const uint &interval  = getSetting<uint>(root, "interval");
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
     const bool equilibriate = equilibriateInt == 1;
@@ -231,7 +232,7 @@ int main(int argv, char** argc)
 
     AverageHeight averageHeight(solver);
 
-    AutoCorrelationHeight autoCorrelation(solver, 0, 0);
+    AutoCorrelationHeight autoCorrelation(solver, 0, 0, interval);
     autoCorrelation.setOnsetTime(thermalization);
 
     EqGamma eqGamma(solver);
@@ -291,6 +292,7 @@ int main(int argv, char** argc)
     if (autoCorrelationInt == 1)
     {
         lattice.addEvent(autoCorrelation);
+        solver.registerObserver(&autoCorrelation);
     }
 
     initializeSurface(solver, initialSurfaceType, diffuseInt, surfaceThermCycles);
@@ -380,6 +382,7 @@ int main(int argv, char** argc)
     simRoot["autoCorrelationInt"] = autoCorrelationInt;
     simRoot["xCorrSpan"] = xCorrSpan;
     simRoot["yCorrSpan"] = yCorrSpan;
+    simRoot["interval"] = interval;
 
     simRoot["useConcEquil"] = equilibriateInt;
     simRoot["reset"] = resetInt;

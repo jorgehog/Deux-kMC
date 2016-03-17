@@ -353,14 +353,15 @@ public:
     void initialize();
 };
 
-class AutoCorrelationHeight : public SOSEvent
+class AutoCorrelationHeight : public SOSEvent, public Observer<Subjects>
 {
 
 public:
 
     AutoCorrelationHeight(const SOSSolver &solver,
                           const uint xSpan,
-                          const uint ySpan);
+                          const uint ySpan,
+                          const uint interval = 1);
 
     mat autoCorrelation() const;
 
@@ -373,11 +374,20 @@ private:
     mat m_autoCorrelationQuadrant;
     mat m_autoCorrelationSubQuadrant;
 
+    const uint m_interval;
+    uint m_count;
+    uint m_updateCount;
+
+    void updateFunction();
+
     // Event interface
 public:
     void execute();
 
-    void initialize();
+    // Observer interface
+public:
+    void initializeObserver(const Subjects &subject);
+    void notifyObserver(const Subjects &subject);
 };
 
 class ConcentrationTracker : public SOSEvent

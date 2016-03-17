@@ -351,6 +351,48 @@ void setBoundariesFromIDs(SOSSolver *solver,
                            {bottomBoundary, topBoundary}});
 }
 
+class SurfaceCounter : public Event<uint>, public Observer<Subjects>
+{
+public:
+    SurfaceCounter(const uint totalCount) :
+        Event("SC", "%", true),
+        Observer(),
+        m_totalCount(totalCount)
+    {
+
+    }
+
+private:
+
+    const uint m_totalCount;
+    uint m_counter;
+
+    // Observer interface
+public:
+    void initializeObserver(const Subjects &subject)
+    {
+        m_counter = 0;
+    }
+
+    void notifyObserver(const Subjects &subject)
+    {
+        m_counter++;
+    }
+
+    // Event interface
+public:
+    void execute()
+    {
+        setValue(m_counter/double(m_totalCount)*100);
+
+        if (m_counter >= m_totalCount)
+        {
+            terminateLoop("Counter exceeds limit.");
+        }
+    }
+};
+
+
 void initializeSurface(SOSSolver &solver, const string type,
                        const uint diffusionInt = 0,
                        const uint surfaceThermCycles = 10000,
@@ -492,6 +534,9 @@ void initializeSurface(SOSSolver &solver, const string type,
 
         setBoundariesFromIDs(&thermSolver, {0,0,0,0}, L, W);
 
+        SurfaceCounter counter(surfaceThermCycles);
+        thermSolver.registerObserver(&counter);
+
         if (solver.confiningSurfaceEvent().hasSurface())
         {
             conf = new ConstantConfinement(thermSolver, solver.confiningSurfaceEvent().height());
@@ -532,6 +577,7 @@ void initializeSurface(SOSSolver &solver, const string type,
 
         lattice.addEvent(thermSolver);
         lattice.addEvent(conf);
+        lattice.addEvent(counter);
 
         if (conc->hasDiscreteParticles())
         {
@@ -544,10 +590,11 @@ void initializeSurface(SOSSolver &solver, const string type,
 
         const uint every = surfaceThermCycles/10;
         lattice.enableOutput(output, every);
-        lattice.enableProgressReport();
+        lattice.enableProgressReport(false);
         lattice.enableEventValueStorage(false, false);
 
-        lattice.eventLoop(surfaceThermCycles);
+
+        lattice.eventLoop(1000*surfaceThermCycles);
 
         solver.setHeights(thermSolver.heights(), false);
 

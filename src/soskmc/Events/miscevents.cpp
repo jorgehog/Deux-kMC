@@ -371,13 +371,15 @@ void HeightRMS::execute()
 }
 
 
-AutoCorrelationHeight::AutoCorrelationHeight(const SOSSolver &solver, const uint xSpan, const uint ySpan) :
-    SOSEvent(solver),
+AutoCorrelationHeight::AutoCorrelationHeight(const SOSSolver &solver, const uint xSpan, const uint ySpan, const uint interval) :
+    SOSEvent(solver, "ach", "",true),
+    Observer(),
     m_xSpan(xSpan == 0 ? solver.length()/2 : xSpan),
     m_ySpan(ySpan == 0 ? solver.width()/2 : ySpan),
     m_autoCorrelationQuadrant(m_xSpan+1, m_ySpan+1),
     m_autoCorrelationSubQuadrant(m_xSpan == 0 ? 0 : m_xSpan,
-                                 m_ySpan == 0 ? 0 : m_ySpan)
+                                 m_ySpan == 0 ? 0 : m_ySpan),
+    m_interval(interval)
 {
     if (m_ySpan > solver.width() || m_xSpan > solver.length())
     {
@@ -389,7 +391,7 @@ mat AutoCorrelationHeight::autoCorrelation() const
 {
     mat autocorrelation(2*m_xSpan + 1, 2*m_ySpan + 1, fill::zeros);
 
-    uint weight = solver().area()*(cycle() + 1);
+    uint weight = solver().area()*m_count;
 
     //implement symmetry for 11 10 01 and -1-1 -10 0-1 steps
     for (uint dx = 0; dx <= m_xSpan; ++dx)
@@ -402,8 +404,6 @@ mat AutoCorrelationHeight::autoCorrelation() const
         }
     }
 
-    uint subweight = solver().area()*(cycle() + 1);
-
     //implement symmetry for 1-1 and -11
     for (uint dx = 1; dx <= m_xSpan; ++dx)
     {
@@ -411,7 +411,7 @@ mat AutoCorrelationHeight::autoCorrelation() const
         {
             autocorrelation(m_xSpan + dx, m_ySpan - (int)dy)
                     = autocorrelation(m_xSpan - (int)dx, m_ySpan + dy)
-                    = m_autoCorrelationSubQuadrant(dx - 1, dy - 1)/subweight;
+                    = m_autoCorrelationSubQuadrant(dx - 1, dy - 1)/weight;
         }
     }
 
@@ -419,7 +419,7 @@ mat AutoCorrelationHeight::autoCorrelation() const
 
 }
 
-void AutoCorrelationHeight::execute()
+void AutoCorrelationHeight::updateFunction()
 {
     int xn;
     int yn;
@@ -468,17 +468,49 @@ void AutoCorrelationHeight::execute()
         }
     }
 
-    //#ifndef NDEBUG
-    mat autocorr = autoCorrelation();
-    autocorr.save("/tmp/autocorr.arma");
-    //#endif
+    m_updateCount++;
 }
 
-void AutoCorrelationHeight::initialize()
+void AutoCorrelationHeight::execute()
 {
+    setValue(m_updateCount);
+
+    if (cycle() % m_interval == 0)
+    {
+        //#ifndef NDEBUG
+        mat autocorr = autoCorrelation();
+        autocorr.save("/tmp/autocorr.arma");
+        //#endif
+    }
+
+    if (m_updateCount == 10000)
+    {
+        terminateLoop("AutoCorrelation Converged.");
+    }
+}
+
+void AutoCorrelationHeight::initializeObserver(const Subjects &subject)
+{
+    (void) subject;
+
     m_autoCorrelationQuadrant.zeros();
     m_autoCorrelationSubQuadrant.zeros();
+    m_count = 0;
+    m_updateCount = 0;
 }
+
+void AutoCorrelationHeight::notifyObserver(const Subjects &subject)
+{
+    (void) subject;
+
+    m_count++;
+
+    if (((m_count-1) % m_interval) == 0)
+    {
+        updateFunction();
+    }
+}
+
 
 
 void ConcentrationTracker::execute()
@@ -583,3 +615,5 @@ void AutoCorrelation1D::initialize()
 {
     m_acf.zeros();
 }
+
+

@@ -2210,7 +2210,7 @@ class AutoCorrelation(DCVizPlotter):
 
     nametag = "autocorr\.arma"
 
-    figMap = {"figure": ["subfigure"], "figure3D": [], "figure_projections" : "proj"}
+    figMap = {"figure": ["subfigure"], "figure3D": [], "figure_projections" : ["proj", "proj2"]}
 
     # isFamilyMember = True
     # loadSequential = True
@@ -2219,6 +2219,7 @@ class AutoCorrelation(DCVizPlotter):
 
     tight = False
 
+    fig_size = [10, 10]
     specific_fig_size = {"figure_projections": [15, 10]}
 
     def plot(self, data):
@@ -2237,38 +2238,18 @@ class AutoCorrelation(DCVizPlotter):
         L = (Lm - 1)/2
         W = (Wm - 1)/2
 
-        # ax = self.subfigure.imshow(data, extent=[-L, L, -W, W], origin="lower", aspect="auto", interpolation="none", cmap="Blues")
-        # self.subfigure.set_xlabel(r"$\delta x$")
-        # self.subfigure.set_ylabel(r"$\delta y$")
-        # #self.figure.colorbar(ax)
-        # #
-        # ax = Axes3D(self.figure3D)
-        #
-        # elements = Lm*Wm
-        #
-        # xpos, ypos = np.meshgrid(np.arange(Lm), np.arange(Wm))
-        #
-        # ax.plot_surface(xpos, ypos, data, cstride=1, rstride=1)
-        #
+        ax = self.subfigure.imshow(data, extent=[-L, L, -W, W], origin="lower", aspect="auto", interpolation="none", cmap="Blues")
+        self.subfigure.set_xlabel(r"$\delta x$")
+        self.subfigure.set_ylabel(r"$\delta y$")
+
+        ax = Axes3D(self.figure3D)
+
+        xpos, ypos = np.meshgrid(np.arange(Lm), np.arange(Wm))
+
+        ax.plot_surface(xpos, ypos, data, cstride=1, rstride=1)
+
         d1 = np.diag(data)
         d2 = np.diag(np.flipud(data))
-        #
-        # for i in range(Lm):
-        #     for j in range(Wm):
-        #         print "%.2f" % data[i, j],
-        #     print
-        #
-        # print
-        # print
-        #
-        # for d in d1:
-        #     print "%.2f" % d,
-        # print
-        #
-        # for d in d2:
-        #     print "%.2f" % d,
-        # print
-        #
 
         xl = np.linspace(-L, L, Lm)
         xw = np.linspace(-W, W, Wm)
@@ -2287,43 +2268,45 @@ class AutoCorrelation(DCVizPlotter):
         # p1, _ = curve_fit(f, x1, d1, p0)
         # p2, _ = curve_fit(f, x2, d2, p0)
 
-        # self.proj.plot(xl, self.trans(dl), '-o', label="X")
-        # self.proj.plot(xw, self.trans(dw), '-^', label="Y")
-        # self.proj.plot(x1, self.trans(d1), '-d', label="11 diag")
-        # self.proj.plot(x2, self.trans(d2), '-s', label="-11 diag")
+        self.proj2.plot(xl, dl, '-o', label="X")
+        self.proj2.plot(xw, dw, '-^', label="Y")
+        self.proj2.plot(x1, d1, '-d', label="11 diag")
+        self.proj2.plot(x2, d2, '-s', label="-11 diag")
 
         print self.find_corrl(xl, dl, '-o', "X")
         print self.find_corrl(xw, dw, '-^', "Y")
         print self.find_corrl(x1, d1, '-d', "11 diag")
         print self.find_corrl(x2, d2, '-s', "-11 diag")
 
-        # print pl, pw, p1, p2
-
-        # self.proj.plot(xl, f(xl, *pl))
-        # self.proj.plot(xw, f(xw, *pw))
-        # self.proj.plot(x1, f(x1, *p1))
-        # self.proj.plot(x2, f(x2, *p2))
-        #
-        # print pl[1], pw[1]
-        # print p1[1], p2[1]
-
         self.proj.legend()
         self.proj.set_xlabel(r"$\delta r$")
         self.proj.set_ylabel("corr")
-        # self.proj.set_title(self.filename)
         self.proj.plot(x1, np.zeros_like(x1), 'k--')
 
     def find_corrl(self, x, y, c, l):
         I = np.where(y > self.lim)
+        J = np.where(x[I] > 0)
+        K = slice(0,4)
 
-        self.proj.plot(x[I], y[I], c, label=l)
+        X = x[I][J][K]
 
-        f = lambda x, b: exp(-abs(x)/b)
+        # shift = y.min()
+        shift = 0
+        Y = np.log((y-shift)[I][J][K])
 
-        p0 = (1.)
-        pl, _ = curve_fit(f, x[I], y[I], p0)
+        self.proj.plot(X, Y, c, label=l)
 
-        return pl[0]
+        f = lambda x, a, b: a*x + b
+
+        p0 = (-1., -1.)
+
+        pl, cl = curve_fit(f, X, Y, p0)
+        print pl
+
+        _x = np.linspace(X.min(), X.max(), 10000)
+        self.proj.plot(_x, f(_x, *pl))
+
+        return -1./pl[0]
 
 class LatticediffSpeeds(DCVizPlotter):
 
