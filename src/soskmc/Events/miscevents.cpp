@@ -477,13 +477,13 @@ void AutoCorrelationHeight::execute()
 
     if (cycle() % m_interval == 0)
     {
-        //#ifndef NDEBUG
+#ifdef DUMPCORR
         mat autocorr = autoCorrelation();
         autocorr.save("/tmp/autocorr.arma");
-        //#endif
+#endif
     }
 
-    if (m_updateCount == 10000)
+    if (m_updateCount == 100)
     {
         terminateLoop("AutoCorrelation Converged.");
     }
