@@ -371,11 +371,13 @@ private:
 public:
     void initializeObserver(const Subjects &subject)
     {
+        (void) subject;
         m_counter = 0;
     }
 
     void notifyObserver(const Subjects &subject)
     {
+        (void) subject;
         m_counter++;
     }
 

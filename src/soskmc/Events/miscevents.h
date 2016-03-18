@@ -359,8 +359,7 @@ class AutoCorrelationHeight : public SOSEvent, public Observer<Subjects>
 public:
 
     AutoCorrelationHeight(const SOSSolver &solver,
-                          const uint xSpan,
-                          const uint ySpan,
+                          const uint totalsamples,
                           const uint interval = 1);
 
     mat autoCorrelation() const;
@@ -374,6 +373,7 @@ private:
     mat m_autoCorrelationQuadrant;
     mat m_autoCorrelationSubQuadrant;
 
+    const uint m_totalsamples;
     const uint m_interval;
     uint m_count;
     uint m_updateCount;

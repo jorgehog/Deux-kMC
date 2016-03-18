@@ -3101,7 +3101,9 @@ class AutoCorrWoot(DCVizPlotter):
 
                 Rfs[ih].plot(alphas, RMSes, s, label=self.names[type], **my_props["fmt"])
 
-                Cfs[ih].plot(alphas, 0.5*(Cs[:, 0] + Cs[:, 1]), s, **my_props["fmt"])
+                c = 0.5*(Cs[:, 0] + Cs[:, 1])
+                # c = Cs[:, 1]
+                Cfs[ih].plot(alphas, c, s, **my_props["fmt"])
                 # self.CFig_diag.plot(alphas, Cs[:, 1], s, label=type, **my_props["fmt"])
 
         self.RMSfig1.set_ylabel(r"$\sigma(\mathbf{h})$")

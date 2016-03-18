@@ -1,3 +1,4 @@
+from matplotlib.pylab import plot, show
 import sys
 import os
 from os.path import join
@@ -9,6 +10,24 @@ sys.path.append(join(os.getcwd(), ".."))
 
 from parse_h5_output import ParseKMCHDF5
 
+from scipy.stats import linregress
+
+
+def find_match(x, y, start, end):
+    slope, intercept, r, p, stderr = linregress(x[start:end], y[start:end])
+    return abs(1-r**2), slope
+
+def fit_best_line(x, y):
+
+    all_err = []
+    ends = range(3, len(x))
+
+    for end in ends:
+        err, slope = find_match(x, y, 0, end)
+
+        all_err.append([end, err, slope])
+
+    return min(all_err, key=lambda x: x[1])
 
 def find_corrl(x, y):
     I = np.where(y > exp(-2))
@@ -25,21 +44,34 @@ def find_corrl(x, y):
     return pl[0]
 
 def find_corrl2(x, y):
-    J = np.where(x > 0)
-    K = np.where(x[J] <= 8)
 
-    X = x[J][K]
-    Y = np.log((y[J][K]))
+    I = np.where(y > 0)
+    J = np.where(x[I] >= 0)
 
-    f = lambda x, a, b: a*x + b
+    X = x[I][J]
+    Y = np.log((y[I][J]))
 
-    p0 = (-1., -1.)
+    # print "[",
+    # for _y in y:
+    #     print _y, ", ",
+    # print "]"
 
-    pl, cl = curve_fit(f, X, Y, p0)
+    try:
+        end, err, slope = fit_best_line(X, Y)
+    except:
+        return 0
+    #
+    # plot(X, Y)
+    # plot(X[:end], Y[:end], 'rx')
+    # print end, err, slope
+    # print -1/slope
+    # show()
 
-    return -1./pl[0]
+    return -1./slope
 
 def analyze(input_file, typeint, typestr):
+
+    print typeint
 
     input_file = sys.argv[1]
 
@@ -78,12 +110,6 @@ def analyze(input_file, typeint, typestr):
         ia = alphas.index(alpha)
         ih = heights.index(height)
 
-        xl = np.linspace(-L/2, L/2, L + 1)
-        xw = np.linspace(-W/2, W/2, W + 1)
-
-        x1 = sqrt(2)*xl
-        x2 = sqrt(2)*xw
-
         autocorr = np.array(data["autocorrelation"])
 
         autocorrs[ih, ia, :, :] += autocorr
@@ -95,8 +121,15 @@ def analyze(input_file, typeint, typestr):
 
         RMSes[ih, ia] += rms
         counts[ih, ia] += 1
+    show()
 
     RMSes /= counts
+
+    xl = np.linspace(-L/2, L/2, L + 1)
+    xw = np.linspace(-W/2, W/2, W + 1)
+
+    x1 = sqrt(2)*xl
+    x2 = sqrt(2)*xw
 
     for j, height in enumerate(heights):
 
@@ -114,6 +147,7 @@ def analyze(input_file, typeint, typestr):
             d1 = np.diag(autocorr)
             d2 = np.diag(np.flipud(autocorr))
 
+            print height, alphas[i]
             cl = find_corrl2(xl, dl)
             cw = find_corrl2(xw, dw)
             c1 = find_corrl2(x1, d1)
@@ -134,7 +168,7 @@ def main():
 
     input_file = sys.argv[1]
 
-    analyze(input_file, 6, "uniform")
+    analyze(input_file, 1, "uniform")
     analyze(input_file, 2, "lattice")
     analyze(input_file, 3, "radial")
     analyze(input_file, 4, "pathfind")

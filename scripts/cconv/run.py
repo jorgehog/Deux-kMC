@@ -17,7 +17,7 @@ def main():
     type_values.initialize_set([0, 1])
 
     alpha_values = ParameterSet(cfg, "alpha\s*=\s*(.*)\;")
-    alpha_values.initialize_set(np.linspace(0.5, 3., 16))
+    alpha_values.initialize_set(np.linspace(0.5, 2., 16))
 
     h_values = ParameterSet(cfg, "h0\s*=\s*(.*)\;")
     h_values.initialize_set([5., 10., 15., 20.])

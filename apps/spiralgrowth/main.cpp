@@ -81,9 +81,8 @@ int main(int argv, char** argc)
     const bool constantN = constantNInt == 1;
 
     const uint &autoCorrelationInt = getSetting<uint>(root, "autocorrelation");
-    const uint &xCorrSpan = getSetting<uint>(root, "xCorrSpan");
-    const uint &yCorrSpan = getSetting<uint>(root, "yCorrSpan");
     const uint &interval  = getSetting<uint>(root, "interval");
+    const uint &totalsamples = getSetting<uint>(root, "totalsamples");
 
     const uint &equilibriateInt = getSetting<uint>(root, "equilibriate");
     const bool equilibriate = equilibriateInt == 1;
@@ -232,7 +231,7 @@ int main(int argv, char** argc)
 
     AverageHeight averageHeight(solver);
 
-    AutoCorrelationHeight autoCorrelation(solver, 0, 0, interval);
+    AutoCorrelationHeight autoCorrelation(solver, totalsamples, interval);
     autoCorrelation.setOnsetTime(thermalization);
 
     EqGamma eqGamma(solver);
@@ -380,9 +379,8 @@ int main(int argv, char** argc)
     simRoot["constantN"] = constantNInt;
 
     simRoot["autoCorrelationInt"] = autoCorrelationInt;
-    simRoot["xCorrSpan"] = xCorrSpan;
-    simRoot["yCorrSpan"] = yCorrSpan;
     simRoot["interval"] = interval;
+    simRoot["totalsamples"] = totalsamples;
 
     simRoot["useConcEquil"] = equilibriateInt;
     simRoot["reset"] = resetInt;

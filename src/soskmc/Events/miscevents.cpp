@@ -371,14 +371,17 @@ void HeightRMS::execute()
 }
 
 
-AutoCorrelationHeight::AutoCorrelationHeight(const SOSSolver &solver, const uint xSpan, const uint ySpan, const uint interval) :
-    SOSEvent(solver, "ach", "",true),
+AutoCorrelationHeight::AutoCorrelationHeight(const SOSSolver &solver,
+                                             const uint totalsamples,
+                                             const uint interval) :
+    SOSEvent(solver, "ach", "%",true),
     Observer(),
-    m_xSpan(xSpan == 0 ? solver.length()/2 : xSpan),
-    m_ySpan(ySpan == 0 ? solver.width()/2 : ySpan),
+    m_xSpan(solver.length()/2),
+    m_ySpan(solver.width()/2),
     m_autoCorrelationQuadrant(m_xSpan+1, m_ySpan+1),
     m_autoCorrelationSubQuadrant(m_xSpan == 0 ? 0 : m_xSpan,
                                  m_ySpan == 0 ? 0 : m_ySpan),
+    m_totalsamples(totalsamples),
     m_interval(interval)
 {
     if (m_ySpan > solver.width() || m_xSpan > solver.length())
@@ -473,7 +476,7 @@ void AutoCorrelationHeight::updateFunction()
 
 void AutoCorrelationHeight::execute()
 {
-    setValue(m_updateCount);
+    setValue(m_updateCount/double(m_totalsamples)*100);
 
     if (cycle() % m_interval == 0)
     {
@@ -483,7 +486,7 @@ void AutoCorrelationHeight::execute()
 #endif
     }
 
-    if (m_updateCount == 100)
+    if (m_updateCount == m_totalsamples)
     {
         terminateLoop("AutoCorrelation Converged.");
     }
