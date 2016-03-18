@@ -2706,14 +2706,14 @@ class LatticediffSpeeds(DCVizPlotter):
 
         ss = np.linspace(supersaturations.min(), supersaturations.max())
 
-        self.subfigure3.plot(ss, self.asympt(ss), "r--", label=r"$\Omega(0)h_l/(1/c_\mathrm{eq} - 1)$")
-        self.subfigure3.plot(all_ss, all_asympts, "ks", label=r"$\mathrm{KMC}$", **my_props["fmt"])
+        self.subfigure3.plot(ss, self.asympt(ss)/self.h0c*100, "r--", label=r"$(c(0) - \langle c_\mathrm{eq}\rangle)/(1 -  \langle c_\mathrm{eq}\rangle)$")
+        self.subfigure3.plot(all_ss, np.array(all_asympts)/self.h0c*100, "ks", label=r"$\langle h_\mathrm{eq} \rangle /h_l $", **my_props["fmt"])
 
-        self.subfigure3.yaxis.set_major_formatter(FuncFormatter(self.axisFormat))
+        #self.subfigure3.yaxis.set_major_formatter(FuncFormatter(self.axisFormat))
         self.subfigure3.xaxis.set_ticks([-1, -0.5, 0, 0.5, 1])
         self.subfigure3.set_xbound(-1)
         self.subfigure3.xaxis.set_ticklabels([])
-        self.subfigure3.set_ylabel(r"$h(t\to\infty)/l_0$")
+        self.subfigure3.set_ylabel(r"$10^2\phi$")
 
         lg = self.subfigure3.axes.legend(loc="center",
                                              numpoints=1,
@@ -2726,7 +2726,7 @@ class LatticediffSpeeds(DCVizPlotter):
                                              borderaxespad=0.0,
                                              frameon=False,
                                              fontsize=20,
-                                             bbox_to_anchor=(0.32, 0.75))
+                                             bbox_to_anchor=(0.35, 0.75))
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
 
