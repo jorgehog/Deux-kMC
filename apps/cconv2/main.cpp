@@ -102,8 +102,9 @@ public:
                 double fb,
                 const double tol = 1e-3)
     {
-        if (b-a < tol)
+        if (b - a < tol)
         {
+            cout << "tolerance reached: " << a << " " << b << endl;
             return;
         }
 
@@ -112,6 +113,7 @@ public:
 
         if (fmid < fa || fmid > fb)
         {
+            cout << "error range reached: " << fa << " " << fmid << " " << fb << endl;
             return;
         }
 
