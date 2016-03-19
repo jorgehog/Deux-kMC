@@ -15,12 +15,7 @@
 LatticeDiffusion::LatticeDiffusion(SOSSolver &solver) :
     Diffusion(solver, "latticeDiffusion", "", true, true)
 {
-    if (!solver.confiningSurfaceIsSet())
-    {
-        throw std::runtime_error("confining surface event must be added prior to lattice diffusion object creation.");
-    }
 
-    solver.confiningSurfaceEvent().registerObserver(this);
 }
 
 LatticeDiffusion::~LatticeDiffusion()

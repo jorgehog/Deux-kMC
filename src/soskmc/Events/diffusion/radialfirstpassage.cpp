@@ -2,12 +2,13 @@
 
 #include "../../sossolver.h"
 #include "dissolutiondeposition.h"
+#include "../confiningsurface/confiningsurface.h"
 
 RadialFirstPassage::RadialFirstPassage(SOSSolver &solver,
                                        const double maxdt,
                                        const int depositionBoxHalfSize,
                                        const double c) :
-    Diffusion(solver, "AStarFirstPassage"),
+    Diffusion(solver, "RadialFirstPassage"),
     FirstPassageContinuum(solver, maxdt, depositionBoxHalfSize, c)
 {
 
@@ -31,13 +32,7 @@ void RadialFirstPassage::execute()
 
 void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 {
-    for (uint x = 0; x < solver().length(); ++x)
-    {
-        for (uint y = 0; y < solver().width(); ++y)
-        {
-            solver().surfaceReaction(x, y).setDepositionRate(0);
-        }
-    }
+    resetDepositionRates();
 
     const int &l = depositionBoxHalfSize();
 
@@ -49,20 +44,13 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     double localRate;
 
     const int hmax = solver().heights().max();
+    const double hUpper = solver().confiningSurfaceEvent().height() - 2;
 
     const double D = DScaled();
 
+    m_localRates.zeros();
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
-
-        for (uint x = 0; x < solver().length(); ++x)
-        {
-            for (uint y = 0; y < solver().width(); ++y)
-            {
-                m_localRates(x, y, n) = 0;
-            }
-        }
-
         const double &zp = particlePositions(2, n);
 
         if (zp > hmax + l + 1)
@@ -87,6 +75,12 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 
                 const int &h = solver().height(xTrans, yTrans);
 
+                //if there is no room to deposit.
+                if (h > hUpper)
+                {
+                    continue;
+                }
+
                 const double dz2 = (h+1-zp)*(h+1-zp);
 
                 if (dz2 < l*l)
@@ -96,7 +90,7 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                     BADAssClose(r2, solver().closestSquareDistance(xTrans, yTrans, h+1, xp, yp, zp), 1E-3);
 
                     r = &solver().surfaceReaction(xTrans, yTrans);
-                    localRate = FirstPassageContinuum::localRateOverD(r2);
+                    localRate = c()/(r2*r2);
                     m_localRates(xTrans, yTrans, n) = localRate;
                     r->setDepositionRate(r->depositionRate() + localRate*D);
                 }

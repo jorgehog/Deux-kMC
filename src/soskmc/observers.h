@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <algorithm>
 
+#include <iostream>
+
 namespace kMC
 {
 
@@ -31,6 +33,11 @@ public:
 
     void registerObserver(ObserverType *observer)
     {
+        if (std::find(m_observers.begin(), m_observers.end(), observer) != m_observers.end())
+        {
+            std::cerr << "duplicate observer added." << std::endl;
+        }
+
         m_observers.push_back(observer);
     }
 

@@ -67,7 +67,7 @@ bool AverageHeightLineBoundary::isBlockedLattice(const int xi, const int xj, con
     {
         if (m_dim == 0)
         {
-            if (xi < solver().length())
+            if (xi < int(solver().length()))
             {
                 return false;
             }
@@ -75,7 +75,7 @@ bool AverageHeightLineBoundary::isBlockedLattice(const int xi, const int xj, con
 
         else
         {
-            if (xi < solver().width())
+            if (xi < int(solver().width()))
             {
                 return false;
             }

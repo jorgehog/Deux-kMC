@@ -45,22 +45,13 @@ public:
         return m_depositionBoxHalfSize;
     }
 
+    void resetDepositionRates();
+
     double localRateOverD(const double rSquared) const;
 
     void getTrans(int &xTrans, int &yTrans,
                   const uint x, const uint y,
-                  const int dx, const int dy)
-    {
-        const auto &xy = m_allSimBoxes(x, y)(dx + m_depositionBoxHalfSize,
-                                             dy + depositionBoxHalfSize());
-
-        xTrans = xy.first;
-        yTrans = xy.second;
-
-#ifndef NDEBUG
-        checkTrans(xTrans, yTrans, x, y, dx, dy);
-#endif
-    }
+                  const int dx, const int dy);
 
     void checkTrans(int xTrans, int yTrans,
                     const int x, const int y,

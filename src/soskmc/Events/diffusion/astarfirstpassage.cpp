@@ -47,13 +47,7 @@ AStarFirstPassage::~AStarFirstPassage()
 
 void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 {
-    for (uint x = 0; x < solver().length(); ++x)
-    {
-        for (uint y = 0; y < solver().width(); ++y)
-        {
-            solver().surfaceReaction(x, y).setDepositionRate(0);
-        }
-    }
+    resetDepositionRates();
 
     const int &l = depositionBoxHalfSize();
 
@@ -66,6 +60,7 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     double localRate;
 
     const int hmax = solver().heights().max();
+    const double hUpper = solver().confiningSurfaceEvent().height() - 2;
 
     const double D = DScaled();
 
@@ -77,18 +72,11 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     writer.setSystemSize(2*l+1, 2*l+1, 2*l+1);
 #endif
 
+    m_localRates.zeros();
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
         m_nPathFinds = 0;
         m_world->ResetBlocks();
-
-        for (uint x = 0; x < solver().length(); ++x)
-        {
-            for (uint y = 0; y < solver().width(); ++y)
-            {
-                m_localRates(x, y, n) = 0;
-            }
-        }
 
         const double &zp = particlePositions(2, n);
 
@@ -137,12 +125,16 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             for (int yscan = -l; yscan <= l; ++yscan)
             {
                 getTrans(xTrans, yTrans, ix, iy, xscan, yscan);
-//                solver().boundaryLatticeTransform(xTrans, yTrans, ix + xscan, iy + yscan, iz);
+
+                if (!solver().depositionIsAvailable(xTrans, yTrans))
+                {
+                    continue;
+                }
 
                 const int &h = solver().height(xTrans, yTrans);
 
                 //if there is no room to deposit.
-                if (h > solver().confiningSurfaceEvent().height() - 1)
+                if (h > hUpper)
                 {
                     continue;
                 }

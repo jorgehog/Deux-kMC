@@ -128,10 +128,15 @@ void KMCSolver::getCumsumAndTotalRate()
     resizeCumsumRates();
 
     uint i = 0;
-    for (const Reaction *reaction : m_reactions)
+    for (Reaction *reaction : m_reactions)
     {
         if (reaction->isAllowed())
         {
+            BADAssClose(reaction->rate(), reaction->rateExpression(), 1E-5, "error in rate updating.", [&] ()
+            {
+                BADAssSimpleDump(reaction->rate(), reaction->rateExpression());
+            });
+
             m_totalRate += reaction->rate();
         }
 

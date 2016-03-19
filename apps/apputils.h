@@ -575,8 +575,6 @@ void initializeSurface(SOSSolver &solver, const string type,
 
         ParticleNumberConservator pnc(thermSolver);
 
-        conf->registerObserver(conc);
-
         lattice.addEvent(thermSolver);
         lattice.addEvent(conf);
         lattice.addEvent(counter);
@@ -584,6 +582,7 @@ void initializeSurface(SOSSolver &solver, const string type,
         if (conc->hasDiscreteParticles())
         {
             lattice.addEvent(pnc);
+            conc->setDependency(pnc);
         }
 
         lattice.addEvent(conc);

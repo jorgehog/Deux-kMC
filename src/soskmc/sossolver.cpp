@@ -191,18 +191,40 @@ void SOSSolver::setHeights(const imat &newheights, const bool iteratively)
     }
 }
 
+bool SOSSolver::depositionIsAvailable(const uint x, const uint y) const
+{
+    if (m_confiningSurfaceEvent->hasSurface())
+    {
+        if (m_heights(x, y) + 1 > m_confiningSurfaceEvent->height() - 1)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 void SOSSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
 {
     m_confiningSurfaceEvent = &confiningSurfaceEvent;
     registerObserver(&confiningSurfaceEvent);
     confiningSurfaceEvent.registerObserver(this);
+
+    if (diffusionEventIsSet())
+    {
+        confiningSurfaceEvent.registerObserver(m_diffusionEvent);
+    }
 }
 
 void SOSSolver::setDiffusionEvent(Diffusion &diffusionEvent)
 {
     m_diffusionEvent = &diffusionEvent;
     registerObserver(&diffusionEvent);
+
+    if (confiningSurfaceIsSet())
+    {
+        confiningSurfaceEvent().registerObserver(&diffusionEvent);
+    }
 }
 
 double SOSSolver::volume() const

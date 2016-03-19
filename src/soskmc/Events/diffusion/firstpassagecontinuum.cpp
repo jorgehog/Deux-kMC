@@ -1,6 +1,7 @@
 #include "firstpassagecontinuum.h"
 
 #include "../../sossolver.h"
+#include "../../dissolutiondeposition.h"
 
 FirstPassageContinuum::FirstPassageContinuum(SOSSolver &solver,
                                              const double maxdt,
@@ -48,10 +49,34 @@ void FirstPassageContinuum::setc(const double c)
     calculateLocalRatesAndUpdateDepositionRates();
 }
 
+void FirstPassageContinuum::resetDepositionRates()
+{
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            solver().surfaceReaction(x, y).setDepositionRate(0);
+        }
+    }
+}
+
 
 double FirstPassageContinuum::localRateOverD(const double rSquared) const
 {
     return m_c/(rSquared*rSquared);
+}
+
+void FirstPassageContinuum::getTrans(int &xTrans, int &yTrans, const uint x, const uint y, const int dx, const int dy)
+{
+    const auto &xy = m_allSimBoxes(x, y)(dx + m_depositionBoxHalfSize,
+                                         dy + m_depositionBoxHalfSize);
+
+    xTrans = xy.first;
+    yTrans = xy.second;
+
+#ifndef NDEBUG
+    checkTrans(xTrans, yTrans, x, y, dx, dy);
+#endif
 }
 
 void FirstPassageContinuum::checkTrans(int xTrans,

@@ -84,14 +84,16 @@ public:
             const double h0,
             const int type,
             const uint nThermCycles,
-            const uint nCyclesPerEquilibrium) :
+            const uint nCyclesPerEquilibrium,
+            const bool toFile) :
         m_L(L),
         m_W(W),
         m_alpha(alpha),
         m_h0(h0),
         m_type(type),
         m_nThermCycles(nThermCycles),
-        m_nCyclesPerEquilibrium(nCyclesPerEquilibrium)
+        m_nCyclesPerEquilibrium(nCyclesPerEquilibrium),
+        m_toFile(toFile)
     {
 
     }
@@ -142,16 +144,6 @@ public:
         bisect(a, b, fa, fb, tol);
     }
 
-    const uint m_L;
-    const uint m_W;
-    const double m_alpha;
-
-    const double m_h0;
-    const int m_type;
-
-    const uint m_nThermCycles;
-    const uint m_nCyclesPerEquilibrium;
-
     double estimateSpeed(const double c)
     {
         cout << "running " << c << endl;
@@ -177,17 +169,21 @@ public:
 
         ParticleNumberConservator pnc(solver);
 
+        diffusion->setDependency(pnc);
+
         GrowthSpeed speed(solver);
         speed.setOnsetTime(m_nThermCycles);
-        AvgLast ta(speed, 3000, true, true);
-        ta.setOnsetTime(m_nThermCycles);
+//        AvgLast ta(speed, 3000, true, true);
+//        ta.setOnsetTime(m_nThermCycles);
         AverageHeight avgHeight(solver);
 
+//        DumpSystem dump(solver, 1);
 
         Lattice lattice;
 
-        lattice.enableOutput(false);
-        lattice.enableEventValueStorage(false, true, "ignisSOS.ign", "/tmp", 1);
+        lattice.enableOutput(false, 100);
+        lattice.enableProgressReport(true);
+        lattice.enableEventValueStorage(false, m_toFile, "ignisSOS.ign", "/tmp", 100);
 
         lattice.addEvent(solver);
         lattice.addEvent(confiningSurface);
@@ -195,12 +191,8 @@ public:
         lattice.addEvent(diffusion);
         lattice.addEvent(avgHeight);
         lattice.addEvent(speed);
-        lattice.addEvent(ta);
-
-#ifndef NDEBUG
-        RateChecker checker(solver);
-        lattice.addEvent(checker);
-#endif
+//        lattice.addEvent(dump);
+//        lattice.addEvent(ta);
 
         initializeSurface(solver, "random", 3 + m_type, m_nThermCycles, false);
 
@@ -209,12 +201,26 @@ public:
         return speed.value();
     }
 
+private:
+
+    const uint m_L;
+    const uint m_W;
+    const double m_alpha;
+
+    const double m_h0;
+    const int m_type;
+
+    const uint m_nThermCycles;
+    const uint m_nCyclesPerEquilibrium;
+
+    const bool m_toFile;
+
 };
 
 int main(int argv, char **argc)
 {
-    rng.initialize(time(nullptr));
-    //    rng.initialize(139444);
+    rng.initialize(time(nullptr) % 1000000);
+//        rng.initialize(139444);
 
     string cfgName = getCfgName(argv, argc, "cconv2");
 
@@ -232,16 +238,19 @@ int main(int argv, char **argc)
     const double a0 = getSetting<double>(cfgRoot, "a");
     const double b0 = getSetting<double>(cfgRoot, "b");
 
-    const int halfSize = getSetting<int>(cfgRoot, "halfSize");
-    const double maxdt = getSetting<double>(cfgRoot, "maxdt");
+//    const int halfSize = getSetting<int>(cfgRoot, "halfSize");
+//    const double maxdt = getSetting<double>(cfgRoot, "maxdt");
 
     const uint L = getSetting<uint>(cfgRoot, "L");
     const uint W = getSetting<uint>(cfgRoot, "W");
     const double h0 = getSetting<double>(cfgRoot, "h0");
     const double alpha = getSetting<double>(cfgRoot, "alpha");
 
+    const bool toFile = getSetting<uint>(cfgRoot, "toFile") == 1;
+
     BisectC bc(L, W, alpha, h0, type,
-               nThermCycles, nCyclesPerEquilibrium);
+               nThermCycles, nCyclesPerEquilibrium,
+               toFile);
 
     double a = a0;
     double b = b0;
@@ -273,8 +282,8 @@ int main(int argv, char **argc)
     simRoot["nThermCycles"] = nThermCycles;
     simRoot["nCyclesPerEquilibrium"] = nCyclesPerEquilibrium;
 
-    simRoot["halfSize"] = halfSize;
-    simRoot["maxdt"] = maxdt;
+//    simRoot["halfSize"] = halfSize;
+//    simRoot["maxdt"] = maxdt;
 
     simRoot["a"] = a;
     simRoot["b"] = b;

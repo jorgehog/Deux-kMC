@@ -39,7 +39,6 @@ bool OfflatticeMonteCarlo::countPaths() const
 
 void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
 {
-
     if (!hasStarted())
     {
         return;
@@ -113,26 +112,43 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
     
     else
     {
-//        const double &h = solver().confiningSurfaceEvent().height();
-//        const CurrentConfinementChange &ccc = solver().confiningSurfaceEvent().currentConfinementChange();
+        const double &hc = solver().confiningSurfaceEvent().height();
 
-//        const double dh = h - ccc.prevHeight;
-        
-//        for (uint n = 0; n < nOfflatticeParticles(); ++n)
-//        {
-//            const uint xi = round(particlePositions(0, n));
-//            const uint yi = round(particlePositions(1, n));
-//            const int hi = solver().height(xi, yi);
+        vector<uint> lostParticles;
+        for (uint n = 0; n < nOfflatticeParticles(); ++n)
+        {
+            const double &x0 = particlePositions(0, n);
+            const double &y0 = particlePositions(1, n);
+            const double &z0 = particlePositions(2, n);
 
-//            const double dhi = particlePositions(2, n) - hi;
-//            const double dhiScaled = (1 + dh/(ccc.prevHeight - hi))*dhi;
+            //this means that the particle has been locked inside
+            //the surface when it moved
+            if (z0 > hc - 1)
+            {
+                //if there is no room for it directly below..
+                if (solver().height(round(x0), round(y0)) == hc - 1)
+                {
+                    //..we remove the particle and insert it at a
+                    //random spot
+                    lostParticles.push_back(n);
+                }
+                else
+                {
+                    //..else we shift it down to be just below the
+                    //confining surface
+                    m_particlePositions(2, n) = hc - 1;
+                }
+            }
+        }
 
-//            m_particlePositions(2, n) = hi + dhiScaled;
-//        }
-        
+        //remove in decreasing order to avoid messing things up
+        for (int i = int(lostParticles.size() - 1); i >= 0; ++i)
+        {
+            removeParticle(lostParticles.at(i));
+        }
+
+        insertRandomParticles(lostParticles.size());
     }
-
-
 }
 
 double OfflatticeMonteCarlo::depositionRate(const uint x, const uint y) const
@@ -294,22 +310,41 @@ void OfflatticeMonteCarlo::diffuseSingleParticle(const uint n, const double dt, 
     //        m_F(1, n) = 0;
     //        m_F(2, n) = solver().confiningSurfaceEvent().diffusionDrift(x0, y0, z0);
 
+    //if particle is squeezed we would wait
+    //forever for a dz=0 trial position.
+    bool dzZero = false;
+    if (solver().confiningSurfaceEvent().height() == z0 + 1 &&
+            solver().height(round(x0), round(y0)) == z0 - 1)
+    {
+        dzZero = true;
+    }
+
+    double dx;
+    double dy;
+    double dz;
 
     do
     {
-        double dx = prefac*rng.normal();// + D*m_F(0, n)*dt;
-        double dy = prefac*rng.normal();// + D*m_F(1, n)*dt;
-        double dz = prefac*rng.normal();// + D*m_F(2, n)*dt;
+        dx = prefac*rng.normal();// + D*m_F(0, n)*dt;
+        dy = prefac*rng.normal();// + D*m_F(1, n)*dt;
 
         solver().boundaryContinousTransform(x1, y1, x0 + dx, y0 + dy, z0);
-        z1 = z0 + dz;
+
+        if (!dzZero)
+        {
+            dz = prefac*rng.normal();// + D*m_F(2, n)*dt;
+            z1 = z0 + dz;
+        }
+
+        else
+        {
+            z1 = z0;
+        }
 
         if (solver().surfaceDim() == 1)
         {
             y1 = y0;
         }
-
-
 
     } while(solver().isBlockedPosition(x1, y1, z1));
 
@@ -335,7 +370,12 @@ void OfflatticeMonteCarlo::removeParticle(const uint n)
         m_F(dim, n) = m_F(dim, m_nParticles);
     }
 
-    m_localRates.slice(n) = m_localRates.slice(m_nParticles);
+    BADAss(n, <=, m_nParticles);
+
+    if (n != m_nParticles)
+    {
+        m_localRates.slice(n) = m_localRates.slice(m_nParticles);
+    }
 
 }
 
@@ -363,7 +403,8 @@ void OfflatticeMonteCarlo::insertParticle(const double x, const double y, const 
 
 void OfflatticeMonteCarlo::insertRandomParticles(const uint N)
 {
-    while (m_nParticles < N)
+    uint nParticles = m_nParticles + N;
+    while (m_nParticles < nParticles)
     {
         insertRandomParticle();
     }
@@ -517,6 +558,17 @@ bool OfflatticeMonteCarlo::isInLineOfSight(const uint n, const uint x, const uin
 void OfflatticeMonteCarlo::releaseLockedParticle()
 {
     m_particleIsLocked = false;
+}
+
+void OfflatticeMonteCarlo::resetLocalRates(const uint n)
+{
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            m_localRates(x, y, n) = 0;
+        }
+    }
 }
 
 void OfflatticeMonteCarlo::initialize()

@@ -27,7 +27,6 @@ private:
     uint m_ymax2;
     int m_currentHeight;
 
-    void stuff(const int x, const int y, const int x1, const int y1);
     void scanForYMax();
     void scanForYMax2();
 

@@ -9,12 +9,7 @@ ParticleNumberConservator::ParticleNumberConservator(SOSSolver &solver) :
     LatticeEvent("NConservator", "", true),
     m_solver(solver)
 {
-    BADAssBool(solver.diffusionEventIsSet(), "Diffusion event need to be set before this object can be constructed.");
 
-    if (solver.diffusionEvent().hasDiscreteParticles())
-    {
-        solver.diffusionEvent().setDependency(this);
-    }
 }
 
 void ParticleNumberConservator::initialize()

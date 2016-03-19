@@ -132,6 +132,8 @@ public:
         return m_nNeighbors(x, y);
     }
 
+    bool depositionIsAvailable(const uint x, const uint y) const;
+
     void setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent);
 
     void setDiffusionEvent(Diffusion &diffusionEvent);

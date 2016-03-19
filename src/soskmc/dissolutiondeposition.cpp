@@ -88,12 +88,9 @@ double SurfaceReaction::calculateEscapeRate() const
 
 double SurfaceReaction::calculateDepositionRate() const
 {
-    if (solver().confiningSurfaceEvent().hasSurface())
+    if (!solver().depositionIsAvailable(x(), y()))
     {
-        if (solver().height(x(), y()) + 1 > solver().confiningSurfaceEvent().height() - 1)
-        {
-            return 0;
-        }
+        return 0;
     }
 
     BADAssBool(solver().diffusionEvent().hasStarted());

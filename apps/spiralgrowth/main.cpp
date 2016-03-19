@@ -222,6 +222,7 @@ int main(int argv, char** argc)
     if (constantN && diffusion->hasDiscreteParticles())
     {
         lattice.addEvent(pnc);
+        diffusion->setDependency(pnc);
     }
 
     lattice.addEvent(diffusion);
@@ -243,11 +244,6 @@ int main(int argv, char** argc)
         lattice.addEvent(systemDumper);
     }
 
-#ifndef NDEBUG
-    RateChecker checker(solver);
-    lattice.addEvent(checker);
-    eqGamma.setDependency(checker);
-#endif
 
     lattice.enableOutput(ignisOutput, nCyclesPerOutput);
     lattice.enableProgressReport();

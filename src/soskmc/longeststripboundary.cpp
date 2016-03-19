@@ -110,46 +110,6 @@ bool LongestStripBoundary::isConnectedToOrigin(const uint y, const int h) const
     return (h < m_currentHeight) || ((h == m_currentHeight) && (y <= m_ymax || y >= m_ymax2));
 }
 
-void LongestStripBoundary::stuff(const int x, const int y, const int x1, const int y1)
-{
-    if (x1 == 0)
-    {
-        if (x == 0)
-        {
-            //diffusion from top
-            if (y == m_ymax)
-            {
-                m_ymax--;
-            }
-
-            //diffusion to top
-            if (y1 == m_ymax)
-            {
-                m_ymax++;
-            }
-        }
-
-        else
-        {
-            //diffusion to top
-            if (y1 == m_ymax)
-            {
-                m_ymax++;
-            }
-        }
-    }
-
-    else if (x == 0)
-    {
-        //here x1 != 0
-        //diffusion from top
-        if (y == m_ymax)
-        {
-            m_ymax--;
-        }
-    }
-}
-
 void LongestStripBoundary::scanForYMax()
 {
     if (m_dim == 0)
@@ -295,75 +255,6 @@ void LongestStripBoundary::initializeObserver(const Subjects &subject)
 void LongestStripBoundary::notifyObserver(const Subjects &subject)
 {
     (void) subject;
-
-//    const uint &x = solver().currentSurfaceChange().x;
-//    const uint &y = solver().currentSurfaceChange().y;
-//    const int &value = solver().currentSurfaceChange().value;
-
-//    const int h = solver().height(x, y);
-
-//    if (solver().currentSurfaceChange().type == ChangeTypes::Single)
-//    {
-//        if (value == 1)
-//        {
-//            if (h == m_currentHeight)
-//            {
-//                if (m_dim == 0)
-//                {
-//                    if (x == 0 && y == m_ymax + 1)
-//                    {
-//                        m_ymax++;
-//                    }
-//                }
-
-//                else
-//                {
-//                    if (y == 0 && x == m_ymax + 1)
-//                    {
-//                        m_ymax++;
-//                    }
-//                }
-//            }
-//        }
-
-//        else
-//        {
-//            if (h == m_currentHeight - 1)
-//            {
-//                if (m_dim == 0)
-//                {
-//                    if (y == m_ymax)
-//                    {
-//                        m_ymax--;
-//                    }
-//                }
-
-//                else
-//                {
-//                    if (x == m_ymax)
-//                    {
-//                        m_ymax--;
-//                    }
-//                }
-//            }
-//        }
-//    }
-
-//    else
-//    {
-//        const uint &x1 = solver().currentSurfaceChange().x1;
-//        const uint &y1 = solver().currentSurfaceChange().y1;
-
-//        if (m_dim == 0)
-//        {
-//            stuff(x, y, x1, y1);
-//        }
-
-//        else
-//        {
-//            stuff(y, x, y1, x1);
-//        }
-//    }
 
     const uint ymaxPrev = m_ymax;
     const uint ymax2Prev = m_ymax2;
