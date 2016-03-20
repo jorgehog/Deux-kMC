@@ -204,8 +204,8 @@ public:
 
         Lattice lattice;
 
-//        lattice.enableOutput(true, m_nCyclesPerEquilibrium/10);
-        lattice.enableOutput(true, 1);
+        lattice.enableOutput(true, m_nCyclesPerEquilibrium/10);
+//        lattice.enableOutput(true, 1);
         lattice.enableProgressReport(true);
         lattice.enableEventValueStorage(false, m_toFile, "ignisSOS.ign", "/tmp", 100);
 
