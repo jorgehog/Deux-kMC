@@ -8,6 +8,22 @@ sys.path.append(join(os.getcwd(), ".."))
 from parse_h5_output import ParseKMCHDF5
 
 
+def dump_map(set, setname):
+
+    s = "const maptype valueMap%s%s = {" % (setname[0].upper(), setname[1:])
+
+    set = sorted(set, key=lambda x: x[2]*100 + x[3])
+
+    for a, b, i, j in set:
+
+        c = (a+b)/2.
+
+        s += "{{%2d, %2d}, %.3f},\n" % (i, j, c)
+
+    s = s.strip(",\n") + "};"
+
+    print s
+
 def main():
 
     input_file = sys.argv[1]
@@ -17,6 +33,7 @@ def main():
     radial = []
     pathfind = []
     heights = []
+    alphas = []
 
     r_ids = []
     p_ids = []
@@ -30,6 +47,8 @@ def main():
         a = data.attrs["a"]
         b = data.attrs["b"]
 
+        alpha = round(alpha, 3)
+
         id = int(run_id)
         #
         # if id < 4E13:
@@ -37,10 +56,13 @@ def main():
 
         if h0 not in heights:
             heights.append(h0)
+        if alpha not in alphas:
+            alphas.append(alpha)
 
         i = heights.index(h0)
+        j = alphas.index(alpha)
 
-        arr = [alpha, a, b, i]
+        arr = [a, b, i, j]
 
         add = True
         if type == 0:
@@ -74,15 +96,24 @@ def main():
     print "Parsed", n, "entries. Extracted", len(r_ids), len(p_ids), "values."
 
     heights = np.array(heights)
+    alphas = np.array(alphas)
     pathfind = np.array(pathfind)
     radial = np.array(radial)
 
     np.save("/tmp/cconv_heights.npy", heights)
+    np.save("/tmp/cconv_alphas.npy", alphas)
 
     if len(pathfind) != 0:
         np.save("/tmp/cconv_pathfind.npy", pathfind)
     if len(radial) != 0:
         np.save("/tmp/cconv_radial.npy", radial)
+
+    dump_map(radial, "radial")
+    dump_map(pathfind, "pathfind")
+
+    print "h", heights
+    print "a", alphas
+
 
 if __name__ == "__main__":
     main()

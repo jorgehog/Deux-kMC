@@ -95,6 +95,8 @@ public:
 
     void resetLocalRates(const uint n);
 
+    void findRandomPosition(double &x0, double &y0, double &z0) const;
+
 protected:
     cube m_localRates;
     //create cube of size (2l+1 2l+1 N) which translates more.dont saveas many zeros and

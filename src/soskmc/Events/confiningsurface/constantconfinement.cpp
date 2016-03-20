@@ -26,10 +26,11 @@ void ConstantConfinement::notifyObserver(const Subjects &subject)
         return;
     }
 
-    double newHeight = solver().averageHeight() + m_h;
+    const double &avgh = solver().averageHeight();
+    const double newHeight = avgh + m_h;
 
     uint xi, yi;
-    int maxHeight = solver().heights().max(xi, yi);
+    const int maxHeight = solver().heights().max(xi, yi);
 
     BADAssEqual(maxHeight, solver().height(xi, yi));
 
@@ -39,6 +40,11 @@ void ConstantConfinement::notifyObserver(const Subjects &subject)
     if (maxHeight <= newHeight - 1)
     {
         setHeight(newHeight);
+    }
+
+    else
+    {
+        setHeight(maxHeight + 1);
     }
 }
 

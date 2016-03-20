@@ -2937,7 +2937,7 @@ class cconv(DCVizPlotter):
             self.adjust_maps[f]["right"] = 0.98
             self.adjust_maps[f]["left"] = 0.15
 
-    def plotsingle(self, subfigure, heights, set, do_legend=False):
+    def plotsingle(self, subfigure, alphas, heights, set, do_legend=False):
 
         xvals = np.zeros((len(heights), len(set)))
         crads = np.zeros_like(xvals)
@@ -2947,22 +2947,14 @@ class cconv(DCVizPlotter):
 
         all_alpha = []
 
-        for j, (alpha, a, b, i) in enumerate(set):
-            h = heights[i]
-
-            if alpha > 2:
-                continue
-
-            if alpha not in all_alpha:
-                all_alpha.append(alpha)
+        for j, (a, b, i, k) in enumerate(set):
+            alpha = alphas[k]
 
             xvals[i, j] = alpha
             crads[i, j] = (a+b)/2
             err[i, j] = -np.log(b/a)/2
 
-        all_alpha = sorted(all_alpha)
-
-        counts = np.zeros(len(all_alpha))
+        counts = np.zeros_like(alphas)
         avgs = np.zeros_like(counts)
 
         heights = sorted(heights)
@@ -2986,13 +2978,13 @@ class cconv(DCVizPlotter):
 
             for k, a in enumerate(X):
                 if a != 0:
-                    j = all_alpha.index(a)
+                    j = list(alphas).index(a)
                     counts[j] += 1
                     avgs[j] += Y[k]
 
         J = np.where(counts != 0)
 
-        _X = np.array(all_alpha)[J]
+        _X = alphas[J]
         _Y = avgs[J]/counts[J]
 
         subfigure.set_xlabel(r"$\alpha$")
@@ -3017,17 +3009,16 @@ class cconv(DCVizPlotter):
 
         subfigure.set_ylim(0, 3)
 
-        return _X, _Y
-
-
+        return zip(*sorted(zip(_X, _Y), key=lambda x: x[0]))
 
     def plot(self, data):
 
         heights = self.get_family_member_data(data, "heights")
+        alphas = self.get_family_member_data(data, "alphas")
 
         try:
             radial = self.get_family_member_data(data, "radial")
-            Xr, Yr = self.plotsingle(self.subfigure1, heights, radial, True)
+            Xr, Yr = self.plotsingle(self.subfigure1, alphas, heights, radial, True)
 
             self.subfigure1.plot(Xr, -np.log(Yr), "r--")
             self.subfigure2.plot(Xr, -np.log(Yr), "r--")
@@ -3037,7 +3028,7 @@ class cconv(DCVizPlotter):
 
         try:
             pathfind = self.get_family_member_data(data, "pathfind")
-            Xp, Yp = self.plotsingle(self.subfigure2, heights, pathfind)
+            Xp, Yp = self.plotsingle(self.subfigure2, alphas, heights, pathfind)
 
             self.subfigure1.plot(Xp, -np.log(Yp), "b-.")
             self.subfigure2.plot(Xp, -np.log(Yp), "b-.")

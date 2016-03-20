@@ -207,23 +207,25 @@ bool SOSSolver::depositionIsAvailable(const uint x, const uint y) const
 void SOSSolver::setConfiningSurfaceEvent(ConfiningSurface &confiningSurfaceEvent)
 {
     m_confiningSurfaceEvent = &confiningSurfaceEvent;
-    registerObserver(&confiningSurfaceEvent);
     confiningSurfaceEvent.registerObserver(this);
 
     if (diffusionEventIsSet())
     {
         confiningSurfaceEvent.registerObserver(m_diffusionEvent);
+        registerObserver(m_diffusionEvent);
+        registerObserver(m_confiningSurfaceEvent);
     }
 }
 
 void SOSSolver::setDiffusionEvent(Diffusion &diffusionEvent)
 {
     m_diffusionEvent = &diffusionEvent;
-    registerObserver(&diffusionEvent);
 
     if (confiningSurfaceIsSet())
     {
         confiningSurfaceEvent().registerObserver(&diffusionEvent);
+        registerObserver(&diffusionEvent);
+        registerObserver(m_confiningSurfaceEvent);
     }
 }
 

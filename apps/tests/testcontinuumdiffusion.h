@@ -56,7 +56,9 @@ TEST_F(CDiffTest, scan)
 {
     const uint n = 0;
 
+    m_solver->setHeight(1, 1, -1, false);
     m_cdiffusionEvent->insertParticle(1, 1, 0);
+    m_solver->setHeight(1, 1, 0, false);
 
     const double &x0 = m_cdiffusionEvent->particlePositions()(0, n);
     const double &y0 = m_cdiffusionEvent->particlePositions()(1, n);
@@ -105,9 +107,8 @@ TEST_F(CDiffTest, fullscan)
 {
     const uint n = 0;
 
-    m_solver->setHeight(1, 1, 1, false);
-
     m_cdiffusionEvent->insertParticle(1, 1, 1.8);
+    m_solver->setHeight(1, 1, 1, false);
 
     uint dim;
     double delta;
@@ -118,7 +119,9 @@ TEST_F(CDiffTest, fullscan)
 
     m_cdiffusionEvent->clearDiffusingParticles();
 
+    m_solver->setHeight(1, 1, 0, false);
     m_cdiffusionEvent->insertParticle(1, 0.9, 1);
+    m_solver->setHeight(1, 1, 1, false);
 
     m_cdiffusionEvent->scanForDisplacement(n, dim, delta, 0.01);
 

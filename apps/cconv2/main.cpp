@@ -5,6 +5,27 @@
 #include <HDF5Wrapper/include/hdf5wrapper.h>
 #include <libconfig_utils/libconfig_utils.h>
 
+
+class MeasureSomething : public SOSEvent
+{
+public:
+    MeasureSomething(const SOSSolver &solver,
+                     const std::function<double(const SOSSolver &)> f) :
+        SOSEvent(solver, "Something", "", true),
+        m_f(f)
+    {
+
+    }
+
+    void execute()
+    {
+        this->setValue(m_f(solver()));
+    }
+
+private:
+    const std::function<double(const SOSSolver &)> &m_f;
+};
+
 class AvgLast : public SOSEvent
 {
 public:
@@ -141,6 +162,11 @@ public:
         const double fa = estimateSpeed(a);
         const double fb = estimateSpeed(b);
 
+        if (fa*fb >= 0)
+        {
+            throw std::runtime_error("zero is not in interval.");
+        }
+
         bisect(a, b, fa, fb, tol);
     }
 
@@ -173,15 +199,13 @@ public:
 
         GrowthSpeed speed(solver);
         speed.setOnsetTime(m_nThermCycles);
-//        AvgLast ta(speed, 3000, true, true);
-//        ta.setOnsetTime(m_nThermCycles);
         AverageHeight avgHeight(solver);
 
-//        DumpSystem dump(solver, 1);
 
         Lattice lattice;
 
-        lattice.enableOutput(true, m_nCyclesPerEquilibrium/10);
+//        lattice.enableOutput(true, m_nCyclesPerEquilibrium/10);
+        lattice.enableOutput(true, 1);
         lattice.enableProgressReport(true);
         lattice.enableEventValueStorage(false, m_toFile, "ignisSOS.ign", "/tmp", 100);
 
@@ -191,8 +215,14 @@ public:
         lattice.addEvent(diffusion);
         lattice.addEvent(avgHeight);
         lattice.addEvent(speed);
+
+//        lattice.addEvent(new MeasureSomething(solver, [&] (const SOSSolver &s)
+//        {
+//            return s.confiningSurfaceEvent().height() - s.averageHeight();
+//        }));
+
+//        DumpSystem dump(solver, 1);
 //        lattice.addEvent(dump);
-//        lattice.addEvent(ta);
 
         initializeSurface(solver, "random", 3 + m_type, m_nThermCycles, false);
 
@@ -219,8 +249,8 @@ private:
 
 int main(int argv, char **argc)
 {
-    rng.initialize(time(nullptr) % 1000000);
-//        rng.initialize(139444);
+//    rng.initialize(time(nullptr) % 1000000);
+            rng.initialize(361632621);
 
     string cfgName = getCfgName(argv, argc, "cconv2");
 
@@ -238,8 +268,8 @@ int main(int argv, char **argc)
     const double a0 = getSetting<double>(cfgRoot, "a");
     const double b0 = getSetting<double>(cfgRoot, "b");
 
-//    const int halfSize = getSetting<int>(cfgRoot, "halfSize");
-//    const double maxdt = getSetting<double>(cfgRoot, "maxdt");
+    //    const int halfSize = getSetting<int>(cfgRoot, "halfSize");
+    //    const double maxdt = getSetting<double>(cfgRoot, "maxdt");
 
     const uint L = getSetting<uint>(cfgRoot, "L");
     const uint W = getSetting<uint>(cfgRoot, "W");
@@ -282,8 +312,8 @@ int main(int argv, char **argc)
     simRoot["nThermCycles"] = nThermCycles;
     simRoot["nCyclesPerEquilibrium"] = nCyclesPerEquilibrium;
 
-//    simRoot["halfSize"] = halfSize;
-//    simRoot["maxdt"] = maxdt;
+    //    simRoot["halfSize"] = halfSize;
+    //    simRoot["maxdt"] = maxdt;
 
     simRoot["a"] = a;
     simRoot["b"] = b;
