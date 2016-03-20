@@ -323,6 +323,9 @@ void OfflatticeMonteCarlo::diffuseSingleParticle(const uint n, const double dt, 
     double dy;
     double dz;
 
+    uint N = 0;
+    const uint NMax = 1000000;
+
     do
     {
         dx = prefac*rng.normal();// + D*m_F(0, n)*dt;
@@ -344,6 +347,16 @@ void OfflatticeMonteCarlo::diffuseSingleParticle(const uint n, const double dt, 
         if (solver().surfaceDim() == 1)
         {
             y1 = y0;
+        }
+
+        N++;
+
+        if (N > NMax)
+        {
+            cout << cycle() + 1 << " " << n << " " << x0 << " " << y0 << " " << z0 << endl;
+            dump(cycle() + 1);
+
+            throw std::runtime_error("No path available for diffusing particle.");
         }
 
     } while(solver().isBlockedPosition(x1, y1, z1));

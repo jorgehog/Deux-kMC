@@ -2927,13 +2927,17 @@ class cconv(DCVizPlotter):
 
     hugifyFonts = True
 
-    def adjust(self):
-        self.adjust_maps["figure"]["top"] = 0.97
-        self.adjust_maps["figure"]["bottom"] = 0.18
-        self.adjust_maps["figure"]["right"] = 0.98
-        self.adjust_maps["figure"]["left"] = 0.15
+    figMap = {"f1" : "subfigure1", "f2" : "subfigure2"}
+    fig_size = [5, 5]
 
-    def plotsingle(self, heights, set):
+    def adjust(self):
+        for f in self.figure_names:
+            self.adjust_maps[f]["top"] = 0.97
+            self.adjust_maps[f]["bottom"] = 0.18
+            self.adjust_maps[f]["right"] = 0.98
+            self.adjust_maps[f]["left"] = 0.15
+
+    def plotsingle(self, subfigure, heights, set, do_legend=False):
 
         xvals = np.zeros((len(heights), len(set)))
         crads = np.zeros_like(xvals)
@@ -2967,7 +2971,7 @@ class cconv(DCVizPlotter):
 
             I = np.where(xvals[i, :] != 0)
 
-            self.subfigure.errorbar(xvals[i, :][I],
+            subfigure.errorbar(xvals[i, :][I],
                                 -np.log(crads[i, :][I]),
                                 err[i, :][I],
                                 fmt="k"+heightFMT[int(i)],
@@ -2991,26 +2995,29 @@ class cconv(DCVizPlotter):
         _X = np.array(all_alpha)[J]
         _Y = avgs[J]/counts[J]
 
-        self.subfigure.plot(_X, -np.log(_Y), "r--")
-        self.subfigure.set_ylim(0, 3)
+        subfigure.set_xlabel(r"$\alpha$")
+        subfigure.set_xlim(0.4, 2.1)
 
-        self.subfigure.set_xlabel(r"$\alpha$")
-        self.subfigure.set_xlim(0.4, 2.1)
-        self.subfigure.legend(loc="lower center",
-                              numpoints=1,
-                              ncol=2,
-                              handlelength=1.0,
-                              borderpad=0.2,
-                              labelspacing=0.2,
-                              columnspacing=1.25,
-                              handletextpad=0.25,
-                              borderaxespad=0.0,
-                              frameon=False,
-                              fontsize=20,
-                              bbox_to_anchor=(0.65, 0.02)) \
-            .get_frame().set_fill(not (self.toFile and self.transparent))
+        if do_legend:
+            subfigure.legend(loc="lower center",
+                                  numpoints=1,
+                                  ncol=2,
+                                  handlelength=1.0,
+                                  borderpad=0.2,
+                                  labelspacing=0.2,
+                                  columnspacing=1.25,
+                                  handletextpad=0.25,
+                                  borderaxespad=0.0,
+                                  frameon=False,
+                                  fontsize=20,
+                                  bbox_to_anchor=(0.65, 0.02)) \
+                .get_frame().set_fill(not (self.toFile and self.transparent))
 
-        self.subfigure.set_ylabel(r"$\log(1/\kappa)$")
+        subfigure.set_ylabel(r"$\log(1/\kappa)$")
+
+        subfigure.set_ylim(0, 3)
+
+        return _X, _Y
 
 
 
@@ -3020,17 +3027,20 @@ class cconv(DCVizPlotter):
 
         try:
             radial = self.get_family_member_data(data, "radial")
-            self.plotsingle(heights, radial)
+            Xr, Yr = self.plotsingle(self.subfigure1, heights, radial, True)
+
+            self.subfigure1.plot(Xr, -np.log(Yr), "r--")
+            self.subfigure2.plot(Xr, -np.log(Yr), "r--")
+
         except RuntimeError:
             pass
 
         try:
             pathfind = self.get_family_member_data(data, "pathfind")
+            Xp, Yp = self.plotsingle(self.subfigure2, heights, pathfind)
 
-            if "corr_smaug" in self.argv:
-                pathfind = np.insert(pathfind, -1, (1.16666666667, 0.0711719, 0.0700391, list(heights).index(5)), 0)
-
-            self.plotsingle(heights, pathfind)
+            self.subfigure1.plot(Xp, -np.log(Yp), "b-.")
+            self.subfigure2.plot(Xp, -np.log(Yp), "b-.")
         except RuntimeError:
             pass
 
