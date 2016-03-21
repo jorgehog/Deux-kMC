@@ -24,6 +24,20 @@ def dump_map(set, setname):
 
     print s
 
+def dump_array(arr, name):
+
+    s = "const vec %s = {" % name
+
+    for i, v in enumerate(arr):
+        s += "%g, " % v
+
+        if (i+1) % 4 == 0:
+            s += "\n"
+
+    s = s.strip(", ").strip(", \n") + "};"
+
+    print s
+
 def main():
 
     input_file = sys.argv[1]
@@ -43,21 +57,24 @@ def main():
 
         h0 = data.attrs["h0"]
         alpha = data.attrs["alpha"]
-        type = data.attrs["type"]
-        a = data.attrs["a"]
-        b = data.attrs["b"]
 
         alpha = round(alpha, 3)
-
-        id = int(run_id)
-        #
-        # if id < 4E13:
-        #     continue
 
         if h0 not in heights:
             heights.append(h0)
         if alpha not in alphas:
             alphas.append(alpha)
+
+    heights = sorted(heights)
+    alphas = sorted(alphas)
+
+    for data, _, _, run_id in parser:
+
+        h0 = data.attrs["h0"]
+        alpha = data.attrs["alpha"]
+        type = data.attrs["type"]
+        a = data.attrs["a"]
+        b = data.attrs["b"]
 
         i = heights.index(h0)
         j = alphas.index(alpha)
@@ -110,10 +127,8 @@ def main():
 
     dump_map(radial, "radial")
     dump_map(pathfind, "pathfind")
-
-    print "h", heights
-    print "a", alphas
-
+    dump_array(heights, "knownHeights")
+    dump_array(alphas, "knownAlphas")
 
 if __name__ == "__main__":
     main()
