@@ -249,8 +249,8 @@ private:
 
 int main(int argv, char **argc)
 {
-//    rng.initialize(time(nullptr) % 1000000);
-            rng.initialize(361632621);
+    rng.initialize(time(nullptr) % 1000000);
+//            rng.initialize(361632621);
 
     string cfgName = getCfgName(argv, argc, "cconv2");
 
