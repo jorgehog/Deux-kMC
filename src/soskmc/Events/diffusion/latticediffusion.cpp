@@ -409,13 +409,7 @@ void LatticeDiffusion::onConfiningHeightChanged()
 {
     const double &h = solver().confiningSurfaceEvent().height();
 
-//    //we have expanded: no reactions are blocked
-//    if (h > solver().confiningSurfaceEvent().currentConfinementChange().prevHeight)
-//    {
-//        return;
-//    }
-
-    const int surfaceContactHeight = h - 1;
+    const int surfaceContactHeight = floor(h - 1);
 
     vector<SOSDiffusionReaction *> blockedReactions;
 
