@@ -258,7 +258,6 @@ int main(int argv, char** argc)
     Time currentTime(solver);
 
     HeightRMS rms(solver);
-    rms.setDependency(averageHeight);
 
     SurfaceSize size(solver);
     size.setOnsetTime(thermalization);

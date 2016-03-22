@@ -43,7 +43,7 @@ def find_corrl(x, y):
 
     return pl[0]
 
-def find_corrl2(x, y):
+def find_corrl2(x, y, doPlot=False):
 
     I = np.where(y > 0)
     J = np.where(x[I] >= 0)
@@ -59,21 +59,21 @@ def find_corrl2(x, y):
     try:
         end, err, slope = fit_best_line(X, Y)
     except:
+        print "ERROR", X, Y
         return 0
-    #
-    # plot(X, Y)
-    # plot(X[:end], Y[:end], 'rx')
-    # print end, err, slope
-    # print -1/slope
-    # show()
+
+    if doPlot:
+        plot(X, Y)
+        plot(X[:end], Y[:end], 'rx')
+        print end, err, slope
+        print -1/slope
+        show()
 
     return -1./slope
 
 def analyze(input_file, typeint, typestr):
 
     print typeint
-
-    input_file = sys.argv[1]
 
     parser = ParseKMCHDF5(input_file)
 
@@ -148,21 +148,26 @@ def analyze(input_file, typeint, typestr):
             d2 = np.diag(np.flipud(autocorr))
 
             print height, alphas[i]
-            cl = find_corrl2(xl, dl)
-            cw = find_corrl2(xw, dw)
-            c1 = find_corrl2(x1, d1)
-            c2 = find_corrl2(x2, d2)
+
+            doPlot = (typeint == 2) and (alphas[i] == 0.6) and False
+
+            cl = find_corrl2(xl, dl, doPlot)
+            cw = find_corrl2(xw, dw, doPlot)
+            c1 = find_corrl2(x1, d1, doPlot)
+            c2 = find_corrl2(x2, d2, doPlot)
 
             Cs.append([(cl + cw)/2., (c1 + c2)/2.])
 
         alphas = np.array(alphas)
         Cs = np.array(Cs)
 
+        print alphas.shape, RMSes[j, :].shape, Cs.shape
         np.save("/tmp/acf_h%d_%s_alphas.npy" % (j, typestr), alphas)
         np.save("/tmp/acf_h%d_%s_RMSes.npy" % (j, typestr), RMSes[j, :])
         np.save("/tmp/acf_h%d_%s_Cs.npy" % (j, typestr), Cs)
 
-    np.save("/tmp/acf_heights.npy", np.array(heights))
+    if heights:
+        np.save("/tmp/acf_heights.npy", np.array(heights))
 
 def main():
 
