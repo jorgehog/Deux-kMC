@@ -3042,7 +3042,8 @@ class AutoCorrWoot(DCVizPlotter):
 
     isFamilyMember = True
 
-    figMap = {"figure" : ['RMSfig1', 'RMSfig2', 'CFig1', 'CFig2']}
+    figMap = {"rmsfigure" : ['RMSfig1', 'RMSfig2', 'RMSfig3'],
+              "cfigure" :   ['CFig1', 'CFig2', "CFig3"]}
 
     styles = ["s", "o", "^", "d"]
     colors = ["k", "r", "b", "g"]
@@ -3059,7 +3060,7 @@ class AutoCorrWoot(DCVizPlotter):
 
     hugifyFonts = True
 
-    def adjust(self):
+    def adjust_old(self):
         self.adjust_maps["figure"]["top"] = 0.98
         self.adjust_maps["figure"]["bottom"] = 0.08
         self.adjust_maps["figure"]["right"] = 0.87
@@ -3071,6 +3072,7 @@ class AutoCorrWoot(DCVizPlotter):
     def plot(self, data):
 
         heights = self.get_family_member_data(data, "heights")
+        print heights
 
         types = []
         for name in self.familyFileNames:
@@ -3085,20 +3087,22 @@ class AutoCorrWoot(DCVizPlotter):
 
         types = sorted(types, key=lambda x: self.prios[x])
 
-        Rfs = [self.RMSfig1, self.RMSfig2]
-        Cfs = [self.CFig1, self.CFig2]
+        print types
+
+        Rfs = [self.RMSfig1, self.RMSfig2, self.RMSfig3]
+        Cfs = [self.CFig1, self.CFig2, self.CFig3]
 
         for ih, height in enumerate(heights):
 
-            if ih > 1:
+            if ih > 2:
                 continue
 
-            for i, type in enumerate(types):
+            for it, type in enumerate(types):
                 alphas = self.get_family_member_data(data, "h%d_%s_alphas" % (ih, type))
                 RMSes = self.get_family_member_data(data, "h%d_%s_RMSes" % (ih, type))
                 Cs = self.get_family_member_data(data, "h%d_%s_Cs" % (ih, type))
 
-                s = self.colors[i] + self.styles[i]
+                s = self.colors[it] + self.styles[it]
 
                 Rfs[ih].plot(alphas, RMSes, s, label=self.names[type], **my_props["fmt"])
 
@@ -3110,51 +3114,36 @@ class AutoCorrWoot(DCVizPlotter):
                 Cfs[ih].plot(alphas, c, s, **my_props["fmt"])
                 # self.CFig_diag.plot(alphas, Cs[:, 1], s, label=type, **my_props["fmt"])
 
-        self.RMSfig1.set_ylabel(r"$\sigma(\mathbf{h})$")
-        self.RMSfig1.xaxis.set_ticks([0.5, 1, 1.5, 2])
-        self.RMSfig1.yaxis.set_ticks([0, 1, 2, 3])
-        self.RMSfig1.set_xlim(0.4, 2.1)
-
-        self.RMSfig2.set_ylabel(r"$\sigma(\mathbf{h})$")
-        self.RMSfig2.xaxis.set_ticks([0.5, 1, 1.5, 2])
-        self.RMSfig2.yaxis.set_ticks([0, 1, 2, 3])
-        self.RMSfig2.set_xlim(0.4, 2.1)
-
-        self.CFig1.set_ylabel(r"$\xi$")
-        self.CFig1.yaxis.set_ticks([0, 1, 2, 3])
-        self.CFig1.xaxis.set_ticks([0.5, 1, 1.5, 2])
-        self.CFig1.set_xlim(0.4, 2.1)
-        self.CFig1.set_ylim(0, 3.5)
-
-        self.CFig2.set_ylabel(r"$\xi$")
-        self.CFig2.yaxis.set_ticks([0, 1, 2, 3])
-        self.CFig2.set_xlim(0.4, 2.1)
-        self.CFig2.set_ylim(0, 3.5)
-
         label = r"\langle d_i\rangle"
 
-        ax = self.RMSfig1.axes.twinx()
-        ax.set_ylabel(r"$%s=%.1f$" % (label, heights[0]), labelpad=15)
-        ax.yaxis.set_ticks([])
-        ax.yaxis.set_ticklabels([])
+        for ih, h in enumerate(heights):
 
-        ax = self.RMSfig2.axes.twinx()
-        ax.set_ylabel(r"$%s=%.1f$" % (label, heights[1]), labelpad=15)
-        ax.yaxis.set_ticks([])
-        ax.yaxis.set_ticklabels([])
+            rf = Rfs[ih]
+            cf = Cfs[ih]
 
-        ax = self.CFig1.axes.twinx()
-        ax.set_ylabel(r"$%s=%.1f$" % (label, heights[0]), labelpad=15)
-        ax.yaxis.set_ticks([])
-        ax.yaxis.set_ticklabels([])
+            rf.set_ylabel(r"$\sigma(\mathbf{h})$")
+            rf.xaxis.set_ticks([0.5, 1, 1.5, 2])
+            rf.yaxis.set_ticks([0, 1, 2, 3])
+            rf.set_xlim(0.4, 2.1)
 
-        ax = self.CFig2.axes.twinx()
-        ax.set_ylabel(r"$%s=%.1f$" % (label, heights[1]), labelpad=15)
-        ax.yaxis.set_ticks([])
-        ax.yaxis.set_ticklabels([])
+            ax = rf.axes.twinx()
+            ax.set_ylabel(r"$%s=%.1f$" % (label, h), labelpad=15)
+            ax.yaxis.set_ticks([])
+            ax.yaxis.set_ticklabels([])
 
-        self.CFig2.set_xlabel(r"$\alpha$")
-        self.CFig2.xaxis.set_ticks([0.5, 1, 1.5, 2])
+            cf.set_ylabel(r"$\xi$")
+            cf.yaxis.set_ticks([0, 1, 2, 3])
+            cf.xaxis.set_ticks([0.5, 1, 1.5, 2])
+            cf.set_xlim(0.4, 2.1)
+            cf.set_ylim(0, 3.5)
+
+            ax = cf.axes.twinx()
+            ax.set_ylabel(r"$%s=%.1f$" % (label, h), labelpad=15)
+            ax.yaxis.set_ticks([])
+            ax.yaxis.set_ticklabels([])
+
+        self.CFig3.set_xlabel(r"$\alpha$")
+        self.RMSfig3.set_xlabel(r"$\alpha$")
 
         def format_func0(v, i):
             return ""
@@ -3163,6 +3152,8 @@ class AutoCorrWoot(DCVizPlotter):
         self.RMSfig1.axes.xaxis.set_major_formatter(formatter)
         self.RMSfig2.axes.xaxis.set_major_formatter(formatter)
         self.CFig1.axes.xaxis.set_major_formatter(formatter)
+        self.CFig2.axes.xaxis.set_major_formatter(formatter)
+
 
         # self.CFig.text(0.05, 0.75, r"$\langle d_i \rangle = %.1f$" % float(height),
         #                horizontalalignment="left",
@@ -3170,15 +3161,15 @@ class AutoCorrWoot(DCVizPlotter):
         #                fontsize=24,
         #                transform=self.CFig.axes.transAxes)
 
-        def format_func(v, i):
-            if int(v) == v:
-                return r"$%d$" % v
-            else:
-                return ""
-
-        formatter = FuncFormatter(format_func)
-        self.CFig1.axes.yaxis.set_major_formatter(formatter)
-        self.CFig2.axes.yaxis.set_major_formatter(formatter)
+        # def format_func(v, i):
+        #     if int(v) == v:
+        #         return r"$%d$" % v
+        #     else:
+        #         return ""
+        #
+        # formatter = FuncFormatter(format_func)
+        # self.CFig1.axes.yaxis.set_major_formatter(formatter)
+        # self.CFig2.axes.yaxis.set_major_formatter(formatter)
 
         self.RMSfig1.axes.legend(loc="center",
                                  numpoints=1,
