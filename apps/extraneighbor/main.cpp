@@ -71,8 +71,8 @@ int main(int argv, char** argc)
 
     lattice.enableOutput(true, interval);
     lattice.enableProgressReport();
-    lattice.enableEventValueStorage(true,
-                                    true,
+    lattice.enableEventValueStorage(false,
+                                    false,
                                     "ignisSOS.ign",
                                     "/tmp",
                                     interval);
