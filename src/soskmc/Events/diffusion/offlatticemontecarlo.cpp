@@ -89,25 +89,25 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
                 m_particleIsLocked = true;
                 m_lockedParticle = nOfflatticeParticles() - 1;
             }
+        }
 
-            for (uint n = 0; n < nOfflatticeParticles(); ++n)
+        for (uint n = 0; n < nOfflatticeParticles(); ++n)
+        {
+            const double &x0 = particlePositions(0, n);
+            const double &y0 = particlePositions(1, n);
+            const double &z0 = particlePositions(2, n);
+
+            //if the height change made the particle blocked,
+            //we shift it a little and recalculate the rates
+            if (solver().isBlockedPosition(x0, y0, z0))
             {
-                const double &x0 = particlePositions(0, n);
-                const double &y0 = particlePositions(1, n);
-                const double &z0 = particlePositions(2, n);
+                uint dim;
+                double delta;
 
-                //if the height change made the particle blocked,
-                //we shift it a little and recalculate the rates
-                if (solver().isBlockedPosition(x0, y0, z0))
-                {
-                    uint dim;
-                    double delta;
+                scanForDisplacement(n, dim, delta);
+                m_particlePositions(dim, n) += delta;
 
-                    scanForDisplacement(n, dim, delta);
-                    m_particlePositions(dim, n) += delta;
-
-                    BADAssBool(!solver().isBlockedPosition(x0, y0, z0));
-                }
+                BADAssBool(!solver().isBlockedPosition(x0, y0, z0));
             }
         }
     }

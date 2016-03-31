@@ -3042,11 +3042,11 @@ class AutoCorrWoot(DCVizPlotter):
 
     isFamilyMember = True
 
-    figMap = {"rmsfigure" : ['RMSfig1', 'RMSfig2', 'RMSfig3'],
-              "cfigure" :   ['CFig1', 'CFig2', "CFig3"]}
+    figMap = {"rmsfigure" : ['RMSfig1', 'RMSfig2', 'RMSfig4'],
+              "cfigure" :   ['CFig1', 'CFig2', 'CFig4']}
 
-    styles = ["s", "o", "^", "d"]
-    colors = ["k", "r", "b", "g"]
+    styles = ["s", "^", "o", "d"]
+    colors = ["k", "b", "r", "g"]
 
     names = {"uniform"  : "Uniform",
              "lattice"  : "Lattice",
@@ -3058,21 +3058,32 @@ class AutoCorrWoot(DCVizPlotter):
              "radial"   : 2,
              "pathfind" : 3}
 
+    styles = {"uniform"  : "ks",
+              "lattice"  : "ro",
+              "radial"   : "b^",
+              "pathfind" : "gd"}
+
     hugifyFonts = True
 
-    def adjust_old(self):
-        self.adjust_maps["figure"]["top"] = 0.98
-        self.adjust_maps["figure"]["bottom"] = 0.08
-        self.adjust_maps["figure"]["right"] = 0.87
-        self.adjust_maps["figure"]["left"] = 0.14
-        self.adjust_maps["figure"]["hspace"] = 0.14
+    def adjust(self):
+        for figname in self.figure_names:
+            self.adjust_maps[figname]["top"] = 0.98
+            self.adjust_maps[figname]["bottom"] = 0.1
+            self.adjust_maps[figname]["hspace"] = 0.11
 
-    fig_size = [5, 10]
+        self.adjust_maps["cfigure"]["right"] = 0.87
+        self.adjust_maps["cfigure"]["left"] = 0.14
+
+        self.adjust_maps["rmsfigure"]["right"] = 0.93
+        self.adjust_maps["rmsfigure"]["left"] = 0.20
+
+
+
+    fig_size = [5, 7]
 
     def plot(self, data):
 
         heights = self.get_family_member_data(data, "heights")
-        print heights
 
         types = []
         for name in self.familyFileNames:
@@ -3089,20 +3100,25 @@ class AutoCorrWoot(DCVizPlotter):
 
         print types
 
-        Rfs = [self.RMSfig1, self.RMSfig2, self.RMSfig3]
-        Cfs = [self.CFig1, self.CFig2, self.CFig3]
+        #Rfs = [self.RMSfig1, self.RMSfig2, self.RMSfig3, self.RMSfig4]
+        Rfs = self.figures[self.figure_names.index("rmsfigure")][1:][::-1]
+        #Cfs = [self.CFig1, self.CFig2, self.CFig3, self.CFig4]
+        Cfs = self.figures[self.figure_names.index("cfigure")][1:][::-1]
 
-        for ih, height in enumerate(heights):
-
-            if ih > 2:
-                continue
-
+        for _ih, height in enumerate(heights):
             for it, type in enumerate(types):
-                alphas = self.get_family_member_data(data, "h%d_%s_alphas" % (ih, type))
-                RMSes = self.get_family_member_data(data, "h%d_%s_RMSes" % (ih, type))
-                Cs = self.get_family_member_data(data, "h%d_%s_Cs" % (ih, type))
+                alphas = self.get_family_member_data(data, "h%d_%s_alphas" % (_ih, type))
+                RMSes = self.get_family_member_data(data, "h%d_%s_RMSes" % (_ih, type))
+                Cs = self.get_family_member_data(data, "h%d_%s_Cs" % (_ih, type))
 
-                s = self.colors[it] + self.styles[it]
+                s = self.styles[type]
+
+                if _ih == 2:
+                    continue
+                elif _ih == 3:
+                    ih = 2
+                else:
+                    ih = _ih
 
                 Rfs[ih].plot(alphas, RMSes, s, label=self.names[type], **my_props["fmt"])
 
@@ -3111,49 +3127,70 @@ class AutoCorrWoot(DCVizPlotter):
                 else:
                     c = 0.5*(Cs[:, 0] + Cs[:, 1])
 
-                Cfs[ih].plot(alphas, c, s, **my_props["fmt"])
+                Cfs[ih].plot(alphas, c, s, label=self.names[type], **my_props["fmt"])
                 # self.CFig_diag.plot(alphas, Cs[:, 1], s, label=type, **my_props["fmt"])
+
+                if type == "lattice" and height > 5:
+                    Rfs[ih].text(0.75, 2.5, r"$\uparrow %.2f$" % max(RMSes))
 
         label = r"\langle d_i\rangle"
 
-        for ih, h in enumerate(heights):
+        def format_func0(v, i):
+            return ""
+
+        def format_func(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            else:
+                return ""
+
+        null_formatter = FuncFormatter(format_func0)
+        int_formatter = FuncFormatter(format_func)
+
+        for _ih, h in enumerate(heights):
+
+            if _ih == 2:
+                continue
+            elif _ih == 3:
+                ih = 2
+            else:
+                ih = _ih
+
 
             rf = Rfs[ih]
             cf = Cfs[ih]
 
             rf.set_ylabel(r"$\sigma(\mathbf{h})$")
             rf.xaxis.set_ticks([0.5, 1, 1.5, 2])
-            rf.yaxis.set_ticks([0, 1, 2, 3])
             rf.set_xlim(0.4, 2.1)
+            rf.set_ylim(0, 3)
+            rf.axes.yaxis.set_major_formatter(int_formatter)
 
-            ax = rf.axes.twinx()
-            ax.set_ylabel(r"$%s=%.1f$" % (label, h), labelpad=15)
-            ax.yaxis.set_ticks([])
-            ax.yaxis.set_ticklabels([])
+            # ax = rf.axes.twinx()
+            # ax.set_ylabel(r"$%s=%.1f$" % (label, h), labelpad=15)
+            # ax.yaxis.set_ticks([])
+            # ax.yaxis.set_ticklabels([])
 
             cf.set_ylabel(r"$\xi$")
             cf.yaxis.set_ticks([0, 1, 2, 3])
             cf.xaxis.set_ticks([0.5, 1, 1.5, 2])
             cf.set_xlim(0.4, 2.1)
             cf.set_ylim(0, 3.5)
+            cf.axes.yaxis.set_major_formatter(int_formatter)
 
             ax = cf.axes.twinx()
             ax.set_ylabel(r"$%s=%.1f$" % (label, h), labelpad=15)
             ax.yaxis.set_ticks([])
             ax.yaxis.set_ticklabels([])
 
-        self.CFig3.set_xlabel(r"$\alpha$")
-        self.RMSfig3.set_xlabel(r"$\alpha$")
+            if ih == 0:
 
-        def format_func0(v, i):
-            return ""
+                cf.set_xlabel(r"$\alpha$")
+                rf.set_xlabel(r"$\alpha$")
 
-        formatter = FuncFormatter(format_func0)
-        self.RMSfig1.axes.xaxis.set_major_formatter(formatter)
-        self.RMSfig2.axes.xaxis.set_major_formatter(formatter)
-        self.CFig1.axes.xaxis.set_major_formatter(formatter)
-        self.CFig2.axes.xaxis.set_major_formatter(formatter)
-
+            else:
+                rf.axes.xaxis.set_major_formatter(null_formatter)
+                cf.axes.xaxis.set_major_formatter(null_formatter)
 
         # self.CFig.text(0.05, 0.75, r"$\langle d_i \rangle = %.1f$" % float(height),
         #                horizontalalignment="left",
@@ -3161,28 +3198,20 @@ class AutoCorrWoot(DCVizPlotter):
         #                fontsize=24,
         #                transform=self.CFig.axes.transAxes)
 
-        # def format_func(v, i):
-        #     if int(v) == v:
-        #         return r"$%d$" % v
-        #     else:
-        #         return ""
-        #
-        # formatter = FuncFormatter(format_func)
-        # self.CFig1.axes.yaxis.set_major_formatter(formatter)
-        # self.CFig2.axes.yaxis.set_major_formatter(formatter)
 
-        self.RMSfig1.axes.legend(loc="center",
-                                 numpoints=1,
-                                 ncol=2,
-                                 handlelength=1.0,
-                                 borderpad=0.2,
-                                 labelspacing=0.2,
-                                 columnspacing=0.3,
-                                 handletextpad=0.25,
-                                 borderaxespad=0.0,
-                                 frameon=False,
-                                 fontsize=12,
-                                 bbox_to_anchor=(0.63, 0.76)) \
+
+        self.CFig1.axes.legend(loc="center",
+                               numpoints=1,
+                               ncol=2,
+                               handlelength=1.0,
+                               borderpad=0.2,
+                               labelspacing=0.2,
+                               columnspacing=0.3,
+                               handletextpad=0.25,
+                               borderaxespad=0.0,
+                               frameon=False,
+                               fontsize=12,
+                               bbox_to_anchor=(0.66, 0.15)) \
             .get_frame().set_fill(not (self.toFile and self.transparent))
 
 

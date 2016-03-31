@@ -14,6 +14,12 @@ public:
 
     void dumpProfile() const;
 
+    //!Returns zero when in mechanical equilibrium and nonzero elsewize.
+    double mechanicalEquilibriumCondition(const double hl) const;
+
+    double totalRepulsion() const;
+    double totalAttraction() const;
+
 private:
 
     const RDLPotential &m_rdlPotential;
@@ -25,12 +31,6 @@ private:
     void findNewHeight();
 
     double iteratingExpression(const double hPrev) const;
-
-    //!Returns zero when in mechanical equilibrium and nonzero elsewize.
-    double mechanicalEquilibriumCondition(const double hl) const;
-
-    double totalRepulsion() const;
-    double totalAttraction() const;
 
     void fixPointIteration();
 

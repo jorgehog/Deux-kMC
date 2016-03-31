@@ -9,7 +9,7 @@ RDLExtraNeighborSurface::RDLExtraNeighborSurface(SOSSolver &solver,
     m_rdlPotential(rdlPotential),
     m_extraNeighborPotential(extraNeighborPotential),
     m_Pl(Pl),
-    m_nFactor(rdlPotential.lD()*(1 - exp(-1/rdlPotential.lD()) + rdlPotential.s0())/20)
+    m_nFactor(rdlPotential.lD()*(1 - exp(-1/rdlPotential.lD()) + solver.area()*rdlPotential.s0())/20)
 {
     registerObserver(&rdlPotential);
     registerObserver(&extraNeighborPotential);
@@ -162,11 +162,6 @@ double RDLExtraNeighborSurface::totalRepulsion() const
 
 double RDLExtraNeighborSurface::totalAttraction() const
 {
-    const double &lD = m_rdlPotential.lD();
-    const double &s0 = m_rdlPotential.s0();
-
-    const double nFactor = lD*(1 - exp(-1/lD) + s0)/20;
-
     double extraNeighborContribution = 0;
 
     for (uint x = 0; x < solver().length(); ++x)
@@ -186,11 +181,13 @@ double RDLExtraNeighborSurface::totalAttraction() const
 
     extraNeighborContribution /= solver().area();
 
-    return m_Pl + extraNeighborContribution*nFactor;
+    return m_Pl + extraNeighborContribution*m_nFactor;
 }
 
 void RDLExtraNeighborSurface::fixPointIteration()
 {
+    BADAssBreak("");
+
     const double eps = 1E-10;
 
     double h = height();

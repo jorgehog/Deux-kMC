@@ -9,3 +9,5 @@ HEADERS += \
     extraneighbor.h \
     rdlrepulsion.h \
     rdlextraneighborsurface.h
+
+DISTFILES += infiles/extraneighbor.cfg
