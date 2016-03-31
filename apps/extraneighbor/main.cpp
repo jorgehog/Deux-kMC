@@ -7,6 +7,37 @@
 
 using ignis::Lattice;
 
+class Coverage : public SOSEvent
+{
+public:
+    Coverage(const SOSSolver &solver) :
+        SOSEvent(solver, "Coverage", "", true, true)
+    {
+
+    }
+
+    // Event interface
+public:
+    void execute()
+    {
+        uint coverage = 0;
+        const double &hl = solver().confiningSurfaceEvent().height();
+
+        for (uint x = 0; x < solver().length(); ++x)
+        {
+            for (uint y = 0; y < solver().width(); ++y)
+            {
+                if (hl - solver().height(x, y) < 2)
+                {
+                    coverage++;
+                }
+            }
+        }
+
+        setValue(coverage);
+    }
+};
+
 int main(int argv, char** argc)
 {
     string cfgName = getCfgName(argv, argc, "extraneighbor");
@@ -23,11 +54,11 @@ int main(int argv, char** argc)
     rng.initialize(time(nullptr));
 //    rng.initialize(10000);
 
-    const uint L = 50;
-    const uint W = 50;
+    const uint L = 30;
+    const uint W = 30;
 
     const double ld = 5.0;
-    const double s0 = 1.0;
+    const double s0 = 0.5;
     const double eTerm = 1-exp(-1/ld);
 
     const double gamma = alpha*Pl/(ld*eTerm);
@@ -58,6 +89,9 @@ int main(int argv, char** argc)
     lattice.addEvent(rdlSurface);
     lattice.addEvent(constantConcentration);
 
+    Coverage coverage(solver);
+    lattice.addEvent(coverage);
+
 //    DumpSystem dumper(solver, interval, path);
 //    lattice.addEvent(dumper);
 
@@ -71,7 +105,7 @@ int main(int argv, char** argc)
 
     lattice.enableOutput(true, interval);
     lattice.enableProgressReport();
-    lattice.enableEventValueStorage(false,
+    lattice.enableEventValueStorage(true,
                                     false,
                                     "ignisSOS.ign",
                                     "/tmp",
@@ -80,7 +114,7 @@ int main(int argv, char** argc)
     initializeSurface(solver, "random");
     rdlSurface.setHeight(rdlSurface.getRdlEquilibrium());
 
-    lattice.eventLoop(1000000);
+    lattice.eventLoop(10000000);
 
 
     H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "extraneighbor", "h5"));
@@ -99,7 +133,7 @@ int main(int argv, char** argc)
     simRoot["alpha"] = alpha;
     simRoot["Pl"] = Pl;
     simRoot["h"] = rdlSurface.height();
-    simRoot["heights"] = solver.heights();
+    simRoot["coverage"] = colvec(lattice.storedEventValues().col(0));
 
     return 0;
 }
