@@ -131,6 +131,7 @@ int main(int argv, char** argc)
 
     simRoot["alpha"] = alpha;
     simRoot["Pl"] = Pl;
+    simRoot["s0"] = s0;
     simRoot["h"] = rdlSurface.height();
     simRoot["coverage"] = colvec(lattice.storedEventValues().col(0));
 

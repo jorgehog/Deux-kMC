@@ -1,4 +1,4 @@
-from matplotlib.pylab import imshow, show
+import matplotlib.pylab as plab
 import sys
 import os
 from os.path import join
@@ -18,6 +18,7 @@ def main():
 
     alphas = []
     Pls = []
+    s0s = []
 
     for data, L, W, run_id in parser:
 
@@ -27,13 +28,21 @@ def main():
         Pl = data.attrs["Pl"]
         Pl = round(Pl, 3)
 
+        s0 = data.attrs["s0"]
+        s0 = round(s0, 3)
+
         if alpha not in alphas:
             alphas.append(alpha)
 
         if Pl not in Pls:
             Pls.append(Pl)
 
-    cmat = np.zeros(shape=(len(alphas), len(Pls)))
+        if s0 not in s0s:
+            s0s.append(s0)
+
+
+    cmat = np.zeros(shape=(len(s0s), len(alphas), len(Pls)))
+    ccounts = np.zeros_like(cmat)
 
     for data, L, W, run_id in parser:
 
@@ -45,17 +54,25 @@ def main():
         Pl = round(Pl, 3)
         ipl = Pls.index(Pl)
 
-        height = data.attrs["h"]
-        heights = data["heights"]
+        s0 = data.attrs["s0"]
+        s0 = round(s0, 3)
+        is0 = s0s.index(s0)
 
-        # print np.array(heights).max(), floor(height)
-        c = len(np.where(np.array(heights) > floor(height) - 2)[0])
+        coverage = data["coverage"]
+        L = len(coverage)
 
-        if c > 10:
-            cmat[ia, ipl] = 1
+        cval = np.array(coverage)[-1]
 
-    imshow(cmat)
-    show()
+        cmat[is0, ia, ipl] += cval
+        ccounts[is0, ia, ipl] += 1
+
+    cmat /= ccounts
+
+    for is0, s0 in enumerate(s0s):
+        plab.figure()
+        plab.title(s0)
+        plab.imshow(cmat[0, :, :], interpolation='none')
+        plab.show()
 
     np.save("/tmp/extraneighbor_alphas.npy", alphas)
     np.save("/tmp/extraneighbor_Pls.npy", Pls)
