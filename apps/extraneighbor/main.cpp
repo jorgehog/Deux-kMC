@@ -50,6 +50,11 @@ int main(int argv, char** argc)
     const string path = getSetting<string>(cfgRoot, "path") + "/";
     const double Pl = getSetting<double>(cfgRoot, "Pl");
     const double alpha = getSetting<double>(cfgRoot, "alpha");
+    const double ld = getSetting<double>(cfgRoot, "ld");
+    const double s0 = getSetting<double>(cfgRoot, "s0");
+    const uint nCycles = getSetting<uint>(cfgRoot, "nCycles");
+    const uint interval = getSetting<uint>(cfgRoot, "interval");
+    const uint output = getSetting<uint>(cfgRoot, "output");
 
     rng.initialize(time(nullptr));
 //    rng.initialize(10000);
@@ -57,10 +62,7 @@ int main(int argv, char** argc)
     const uint L = 30;
     const uint W = 30;
 
-    const double ld = 5.0;
-    const double s0 = 0.5;
     const double eTerm = 1-exp(-1/ld);
-
     const double gamma = alpha*Pl/(ld*eTerm);
 
     SOSSolver solver(L, W, alpha, gamma, true);
@@ -80,8 +82,6 @@ int main(int argv, char** argc)
 
 //    RadialFirstPassage constantConcentration(solver, 0.01, 3, getMFPTConstant(10, alpha, 0));
     ConfinedConstantConcentration constantConcentration(solver);
-
-    const uint interval = 100;
 
     Lattice lattice;
 
@@ -106,7 +106,7 @@ int main(int argv, char** argc)
     lattice.enableOutput(true, interval);
     lattice.enableProgressReport();
     lattice.enableEventValueStorage(true,
-                                    false,
+                                    output,
                                     "ignisSOS.ign",
                                     "/tmp",
                                     interval);
@@ -114,8 +114,7 @@ int main(int argv, char** argc)
     initializeSurface(solver, "random");
     rdlSurface.setHeight(rdlSurface.getRdlEquilibrium());
 
-    lattice.eventLoop(10000000);
-
+    lattice.eventLoop(nCycles);
 
     H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "extraneighbor", "h5"));
 
