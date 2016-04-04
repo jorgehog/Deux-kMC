@@ -70,21 +70,30 @@ def main():
         #     is0 = 0
 
         coverage = data["coverage"]
-        L = len(coverage)
+        l = len(coverage)
 
-        cval = np.array(coverage)[(9*L)/10:].mean()/float(L*W)
+        start = (9*l)/10
 
-        if cval != 0 and ccounts[is0, ia, ipl] == 0:
-            cmat[is0, ia, ipl] += float(cval)
+        k = 0
+        cval = sum(coverage[start:])/float(L*W*(l-start))
+        #
+        # for i in range(start, L):
+        #     cval += coverage[i]
+        #     k += 1
+
+        if cval != 0:
+            cmat[is0, ia, ipl] += cval
             ccounts[is0, ia, ipl] += 1.
 
-        plab.plot(coverage)
+        # plab.plot(coverage)
         # print alpha, Pl, s0, cval
-        plab.show()
+        # plab.show()
 
     I = np.where(ccounts != 0)
 
     cmat[I] /= ccounts[I]
+
+    print cmat.max()
 
     for is0, s0 in enumerate(s0s):
         f = plab.figure()
@@ -95,9 +104,10 @@ def main():
 
         ax.plot_surface(xpos, ypos, cmat[is0, :, :], cstride=1, rstride=1)
 
+        print cmat[is0, :, :].max()
         plab.figure()
         plab.title(s0)
-        plab.imshow(cmat[is0, :, :], interpolation='none')
+        plab.imshow(cmat[is0, :, :], interpolation='none', vmin=0, vmax=1, extent=[alphas[0], alphas[-1], Pls[0], Pls[-1]])
         plab.show()
 
     np.save("/tmp/extraneighbor_alphas.npy", alphas)
