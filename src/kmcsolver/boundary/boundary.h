@@ -46,6 +46,10 @@ private:
 
     const Boundary::orientations m_orientation;
 
+protected:
+    static constexpr Boundary::orientations First = Boundary::orientations::FIRST;
+    static constexpr Boundary::orientations Last  = Boundary::orientations::LAST;
+
 };
 
 }

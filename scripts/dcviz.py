@@ -3077,8 +3077,6 @@ class AutoCorrWoot(DCVizPlotter):
         self.adjust_maps["rmsfigure"]["right"] = 0.93
         self.adjust_maps["rmsfigure"]["left"] = 0.20
 
-
-
     fig_size = [5, 7]
 
     def plot(self, data):
@@ -3213,6 +3211,86 @@ class AutoCorrWoot(DCVizPlotter):
                                fontsize=12,
                                bbox_to_anchor=(0.66, 0.15)) \
             .get_frame().set_fill(not (self.toFile and self.transparent))
+
+
+class ExtraNeighbor(DCVizPlotter):
+
+    nametag = "extraneighbor_(.*)\.npy"
+
+    isFamilyMember = True
+
+    figMap = {"f1" : "subfigure", "f2" : ["subfigure1",
+                                          "subfigure2",
+                                          "subfigure3"]}
+
+    specific_fig_size = {"f2" : [8, 7]}
+
+    plotOnly = "f2"
+
+    hugifyFonts = True
+
+    def adjust(self):
+        self.adjust_maps["f2"]["right"] = 0.8
+        self.adjust_maps["f2"]["left"] = 0.15
+        self.adjust_maps["f2"]["top"] = 0.99
+        self.adjust_maps["f2"]["bottom"] = 0.1
+        self.adjust_maps["f2"]["hspace"] = 0.06
+
+    def trans_mat(self, mat):
+        return mat.transpose()
+
+        t = np.zeros_like(mat)
+
+        l, w = t.shape
+
+        for i in range(l):
+            for j in range(w):
+                t[i, j] = i*j/float(l*w)
+
+        t[0, :] = 0
+        t[:, 0] = 1
+
+        return t.transpose()
+
+
+    def plot(self, data):
+
+        s0s = self.get_family_member_data(data, "s0s")
+        alphas = self.get_family_member_data(data, "alphas")
+        Pls = self.get_family_member_data(data, "Pls")
+        cmat = self.get_family_member_data(data, "cmat")
+
+        ax = Axes3D(self.f1)
+        xpos, ypos = np.meshgrid(Pls, alphas)
+
+        s0figs = [self.subfigure1,
+                   self.subfigure2,
+                   self.subfigure3]
+
+        null_formatter = FuncFormatter(lambda v, i: "")
+
+        for is0, s0 in enumerate(s0s):
+
+            sfig = s0figs[is0]
+
+            ax.plot_surface(xpos, ypos, cmat[is0, :, :], cstride=1, rstride=1)
+
+            im = sfig.imshow(self.trans_mat(cmat[is0, :, :]), interpolation='none', vmin=0, vmax=1,
+                    extent=[alphas[0], alphas[-1], Pls[0], Pls[-1]], cmap="gist_earth_r", origin='lower')
+
+            sfig.set_ylabel(r"$P_\lambda$")
+
+            # sfig.text(0.1, 0.5, r"$\sigma_0 = %.2f$" % s0, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
+
+            if is0 < len(s0s) - 1:
+                sfig.axes.xaxis.set_major_formatter(null_formatter)
+            else:
+                sfig.set_xlabel(r"$\alpha = E_b/kT$")
+
+        cbar_ax = self.f2.add_axes([0.85, 0.2, 0.05, 0.7])
+        self.f2.colorbar(im, cax=cbar_ax)
+
+
 
 
 

@@ -92,24 +92,23 @@ def main():
     I = np.where(ccounts != 0)
 
     cmat[I] /= ccounts[I]
+    #
+    # for is0, s0 in enumerate(s0s):
+    #     f = plab.figure()
+    #     ax = Axes3D(f)
+    #     xpos, ypos = np.meshgrid(Pls, alphas)
+    #
+    #     print ypos.shape, xpos.shape, len(alphas), len(Pls), cmat[is0, :, :].shape
+    #
+    #     ax.plot_surface(xpos, ypos, cmat[is0, :, :], cstride=1, rstride=1)
+    #
+    #     print cmat[is0, :, :].max()
+    #     plab.figure()
+    #     plab.title(s0)
+    #     plab.imshow(cmat[is0, :, :], interpolation='none', vmin=0, vmax=1, extent=[alphas[0], alphas[-1], Pls[0], Pls[-1]])
+    #     plab.show()
 
-    print cmat.max()
-
-    for is0, s0 in enumerate(s0s):
-        f = plab.figure()
-        ax = Axes3D(f)
-        xpos, ypos = np.meshgrid(Pls, alphas)
-
-        print ypos.shape, xpos.shape, len(alphas), len(Pls), cmat[is0, :, :].shape
-
-        ax.plot_surface(xpos, ypos, cmat[is0, :, :], cstride=1, rstride=1)
-
-        print cmat[is0, :, :].max()
-        plab.figure()
-        plab.title(s0)
-        plab.imshow(cmat[is0, :, :], interpolation='none', vmin=0, vmax=1, extent=[alphas[0], alphas[-1], Pls[0], Pls[-1]])
-        plab.show()
-
+    np.save("/tmp/extraneighbor_s0s.npy", s0s)
     np.save("/tmp/extraneighbor_alphas.npy", alphas)
     np.save("/tmp/extraneighbor_Pls.npy", Pls)
     np.save("/tmp/extraneighbor_cmat.npy", cmat)

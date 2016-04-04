@@ -3,7 +3,7 @@
 #include "sosboundary.h"
 
 
-class AverageHeightLineBoundary : public SOSBoundary
+class AverageHeightLineBoundary : public SOSBoundary, public Observer<Subjects>
 {
 public:
     AverageHeightLineBoundary(SOSSolver &solver, const Boundary::orientations orientation, const uint dim, const uint depth);
@@ -23,4 +23,9 @@ public:
     bool isBlockedContinous(const double xi, const double xj, const double xk) const;
     bool isBlockedLattice(const int xi, const int xj, const int xk) const;
     void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const;
+
+    // Observer interface
+public:
+    void initializeObserver(const Subjects &subject);
+    void notifyObserver(const Subjects &subject);
 };

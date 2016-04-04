@@ -8,6 +8,8 @@ AverageHeightLineBoundary::AverageHeightLineBoundary(SOSSolver &solver,
     m_dim(dim),
     m_depth(depth)
 {
+    solver.registerObserver(this);
+
     if (orientation == Boundary::orientations::FIRST)
     {
         m_x0 = 0;
@@ -162,4 +164,52 @@ bool AverageHeightLineBoundary::isBlockedLattice(const int xi, const int xj, con
 void AverageHeightLineBoundary::closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const
 {
     return noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
+}
+
+
+void AverageHeightLineBoundary::initializeObserver(const Subjects &subject)
+{
+    (void) subject;
+}
+
+void AverageHeightLineBoundary::notifyObserver(const Subjects &subject)
+{
+    (void) subject;
+
+    uint loc;
+    if (m_dim == 0)
+    {
+        if (orientation() == First)
+        {
+            loc = 0;
+        }
+
+        else
+        {
+            loc = solver().length() - 1;
+        }
+
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            solver().registerChangedSite(loc, y);
+        }
+    }
+
+    else
+    {
+        if (orientation() == First)
+        {
+            loc = 0;
+        }
+
+        else
+        {
+            loc = solver().width() - 1;
+        }
+
+        for (uint x = 0; x < solver().length(); ++x)
+        {
+            solver().registerChangedSite(x, loc);
+        }
+    }
 }

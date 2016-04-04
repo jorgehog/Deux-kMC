@@ -55,7 +55,6 @@ int main(int argv, char **argc)
     AverageHeightLineBoundary bottomBoundary(solver, Boundary::orientations::FIRST, 1, boundaryDepth);
 //    AverageHeightLineBoundary topBoundary(solver, Boundary::orientations::LAST, 1, boundaryDepth);
 
-
     solver.setBoundaries({{&leftBoundary, &rightBoundary}, {&bottomBoundary, &topBoundary}});
 
     ConcentrationProfile concProfile(solver, [&W, &cBath] (const uint x, const uint y)
