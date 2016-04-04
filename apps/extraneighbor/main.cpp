@@ -50,20 +50,25 @@ int main(int argv, char** argc)
     const string path = getSetting<string>(cfgRoot, "path") + "/";
     const double Pl = getSetting<double>(cfgRoot, "Pl");
     const double alpha = getSetting<double>(cfgRoot, "alpha");
+    const double omega = getSetting<double>(cfgRoot, "omega");
+
     const double ld = getSetting<double>(cfgRoot, "ld");
     const double s0 = getSetting<double>(cfgRoot, "s0");
+
     const uint nCycles = getSetting<uint>(cfgRoot, "nCycles");
     const uint interval = getSetting<uint>(cfgRoot, "interval");
     const uint output = getSetting<uint>(cfgRoot, "output");
 
+    const uint type = getSetting<uint>(cfgRoot, "type");
+
     rng.initialize(time(nullptr));
-//    rng.initialize(10000);
 
     const uint L = 30;
     const uint W = 30;
 
     const double eTerm = 1-exp(-1/ld);
-    const double gamma = alpha*Pl/(ld*eTerm);
+    const double gamma0 = alpha*Pl/(ld*eTerm);
+    const double gamma = log(1 + omega) + gamma0;
 
     SOSSolver solver(L, W, alpha, gamma, true);
 
@@ -76,18 +81,24 @@ int main(int argv, char** argc)
     ExtraNeighbor extraNeighbor(solver, s0/eTerm);
     solver.addLocalPotential(&extraNeighbor);
 
-
     RDLExtraNeighborSurface rdlSurface(solver, rdlpotential, extraNeighbor, Pl);
-//    FixedSurface rdlSurface(solver, 10);
 
-//    RadialFirstPassage constantConcentration(solver, 0.01, 3, getMFPTConstant(10, alpha, 0));
-    ConfinedConstantConcentration constantConcentration(solver);
+    Diffusion *diff;
+
+    if (type == 0)
+    {
+        diff = new ConfinedConstantConcentration(solver);
+    }
+    else
+    {
+        diff = new ConstantConcentration(solver);
+    }
 
     Lattice lattice;
 
     lattice.addEvent(solver);
     lattice.addEvent(rdlSurface);
-    lattice.addEvent(constantConcentration);
+    lattice.addEvent(diff);
 
     Coverage coverage(solver);
     lattice.addEvent(coverage);
@@ -130,6 +141,8 @@ int main(int argv, char** argc)
     H5Wrapper::Member &simRoot = sizeRoot.addMember(run_ID);
 
     simRoot["alpha"] = alpha;
+    simRoot["omega"] = omega;
+    simRoot["type"] = type;
     simRoot["Pl"] = Pl;
     simRoot["s0"] = s0;
     simRoot["h"] = rdlSurface.height();
