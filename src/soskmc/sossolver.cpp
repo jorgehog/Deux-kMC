@@ -850,7 +850,9 @@ double SOSSolver::boundaryContinousTransformSingle(const double x, const double 
 //    return boundary(dim, boundaryOrientation(x, dim));
 //}
 
-void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orientations orientation)
+void SOSSolver::addConcentrationBoundary(const uint dim,
+                                         const Boundary::orientations orientation,
+                                         const double omega)
 {
     uint orientationInt;
     if (orientation == Boundary::orientations::FIRST)
@@ -863,48 +865,14 @@ void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orienta
         orientationInt = 1;
     }
 
-    const Boundary *b = boundary(dim, orientationInt);
-
-    ConcentrationBoundaryReaction *concReaction = new ConcentrationBoundaryReaction(dim, orientationInt, *this);
-
-
-    int outSide = concReaction->location() + (2*orientationInt - 1);
-    int outSideTrans;
-    bool blocked;
-
-    if (dim == 0)
-    {
-        outSideTrans = b->transformLatticeCoordinate(outSide, 0, height(outSide, 0));
-        blocked = b->isBlockedLattice(outSideTrans, 0, height(outSideTrans, 0));
-    }
-
-    else if (dim == 1)
-    {
-        outSideTrans = b->transformLatticeCoordinate(outSide, 0, height(0, outSide));
-        blocked = b->isBlockedLattice(outSideTrans, 0, height(0, outSideTrans));
-    }
-
-    else
-    {
-        throw std::logic_error("invalid dimension");
-    }
-
-
-    if (blocked)
-    {
-        throw std::logic_error("Concentration boundaries must not be blocked.");
-    }
-
-    if (outSideTrans != outSide)
-    {
-        throw std::logic_error("Concentration boundaries must not transform coordinates.");
-    }
+    ConcentrationBoundaryReaction *concReaction = new ConcentrationBoundaryReaction(dim, orientationInt, *this, omega);
 
     m_concentrationBoundaryReactions.push_back(concReaction);
 
     addReaction(concReaction);
 
     registerObserver(concReaction);
+    confiningSurfaceEvent().registerObserver(concReaction);
 }
 
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const

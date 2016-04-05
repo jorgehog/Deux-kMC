@@ -606,23 +606,18 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
     //    }
 }
 
-void LatticeDiffusion::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
+void LatticeDiffusion::executeConcentrationBoundaryReaction(const uint x, const uint y, const double z)
 {
-    const uint n =reaction->freeBoundarySites();
-    const uint nChosen = rng.uniform()*n;
+    const int zLattice = floor(z);
 
-    uint xi;
-    int z;
-    reaction->getFreeBoundarSite(nChosen, xi, z);
-
-    if (reaction->dim() == 0)
+    if (isBlockedPosition(x, y, zLattice))
     {
-        addDiffusionReactant(reaction->location(), xi, z);
+        return;
     }
 
     else
     {
-        addDiffusionReactant(xi, reaction->location(), z);
+        addDiffusionReactant(x, y, zLattice);
     }
 }
 

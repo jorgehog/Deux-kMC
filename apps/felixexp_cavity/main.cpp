@@ -152,8 +152,6 @@ int main(int argv, char** argc)
     const double &omega = getSetting<double>(cfgRoot, "omega");
     const double &height = getSetting<double>(cfgRoot, "height");
 
-    const uint &influxInterval = getSetting<uint>(cfgRoot, "influxInterval");
-
     const uint &nCycles = getSetting<uint>(cfgRoot, "nCycles");
     const uint &interval = getSetting<uint>(cfgRoot, "interval");
     const uint &output = getSetting<uint>(cfgRoot, "output");
@@ -161,8 +159,7 @@ int main(int argv, char** argc)
     rng.initialize(time(nullptr));
 //    rng.initialize(100101010);
 
-    const double gamma0 = 0;
-    const double gamma = log(1 + omega) + gamma0;
+    const double gamma = 0;
 
     SOSSolver solver(L, W, alpha, gamma, true);
 
@@ -180,14 +177,16 @@ int main(int argv, char** argc)
     RadialFirstPassage diff(solver, 0.01, 3, getMFPTConstant(height, alpha, 0));
     FixedSurface confSurface(solver, height);
 
+    solver.addConcentrationBoundary(0, Boundary::orientations::FIRST, omega);
+
     Lattice lattice;
 
     lattice.addEvent(solver);
     lattice.addEvent(confSurface);
     lattice.addEvent(diff);
 
-    InFluxer inFluxer(solver, diff, influxInterval);
-    lattice.addEvent(inFluxer);
+//    InFluxer inFluxer(solver, diff, influxInterval);
+//    lattice.addEvent(inFluxer);
 
     DumpSystem dumper(solver, 100, path);
     lattice.addEvent(dumper);

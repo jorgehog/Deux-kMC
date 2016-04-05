@@ -13,20 +13,16 @@ using kMC::Subjects;
 class ConcentrationBoundaryReaction : public Reaction, public Observer<Subjects>
 {
 public:
-    ConcentrationBoundaryReaction(const uint dim, const uint orientation, SOSSolver &solver);
+    ConcentrationBoundaryReaction(const uint dim,
+                                  const uint orientation,
+                                  SOSSolver &solver,
+                                  const double omega);
+
     ~ConcentrationBoundaryReaction();
 
     double freeBoundaryArea() const;
 
-    double dh(const uint n) const;
-
     const int &heightAtBoundary(const uint n) const; //!height at boundary site n
-
-    void getFreeBoundarSite(const uint n, uint &xi, int &z) const;
-
-    double topFilling() const;
-
-    uint freeBoundarySites() const;
 
     bool pointIsOnBoundary(const uint x, const uint y) const;
 
@@ -65,6 +61,11 @@ private:
     const uint m_span;
 
     SOSSolver &m_solver;
+
+    const double m_c;
+
+    vec m_boundaryHeights;
+    vec m_accuBoundaryHeights;
 
     // Reaction interface
 public:

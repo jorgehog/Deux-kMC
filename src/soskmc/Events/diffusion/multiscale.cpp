@@ -60,9 +60,11 @@ void Multiscale::initializeObserver(const Subjects &subject)
 
 }
 
-void Multiscale::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
+void Multiscale::executeConcentrationBoundaryReaction(const uint x, const uint y, const double z)
 {
-    (void) reaction;
+    (void) x;
+    (void) y;
+    (void) z;
 }
 
 void Multiscale::dump(const uint frameNumber, const string path) const

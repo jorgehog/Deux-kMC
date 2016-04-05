@@ -247,7 +247,9 @@ public:
     int boundaryLatticeTransformSingle(const int x, const int y, const int z, uint dim, const int shift = 0) const;
     double boundaryContinousTransformSingle(const double x, const double y, const double z, uint dim, const double shift = 0) const;
 
-    void addConcentrationBoundary(const uint dim, const Boundary::orientations orientation);
+    void addConcentrationBoundary(const uint dim,
+                                  const Boundary::orientations orientation,
+                                  const double omega);
 
     bool isBlockedPosition(const double x, const double y, const double z) const;
 

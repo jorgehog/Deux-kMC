@@ -53,9 +53,11 @@ void ConcentrationProfile::executeDiffusionReaction(SOSDiffusionReaction *reacti
     (void) z;
 }
 
-void ConcentrationProfile::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
+void ConcentrationProfile::executeConcentrationBoundaryReaction(const uint x, const uint y, const double z)
 {
-    (void) reaction;
+    (void) x;
+    (void) y;
+    (void) z;
 }
 
 bool ConcentrationProfile::isBlockedPosition(const uint x, const uint y, const int z) const

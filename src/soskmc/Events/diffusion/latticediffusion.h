@@ -118,7 +118,7 @@ public:
     double depositionRate(const uint x, const uint y) const;
     bool countPaths() const;
     void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
-    void executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction);
+    void executeConcentrationBoundaryReaction(const uint x, const uint y, const double z);
     bool isBlockedPosition(const uint x, const uint y, const int z) const;
     double concentration() const;
     bool hasDiscreteParticles() const;

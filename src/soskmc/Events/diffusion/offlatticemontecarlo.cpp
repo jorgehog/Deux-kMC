@@ -208,28 +208,9 @@ void OfflatticeMonteCarlo::executeDiffusionReaction(SOSDiffusionReaction *reacti
     throw std::logic_error("invalid diffusion model.");
 }
 
-void OfflatticeMonteCarlo::executeConcentrationBoundaryReaction(ConcentrationBoundaryReaction *reaction)
+void OfflatticeMonteCarlo::executeConcentrationBoundaryReaction(const uint x, const uint y, const double z)
 {
-    const uint n =reaction->freeBoundarySites();
-    const uint nChosen = rng.uniform()*n;
-
-    uint ixi;
-    int iz;
-    reaction->getFreeBoundarSite(nChosen, ixi, iz);
-
-    //place the particle randomly inside the selected box.
-    double z = iz + (rng.uniform() - 0.5);
-    double xi = ixi + (rng.uniform() - 0.5);
-
-    if (reaction->dim() == 0)
-    {
-        insertParticle(reaction->location(), xi, z);
-    }
-
-    else
-    {
-        insertParticle(xi, reaction->location(), z);
-    }
+    insertParticle(x, y, z);
 }
 
 bool OfflatticeMonteCarlo::isBlockedPosition(const uint x, const uint y, const int z) const
