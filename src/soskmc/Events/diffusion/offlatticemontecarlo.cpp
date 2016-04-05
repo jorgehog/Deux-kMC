@@ -82,12 +82,15 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
 
                 solver().boundaryLatticeTransform(x1, y1, x + dx, y + dy, z);
 
-                z1 = z + dz;
+                if (!solver().isOutsideBoxContinuous(x1, y1))
+                {
+                    z1 = z + dz;
 
-                insertParticle(x1, y1, z1);
+                    insertParticle(x1, y1, z1);
 
-                m_particleIsLocked = true;
-                m_lockedParticle = nOfflatticeParticles() - 1;
+                    m_particleIsLocked = true;
+                    m_lockedParticle = nOfflatticeParticles() - 1;
+                }
             }
         }
 

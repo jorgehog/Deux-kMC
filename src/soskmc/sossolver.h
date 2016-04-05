@@ -251,6 +251,8 @@ public:
 
     bool isBlockedPosition(const double x, const double y, const double z) const;
 
+    bool isOutsideBoxContinuous(const double x, const double y) const;
+
     bool isOutsideBoxSingle(const int x, const uint dim) const;
 
     bool isOutsideBox(const int x, const int y) const;

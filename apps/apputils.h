@@ -389,7 +389,7 @@ public:
 
         if (m_counter >= m_totalCount)
         {
-            terminateLoop("Counter exceeds limit.");
+            terminateLoop("Counter exceeds limit");
         }
     }
 };

@@ -44,37 +44,31 @@ void AverageHeightBoundary::affectSurfaceSites()
     }
 }
 
-void AverageHeightBoundary::affectSolutionSites(const int z)
-{
-    BADAssBool(!solver().diffusionEvent().hasDiscreteParticles());
-    (void) z;
-    //derp
-}
 
 void AverageHeightBoundary::updateSites(const int height, const int prevHeight)
 {
-    int delta;
     if (height == prevHeight)
     {
         return;
     }
 
-    else if (height < prevHeight)
-    {
-        delta = -1;
-    }
-
-    else
-    {
-        delta = 1;
-    }
-
     affectSurfaceSites();
 
-    for (int z = prevHeight; z != height + delta; z += delta)
-    {
-        affectSolutionSites(z);
-    }
+//    int delta;
+//    else if (height < prevHeight)
+//    {
+//        delta = -1;
+//    }
+
+//    else
+//    {
+//        delta = 1;
+//    }
+
+//    for (int z = prevHeight; z != height + delta; z += delta)
+//    {
+//        affectSolutionSites(z);
+//    }
 }
 
 double AverageHeightBoundary::calcAverage() const

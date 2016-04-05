@@ -51,7 +51,7 @@ void ConcentrationBoundaryReaction::getFreeBoundarSite(const uint n, uint &xi, i
 
     //unoptimized
     double surfaceHeight = solver().confiningSurfaceEvent().height();
-    int surfaceHeightInt = (int)surfaceHeight;
+    int surfaceHeightInt = floor(surfaceHeight);
 
     bool blocked;
     uint nCount = 0;
@@ -85,7 +85,7 @@ void ConcentrationBoundaryReaction::getFreeBoundarSite(const uint n, uint &xi, i
 double ConcentrationBoundaryReaction::topFilling() const
 {
     double surfaceHeight = solver().confiningSurfaceEvent().height();
-    int surfaceHeightInt = (int)surfaceHeight;
+    int surfaceHeightInt = floor(surfaceHeight);
 
     return (surfaceHeight - surfaceHeightInt);
 

@@ -909,17 +909,10 @@ void SOSSolver::addConcentrationBoundary(const uint dim, const Boundary::orienta
 
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
 {
-
-    //issue here when x = 19.7 it is outside, but not really. it is at 0.2.
-    //if we let 19.7 pass it will round to 20. Need periodic to
-    //transform 19.7 into -0.2 so it rounds up to 0
-
-    //to enable round arond 0 and length to have same room as othes we let particles
-    //go from -0.5 to l-0.5. Boundaries should not suggest these moves
-    //if they are illegal.
-    const bool isOutSideBox_x = (x <= -0.5) || (x >= length() - 0.5);
-
-    const bool isOutSideBox_y = (y <= -0.5) || (y >= width() - 0.5);
+    if (isOutsideBoxContinuous(x, y))
+    {
+        return true;
+    }
 
     //center of conf surf is at confSE().height(), such that it extends to confSE().height() - 0.5
     //which makes a particle of radius 0.5 collide if z is larger than cse.h() - 1
@@ -933,7 +926,7 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
         isOutSideBox_z = false;
     }
 
-    if (isOutSideBox_x || isOutSideBox_y || isOutSideBox_z)
+    if (isOutSideBox_z)
     {
         return true;
     }
@@ -944,6 +937,22 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
     //center of surface particle is at h=height(X, Y) and surface particles extend to h+0.5
     //such that particles of radius 0.5 collide when z is lower than h - 1
     return z < height(X, Y) + 1;
+}
+
+bool SOSSolver::isOutsideBoxContinuous(const double x, const double y) const
+{
+    //issue here when x = 19.7 it is outside, but not really. it is at 0.2.
+    //if we let 19.7 pass it will round to 20. Need periodic to
+    //transform 19.7 into -0.2 so it rounds up to 0
+
+    //to enable round arond 0 and length to have same room as othes we let particles
+    //go from -0.5 to l-0.5. Boundaries should not suggest these moves
+    //if they are illegal.
+    const bool isOutSideBox_x = (x <= -0.5) || (x >= length() - 0.5);
+
+    const bool isOutSideBox_y = (y <= -0.5) || (y >= width() - 0.5);
+
+    return (isOutSideBox_x || isOutSideBox_y);
 }
 
 bool SOSSolver::isOutsideBoxSingle(const int x, const uint dim) const
@@ -973,7 +982,17 @@ bool SOSSolver::isOutsideBoxSingle(const int x, const uint dim) const
 
 bool SOSSolver::isOutsideBox(const int x, const int y) const
 {
-    return isOutsideBoxSingle(x, 0) || isOutsideBoxSingle(y, 1);
+    if (x < 0 || y < 0)
+    {
+        return true;
+    }
+
+    if (uint(x) >= length() || uint(y) >= width())
+    {
+        return true;
+    }
+
+    return false;
 }
 
 bool SOSSolver::isSurfaceSite(const uint x, const uint y, const int z) const

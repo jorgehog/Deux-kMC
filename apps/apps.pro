@@ -6,7 +6,8 @@ SUBDIRS += spiralgrowth \
     tests \
     extraneighbor \
     cconv2 \
-    felixexp
+    felixexp \
+    felixexp_cavity
     #cconv \
 #    cconvergence \
 #    cconvergence2 \

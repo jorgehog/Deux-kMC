@@ -73,6 +73,11 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
             {
                 getTrans(xTrans, yTrans, ix, iy, xscan, yscan);
 
+                if (solver().isOutsideBox(xTrans, yTrans))
+                {
+                    continue;
+                }
+
                 const int &h = solver().height(xTrans, yTrans);
 
                 //if there is no room to deposit.
