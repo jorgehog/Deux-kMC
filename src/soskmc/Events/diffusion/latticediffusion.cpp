@@ -109,7 +109,8 @@ void LatticeDiffusion::addRandomParticles(const uint N, bool setRate)
 
         } while(solver().isBlockedPosition(x0, y0, z0) ||
                 isBlockedPosition(x0, y0, z0) ||
-                solver().isSurfaceSite(x0, y0, z0));
+                solver().isSurfaceSite(x0, y0, z0)
+                || solver().isOutsideBox(x0, y0));
 
         addDiffusionReactant(x0, y0, z0, setRate);
 
@@ -460,6 +461,7 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
 
     BADAssBool(!isBlockedPosition(x, y, z), "spot already taken");
     BADAssBool(!solver().isBlockedPosition(x, y, z), "spot inside surfaces");
+    BADAssBool(!solver().isOutsideBox(x, y), "spot outside simulation box");
 
     SOSDiffusionReaction *reaction = new SOSDiffusionReaction(solver(), x, y, z);
 
@@ -499,6 +501,13 @@ void LatticeDiffusion::execute()
         const int &z = reaction->z();
 
         BADAssBool(!solver().isBlockedPosition(x, y, z), "Illigal particle position", [&] ()
+        {
+            const int h = solver().height(x, y);
+            const double hconf = solver().confiningSurfaceEvent().height();
+            BADAssSimpleDump(x, y, z, h, hconf);
+        });
+
+        BADAssBool(!solver().isOutsideBox(x, y), "Illigal particle position", [&] ()
         {
             const int h = solver().height(x, y);
             const double hconf = solver().confiningSurfaceEvent().height();

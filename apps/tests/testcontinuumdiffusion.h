@@ -165,7 +165,7 @@ TEST_F(CDiffTest, diffusion)
         }
     }
 
-    m_cdiffusionEvent->releaseLockedParticle();
+    m_cdiffusionEvent->releaseLockedParticles();
 
     EXPECT_EQ(solver().area(), m_cdiffusionEvent->nOfflatticeParticles());
 

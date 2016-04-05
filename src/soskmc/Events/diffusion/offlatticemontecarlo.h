@@ -91,7 +91,7 @@ public:
 
     bool isInLineOfSight(const uint n, const uint x, const uint y) const;
 
-    void releaseLockedParticle();
+    void releaseLockedParticles();
 
     void resetLocalRates(const uint n);
 
@@ -104,8 +104,7 @@ protected:
 
 private:
 
-    bool m_particleIsLocked;
-    uint m_lockedParticle;
+    vector<uint> m_lockedParticles;
 
     const double m_maxdt;
 
@@ -121,6 +120,9 @@ private:
     vec::fixed<6> m_scanDeltas;
     vec::fixed<6> m_scanAbsDeltas;
     vec::fixed<3> m_scanOriginalPositions;
+
+    vector<uint> m_removalQueue;
+    uint m_dumpCounter;
 
     // Event interface
 public:

@@ -877,11 +877,6 @@ void SOSSolver::addConcentrationBoundary(const uint dim,
 
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
 {
-    if (isOutsideBoxContinuous(x, y))
-    {
-        return true;
-    }
-
     //center of conf surf is at confSE().height(), such that it extends to confSE().height() - 0.5
     //which makes a particle of radius 0.5 collide if z is larger than cse.h() - 1
     bool isOutSideBox_z;
@@ -902,6 +897,8 @@ bool SOSSolver::isBlockedPosition(const double x, const double y, const double z
     const uint X = uint(round(x));
     const uint Y = uint(round(y));
 
+    BADAssBool(!isOutsideBox(X, Y));
+
     //center of surface particle is at h=height(X, Y) and surface particles extend to h+0.5
     //such that particles of radius 0.5 collide when z is lower than h - 1
     return z < height(X, Y) + 1;
@@ -916,9 +913,9 @@ bool SOSSolver::isOutsideBoxContinuous(const double x, const double y) const
     //to enable round arond 0 and length to have same room as othes we let particles
     //go from -0.5 to l-0.5. Boundaries should not suggest these moves
     //if they are illegal.
-    const bool isOutSideBox_x = (x <= -0.5) || (x >= length() - 0.5);
+    const bool isOutSideBox_x = (x < -0.5) || (x > length() - 0.5);
 
-    const bool isOutSideBox_y = (y <= -0.5) || (y >= width() - 0.5);
+    const bool isOutSideBox_y = (y < -0.5) || (y > width() - 0.5);
 
     return (isOutSideBox_x || isOutSideBox_y);
 }

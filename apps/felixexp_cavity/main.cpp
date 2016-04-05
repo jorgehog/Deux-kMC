@@ -89,9 +89,10 @@ public:
         (void) xj;
         (void) xk;
 
-        if (xi >= solver().length())
+        if (xi >= solver().length() - 0.5)
         {
-            return 2*(solver().length() - 1) - xi + 1;
+
+            return 2*solver().length() - xi - 1;
         }
 
         else
@@ -166,7 +167,7 @@ int main(int argv, char** argc)
     Boundary *x0;
     Boundary *x1;
 
-    x0 = new AverageHeightBoundary(solver, 5, 0, L, W, Boundary::orientations::FIRST, 0);
+    x0 = new AverageHeightBoundary(solver, 3, 0, L, W, Boundary::orientations::FIRST, 0);
     x1 = new ReflConstantHybrid(solver);
 
     Periodic y0(W, Boundary::orientations::FIRST);
