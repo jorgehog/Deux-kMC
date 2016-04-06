@@ -160,14 +160,14 @@ int main(int argv, char** argc)
     rng.initialize(time(nullptr));
 //    rng.initialize(100101010);
 
-    const double gamma = 0;
+    const double gamma = log(1 + omega);
 
     SOSSolver solver(L, W, alpha, gamma, true);
 
     Boundary *x0;
     Boundary *x1;
 
-    x0 = new AverageHeightBoundary(solver, 3, 0, L, W, Boundary::orientations::FIRST, 0);
+    x0 = new AverageHeightBoundary(solver, L/20, 0, L, W, Boundary::orientations::FIRST, 0);
     x1 = new ReflConstantHybrid(solver);
 
     Periodic y0(W, Boundary::orientations::FIRST);
@@ -189,7 +189,7 @@ int main(int argv, char** argc)
 //    InFluxer inFluxer(solver, diff, influxInterval);
 //    lattice.addEvent(inFluxer);
 
-    DumpSystem dumper(solver, 100, path);
+    DumpSystem dumper(solver, interval, path);
     lattice.addEvent(dumper);
 
     AverageHeight avgH(solver);
@@ -203,8 +203,8 @@ int main(int argv, char** argc)
                                     "/tmp",
                                     interval);
 
-    //    const string initType = "thermalized";
-    const string initType = "random";
+        const string initType = "thermalized";
+//    const string initType = "random";
     initializeSurface(solver, initType, 3, 10000);
 
     lattice.eventLoop(nCycles);

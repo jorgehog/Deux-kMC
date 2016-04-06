@@ -804,6 +804,12 @@ inline double getMFPTConstant(const double h0, const double alpha, const int typ
                              1.7, 1.8, 1.9, 2};
 
     uint ia = 0;
+
+    while (alpha > knownAlphas(ia))
+    {
+        ia++;
+    }
+
     uint ih = 0;
 
     while (h0 != knownHeights(ih))
@@ -812,13 +818,10 @@ inline double getMFPTConstant(const double h0, const double alpha, const int typ
 
         if (ih == knownHeights.size())
         {
-            throw std::runtime_error("h0 not found.");
+            cout << "Warning: h0 not found" << endl;
+            ih = knownHeights.size() - 1;
+            break;
         }
-    }
-
-    while (alpha > knownAlphas(ia))
-    {
-        ia++;
     }
 
     double c0, c1;

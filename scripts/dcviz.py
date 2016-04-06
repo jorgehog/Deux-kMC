@@ -2751,7 +2751,7 @@ class LatticediffSpeeds(DCVizPlotter):
 
 class ignisSOS(DCVizPlotter):
 
-    nametag = "ignisSOS\.ign"
+    nametag = "ignisSOS(.*)\.ign"
 
     def plot(self, data):
 

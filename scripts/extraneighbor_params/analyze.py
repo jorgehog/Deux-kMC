@@ -4,6 +4,7 @@ import sys
 import os
 from os.path import join
 import numpy as np
+from scipy.signal import argrelextrema
 
 sys.path.append(join(os.getcwd(), ".."))
 
@@ -84,7 +85,6 @@ def main():
             if io != this_io:
                 continue
 
-
             alpha = data.attrs["alpha"]
             alpha = round(alpha, 3)
             ia = alphas.index(alpha)
@@ -101,27 +101,43 @@ def main():
 
             is0 = s0s.index(s0)
 
-            coverage = data["coverage"]
-            l = len(coverage)
+            coverage = data["coverage"][()]
 
+            l = len(coverage)
             start = (9*l)/10
 
-            k = 0
-            cval = sum(coverage[start:])/float(L*W*(l-start))
+            if omega == 0:
+                cval = coverage[start:].mean()
+
+            elif omega > 0:
+                X = argrelextrema(coverage[start:], np.greater)
+
+                if len(X[0]) < 10:
+                    cval = 0
+                else:
+                    cval = coverage[start:][X].mean()
+
+                    # plab.plot(coverage[start:])
+                    # plab.hold('on')
+                    # plab.plot(X[0], coverage[start:][X], 'ro')
+                    # plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
+                    # plab.show()
+            else:
+                cval = 0
 
             if cval != 0:
-                cmat[is0, ia, ipl] += cval
+                cmat[is0, ia, ipl] += cval/float(L*W)
                 ccounts[is0, ia, ipl] += 1.
 
             # plab.plot(coverage)
             # print alpha, Pl, s0, cval
             # plab.show()
 
-            I = np.where(ccounts != 0)
+        I = np.where(ccounts != 0)
 
-            cmat[I] /= ccounts[I]
+        cmat[I] /= ccounts[I]
 
-            np.save("/tmp/extraneighbor_cmat_omega%d.npy" % io, cmat)
+        np.save("/tmp/extraneighbor_cmat_omega%d.npy" % io, cmat)
 
 
 if __name__ == "__main__":

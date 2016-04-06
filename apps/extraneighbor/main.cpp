@@ -21,7 +21,6 @@ public:
     void execute()
     {
         uint coverage = 0;
-        const double &hl = solver().confiningSurfaceEvent().height();
 
         for (uint x = 0; x < solver().length(); ++x)
         {
@@ -68,9 +67,8 @@ int main(int argv, char** argc)
 
     const double eTerm = 1-exp(-1/ld);
     const double gamma0 = alpha*Pl/(ld*eTerm);
-    const double gamma = log(1 + omega) + gamma0;
 
-    SOSSolver solver(L, W, alpha, gamma, true);
+    SOSSolver solver(L, W, alpha, gamma0, true);
 
     setBoundariesFromIDs(&solver, {0,0,0,0}, L, W);
 
@@ -85,14 +83,7 @@ int main(int argv, char** argc)
 
     Diffusion *diff;
 
-    if (type == 0)
-    {
-        diff = new ConfinedConstantConcentration(solver);
-    }
-    else
-    {
-        diff = new ConstantConcentration(solver);
-    }
+    diff = new ConfinedConstantConcentration(solver);
 
     Lattice lattice;
 
@@ -103,16 +94,12 @@ int main(int argv, char** argc)
     Coverage coverage(solver);
     lattice.addEvent(coverage);
 
-//    DumpSystem dumper(solver, interval, path);
-//    lattice.addEvent(dumper);
+    DumpSystem dumper(solver, interval, path);
 
-    AverageHeight avgH(solver);
-    lattice.addEvent(avgH);
-
-#ifndef NDEBUG
-    RateChecker checker(solver);
-    lattice.addEvent(checker);
-#endif
+    if (output)
+    {
+        lattice.addEvent(dumper);
+    }
 
     lattice.enableOutput(true, interval);
     lattice.enableProgressReport();
@@ -126,6 +113,67 @@ int main(int argv, char** argc)
     rdlSurface.setHeight(rdlSurface.getRdlEquilibrium());
 
     lattice.eventLoop(nCycles);
+
+
+    /*
+     *
+     *
+     *
+     */
+
+    double gamma2 = solver.gamma() + log(1 + omega);
+    SOSSolver solver2(L, W, alpha, gamma2, true);
+
+    setBoundariesFromIDs(&solver2, {0,0,0,0}, L, W);
+
+    RDLPotential rdlpotential2(solver2, s0, ld);
+    solver2.addLocalPotential(&rdlpotential2);
+    solver2.registerObserver(&rdlpotential2);
+
+    ExtraNeighbor extraNeighbor2(solver2, s0/eTerm);
+    solver2.addLocalPotential(&extraNeighbor2);
+
+    RDLExtraNeighborSurface rdlSurface2(solver2, rdlpotential2, extraNeighbor2, Pl);
+
+    Diffusion *diff2;
+
+    diff2 = new ConstantConcentration(solver2);
+
+    Lattice lattice2;
+
+    lattice2.addEvent(solver2);
+    lattice2.addEvent(rdlSurface2);
+    lattice2.addEvent(diff2);
+
+    Coverage coverage2(solver2);
+    lattice2.addEvent(coverage2);
+
+    DumpSystem dumper2(solver2, interval, path);
+
+    if (output)
+    {
+        lattice2.addEvent(dumper2);
+    }
+
+    lattice2.enableOutput(true, interval);
+    lattice2.enableProgressReport();
+    lattice2.enableEventValueStorage(true,
+                                     output,
+                                     "ignisSOS2.ign",
+                                     "/tmp",
+                                     interval);
+
+    solver2.setHeights(solver.heights(), false);
+    rdlSurface2.setHeight(rdlSurface.height());
+
+    lattice2.eventLoop(nCycles);
+
+    /*
+     *
+     *
+     *
+     */
+
 
     H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "extraneighbor", "h5"));
 
@@ -145,8 +193,8 @@ int main(int argv, char** argc)
     simRoot["type"] = type;
     simRoot["Pl"] = Pl;
     simRoot["s0"] = s0;
-    simRoot["h"] = rdlSurface.height();
-    simRoot["coverage"] = colvec(lattice.storedEventValues().col(0));
+    simRoot["h"] = rdlSurface2.height();
+    simRoot["coverage"] = colvec(lattice2.storedEventValues().col(0));
 
     return 0;
 }
