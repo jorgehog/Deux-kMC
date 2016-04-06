@@ -3219,22 +3219,29 @@ class ExtraNeighbor(DCVizPlotter):
 
     isFamilyMember = True
 
-    figMap = {"f1" : "subfigure", "f2" : ["subfigure1",
-                                          "subfigure2",
-                                          "subfigure3"]}
+    figMap = {"f2" : ["subfigure11",
+                      "subfigure12",
+                      "subfigure13"],
+
+              "f3" : ["subfigure21",
+                      "subfigure22",
+                      "subfigure23"],
+
+              "f4" : ["subfigure31",
+                      "subfigure32",
+                      "subfigure33"]}
 
     specific_fig_size = {"f2" : [8, 7]}
-
-    plotOnly = "f2"
 
     hugifyFonts = True
 
     def adjust(self):
-        self.adjust_maps["f2"]["right"] = 0.8
-        self.adjust_maps["f2"]["left"] = 0.15
-        self.adjust_maps["f2"]["top"] = 0.99
-        self.adjust_maps["f2"]["bottom"] = 0.1
-        self.adjust_maps["f2"]["hspace"] = 0.06
+        for figname in self.figure_names:
+            self.adjust_maps[figname]["right"] = 0.8
+            self.adjust_maps[figname]["left"] = 0.15
+            self.adjust_maps[figname]["top"] = 0.99
+            self.adjust_maps[figname]["bottom"] = 0.1
+            self.adjust_maps[figname]["hspace"] = 0.06
 
     def trans_mat(self, mat):
         return mat.transpose()
@@ -3255,40 +3262,35 @@ class ExtraNeighbor(DCVizPlotter):
 
     def plot(self, data):
 
+        omegas = self.get_family_member_data(data, "omegas")
         s0s = self.get_family_member_data(data, "s0s")
         alphas = self.get_family_member_data(data, "alphas")
         Pls = self.get_family_member_data(data, "Pls")
-        cmat = self.get_family_member_data(data, "cmat")
 
-        ax = Axes3D(self.f1)
-        xpos, ypos = np.meshgrid(Pls, alphas)
+        for io, omega in enumerate(omegas):
+            cmat = self.get_family_member_data(data, "cmat_omega%d" % io)
 
-        s0figs = [self.subfigure1,
-                   self.subfigure2,
-                   self.subfigure3]
+            null_formatter = FuncFormatter(lambda v, i: "")
 
-        null_formatter = FuncFormatter(lambda v, i: "")
+            for is0, s0 in enumerate(s0s):
 
-        for is0, s0 in enumerate(s0s):
+                sfig = eval("self.subfigure%d%d" % (io+1, is0+1))
 
-            sfig = s0figs[is0]
+                im = sfig.imshow(self.trans_mat(cmat[is0, :, :]), interpolation='none', vmin=0, vmax=1,
+                        extent=[alphas[0], alphas[-1], Pls[0], Pls[-1]], cmap="gist_earth_r", origin='lower')
 
-            ax.plot_surface(xpos, ypos, cmat[is0, :, :], cstride=1, rstride=1)
+                if io == 0:
+                    sfig.set_ylabel(r"$P_\lambda$")
 
-            im = sfig.imshow(self.trans_mat(cmat[is0, :, :]), interpolation='none', vmin=0, vmax=1,
-                    extent=[alphas[0], alphas[-1], Pls[0], Pls[-1]], cmap="gist_earth_r", origin='lower')
+                # sfig.text(0.1, 0.5, r"$\sigma_0 = %.2f$" % s0, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
-            sfig.set_ylabel(r"$P_\lambda$")
+                if is0 < len(s0s) - 1:
+                    sfig.axes.xaxis.set_major_formatter(null_formatter)
+                else:
+                    sfig.set_xlabel(r"$\alpha = E_b/kT$")
 
-            # sfig.text(0.1, 0.5, r"$\sigma_0 = %.2f$" % s0, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
-
-            if is0 < len(s0s) - 1:
-                sfig.axes.xaxis.set_major_formatter(null_formatter)
-            else:
-                sfig.set_xlabel(r"$\alpha = E_b/kT$")
-
-        cbar_ax = self.f2.add_axes([0.85, 0.2, 0.05, 0.7])
-        self.f2.colorbar(im, cax=cbar_ax)
+        cbar_ax = self.f4.add_axes([0.85, 0.2, 0.05, 0.7])
+        self.f4.colorbar(im, cax=cbar_ax)
 
 
 
