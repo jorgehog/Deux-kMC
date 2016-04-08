@@ -3231,8 +3231,6 @@ class ExtraNeighbor(DCVizPlotter):
                       "subfigure32",
                       "subfigure33"]}
 
-    specific_fig_size = {"f2" : [8, 7]}
-
     hugifyFonts = True
 
     def adjust(self):
@@ -3254,11 +3252,14 @@ class ExtraNeighbor(DCVizPlotter):
             for j in range(w):
                 t[i, j] = i*j/float(l*w)
 
-        t[0, :] = 0
-        t[:, 0] = 1
+        t[0, :] = 0.1
+        t[:, 0] = 0.1
+        t[-1, :] = 0.1
+        t[:, -1] = 0.1
 
-        return t.transpose()
+        return t
 
+    tight = False
 
     def plot(self, data):
 
@@ -3267,30 +3268,73 @@ class ExtraNeighbor(DCVizPlotter):
         alphas = self.get_family_member_data(data, "alphas")
         Pls = self.get_family_member_data(data, "Pls")
 
+        print omegas
+
+        da = (alphas[1]-alphas[0])/2
+        dp = (Pls[1]-Pls[0])/2
+
+        X, Y = np.meshgrid(alphas + 2*da, Pls + 2*dp, indexing='ij')
+
+        print len(alphas), len(Pls)
+        print X.shape, Y.shape,
+
+
         for io, omega in enumerate(omegas):
             cmat = self.get_family_member_data(data, "cmat_omega%d" % io)
+            print cmat.shape,
 
             null_formatter = FuncFormatter(lambda v, i: "")
 
             for is0, s0 in enumerate(s0s):
 
+                print io, is0
+
+                C = self.trans_mat(cmat[is0, :, :])
+
                 sfig = eval("self.subfigure%d%d" % (io+1, is0+1))
 
-                im = sfig.imshow(self.trans_mat(cmat[is0, :, :]), interpolation='none', vmin=0, vmax=1,
-                        extent=[alphas[0], alphas[-1], Pls[0], Pls[-1]], cmap="gist_earth_r", origin='lower')
+                im = sfig.pcolor(C, vmin=0, vmax=1, cmap="gist_earth_r")
+
+
+                fail = np.where(C == -1)
+
+                # succ = np.where(C != -1)
+                # Cs = C.copy()
+                # Cs[fail] = 1
+                # sfig.contour(X, Y, Cs)
+
+                for y, x in zip(*fail):
+                    sfig.scatter(x+0.5, y+0.5, c = 'k', marker='x')
 
                 if io == 0:
                     sfig.set_ylabel(r"$P_\lambda$")
 
                 # sfig.text(0.1, 0.5, r"$\sigma_0 = %.2f$" % s0, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
+                xi = np.arange(1, len(alphas), 2)
+                yi = np.arange(1, len(Pls), 3)
+
+                ax = sfig.axes
+                ax.set_xticks(xi+0.5, minor=False)
+                ax.set_yticks(yi+0.5, minor=False)
+
+                xtics = [r"$%.2f$" % a for a in alphas[xi]]
+                ytics = [r"$%.2f$" % p for p in Pls[yi]]
+
+                ax.set_xticklabels(xtics, minor=False)
+                ax.set_yticklabels(ytics, minor=False)
+
                 if is0 < len(s0s) - 1:
                     sfig.axes.xaxis.set_major_formatter(null_formatter)
                 else:
                     sfig.set_xlabel(r"$\alpha = E_b/kT$")
 
+                sfig.set_xlim(0, 16)
+                sfig.set_ylim(0, 20)
+
         cbar_ax = self.f4.add_axes([0.85, 0.2, 0.05, 0.7])
         self.f4.colorbar(im, cax=cbar_ax)
+
 
 
 

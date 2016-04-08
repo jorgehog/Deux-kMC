@@ -21,6 +21,7 @@ def main():
     Pls = []
     s0s = []
     omegas = []
+    lmax = 0
 
     for data, L, W, run_id in parser:
 
@@ -30,12 +31,10 @@ def main():
         if alpha not in alphas:
             alphas.append(alpha)
 
-
         Pl = data.attrs["Pl"]
         Pl = round(Pl, 3)
         if Pl not in Pls:
             Pls.append(Pl)
-
 
         try:
             s0 = data.attrs["s0"]
@@ -46,7 +45,6 @@ def main():
         if s0 not in s0s:
             s0s.append(s0)
 
-
         try:
             omega = data.attrs["omega"]
             omega = round(omega, 3)
@@ -56,6 +54,9 @@ def main():
         if omega not in omegas:
             omegas.append(omega)
 
+        l = len(data["coverage"])
+        if l > lmax:
+            lmax = l
 
     Pls = sorted(Pls)
     s0s = sorted(s0s)
@@ -106,22 +107,28 @@ def main():
             l = len(coverage)
             start = (9*l)/10
 
+            if l != lmax:
+                cmat[is0, ia, ipl] = -1
+                ccounts[is0, ia, ipl] = 1
+                continue
+
             if omega == 0:
                 cval = coverage[start:].mean()
 
             elif omega > 0:
                 X = argrelextrema(coverage[start:], np.greater)
 
-                if len(X[0]) < 10:
+                if len(X[0]) == 0:
                     cval = 0
-                else:
-                    cval = coverage[start:][X].mean()
 
-                    # plab.plot(coverage[start:])
+                    # print s0, alpha, Pl
+                    # plab.plot(coverage)
                     # plab.hold('on')
                     # plab.plot(X[0], coverage[start:][X], 'ro')
                     # plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
-                    # plab.show()
+                    plab.show()
+                else:
+                    cval = coverage[start:][X].mean()
             else:
                 cval = 0
 

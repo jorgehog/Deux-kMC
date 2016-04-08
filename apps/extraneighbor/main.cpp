@@ -21,6 +21,7 @@ public:
     void execute()
     {
         uint coverage = 0;
+        const double &hl = solver().confiningSurfaceEvent().height();
 
         for (uint x = 0; x < solver().length(); ++x)
         {
@@ -166,7 +167,22 @@ int main(int argv, char** argc)
     solver2.setHeights(solver.heights(), false);
     rdlSurface2.setHeight(rdlSurface.height());
 
-    lattice2.eventLoop(nCycles);
+    double h;
+    vec cov;
+
+    if (omega == 0)
+    {
+        h = rdlSurface.height();
+        cov = lattice.storedEventValues().col(0);
+    }
+
+    else
+    {
+        lattice2.eventLoop(nCycles);
+        h = rdlSurface2.height();
+        cov = lattice2.storedEventValues().col(0);
+    }
+
 
     /*
      *
@@ -193,8 +209,8 @@ int main(int argv, char** argc)
     simRoot["type"] = type;
     simRoot["Pl"] = Pl;
     simRoot["s0"] = s0;
-    simRoot["h"] = rdlSurface2.height();
-    simRoot["coverage"] = colvec(lattice2.storedEventValues().col(0));
+    simRoot["h"] = h;
+    simRoot["coverage"] = cov;
 
     return 0;
 }
