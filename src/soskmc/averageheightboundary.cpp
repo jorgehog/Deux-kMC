@@ -45,32 +45,6 @@ void AverageHeightBoundary::affectSurfaceSites()
 }
 
 
-void AverageHeightBoundary::updateSites(const int height, const int prevHeight)
-{
-    if (height == prevHeight)
-    {
-        return;
-    }
-
-    affectSurfaceSites();
-
-//    int delta;
-//    else if (height < prevHeight)
-//    {
-//        delta = -1;
-//    }
-
-//    else
-//    {
-//        delta = 1;
-//    }
-
-//    for (int z = prevHeight; z != height + delta; z += delta)
-//    {
-//        affectSolutionSites(z);
-//    }
-}
-
 double AverageHeightBoundary::calcAverage() const
 {
     double average = 0;
@@ -105,14 +79,14 @@ void AverageHeightBoundary::getStartsAndEnds(uint &x0, uint &y0, uint &x1, uint 
     {
         if (orientation() == orientations::FIRST)
         {
-            x0 = 0;
-            x1 = m_averageHeightDepth;
+            x0 = 1;
+            x1 = m_averageHeightDepth + 1;
         }
 
         else
         {
-            x0 = m_span - m_averageHeightDepth;
-            x1 = m_span;
+            x0 = m_span - m_averageHeightDepth - 1;
+            x1 = m_span - 1;
         }
 
         y0 = 0;
@@ -123,14 +97,14 @@ void AverageHeightBoundary::getStartsAndEnds(uint &x0, uint &y0, uint &x1, uint 
     {
         if (orientation() == orientations::FIRST)
         {
-            y0 = 0;
-            y1 = m_averageHeightDepth;
+            y0 = 1;
+            y1 = m_averageHeightDepth + 1;
         }
 
         else
         {
-            y0 = m_span - m_averageHeightDepth;
-            y1 = m_span;
+            y0 = m_span - m_averageHeightDepth - 1;
+            y1 = m_span - 1;
         }
 
         x0 = 0;
@@ -209,7 +183,10 @@ void AverageHeightBoundary::notifyObserver(const Subjects &subject)
 
     m_prevAverage = m_average;
 
-    updateSites(height, prevHeight);
+    if (height != prevHeight)
+    {
+        affectSurfaceSites();
+    }
 }
 
 void AverageHeightBoundary::initializeObserver(const Subjects &subject)
@@ -229,5 +206,8 @@ void AverageHeightBoundary::initializeObserver(const Subjects &subject)
     }
     m_prevAverage = m_average;
 
-    updateSites(round(m_prevAverage), round(prev));
+    if (round(m_prevAverage) != round(prev))
+    {
+        affectSurfaceSites();
+    }
 }

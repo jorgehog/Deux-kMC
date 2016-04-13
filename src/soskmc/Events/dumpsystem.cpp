@@ -8,10 +8,11 @@
 using namespace kMC;
 
 
-DumpSystem::DumpSystem(const SOSSolver &solver, const uint dumpInterval, const string path) :
+DumpSystem::DumpSystem(const SOSSolver &solver, const uint dumpInterval, const string path, const string ext) :
     SOSEvent(solver, "DumpSystem", "dumps", true),
     m_dumpInterval(dumpInterval),
-    m_path(path)
+    m_path(path),
+    m_ext(ext)
 {
 
 }
@@ -28,7 +29,7 @@ uint DumpSystem::dumpInterval() const
 
 void DumpSystem::dump(const uint n)
 {
-    solver().diffusionEvent().dump(n, m_path);
+    solver().diffusionEvent().dump(n, m_path, m_ext);
     m_nDumps++;
 }
 

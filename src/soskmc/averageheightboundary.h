@@ -25,7 +25,6 @@ public:
 
     void affectSurfaceSites();
     void affectSolutionSites(const int z);
-    void updateSites(const int height, const int prevHeight);
 
     const double &average() const
     {

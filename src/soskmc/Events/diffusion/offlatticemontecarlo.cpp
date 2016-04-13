@@ -26,10 +26,10 @@ OfflatticeMonteCarlo::~OfflatticeMonteCarlo()
 }
 
 
-void OfflatticeMonteCarlo::dump(const uint frameNumber, const string path) const
+void OfflatticeMonteCarlo::dump(const uint frameNumber, const string path, const string ext) const
 {
-    Diffusion::dump(frameNumber, path);
-    dumpDiffusingParticles(frameNumber, path);
+    Diffusion::dump(frameNumber, path, ext);
+    dumpDiffusingParticles(frameNumber, path, ext);
 }
 
 bool OfflatticeMonteCarlo::countPaths() const
@@ -535,12 +535,12 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
     dim = minLoc/2;
 }
 
-void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber, const string path) const
+void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber, const string path, const string ext) const
 {
     const double &h = solver().confiningSurfaceEvent().height();
     const int zMin = solver().heights().min();
 
-    lammpswriter writer(5, "cavitydiff", path);
+    lammpswriter writer(5, "cavitydiff" + ext, path);
     writer.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     writer.initializeNewFile(frameNumber);
 

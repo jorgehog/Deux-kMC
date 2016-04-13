@@ -21,7 +21,7 @@ public:
 
     virtual ~Diffusion();
 
-    virtual void dump(const uint frameNumber, const string path = "/tmp") const;
+    virtual void dump(const uint frameNumber, const string path = "/tmp", const string ext = "") const;
 
     virtual double depositionRate(const uint x, const uint y) const = 0;
 

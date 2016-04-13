@@ -50,7 +50,7 @@ public:
         return LatticeDiffusion::isBlockedPosition(x, y, z);
     }
 
-    void dump(const uint frameNumber, const string path = "/tmp") const;
+    void dump(const uint frameNumber, const string path = "/tmp", const string ext = "") const;
 
     double concentration() const;
 

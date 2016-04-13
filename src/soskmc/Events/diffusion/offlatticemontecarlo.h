@@ -81,7 +81,7 @@ public:
         return m_localRates(x, y, n);
     }
 
-    void dumpDiffusingParticles(const uint frameNumber, const string path = "/tmp") const;
+    void dumpDiffusingParticles(const uint frameNumber, const string path = "/tmp", const string ext = "") const;
 
     void clearDiffusingParticles();
 
@@ -132,7 +132,7 @@ public:
 
     // Diffusion interface
 public:
-    virtual void dump(const uint frameNumber, const string path = "/tmp") const;
+    virtual void dump(const uint frameNumber, const string path = "/tmp", const string ext = "") const;
     bool countPaths() const;
     virtual double depositionRate(const uint x, const uint y) const;
     virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);

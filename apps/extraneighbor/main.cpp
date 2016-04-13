@@ -59,8 +59,6 @@ int main(int argv, char** argc)
     const uint interval = getSetting<uint>(cfgRoot, "interval");
     const uint output = getSetting<uint>(cfgRoot, "output");
 
-    const uint type = getSetting<uint>(cfgRoot, "type");
-
     rng.initialize(time(nullptr));
 
     const uint L = 30;
@@ -206,7 +204,6 @@ int main(int argv, char** argc)
 
     simRoot["alpha"] = alpha;
     simRoot["omega"] = omega;
-    simRoot["type"] = type;
     simRoot["Pl"] = Pl;
     simRoot["s0"] = s0;
     simRoot["h"] = h;

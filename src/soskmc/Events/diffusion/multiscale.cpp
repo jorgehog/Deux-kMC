@@ -67,11 +67,11 @@ void Multiscale::executeConcentrationBoundaryReaction(const uint x, const uint y
     (void) z;
 }
 
-void Multiscale::dump(const uint frameNumber, const string path) const
+void Multiscale::dump(const uint frameNumber, const string path, const string ext) const
 {
-    Diffusion::dump(frameNumber, path);
-    LatticeDiffusion::dumpDiffusingParticles(frameNumber, path);
-    OfflatticeMonteCarlo::dumpDiffusingParticles(frameNumber, path);
+    Diffusion::dump(frameNumber, path, ext);
+    LatticeDiffusion::dumpDiffusingParticles(frameNumber, path, ext);
+    OfflatticeMonteCarlo::dumpDiffusingParticles(frameNumber, path, ext);
 }
 
 double Multiscale::concentration() const

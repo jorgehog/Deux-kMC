@@ -20,7 +20,7 @@ Diffusion::~Diffusion()
 
 }
 
-void Diffusion::dump(const uint frameNumber, const string path) const
+void Diffusion::dump(const uint frameNumber, const string path, const string ext) const
 {
     double h;
 
@@ -37,7 +37,7 @@ void Diffusion::dump(const uint frameNumber, const string path) const
     const int zMin = solver().heights().min();
     int cutfactor = 1000;
 
-    lammpswriter surfacewriter(5, "surfaces", path);
+    lammpswriter surfacewriter(5, "surfaces" + ext, path);
     surfacewriter.setSystemSize(solver().length(), solver().width(), h, 0, 0, zMin);
     surfacewriter.initializeNewFile(frameNumber);
 
