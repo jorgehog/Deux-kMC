@@ -10,25 +10,54 @@ using ignis::Lattice;
 class Coverage : public SOSEvent
 {
 public:
-    Coverage(const SOSSolver &solver) :
-        SOSEvent(solver, "Coverage", "", true, true)
+    Coverage(const SOSSolver &solver,
+             const bool dumpCoverage = false,
+             const uint interval = 1,
+             const uint nCycles = 0) :
+        SOSEvent(solver, "Coverage", "", true, true),
+        m_dumpCoverage(dumpCoverage),
+        m_interval(interval),
+        m_coverage(dumpCoverage ? solver.length() : 0,
+                   dumpCoverage ? solver.width()  : 0,
+                   dumpCoverage ? nCycles/interval : 0,
+                   fill::zeros)
+
     {
 
     }
+
+    const icube &coverage() const
+    {
+        return m_coverage;
+    }
+
+private:
+    const bool m_dumpCoverage;
+    const uint m_interval;
+
+    icube m_coverage;
 
     // Event interface
 public:
     void execute()
     {
-        uint coverage = 0;
+        const bool isDumpCycle = m_dumpCoverage && (cycle() % m_interval == 0);
+        const uint n = cycle()/m_interval;
+
         const double &hl = solver().confiningSurfaceEvent().height();
 
+        uint coverage = 0;
         for (uint x = 0; x < solver().length(); ++x)
         {
             for (uint y = 0; y < solver().width(); ++y)
             {
                 if (hl - solver().height(x, y) < 2)
                 {
+                    if (isDumpCycle)
+                    {
+                        m_coverage(x, y, n) = 1;
+                    }
+
                     coverage++;
                 }
             }
@@ -58,6 +87,7 @@ int main(int argv, char** argc)
     const uint nCycles = getSetting<uint>(cfgRoot, "nCycles");
     const uint interval = getSetting<uint>(cfgRoot, "interval");
     const uint output = getSetting<uint>(cfgRoot, "output");
+    const uint dumpCoverage = getSetting<uint>(cfgRoot, "dumpCoverage");
 
     rng.initialize(time(nullptr));
 
@@ -90,7 +120,7 @@ int main(int argv, char** argc)
     lattice.addEvent(rdlSurface);
     lattice.addEvent(diff);
 
-    Coverage coverage(solver);
+    Coverage coverage(solver, (dumpCoverage == 1) && (omega == 0), interval, nCycles);
     lattice.addEvent(coverage);
 
     DumpSystem dumper(solver, interval, path);
@@ -144,7 +174,7 @@ int main(int argv, char** argc)
     lattice2.addEvent(rdlSurface2);
     lattice2.addEvent(diff2);
 
-    Coverage coverage2(solver2);
+    Coverage coverage2(solver2, dumpCoverage == 1, interval, nCycles);
     lattice2.addEvent(coverage2);
 
     DumpSystem dumper2(solver2, interval, path);
@@ -190,17 +220,7 @@ int main(int argv, char** argc)
 
 
     H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "extraneighbor", "h5"));
-
-    stringstream sizeDesc;
-    sizeDesc << L << "x" << W;
-    H5Wrapper::Member &sizeRoot = h5root.addMember(sizeDesc.str());
-
-    timeval tv;
-    gettimeofday(&tv, nullptr);
-
-    __int64_t run_ID = 1000*tv.tv_sec + tv.tv_usec/1000 + 10000000000000u*getProc(argv, argc);
-
-    H5Wrapper::Member &simRoot = sizeRoot.addMember(run_ID);
+    H5Wrapper::Member &simRoot = setuph5(h5root, getProc(argv, argc), L, W);
 
     simRoot["alpha"] = alpha;
     simRoot["omega"] = omega;
@@ -208,6 +228,17 @@ int main(int argv, char** argc)
     simRoot["s0"] = s0;
     simRoot["h"] = h;
     simRoot["coverage"] = cov;
+    simRoot["interval"] = interval;
+
+    if (dumpCoverage == 1)
+    {
+        simRoot["coverage_matrix_eq"] = coverage.coverage();
+
+        if (omega != 0)
+        {
+            simRoot["coverage_matrix"] = coverage2.coverage();
+        }
+    }
 
     return 0;
 }

@@ -854,6 +854,19 @@ inline double getMFPTConstant(const double h0, const double alpha, const int typ
 
 }
 
+H5Wrapper::Member &setuph5(H5Wrapper::Root &h5root, const uint proc, const uint L, const uint W)
+{
+    stringstream sizeDesc;
+    sizeDesc << L << "x" << W;
+    H5Wrapper::Member &sizeRoot = h5root.addMember(sizeDesc.str());
+
+    timeval tv;
+    gettimeofday(&tv, nullptr);
+
+    __int64_t run_ID = 1000*tv.tv_sec + tv.tv_usec/1000 + 10000000000000u*proc;
+
+    return sizeRoot.addMember(run_ID);
+}
 
 
 
