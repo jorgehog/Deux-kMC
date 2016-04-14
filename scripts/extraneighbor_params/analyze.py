@@ -39,7 +39,8 @@ def main():
         try:
             s0 = data.attrs["s0"]
             s0 = round(s0, 3)
-        except:
+        except Exception as inst:
+            print inst
             s0= 1.0
 
         if s0 not in s0s:
@@ -48,7 +49,8 @@ def main():
         try:
             omega = data.attrs["omega"]
             omega = round(omega, 3)
-        except:
+        except Exception as inst:
+            print inst
             omega = 0
 
         if omega not in omegas:
@@ -78,7 +80,8 @@ def main():
             try:
                 omega = data.attrs["omega"]
                 omega = round(omega, 3)
-            except:
+            except Exception as inst:
+                print inst
                 omega = 0.0
 
             io = omegas.index(omega)
@@ -97,7 +100,8 @@ def main():
             try:
                 s0 = data.attrs["s0"]
                 s0 = round(s0, 3)
-            except:
+            except Exception as inst:
+                print inst
                 s0 = 1.0
 
             is0 = s0s.index(s0)
@@ -107,44 +111,47 @@ def main():
             l = len(coverage)
             start = (9*l)/10
 
+            #Completely sealed
             if l != lmax:
-                cmat[is0, ia, ipl] = -1
-                ccounts[is0, ia, ipl] = 1
-                continue
+                if omega < 0:
+                    cval = 0
+                else:
+                    cval = L*W-1
+            else:
+                if omega == 0:
+                    cval = coverage[start:].mean()
 
-            if omega == 0:
-                cval = coverage[start:].mean()
+                elif omega > 0:
+                    X = argrelextrema(coverage[start:], np.greater)
 
-            elif omega > 0:
-                X = argrelextrema(coverage[start:], np.greater)
+                    if len(X[0]) == 0:
+                        cval = coverage[start:].mean()
 
-                if len(X[0]) == 0:
+                        # print s0, alpha, Pl
+                        # plab.plot(coverage)
+                        # plab.hold('on')
+                        # plab.plot(X[0], coverage[start:][X], 'ro')
+                        # plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
+                        #plab.show()
+                    else:
+                        cval = coverage[start:][X].mean()
+                else:
                     cval = 0
 
-                    # print s0, alpha, Pl
-                    # plab.plot(coverage)
-                    # plab.hold('on')
-                    # plab.plot(X[0], coverage[start:][X], 'ro')
-                    # plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
-                    plab.show()
-                else:
-                    cval = coverage[start:][X].mean()
-            else:
-                cval = 0
-
-            if cval != 0:
-                cmat[is0, ia, ipl] += cval/float(L*W)
-                ccounts[is0, ia, ipl] += 1.
+            cmat[is0, ia, ipl] += cval/float(L*W)
+            ccounts[is0, ia, ipl] += 1.
 
             # plab.plot(coverage)
             # print alpha, Pl, s0, cval
             # plab.show()
 
         I = np.where(ccounts != 0)
+        J = np.where(ccounts == 0)
 
         cmat[I] /= ccounts[I]
+        cmat[J] = -1
 
-        np.save("/tmp/extraneighbor_cmat_omega%d.npy" % io, cmat)
+        np.save("/tmp/extraneighbor_cmat_omega%d.npy" % this_io, cmat)
 
 
 if __name__ == "__main__":

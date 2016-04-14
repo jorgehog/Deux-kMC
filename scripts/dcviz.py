@@ -3229,7 +3229,19 @@ class ExtraNeighbor(DCVizPlotter):
 
               "f4" : ["subfigure31",
                       "subfigure32",
-                      "subfigure33"]}
+                      "subfigure33"],
+
+              "f5" : ["csubfigure11",
+                      "csubfigure12",
+                      "csubfigure13"],
+
+              "f6" : ["csubfigure21",
+                      "csubfigure22",
+                      "csubfigure23"],
+
+              "f7" : ["csubfigure31",
+                      "csubfigure32",
+                      "csubfigure33"]}
 
     hugifyFonts = True
 
@@ -3242,6 +3254,8 @@ class ExtraNeighbor(DCVizPlotter):
             self.adjust_maps[figname]["hspace"] = 0.06
 
     def trans_mat(self, mat):
+        return mat
+
         return mat.transpose()
 
         t = np.zeros_like(mat)
@@ -3273,7 +3287,7 @@ class ExtraNeighbor(DCVizPlotter):
         da = (alphas[1]-alphas[0])/2
         dp = (Pls[1]-Pls[0])/2
 
-        X, Y = np.meshgrid(alphas + 2*da, Pls + 2*dp, indexing='ij')
+        X, Y = np.meshgrid(alphas, Pls, indexing='ij')
 
         print len(alphas), len(Pls)
         print X.shape, Y.shape,
@@ -3292,9 +3306,16 @@ class ExtraNeighbor(DCVizPlotter):
                 C = self.trans_mat(cmat[is0, :, :])
 
                 sfig = eval("self.subfigure%d%d" % (io+1, is0+1))
+                csfig = eval("self.csubfigure%d%d" % (io+1, is0+1))
 
-                im = sfig.pcolor(C, vmin=0, vmax=1, cmap="gist_earth_r")
+                im = sfig.pcolor(C.transpose(), vmin=0, vmax=1, cmap="gist_earth_r")
 
+                d = 0.1
+                levs = [-1] + [d*i for i in range(1, int(1/d + 1))]
+                if 1 not in levs:
+                    levs = levs + [1]
+
+                im2 = csfig.contourf(X, Y, C, vmin=0, vmax=1, cmap="gist_earth_r", levels=levs)
 
                 fail = np.where(C == -1)
 
@@ -3308,6 +3329,7 @@ class ExtraNeighbor(DCVizPlotter):
 
                 if io == 0:
                     sfig.set_ylabel(r"$P_\lambda$")
+                    csfig.set_ylabel(r"$P_\lambda$")
 
                 # sfig.text(0.1, 0.5, r"$\sigma_0 = %.2f$" % s0, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
@@ -3315,10 +3337,7 @@ class ExtraNeighbor(DCVizPlotter):
                 yi = np.arange(1, len(Pls), 3)
 
                 ax = sfig.axes
-                ax.set_xticks(xi+0.5, minor=False)
-                ax.set_yticks(yi+0.5, minor=False)
-
-                xtics = [r"$%.2f$" % a for a in alphas[xi]]
+                xtics = [r"$%.1f$" % a for a in alphas[xi]]
                 ytics = [r"$%.2f$" % p for p in Pls[yi]]
 
                 ax.set_xticklabels(xtics, minor=False)
@@ -3326,14 +3345,18 @@ class ExtraNeighbor(DCVizPlotter):
 
                 if is0 < len(s0s) - 1:
                     sfig.axes.xaxis.set_major_formatter(null_formatter)
+                    csfig.axes.xaxis.set_major_formatter(null_formatter)
                 else:
                     sfig.set_xlabel(r"$\alpha = E_b/kT$")
+                    csfig.set_xlabel(r"$\alpha = E_b/kT$")
 
                 sfig.set_xlim(0, 16)
                 sfig.set_ylim(0, 20)
 
         cbar_ax = self.f4.add_axes([0.85, 0.2, 0.05, 0.7])
+        cbar_ax2 = self.f7.add_axes([0.85, 0.2, 0.05, 0.7])
         self.f4.colorbar(im, cax=cbar_ax)
+        self.f7.colorbar(im, cax=cbar_ax2)
 
 
 
