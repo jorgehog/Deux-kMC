@@ -206,19 +206,16 @@ int main(int argv, char** argc)
     rdlSurface2.setHeight(rdlSurface.height());
 
     double h;
-    vec cov;
 
     if (omega == 0)
     {
         h = rdlSurface.height();
-        cov = lattice.storedEventValues().col(0);
     }
 
     else
     {
         lattice2.eventLoop(nCycles);
         h = rdlSurface2.height();
-        cov = lattice2.storedEventValues().col(0);
     }
 
 
@@ -237,8 +234,13 @@ int main(int argv, char** argc)
     simRoot["Pl"] = Pl;
     simRoot["s0"] = s0;
     simRoot["h"] = h;
-    simRoot["coverage"] = cov;
+    simRoot["eq_coverage"] = lattice.storedEventValues().col(0).eval();
     simRoot["interval"] = interval;
+
+    if (omega != 0)
+    {
+        simRoot["coverage"] = lattice2.storedEventValues().col(0).eval();
+    }
 
     if (dumpCoverage == 1)
     {

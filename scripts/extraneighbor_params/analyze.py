@@ -115,6 +115,7 @@ def main():
             if l != lmax:
                 if omega < 0:
                     cval = 0
+
                 else:
                     cval = L*W-1
             else:
@@ -136,6 +137,9 @@ def main():
                     else:
                         cval = coverage[start:][X].mean()
                 else:
+                    print s0, Pl, alpha
+                    plab.plot(coverage)
+                    plab.show()
                     cval = 0
 
             cmat[is0, ia, ipl] += cval/float(L*W)
