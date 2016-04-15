@@ -201,6 +201,65 @@ public:
 };
 
 
+class StoreHeights : public SOSEvent
+{
+public:
+    StoreHeights(const SOSSolver &solver, const uint interval, H5Wrapper::Member &h5group) :
+        SOSEvent(solver, "storeheights"),
+        m_interval(interval),
+        m_h5group(h5group.addMember("stored_heights"))
+    {
+
+    }
+
+private:
+    const uint m_interval;
+    H5Wrapper::Member &m_h5group;
+
+    // Event interface
+public:
+    void execute()
+    {
+        if (cycle() % m_interval == 0)
+        {
+            m_h5group[to_string(cycle())] = solver().heights();
+        }
+    }
+};
+
+class StoreParticles : public SOSEvent
+{
+public:
+    StoreParticles(const SOSSolver &solver,
+                 const OfflatticeMonteCarlo &omc,
+                 const uint interval,
+                 H5Wrapper::Member &h5group) :
+        SOSEvent(solver, "storeparticles"),
+        m_omc(omc),
+        m_interval(interval),
+        m_h5group(h5group.addMember("stored_particles"))
+    {
+
+    }
+
+private:
+    const OfflatticeMonteCarlo &m_omc;
+    const uint m_interval;
+    H5Wrapper::Member &m_h5group;
+
+    // Event interface
+public:
+    void execute()
+    {
+        if (cycle() % m_interval == 0)
+        {
+            m_h5group[to_string(cycle())] = m_omc.particlePositions()(span::all,
+                                                                      span(0, m_omc.nOfflatticeParticles() - 1)).eval();
+        }
+    }
+};
+
+
 
 int main(int argv, char** argc)
 {
@@ -224,8 +283,11 @@ int main(int argv, char** argc)
     const uint &interval = getSetting<uint>(cfgRoot, "interval");
     const uint &output = getSetting<uint>(cfgRoot, "output");
 
-    //    rng.initialize(time(nullptr));
-    rng.initialize(100101010);
+    rng.initialize(time(nullptr));
+    //    rng.initialize(100101010);
+
+    const string initType = "thermalized";
+    //    const string initType = "random";
 
     const double gamma = log(1 + omega);
 
@@ -248,20 +310,17 @@ int main(int argv, char** argc)
     solver.addLocalPotential(&pn);
     solver.registerObserver(&pn);
 
-    Lattice lattice;
-
-    lattice.addEvent(solver);
-    lattice.addEvent(confSurface);
-    lattice.addEvent(diff);
-
-    //    InFluxer inFluxer(solver, diff, influxInterval);
-    //    lattice.addEvent(inFluxer);
+    Time time(solver);
 
     DumpSystem dumper(solver, interval, path, getTail(argv, argc));
-    lattice.addEvent(dumper);
 
-    AverageHeight avgH(solver);
-    lattice.addEvent(avgH);
+    H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "felix_cavity", "h5"));
+    H5Wrapper::Member &simRoot = setuph5(h5root, getProc(argv, argc), L, W);
+
+    StoreHeights storeHeights(solver, interval, simRoot);
+    StoreParticles storeParticles(solver, diff, interval, simRoot);
+
+    Lattice lattice;
 
     lattice.enableOutput(true, interval);
     lattice.enableProgressReport();
@@ -271,99 +330,29 @@ int main(int argv, char** argc)
                                     "/tmp",
                                     interval);
 
-    //    const string initType = "thermalized";
-    const string initType = "random";
+    lattice.addEvent(solver);
+    lattice.addEvent(confSurface);
+    lattice.addEvent(diff);
+    lattice.addEvent(time);
+
+    if (output)
+    {
+        lattice.addEvent(dumper);
+    }
+    else
+    {
+        lattice.addEvent(storeHeights);
+        lattice.addEvent(storeParticles);
+    }
+
     initializeSurface(solver, initType, 3, 10000);
 
     lattice.eventLoop(nCycles);
 
-    H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "extraneighbor", "h5"));
-
-    stringstream sizeDesc;
-    sizeDesc << L << "x" << W;
-    H5Wrapper::Member &sizeRoot = h5root.addMember(sizeDesc.str());
-
-    timeval tv;
-    gettimeofday(&tv, nullptr);
-
-    __int64_t run_ID = 1000*tv.tv_sec + tv.tv_usec/1000 + 10000000000000u*getProc(argv, argc);
-
-    H5Wrapper::Member &simRoot = sizeRoot.addMember(run_ID);
-
     simRoot["alpha"] = alpha;
     simRoot["omega"] = omega;
     simRoot["height"] = height;
-    simRoot["coverage"] = colvec(lattice.storedEventValues().col(0));
+    simRoot["time"] = colvec(lattice.storedEventValues().col(0));
 
     return 0;
 }
-
-/*
-class InFluxer : public SOSEvent
-{
-public:
-    InFluxer(const SOSSolver &solver,
-             OfflatticeMonteCarlo &omc,
-             const uint influxInterval) :
-        SOSEvent(solver, "InFluxer", "", true, true),
-        m_x0(0),
-        m_omc(omc),
-        m_influxInterval(influxInterval),
-        m_boundaryHeights(solver.width()),
-        m_accuBoundaryHeights(solver.width())
-    {
-
-    }
-
-private:
-    const uint m_x0;
-    OfflatticeMonteCarlo &m_omc;
-
-    const uint m_influxInterval;
-
-    vector<double> m_boundaryHeights;
-    vector<double> m_accuBoundaryHeights;
-
-    // Event interface
-public:
-    void execute()
-    {
-        if (cycle() == 0)
-        {
-            return;
-        }
-
-        if (cycle() % m_influxInterval == 0)
-        {
-            double dhSum = 0;
-            const double &hl = solver().confiningSurfaceEvent().height();
-            for (uint y = 0; y < solver().width(); ++y)
-            {
-                const int &h = solver().height(m_x0, y);
-
-                double dh = hl - h - 2;
-                m_boundaryHeights.at(y) = dh;
-
-                dhSum += dh;
-                m_accuBoundaryHeights.at(y) = dhSum;
-            }
-
-            if (dhSum <= 0)
-            {
-                terminateLoop("Inlet clogged. Exiting");
-                return;
-            }
-
-            const double R = rng.uniform()*dhSum;
-
-            const uint y0 = binarySearchAndScan(&m_accuBoundaryHeights.front(),
-                                                solver().width(),
-                                                R);
-
-            const double z0 = solver().height(m_x0, y0) + 1 + m_accuBoundaryHeights.at(y0) - R;
-
-            m_omc.insertParticle(m_x0, y0, z0);
-        }
-    }
-};
- */

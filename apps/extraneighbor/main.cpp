@@ -139,7 +139,17 @@ int main(int argv, char** argc)
                                     interval);
 
     initializeSurface(solver, "random");
-    rdlSurface.setHeight(rdlSurface.getRdlEquilibrium());
+    const double h0 = rdlSurface.getRdlEquilibrium();
+    const int hm = solver.heights().max();
+
+    if (hm > h0 - 1)
+    {
+        rdlSurface.setHeight(hm+1);
+    }
+    else
+    {
+        rdlSurface.setHeight(h0);
+    }
 
     lattice.eventLoop(nCycles);
 

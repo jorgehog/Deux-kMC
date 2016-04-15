@@ -8,7 +8,7 @@ class Time : public SOSEvent
 {
 public:
     Time(const SOSSolver &solver) :
-        SOSEvent(solver, "Time", "", false, true)
+        SOSEvent(solver, "Time", "", true, true)
     {
 
     }
