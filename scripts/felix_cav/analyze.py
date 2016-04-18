@@ -3,6 +3,7 @@ import matplotlib.pylab as plab
 import sys
 import os
 from os.path import join
+import shutil
 import numpy as np
 from scipy.signal import argrelextrema
 
@@ -17,141 +18,62 @@ def main():
 
     parser = ParseKMCHDF5(input_file)
 
-    alphas = []
-    Pls = []
-    s0s = []
-    omegas = []
-    lmax = 0
 
     for data, L, W, run_id in parser:
 
-        alpha = data.attrs["alpha"]
-        alpha = round(alpha, 3)
+        omega = data.attrs["omega"]
+        conf_height = data.attrs["height"]
 
-        if alpha not in alphas:
-            alphas.append(alpha)
+        pathname = "felix_o%.2f_h%d" % (omega, conf_height)
 
-        Pl = data.attrs["Pl"]
-        Pl = round(Pl, 3)
-        if Pl not in Pls:
-            Pls.append(Pl)
+        dir = "/tmp/%s" % pathname
+        if not os.path.exists(dir):
+            os.mkdir(dir)
 
-        try:
-            s0 = data.attrs["s0"]
-            s0 = round(s0, 3)
-        except Exception as inst:
-            print inst
-            s0= 1.0
+        stored_heights = data["stored_heights"]
 
-        if s0 not in s0s:
-            s0s.append(s0)
+        n_file = 0
+        every = 100
+        for hi, heights_id in enumerate(sorted(stored_heights, key=lambda x: int(x))):
 
-        try:
-            omega = data.attrs["omega"]
-            omega = round(omega, 3)
-        except Exception as inst:
-            print inst
-            omega = 0
-
-        if omega not in omegas:
-            omegas.append(omega)
-
-        l = len(data["coverage"])
-        if l > lmax:
-            lmax = l
-
-    Pls = sorted(Pls)
-    s0s = sorted(s0s)
-    alphas = sorted(alphas)
-    omegas = sorted(omegas)
-
-    np.save("/tmp/extraneighbor_omegas.npy", omegas)
-    np.save("/tmp/extraneighbor_s0s.npy", s0s)
-    np.save("/tmp/extraneighbor_alphas.npy", alphas)
-    np.save("/tmp/extraneighbor_Pls.npy", Pls)
-
-    for this_io, omega in enumerate(omegas):
-
-        cmat = np.zeros(shape=(len(s0s), len(alphas), len(Pls)))
-        ccounts = np.zeros_like(cmat)
-
-        for data, L, W, run_id in parser:
-
-            try:
-                omega = data.attrs["omega"]
-                omega = round(omega, 3)
-            except Exception as inst:
-                print inst
-                omega = 0.0
-
-            io = omegas.index(omega)
-
-            if io != this_io:
+            if hi % every != 0:
                 continue
 
-            alpha = data.attrs["alpha"]
-            alpha = round(alpha, 3)
-            ia = alphas.index(alpha)
+            heights = stored_heights[heights_id][()].transpose()
 
-            Pl = data.attrs["Pl"]
-            Pl = round(Pl, 3)
-            ipl = Pls.index(Pl)
+            bottom = heights.min()
 
-            try:
-                s0 = data.attrs["s0"]
-                s0 = round(s0, 3)
-            except Exception as inst:
-                print inst
-                s0 = 1.0
+            xyz = ""
+            n = 0
+            for x in range(L):
+                for y in range(W):
+                    h = heights[x, y]
 
-            is0 = s0s.index(s0)
+                    for z in range(bottom, h+1):
+                        xyz += "0 %d %d %d\n" % (x, y, z)
+                        n += 1
 
-            coverage = data["coverage"][()]
+                    xyz += "1 %d %d %g\n" % (x, y, conf_height)
 
-            l = len(coverage)
-            start = (9*l)/10
+                    n += 1
 
-            #Completely sealed
-            if l != lmax:
-                if omega < 0:
-                    cval = 0
-                else:
-                    cval = L*W-1
-            else:
-                if omega == 0:
-                    cval = coverage[start:].mean()
+            xyz_file = "%d\n---\n%s" % (n, xyz)
 
-                elif omega > 0:
-                    X = argrelextrema(coverage[start:], np.greater)
+            sys.stdout.flush()
+            print "\rStored %s xyz %5d / %5d" % (dir, int(hi), len(stored_heights))
 
-                    if len(X[0]) == 0:
-                        cval = coverage[start:].mean()
+            with open("%s/surfaces%d.xyz" % (dir, n_file), 'w') as f:
+                f.write(xyz_file)
 
-                        # print s0, alpha, Pl
-                        # plab.plot(coverage)
-                        # plab.hold('on')
-                        # plab.plot(X[0], coverage[start:][X], 'ro')
-                        # plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
-                        #plab.show()
-                    else:
-                        cval = coverage[start:][X].mean()
-                else:
-                    cval = 0
+            n_file += 1
 
-            cmat[is0, ia, ipl] += cval/float(L*W)
-            ccounts[is0, ia, ipl] += 1.
+        del stored_heights
+        print "fin", dir
 
-            # plab.plot(coverage)
-            # print alpha, Pl, s0, cval
-            # plab.show()
+    print "fin"
 
-        I = np.where(ccounts != 0)
-        J = np.where(ccounts == 0)
 
-        cmat[I] /= ccounts[I]
-        cmat[J] = -1
 
-        np.save("/tmp/extraneighbor_cmat_omega%d.npy" % this_io, cmat)
 
 
 if __name__ == "__main__":
