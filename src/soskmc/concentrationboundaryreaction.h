@@ -22,7 +22,7 @@ public:
 
     double freeBoundaryArea() const;
 
-    const int &heightAtBoundary(const uint n) const; //!height at boundary site n
+    int heightAtBoundary(const uint n) const; //!height at boundary site n
 
     bool pointIsOnBoundary(const uint x, const uint y) const;
 

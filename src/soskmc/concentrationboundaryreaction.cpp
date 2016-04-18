@@ -33,16 +33,22 @@ double ConcentrationBoundaryReaction::freeBoundaryArea() const
     double dhSum = 0;
     for (uint xi = 0; xi < span(); ++xi)
     {
-        const int &h = heightAtBoundary(xi);
+        const int h = heightAtBoundary(xi);
 
-        const double dh = hl - h - 2;
+        double dh = hl - h - 2;
+
+        if (dh < 0)
+        {
+            dh = 0;
+        }
+
         dhSum += dh;
     }
 
     return dhSum;
 }
 
-const int &ConcentrationBoundaryReaction::heightAtBoundary(const uint n) const
+int ConcentrationBoundaryReaction::heightAtBoundary(const uint n) const
 {
     if (dim() == 0)
     {
@@ -86,9 +92,15 @@ void ConcentrationBoundaryReaction::executeAndUpdate()
     const double &hl = solver().confiningSurfaceEvent().height();
     for (uint xi = 0; xi < span(); ++xi)
     {
-        const int &h = heightAtBoundary(xi);
+        const int h = heightAtBoundary(xi);
 
         double dh = hl - h - 2;
+
+        if (dh < 0)
+        {
+            dh = 0;
+        }
+
         m_boundaryHeights(xi) = dh;
 
         dhSum += dh;
@@ -103,7 +115,7 @@ void ConcentrationBoundaryReaction::executeAndUpdate()
                                         span(),
                                         R);
 
-    const int &h0 = heightAtBoundary(x0);
+    const int h0 = heightAtBoundary(x0);
 
     const double z0 = h0 + 1 + m_accuBoundaryHeights(x0) - R;
 

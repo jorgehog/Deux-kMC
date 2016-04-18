@@ -171,6 +171,7 @@ TEST_F(CDiffTest, diffusion)
 
     double T = 100.0;
     m_cdiffusionEvent->diffuseFull(T);
+    m_cdiffusionEvent->calculateLocalRatesAndUpdateDepositionRates();
 
     EXPECT_NEAR(1, m_cdiffusionEvent->acceptanceRatio(), 1E-3);
 
@@ -186,6 +187,11 @@ TEST_F(CDiffTest, diffusion)
             {
                 EXPECT_NEAR(m_cdiffusionEvent->localRateOverD(x, y, n),
                             m_cdiffusionEvent->localRates(x, y, n), 1E-3);
+
+                if (HasFailure())
+                {
+                    return;
+                }
             }
         }
     }

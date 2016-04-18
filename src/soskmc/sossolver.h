@@ -241,6 +241,8 @@ public:
 
     uint span() const;
 
+    const Boundary *getBoundaryFromLoc(const int x, const int y) const;
+
     void boundaryLatticeTransform(int &xTrans, int &yTrans, const int x, const int y, const int z) const;
     void boundaryContinousTransform(double &xTrans, double &yTrans, const double x, const double y, const double z) const;
 
@@ -259,7 +261,7 @@ public:
 
     bool isOutsideBox(const int x, const int y) const;
 
-    bool isSurfaceSite(const uint x, const uint y, const int z) const;
+    bool isSurfaceSite(const int x, const int y, const int z) const;
 
     SurfaceReaction &surfaceReaction(const uint x, const uint y)
     {

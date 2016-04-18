@@ -106,10 +106,13 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
                 uint dim;
                 double delta;
 
+                BADAssBool(!solver().isOutsideBoxContinuous(x0, y0));
+
                 scanForDisplacement(n, dim, delta);
                 m_particlePositions(dim, n) += delta;
 
-                BADAssBool(!(solver().isBlockedPosition(x0, y0, z0) || solver().isOutsideBoxContinuous(x0, y0)));
+                BADAssBool(!solver().isBlockedPosition(x0, y0, z0));
+                BADAssBool(!solver().isOutsideBoxContinuous(x0, y0));
             }
         }
     }
@@ -523,9 +526,16 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
 
         findRandomPosition(x0, y0, z0);
 
+        BADAssBool(!solver().isBlockedPosition(x0, y0, z0));
+        BADAssBool(!solver().isOutsideBoxContinuous(x0, y0));
+
         m_particlePositions(0, n) = x0;
         m_particlePositions(1, n) = y0;
         m_particlePositions(2, n) = z0;
+
+        delta = 0;
+        dim = 0;
+        return;
     }
 
     uint minLoc = 0;

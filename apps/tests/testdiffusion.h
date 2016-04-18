@@ -103,6 +103,11 @@ TEST_F(SOSkMCTest, diffusion)
             uint nn = m_solver->nNeighbors(x, y);
             uint ns = m_solver->numberOfSurroundingSolutionSites(x, y);
             EXPECT_EQ(6, nn + ns) << nn << " " << ns;
+
+            if (HasFailure())
+            {
+                return;
+            }
         }
     }
 

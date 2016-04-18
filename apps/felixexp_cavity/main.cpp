@@ -284,10 +284,10 @@ int main(int argv, char** argc)
     const uint &output = getSetting<uint>(cfgRoot, "output");
 
     rng.initialize(time(nullptr));
-    //    rng.initialize(100101010);
+//        rng.initialize(100101010);
 
     const string initType = "thermalized";
-    //    const string initType = "random";
+//        const string initType = "random";
 
     const double gamma = log(1 + omega);
 

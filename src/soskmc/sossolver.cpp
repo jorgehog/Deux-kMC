@@ -84,15 +84,23 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
 void SOSSolver::registerSurfaceTransition(const uint x0, const uint y0, const int x1, const int y1)
 {
     BADAssBool(!isOutsideBox(x0, y0), "invalid site.");
-    BADAssBool(!isOutsideBox(x1, y1), "this should be checked in surface site.");
+    BADAssBool(isSurfaceSite(x1, y1, height(x0, y0)), "ERRAH.");
 
     m_heights(x0, y0) -= 1;
     registerChangedSite(x0, y0);
     registerChangedAround(x0, y0);
 
-    m_heights(x1, y1) += 1;
-    registerChangedSite(x1, y1);
-    registerChangedAround(x1, y1);
+    if (!isOutsideBox(x1, y1))
+    {
+        m_heights(x1, y1) += 1;
+        registerChangedSite(x1, y1);
+        registerChangedAround(x1, y1);
+    }
+
+    else
+    {
+        m_averageHeight -= 1./area();
+    }
 
     m_currentSurfaceChange.x = x0;
     m_currentSurfaceChange.y = y0;
@@ -613,6 +621,29 @@ uint SOSSolver::span() const
     }
 }
 
+const Boundary *SOSSolver::getBoundaryFromLoc(const int x, const int y) const
+{
+    if (x < 0)
+    {
+        return boundary(0, 0);
+    }
+
+    else if (y < 0)
+    {
+        return boundary(1, 0);
+    }
+
+    else if (uint(x) >= length())
+    {
+        return boundary(0, 1);
+    }
+
+    else
+    {
+        return boundary(1, 1);
+    }
+}
+
 void SOSSolver::boundaryLatticeTransform(int &xTrans, int &yTrans, const int x, const int y, const int z) const
 {
     uint xOrientation;
@@ -960,11 +991,13 @@ bool SOSSolver::isOutsideBox(const int x, const int y) const
     return false;
 }
 
-bool SOSSolver::isSurfaceSite(const uint x, const uint y, const int z) const
+bool SOSSolver::isSurfaceSite(const int x, const int y, const int z) const
 {
     if (isOutsideBox(x, y))
     {
-        return false;
+        const Boundary *b = getBoundaryFromLoc(x, y);
+
+        return b->isBlockedLattice(x, y, z-1) && (!b->isBlockedLattice(x, y, z));
     }
 
     return height(x, y) == z - 1;
