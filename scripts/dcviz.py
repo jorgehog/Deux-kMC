@@ -2902,6 +2902,7 @@ class mftpc(DCVizPlotter):
             print -intercept/slope
 
         self.subfigure.plot(logcsinv, speeds*10**logscale, "ks", **my_props["fmt"])
+        #self.subfigure.plot(1./cs, speeds, 'ks')
         ymin = self.subfigure.get_ylim()[0]
 
         if len(self.argv) > 2:
@@ -2912,7 +2913,7 @@ class mftpc(DCVizPlotter):
             self.subfigure.text(cinvEq*1.05, ymin+0.75, r"$\log 1/%s' \sim %.2f$" % (self.c, round(cinvEq, 2)), verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
 
-        self.subfigure.text(0.75, 0.75, r"$\mathrm{%s}$" % textlabel, transform=self.subfigure.axes.transAxes, horizontalalignment="center")
+        # self.subfigure.text(0.75, 0.75, r"$\mathrm{%s}$" % textlabel, transform=self.subfigure.axes.transAxes, horizontalalignment="center")
 
         self.subfigure.set_xlabel(r"$\log 1/%s$" % self.c)
         self.subfigure.set_ylabel(r"$\Delta \langle h\rangle/\Delta T [l_0 \nu/10^3]$")

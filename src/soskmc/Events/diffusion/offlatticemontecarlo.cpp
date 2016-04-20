@@ -227,7 +227,7 @@ bool OfflatticeMonteCarlo::isBlockedPosition(const uint x, const uint y, const i
 
 double OfflatticeMonteCarlo::concentration() const
 {
-    return nOfflatticeParticles()/solver().freeVolume();
+    return nOfflatticeParticles()/volume();
 }
 
 bool OfflatticeMonteCarlo::hasDiscreteParticles() const
@@ -675,6 +675,11 @@ void OfflatticeMonteCarlo::findRandomPosition(double &x0, double &y0, double &z0
     } while(solver().isBlockedPosition(x0, y0, z0));
 }
 
+double OfflatticeMonteCarlo::volume() const
+{
+    return solver().volume();
+}
+
 void OfflatticeMonteCarlo::initialize()
 {
     releaseLockedParticles();
@@ -712,7 +717,7 @@ void OfflatticeMonteCarlo::initializeObserver(const Subjects &subject)
     //already initialized
     if (numberOfParticles() == 0)
     {
-        const double V = solver().freeVolume();
+        const double V = volume();
 
         BADAss(V, >=, 0);
 
