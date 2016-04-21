@@ -6,8 +6,6 @@ import numpy as np
 sys.path.append(join(os.getcwd(), "..", ".."))
 
 from parse_h5_output import ParseKMCHDF5
-from intercombinatorzor import ICZ
-
 
 def main():
 
@@ -22,7 +20,7 @@ def main():
 
         c = data.attrs["depRateConstant"]
 
-        if not c in cs:
+        if c not in cs:
             cs.append(c)
 
         n += 1
@@ -33,7 +31,7 @@ def main():
 
     print "Found", N, "repeats."
 
-    speeds = np.zeros_like(cs)
+    speeds = np.zeros((2, len(cs)))
 
     for data, _, _, _ in parser:
 
@@ -41,7 +39,9 @@ def main():
 
         i = cs.index(c)
 
-        speeds[i] += data.attrs["GrowthSpeed"]
+        type = data.attrs["diffuse"]
+
+        speeds[type-3, i] += data.attrs["GrowthSpeed"]
 
     speeds /= N
 

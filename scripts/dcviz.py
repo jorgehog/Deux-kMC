@@ -2317,7 +2317,7 @@ class LatticediffSpeeds(DCVizPlotter):
     hugifyFonts = True
 
     alpha = 1
-    h0 = 20
+    h0 = 10
     h0c = h0 - 2
     plot_analytical = True
 
@@ -2878,46 +2878,38 @@ class mftpc(DCVizPlotter):
         cs = self.get_family_member_data(data, "cs")
         speeds = self.get_family_member_data(data, "growthspeeds")
 
-        cs, speeds = [np.array(x) for x in zip(*sorted(zip(cs, speeds), key=lambda x: x[0]))]
+        X = -np.log(cs)
 
-        logcsinv = np.log(1./cs)
-        logscale = 3
-
-        if "radial" in self.filename or "radial" in self.filepath:
-            textlabel = "Radial"
-        else:
-            textlabel = "Pathfinding"
+        self.subfigure.plot(X, 100*speeds[0], "ks", label=r"$\mathrm{Radial}$", **my_props["fmt"])
+        self.subfigure.plot(X, 100*speeds[1], "ro", label=r"$\mathrm{Pathfinding}$", **my_props["fmt"])
 
 
-        if self.argv:
-            kmin = float(self.argv[0])
-            kmax = float(self.argv[1])
-
-            I = np.where(logcsinv > kmin)
-            J = np.where(logcsinv[I] < kmax)
-
-            slope, intercept, _, _, _ = linregress(logcsinv[I][J], speeds[I][J])
-            self.subfigure.plot(logcsinv, (intercept + slope*logcsinv)*10**logscale, "r-", linewidth=3)
-
-            print -intercept/slope
-
-        self.subfigure.plot(logcsinv, speeds*10**logscale, "ks", **my_props["fmt"])
-        #self.subfigure.plot(1./cs, speeds, 'ks')
         ymin = self.subfigure.get_ylim()[0]
-
-        if len(self.argv) > 2:
-            cinvEq = float(self.argv[2])
+        if len(self.argv) > 0:
+            cinvEq = float(self.argv[0])
 
             self.subfigure.plot([0, cinvEq], [0, 0], "k-.")
             self.subfigure.plot([cinvEq, cinvEq], [ymin, 0], "k-.")
-            self.subfigure.text(cinvEq*1.05, ymin+0.75, r"$\log 1/%s' \sim %.2f$" % (self.c, round(cinvEq, 2)), verticalalignment="bottom", horizontalalignment="left", fontsize=20)
+            self.subfigure.text(cinvEq, ymin+1.5, r"$\log \left(1/%s'\right) \sim %.2f$" % (self.c, round(cinvEq, 2)), verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
+            # textlabel = r"\kappa'=%.2f" % cinvEq
+            # self.subfigure.text(0.75, 0.75, r"$\mathrm{%s}$" % textlabel, transform=self.subfigure.axes.transAxes, horizontalalignment="center")
 
-        # self.subfigure.text(0.75, 0.75, r"$\mathrm{%s}$" % textlabel, transform=self.subfigure.axes.transAxes, horizontalalignment="center")
+        self.subfigure.set_xlabel(r"$\log \left(1/%s\right)$" % self.c)
+        self.subfigure.set_ylabel(r"$\Delta \langle h\rangle/\Delta T [l_0 \nu/10^2]$")
 
-        self.subfigure.set_xlabel(r"$\log 1/%s$" % self.c)
-        self.subfigure.set_ylabel(r"$\Delta \langle h\rangle/\Delta T [l_0 \nu/10^3]$")
-
+        self.subfigure.legend(loc="upper right",
+                              numpoints=1,
+                              ncol=1,
+                              handlelength=1.0,
+                              borderpad=0.2,
+                              labelspacing=0.2,
+                              columnspacing=1.25,
+                              handletextpad=0.25,
+                              borderaxespad=0.0,
+                              frameon=False,
+                              fontsize=20,
+                              bbox_to_anchor=(0.95, 0.9))
 
 
 class cconv(DCVizPlotter):
@@ -2928,17 +2920,27 @@ class cconv(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"f1" : "subfigure1", "f2" : "subfigure2"}
-    fig_size = [5, 5]
+    stack = "H"
+    figMap = {"f1": ["subfigure1", "subfigure2"]}
+
+    fig_size = [8, 5]
+
+    labelSize= 25
+    ticklabelSize=21
+    fontSize = 20  # Only invoked by hugifyFonts = True
+    tickSize = 2
 
     def adjust(self):
         for f in self.figure_names:
-            self.adjust_maps[f]["top"] = 0.97
-            self.adjust_maps[f]["bottom"] = 0.18
+            self.adjust_maps[f]["top"] = 0.9
+            self.adjust_maps[f]["bottom"] = 0.15
             self.adjust_maps[f]["right"] = 0.98
-            self.adjust_maps[f]["left"] = 0.15
+            self.adjust_maps[f]["left"] = 0.11
+            self.adjust_maps[f]["wspace"] = 0.05
 
     def plotsingle(self, subfigure, alphas, heights, set, do_legend=False):
+
+        subfigure.plot([0, 3], [2.85, 2.85], "r--", linewidth=3, label=r"$\log(1/\kappa')$")
 
         xvals = np.zeros((len(heights), len(set)))
         crads = np.zeros_like(xvals)
@@ -2946,17 +2948,12 @@ class cconv(DCVizPlotter):
 
         heightFMT = ['o', '^', 's', 'd']
 
-        all_alpha = []
-
         for j, (a, b, i, k) in enumerate(set):
             alpha = alphas[k]
 
             xvals[i, j] = alpha
             crads[i, j] = (a+b)/2
             err[i, j] = -np.log(b/a)/2
-
-        counts = np.zeros_like(alphas)
-        avgs = np.zeros_like(counts)
 
         heights = sorted(heights)
 
@@ -2975,26 +2972,19 @@ class cconv(DCVizPlotter):
 
             print height, heightFMT[int(i)]
 
-            X, Y = zip(*sorted(zip(xvals[i, :], crads[i, :]), key=lambda x: x[0]))
-
-            for k, a in enumerate(X):
-                if a != 0:
-                    j = list(alphas).index(a)
-                    counts[j] += 1
-                    avgs[j] += Y[k]
-
-        J = np.where(counts != 0)
-
-        _X = alphas[J]
-        _Y = avgs[J]/counts[J]
-
         subfigure.set_xlabel(r"$\alpha$")
         subfigure.set_xlim(0.4, 2.1)
+
+        subfigure.text(0.5, 1.05, r"$\mathrm{%s}$" % ("Radial" if do_legend else "Pathfinding"),
+                       horizontalalignment="center",
+                       verticalalignment="center",
+                       fontsize=25,
+                       transform=subfigure.axes.transAxes)
 
         if do_legend:
             subfigure.legend(loc="lower center",
                                   numpoints=1,
-                                  ncol=2,
+                                  ncol=1,
                                   handlelength=1.0,
                                   borderpad=0.2,
                                   labelspacing=0.2,
@@ -3002,39 +2992,37 @@ class cconv(DCVizPlotter):
                                   handletextpad=0.25,
                                   borderaxespad=0.0,
                                   frameon=False,
-                                  fontsize=20,
-                                  bbox_to_anchor=(0.65, 0.02)) \
+                                  fontsize=24,
+                                  bbox_to_anchor=(0.3, 0.05)) \
                 .get_frame().set_fill(not (self.toFile and self.transparent))
 
-        subfigure.set_ylabel(r"$\log(1/\kappa)$")
+            subfigure.set_ylabel(r"$\log(1/\kappa)$")
 
-        subfigure.set_ylim(0, 3)
+        else:
+            subfigure.yaxis.set_ticklabels([])
 
-        return zip(*sorted(zip(_X, _Y), key=lambda x: x[0]))
+        def f(v, i):
+            if v == 333:
+                return r"$2$"
+            else:
+                return r"$%.1f$" % v
+
+        subfigure.axes.xaxis.set_major_formatter(FuncFormatter(f))
+
+        subfigure.set_xlim(0.53, alphas.max()+0.1)
+        subfigure.set_ylim(0, 3.5)
 
     def plot(self, data):
 
         heights = self.get_family_member_data(data, "heights")
         alphas = self.get_family_member_data(data, "alphas")
 
-        try:
-            radial = self.get_family_member_data(data, "radial")
-            Xr, Yr = self.plotsingle(self.subfigure1, alphas, heights, radial, True)
+        radial = self.get_family_member_data(data, "radial")
+        self.plotsingle(self.subfigure1, alphas, heights, radial, True)
 
-            self.subfigure1.plot(Xr, -np.log(Yr), "r--")
-            self.subfigure2.plot(Xr, -np.log(Yr), "r--")
+        pathfind = self.get_family_member_data(data, "pathfind")
+        self.plotsingle(self.subfigure2, alphas, heights, pathfind)
 
-        except RuntimeError:
-            pass
-
-        try:
-            pathfind = self.get_family_member_data(data, "pathfind")
-            Xp, Yp = self.plotsingle(self.subfigure2, alphas, heights, pathfind)
-
-            self.subfigure1.plot(Xp, -np.log(Yp), "b-.")
-            self.subfigure2.plot(Xp, -np.log(Yp), "b-.")
-        except RuntimeError:
-            pass
 
 
 class AutoCorrWoot(DCVizPlotter):
@@ -3358,9 +3346,6 @@ class ExtraNeighbor(DCVizPlotter):
         cbar_ax2 = self.f7.add_axes([0.85, 0.2, 0.05, 0.7])
         self.f4.colorbar(im, cax=cbar_ax)
         self.f7.colorbar(im, cax=cbar_ax2)
-
-
-
 
 
 

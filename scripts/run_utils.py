@@ -13,11 +13,13 @@ def run_kmc(proc, combination, path, app, cfg):
         print "%.3f" % value,
     print
 
+    cfgdir, _ = os.path.split(cfg)
+
     this_dir = os.getcwd()
 
     os.chdir(path)
     #print "./%s %d %s_%d.cfg >> /tmp/kmc_dump_%d.txt" % (app, proc, cfg.split(".cfg")[0], proc, proc)
-    success = os.system("./%s %d %s_%d.cfg >> /tmp/kmc_dump_%d.txt" % (app, proc, cfg.split(".cfg")[0], proc, proc))
+    success = os.system("./%s %d %s_%d.cfg >> %s/kmc_dump_%d.txt" % (app, proc, cfg.split(".cfg")[0], proc, cfgdir, proc))
     os.chdir(this_dir)
 
     return success
