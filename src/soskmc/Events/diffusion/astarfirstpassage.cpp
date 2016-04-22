@@ -18,7 +18,7 @@ AStarFirstPassage::AStarFirstPassage(SOSSolver &solver,
     FirstPassageContinuum(solver, maxdt, depositionBoxHalfSize, c),
     m_boxSize(depositionBoxHalfSize*2 + 1),
     m_world(new World(m_boxSize, m_boxSize, m_boxSize)),
-    m_pathFinder(new PathFinder(*m_world)),
+    m_pathFinder(new PathFinder(*m_world, depositionBoxHalfSize)),
     m_pathFindingJazzes(m_boxSize*m_boxSize),
     m_rootsOfInts(3)
 {

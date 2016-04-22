@@ -69,8 +69,8 @@ def main():
 
     for i, supersaturation in enumerate(supersaturations):
 
-        t, h = combinators[i].mean("Time", "AverageHeight")
-        t, c = combinators[i].mean("Time", "Concentration")
+        t, h = combinators[i].intercombine("Time", "AverageHeight")
+        t, c = combinators[i].intercombine("Time", "Concentration")
 
         l = len(t)
 

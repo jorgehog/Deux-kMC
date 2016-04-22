@@ -24,9 +24,10 @@ namespace Tests
 class PathFinder
 {
 public:
-    PathFinder(const World &world, const int nPreAllocNodes = 1000)
+    PathFinder(const World &world, const int nMax, const int nPreAllocNodes = 1000)
         : m_world(world),
-          m_brWorld(world.Right() * world.Top() * world.Back())
+          m_brWorld(world.Right() * world.Top() * world.Back()),
+          m_nMax(nMax)
     {
         m_allSearchNodes.resize(nPreAllocNodes);
 
@@ -83,6 +84,8 @@ private:
 
     const World &m_world;
     vector<bool> m_brWorld;
+
+    int m_nMax;
 
     vector<SearchNode*> m_allSearchNodes;
     unsigned int nSearchNodes;

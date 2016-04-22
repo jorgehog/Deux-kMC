@@ -42,18 +42,16 @@ def main():
 
     for data, _, _, id in parser:
 
-        try:
-            supersaturation = data.attrs["supersaturation"]
-            heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
-            heights -= heights[0]
-            concentrations = parser.get_ignis_data(data, "Concentration")[::every].copy()
-            time = parser.get_ignis_data(data, "Time")[::every].copy()
+        supersaturation = data.attrs["supersaturation"]
+        heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
+        heights -= heights[0]
+        concentrations = parser.get_ignis_data(data, "Concentration")[::every].copy()
+        time = parser.get_ignis_data(data, "Time")[::every].copy()
 
-            i = supersaturations.index(supersaturation)
+        i = supersaturations.index(supersaturation)
 
-            combinators[i].feed(time, heights, concentrations)
-        except:
-            pass
+        combinators[i].feed(time, heights, concentrations)
+
 
 
     n_steps = len(combinators[0]["Time"])
@@ -67,8 +65,8 @@ def main():
 
     for i, supersaturation in enumerate(supersaturations):
 
-        t, h = combinators[i].mean("Time", "AverageHeight")
-        t2, c = combinators[i].mean("Time", "Concentration")
+        t, h = combinators[i].intercombine("Time", "AverageHeight")
+        t2, c = combinators[i].intercombine("Time", "Concentration")
 
         if not (t == t2).all():
             sys.exit("Failure")

@@ -14,6 +14,7 @@ public:
     int x;
     int y;
     int z;
+    int n;
     int cost;
     int pathCost;
     SearchNode* next = nullptr;
@@ -26,8 +27,6 @@ public:
 
     ~SearchNode();
 
-    static int refCounter;
-
     inline void set(const int &x, const int &y, const int &z,
              const int &cost, const int &pathCost, SearchNode* next);
 
@@ -36,6 +35,20 @@ public:
         stringstream ss;
 
         ss << x << ", " << y << ", " << z;
+
+        return ss.str();
+    }
+
+    string fullPath() const
+    {
+        stringstream ss;
+
+        SearchNode *n = next;
+        while (n->next != nullptr)
+        {
+            ss << n->ToString() << "->";
+            n = n->next;
+        }
 
         return ss.str();
     }
@@ -55,6 +68,7 @@ void SearchNode::set(const int &x, const int &y, const int &z, const int &cost, 
     this->x = x;
     this->y = y;
     this->z = z;
+    this->n = next == nullptr ? 0 : next->n + 1;
     this->cost = cost;
     this->pathCost = pathCost;
     this->next = next;

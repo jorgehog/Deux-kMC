@@ -2545,8 +2545,6 @@ class LatticediffSpeeds(DCVizPlotter):
             if t_min > tmax:
                 t_min = tmax
 
-
-
         mean_errh = np.zeros(max_l)
         mean_errss = np.zeros(max_l)
         mean_Ts = np.zeros(max_l)
@@ -2618,11 +2616,11 @@ class LatticediffSpeeds(DCVizPlotter):
                 self.subfigure.plot(T, analytical_h, "k--", label=_labela)
                 self.subfigure2.plot(T, analytical_ss, "k--", label=_labela)
 
-                errH = analytical_h - H
-                errSS = analytical_ss - SS
+                errH = H - analytical_h
+                errSS = SS - analytical_ss
 
-                mean_errh[:l][I] += errH
-                mean_errss[:l][I] += errSS
+                mean_errh[:l][I] +=  (errH)
+                mean_errss[:l][I] += (errSS)
                 mean_Ts[:l][I] += T
                 mean_cs[:l][I] += 1
 
@@ -2638,25 +2636,32 @@ class LatticediffSpeeds(DCVizPlotter):
         mean_errss = mean_errss[cI]/mean_cs[cI]
         mean_Ts = mean_Ts[cI]/mean_cs[cI]
 
-        self.errfigH.plot(mean_Ts[:len(mean_errh)], 1000*mean_errh/len(all_supersaturations), label=r"$h(t)/l_0$")
-        self.errfigH.plot(mean_Ts[:len(mean_errss)], 1000*mean_errss/len(all_supersaturations), label=r"$\Omega(t)$")
+
+        self.errfigH.plot(mean_Ts[:len(mean_errh)], 1000*mean_errh/len(all_supersaturations), 'r-', label=r"$h(t)/l_0$")
+        self.errfigH.plot(mean_Ts[:len(mean_errss)], 1000*mean_errss/len(all_supersaturations), color="0.75",
+                          linestyle='-', label=r"$\Omega(t)$")
         self.errfigH.set_xlabel(time_label)
         self.errfigH.set_ylabel(r"$10^3\epsilon$")
         y0, y1 = self.errfigH.get_ylim()
         self.errfigH.set_ybound(y0-0.25*(y1 - y0))
 
-        self.errfigH.legend(loc="center",
-                            numpoints=1,
-                            ncol=2,
-                            handlelength=1.0,
-                            borderpad=0.2,
-                            labelspacing=0.2,
-                            columnspacing=1.0,
-                            handletextpad=0.25,
-                            borderaxespad=0.0,
-                            frameon=False,
-                            fontsize=20,
-                            bbox_to_anchor=(0.7, 0.10)).get_frame().set_fill(not (self.toFile and self.transparent))
+        leg = self.errfigH.legend(loc="center",
+                                  numpoints=1,
+                                  ncol=2,
+                                  handlelength=1.0,
+                                  markerscale=20.0,
+                                  borderpad=0.2,
+                                  labelspacing=0.2,
+                                  columnspacing=1.0,
+                                  handletextpad=0.5,
+                                  borderaxespad=0.0,
+                                  frameon=False,
+                                  fontsize=20,
+                                  bbox_to_anchor=(0.7, 0.10))
+
+        leg.get_frame().set_fill(not (self.toFile and self.transparent))
+        for legobj in leg.legendHandles:
+            legobj.set_linewidth(4.0)
 
         self.subfigure7.plot(all_ss, all_ceq, 'k^')
         self.subfigure7.set_xlabel(r"$\Omega(0)$")

@@ -22,7 +22,6 @@ def main():
     except:
         every = 1
 
-
     n = 0
     for data, _, _, _ in parser:
 
@@ -39,57 +38,60 @@ def main():
 
     print "Found", N, "repeats."
 
-    combinators = [ICZ("Time", "AverageHeight", "Concentration") for _ in range(len(supersaturations))]
+    combinators = [[ICZ("Time", "AverageHeight", "Concentration") for _ in range(len(supersaturations))] for _ in [0, 1]]
 
     for data, _, _, _ in parser:
 
-        supersaturation = data.attrs["supersaturation"]\
+        supersaturation = data.attrs["supersaturation"]
 
-        heights = parser.get_ignis_data(data, "AverageHeight")[::every].copy()
+        heights = parser.get_ignis_data(data, "AverageHeight").copy()
 
-        conc = parser.get_ignis_data(data, "Concentration")[::every].copy()
+        conc = parser.get_ignis_data(data, "Concentration").copy()
 
-        time = parser.get_ignis_data(data, "Time")[::every].copy()
+        time = parser.get_ignis_data(data, "Time").copy()
+
+        dtype = data.attrs["diffuse"] - 3
 
         i = supersaturations.index(supersaturation)
 
-        try:
-            combinators[i].feed(time, heights, conc)
-        except:
-            pass
-
-    n_steps = len(combinators[0]["Time"])
+        combinators[dtype][i].feed(time, heights, conc)
+        
+    n_steps = len(combinators[0][0]["Time"])
 
     print "found", n_steps, "sized data."
 
-    all_times = np.zeros([len(supersaturations), n_steps])
-    all_heights = np.zeros_like(all_times)
-    all_conc = np.zeros_like(all_times)
-    lengths = np.zeros(len(supersaturations))
+    for dtype, name in enumerate(["radial", "pathfind"]):
 
-    for i, supersaturation in enumerate(supersaturations):
+        all_times = np.zeros([len(supersaturations), n_steps])
+        all_heights = np.zeros_like(all_times)
+        all_conc = np.zeros_like(all_times)
+        lengths = np.zeros(len(supersaturations))
 
-        t, h = combinators[i].mean("Time", "AverageHeight")
-        t, c = combinators[i].mean("Time", "Concentration")
+        for i, supersaturation in enumerate(supersaturations):
 
-        l = len(t)
+            t, h = combinators[dtype][i].intercombine("Time", "AverageHeight")
+            t, c = combinators[dtype][i].intercombine("Time", "Concentration")
 
-        lengths[i] = l
+            l = len(t)
 
-        all_times[i, :l] = t
-        all_heights[i, :l] = h
-        all_conc[i, :l] = c
+            lengths[i] = l
 
-        print "\r%d/%d" % (i+1, len(supersaturations)),
-        sys.stdout.flush()
+            all_times[i, :l] = t
+            all_heights[i, :l] = h
+            all_conc[i, :l] = c
 
-    print
+            print "\r%d/%d" % (i+1, len(supersaturations)),
+            sys.stdout.flush()
+        print
 
-    np.save("/tmp/confined_mfpt_supersaturations.npy", supersaturations)
-    np.save("/tmp/confined_mfpt_times.npy", all_times)
-    np.save("/tmp/confined_mfpt_heights.npy", all_heights)
-    np.save("/tmp/confined_mfpt_concentrations.npy", all_conc)
-    np.save("/tmp/confined_mfpt_lengths.npy", lengths)
+        if not os.path.exists("/tmp/%s" % name):
+            os.mkdir("/tmp/%s" % name)
+
+        np.save("/tmp/%s/confined_%s_supersaturations.npy" % (name, name), supersaturations)
+        np.save("/tmp/%s/confined_%s_times.npy" % (name, name), all_times)
+        np.save("/tmp/%s/confined_%s_heights.npy" % (name, name), all_heights)
+        np.save("/tmp/%s/confined_%s_concentrations.npy" % (name, name), all_conc)
+        np.save("/tmp/%s/confined_%s_lengths.npy" % (name, name), lengths)
 
 if __name__ == "__main__":
     main()

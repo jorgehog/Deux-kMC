@@ -26,6 +26,20 @@ const SearchNode *PathFinder::FindPathReversed(const int x0, const int y0, const
             return result;
         }
 
+//        if (current->n > m_nMax)
+//        {
+//            cout << startNode->ToString() << endl;
+//            cout << x0 << " "
+//                 << y0 << " "
+//                 << z0 << " -> "
+//                 << x1 << " "
+//                 << y1 << " "
+//                 << z1;
+//            cout << "chain skipping." << endl;
+//            cout << current->fullPath() << endl;
+//            continue;
+//        }
+
         for (int dx = -1; dx <= 1; ++dx)
         {
             for (int dy = -1; dy <= 1; ++dy)
