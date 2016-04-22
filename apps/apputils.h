@@ -822,8 +822,6 @@ inline double getMFPTConstant(const double h0, const double alpha, const int typ
 
     if (alphaKnown)
     {
-        cout << "alpha " << valueMap->at({ih, ia}) << endl;
-        exit(1);
         return valueMap->at({ih, ia});
     }
 
