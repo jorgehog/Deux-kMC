@@ -300,14 +300,14 @@ private:
 
 };
 
-const Boundary *getBoundaryFromID(SOSSolver *solver,
-                                  const uint ID,
-                                  const uint dim,
-                                  const uint span,
-                                  const uint yspan,
-                                  Boundary::orientations orientation,
-                                  const int boundaryHeight = 0,
-                                  const uint averageHeightDepth = 0)
+Boundary *getBoundaryFromID(SOSSolver *solver,
+                            const uint ID,
+                            const uint dim,
+                            const uint span,
+                            const uint yspan,
+                            Boundary::orientations orientation,
+                            const int boundaryHeight = 0,
+                            const uint averageHeightDepth = 0)
 {
     uint location = orientation == Boundary::orientations::FIRST ? 0 : (span - 1);
 
@@ -336,19 +336,27 @@ const Boundary *getBoundaryFromID(SOSSolver *solver,
 
 }
 
-void setBoundariesFromIDs(SOSSolver *solver,
-                          const vector<uint> IDs,
-                          const uint L, const uint W,
-                          const int boundaryHeight = 0,
-                          const uint averageHeightDepth = 0)
+vector<vector<Boundary *> >
+setBoundariesFromIDs(SOSSolver *solver,
+                     const vector<uint> IDs,
+                     const uint L, const uint W,
+                     const int boundaryHeight = 0,
+                     const uint averageHeightDepth = 0)
 {
-    const Boundary* leftBoundary = getBoundaryFromID(solver, IDs.at(0), 0, L, W, Boundary::orientations::FIRST, boundaryHeight, averageHeightDepth);
-    const Boundary* rightBoundary = getBoundaryFromID(solver, IDs.at(1), 0, L, W, Boundary::orientations::LAST, boundaryHeight, averageHeightDepth);
-    const Boundary* bottomBoundary = getBoundaryFromID(solver, IDs.at(2), 1, W, L, Boundary::orientations::FIRST, boundaryHeight, averageHeightDepth);
-    const Boundary* topBoundary = getBoundaryFromID(solver, IDs.at(3), 1, W, L, Boundary::orientations::LAST, boundaryHeight, averageHeightDepth);
+    Boundary* leftBoundary = getBoundaryFromID(solver, IDs.at(0), 0, L, W, Boundary::orientations::FIRST, boundaryHeight, averageHeightDepth);
+    Boundary* rightBoundary = getBoundaryFromID(solver, IDs.at(1), 0, L, W, Boundary::orientations::LAST, boundaryHeight, averageHeightDepth);
+    Boundary* bottomBoundary = getBoundaryFromID(solver, IDs.at(2), 1, W, L, Boundary::orientations::FIRST, boundaryHeight, averageHeightDepth);
+    Boundary* topBoundary = getBoundaryFromID(solver, IDs.at(3), 1, W, L, Boundary::orientations::LAST, boundaryHeight, averageHeightDepth);
 
-    solver->setBoundaries({{leftBoundary, rightBoundary},
-                           {bottomBoundary, topBoundary}});
+    vector<vector<Boundary *> > boundaries = {{leftBoundary, rightBoundary},
+                                              {bottomBoundary, topBoundary}};
+
+    vector<vector<const Boundary *> > boundaries2 = {{leftBoundary, rightBoundary},
+                                                     {bottomBoundary, topBoundary}};
+
+    solver->setBoundaries(boundaries2);
+
+    return boundaries;
 }
 
 class SurfaceCounter : public Event<uint>, public Observer<Subjects>
@@ -534,7 +542,7 @@ void initializeSurface(SOSSolver &solver, const string type,
         Diffusion *conc;
         ConfiningSurface *conf;
 
-        setBoundariesFromIDs(&thermSolver, {0,0,0,0}, L, W);
+        vector<vector<Boundary *> > b = setBoundariesFromIDs(&thermSolver, {0,0,0,0}, L, W);
 
         SurfaceCounter counter(surfaceThermCycles);
         thermSolver.registerObserver(&counter);
@@ -634,6 +642,11 @@ void initializeSurface(SOSSolver &solver, const string type,
 
         delete conc;
         delete conf;
+
+        delete b[0][0];
+        delete b[0][1];
+        delete b[1][0];
+        delete b[1][1];
     }
 
     else if (type == "none")

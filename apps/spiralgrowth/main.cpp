@@ -122,11 +122,12 @@ int main(int argv, char** argc)
     ConfiningSurface *confiningSurface;
     Diffusion *diffusion;
 
-    setBoundariesFromIDs(&solver, {rightBoundaryID,
-                                   leftBoundaryID,
-                                   bottomBoundaryID,
-                                   topBoundaryID},
-                         L, W, boundaryHeight, averageHeightDepth);
+
+    vector<vector<Boundary *> > b = setBoundariesFromIDs(&solver, {rightBoundaryID,
+                                                                   leftBoundaryID,
+                                                                   bottomBoundaryID,
+                                                                   topBoundaryID},
+                                                         L, W, boundaryHeight, averageHeightDepth);
 
     RDLPotential rdlPotential(solver, sigma0, lD);
 
@@ -409,17 +410,13 @@ int main(int argv, char** argc)
 
     //---End data dump
 
-    //derp
-    //    for (auto & dimBoundary : boundaries)
-    //    {
-    //        for (auto & boundary : dimBoundary)
-    //        {
-    //            delete boundary;
-    //        }
-    //    }
-
     delete diffusion;
     delete confiningSurface;
+
+    delete b[0][0];
+    delete b[0][1];
+    delete b[1][0];
+    delete b[1][1];
 
     return 0;
 }

@@ -175,7 +175,8 @@ public:
         cout << "running " << c << endl;
 
         SOSSolver solver(m_L, m_W, m_alpha, 0);
-        setBoundariesFromIDs(&solver, {0,0,0,0}, m_L, m_W);
+
+        vector<vector<Boundary *> > b = setBoundariesFromIDs(&solver, {0,0,0,0}, m_L, m_W);
 
         ConstantConfinement confiningSurface(solver, m_h0);
         FirstPassageContinuum *diffusion;
@@ -228,7 +229,16 @@ public:
 
         lattice.eventLoop(m_nCyclesPerEquilibrium);
 
-        return speed.value();
+        const double v = speed.value();
+
+        delete diffusion;
+
+        delete b[0][0];
+        delete b[0][1];
+        delete b[1][0];
+        delete b[1][1];
+
+        return v;
     }
 
 private:
