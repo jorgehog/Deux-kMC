@@ -44,6 +44,10 @@ def main():
 
     parser = ParseKMCHDF5(input_file)
 
+    additionals = [[1, 0.07625, 0.081875, 10, 0.5],
+                   [1, 0.070625, 0.0734375, 15, 0.5],
+                   [1, 0.065, 0.0875, 20, 0.5]]
+
     radial = []
     pathfind = []
     heights = []
@@ -67,6 +71,18 @@ def main():
 
     heights = sorted(heights)
     alphas = sorted(alphas)
+
+    for type, a, b, h0, alpha in additionals:
+
+        i = heights.index(h0)
+        j = alphas.index(alpha)
+
+        arr = [a, b, i, j]
+
+        if type == 0:
+            radial.append(arr)
+        else:
+            pathfind.append(arr)
 
     for data, _, _, run_id in parser:
 

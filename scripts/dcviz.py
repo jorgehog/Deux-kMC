@@ -2945,7 +2945,7 @@ class cconv(DCVizPlotter):
 
     def plotsingle(self, subfigure, alphas, heights, set, do_legend=False):
 
-        subfigure.plot([0, 3], [2.85, 2.85], "r--", linewidth=3, label=r"$\log(1/\kappa')$")
+        subfigure.plot([alphas.min(), alphas.max()], [2.85, 2.85], "r--", linewidth=3, label=r"$\log(1/\kappa')$")
 
         xvals = np.zeros((len(heights), len(set)))
         crads = np.zeros_like(xvals)
@@ -2978,7 +2978,6 @@ class cconv(DCVizPlotter):
             print height, heightFMT[int(i)]
 
         subfigure.set_xlabel(r"$\alpha$")
-        subfigure.set_xlim(0.4, 2.1)
 
         subfigure.text(0.5, 1.05, r"$\mathrm{%s}$" % ("Radial" if do_legend else "Pathfinding"),
                        horizontalalignment="center",
@@ -3006,16 +3005,24 @@ class cconv(DCVizPlotter):
         else:
             subfigure.yaxis.set_ticklabels([])
 
+        index_list = [[1, 2], [3, 4], [1, 1], [5, 4], [3, 2], [7, 4], [2, 1]]
         def f(v, i):
-            if v == 333:
-                return r"$2$"
+
+            a, b = index_list[i]
+
+            if b == 1:
+                return r"$%d$" % a
             else:
-                return r"$%.1f$" % v
+                return r"\Large{$%d/%d$}" % (a, b)
 
         subfigure.axes.xaxis.set_major_formatter(FuncFormatter(f))
 
-        subfigure.set_xlim(0.53, alphas.max()+0.1)
+        #   subfigure.set_xlim(0.4, 2.1)
+        subfigure.set_xlim(0.45, alphas.max()+0.05)
         subfigure.set_ylim(0, 3.5)
+        subfigure.xaxis.set_ticks([x[0]/float(x[1]) for x in index_list])
+        # subfigure.axes.tick_params(axis='x', which='major', pad=15)
+
 
     def plot(self, data):
 
