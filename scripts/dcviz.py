@@ -2619,8 +2619,8 @@ class LatticediffSpeeds(DCVizPlotter):
                 errH = H - analytical_h
                 errSS = SS - analytical_ss
 
-                mean_errh[:l][I] +=  (errH)
-                mean_errss[:l][I] += (errSS)
+                mean_errh[:l][I] +=  abs(errH)
+                mean_errss[:l][I] += abs(errSS)
                 mean_Ts[:l][I] += T
                 mean_cs[:l][I] += 1
 
@@ -3099,9 +3099,9 @@ class AutoCorrWoot(DCVizPlotter):
 
         print types
 
-        #Rfs = [self.RMSfig1, self.RMSfig2, self.RMSfig3, self.RMSfig4]
+        #Rfs = [self.RMSfig1, self.RMSfig2, self.RMSfig4]
         Rfs = self.figures[self.figure_names.index("rmsfigure")][1:][::-1]
-        #Cfs = [self.CFig1, self.CFig2, self.CFig3, self.CFig4]
+        #Cfs = [self.CFig1, self.CFig2, self.CFig4]
         Cfs = self.figures[self.figure_names.index("cfigure")][1:][::-1]
 
         for _ih, height in enumerate(heights):
@@ -3112,19 +3112,22 @@ class AutoCorrWoot(DCVizPlotter):
 
                 s = self.styles[type]
 
-                if _ih == 2:
-                    continue
-                elif _ih == 3:
-                    ih = 2
+                if self.argv:
+                    if _ih == 2:
+                        continue
+                    elif _ih == 3:
+                        ih = 2
+                    else:
+                        ih = _ih
                 else:
                     ih = _ih
 
                 Rfs[ih].plot(alphas, RMSes, s, label=self.names[type], **my_props["fmt"])
 
-                if self.argv:
-                    c = Cs[:, int(self.argv[0])]
-                else:
-                    c = 0.5*(Cs[:, 0] + Cs[:, 1])
+                # if self.argv:
+                #     c = Cs[:, int(self.argv[0])]
+                # else:
+                c = 0.5*(Cs[:, 0] + Cs[:, 1])
 
                 Cfs[ih].plot(alphas, c, s, label=self.names[type], **my_props["fmt"])
                 # self.CFig_diag.plot(alphas, Cs[:, 1], s, label=type, **my_props["fmt"])
@@ -3148,10 +3151,13 @@ class AutoCorrWoot(DCVizPlotter):
 
         for _ih, h in enumerate(heights):
 
-            if _ih == 2:
-                continue
-            elif _ih == 3:
-                ih = 2
+            if self.argv:
+                if _ih == 2:
+                    continue
+                elif _ih == 3:
+                    ih = 2
+                else:
+                    ih = _ih
             else:
                 ih = _ih
 
@@ -3199,19 +3205,20 @@ class AutoCorrWoot(DCVizPlotter):
 
 
 
-        self.CFig1.axes.legend(loc="center",
-                               numpoints=1,
-                               ncol=2,
-                               handlelength=1.0,
-                               borderpad=0.2,
-                               labelspacing=0.2,
-                               columnspacing=0.3,
-                               handletextpad=0.25,
-                               borderaxespad=0.0,
-                               frameon=False,
-                               fontsize=12,
-                               bbox_to_anchor=(0.66, 0.15)) \
-            .get_frame().set_fill(not (self.toFile and self.transparent))
+        l = self.CFig1.axes.legend(loc="center",
+                                   numpoints=1,
+                                   ncol=2,
+                                   handlelength=1.0,
+                                   borderpad=0.2,
+                                   labelspacing=0.2,
+                                   columnspacing=0.3,
+                                   handletextpad=0.25,
+                                   borderaxespad=0.0,
+                                   frameon=False,
+                                   fontsize=12,
+                                   bbox_to_anchor=(0.66, 0.15))
+
+        l.get_frame().set_fill(not (self.toFile and self.transparent))
 
 
 class ExtraNeighbor(DCVizPlotter):

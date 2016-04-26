@@ -9,3 +9,5 @@
 Makefile
 lib/
 fontconfig/
+kmc_dump*
+massif.out.*

@@ -80,11 +80,14 @@ def analyze(input_file, typeint, typestr):
     alphas = []
     heights = []
 
+    n = 0
     for data, L, W, run_id in parser:
 
         if data.attrs["diffuse"] != typeint:
             continue
 
+        n+=1
+     #   continue
         alpha = data.attrs["alpha"]
         height = data.attrs["confiningSurfaceHeight"]
 
@@ -93,7 +96,8 @@ def analyze(input_file, typeint, typestr):
 
         if height not in heights:
             heights.append(height)
-
+    print "n:",n
+    #return
 
     autocorrs = np.zeros(shape=(len(heights), len(alphas), L+1, W+1))
     RMSes = np.zeros(shape=(len(heights), len(alphas)))
@@ -130,6 +134,8 @@ def analyze(input_file, typeint, typestr):
 
     x1 = sqrt(2)*xl
     x2 = sqrt(2)*xw
+
+    heights = sorted(heights)
 
     for j, height in enumerate(heights):
 
