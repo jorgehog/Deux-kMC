@@ -40,6 +40,8 @@ def main():
 
     combinators = [ICZ("Time", "AverageHeight", "Concentration") for _ in range(len(supersaturations))]
 
+    C = np.zeros(len(supersaturations))
+    CMAX = 100
     for data, _, _, id in parser:
 
         supersaturation = data.attrs["supersaturation"]
@@ -50,9 +52,12 @@ def main():
 
         i = supersaturations.index(supersaturation)
 
+        if C[i] >= CMAX:
+            continue
+
         combinators[i].feed(time, heights, concentrations)
 
-
+        C[i] += 1
 
     n_steps = len(combinators[0]["Time"])
 

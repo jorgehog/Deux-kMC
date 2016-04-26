@@ -40,6 +40,9 @@ def main():
 
     combinators = [[ICZ("Time", "AverageHeight", "Concentration") for _ in range(len(supersaturations))] for _ in [0, 1]]
 
+    C = np.zeros((2, len(supersaturations)))
+    CMAX = 100
+
     for data, _, _, _ in parser:
 
         supersaturation = data.attrs["supersaturation"]
@@ -54,13 +57,17 @@ def main():
 
         i = supersaturations.index(supersaturation)
 
+        if C[dtype, i] >= CMAX:
+            continue
+
         combinators[dtype][i].feed(time, heights, conc)
         
-    n_steps = len(combinators[0][0]["Time"])
 
-    print "found", n_steps, "sized data."
 
     for dtype, name in enumerate(["radial", "pathfind"]):
+
+        n_steps = len(combinators[dtype][0]["Time"])
+        print "found", n_steps, "sized data."
 
         all_times = np.zeros([len(supersaturations), n_steps])
         all_heights = np.zeros_like(all_times)
