@@ -2714,7 +2714,7 @@ class LatticediffSpeeds(DCVizPlotter):
         self.subfigure3.xaxis.set_ticks([-1, -0.5, 0, 0.5, 1])
         self.subfigure3.set_xbound(-1)
         self.subfigure3.xaxis.set_ticklabels([])
-        self.subfigure3.set_ylabel(r"$10^2\phi$")
+        self.subfigure3.set_ylabel(r"$10^2h(t\to\infty)/h_l$")
 
         lg = self.subfigure3.axes.legend(loc="center",
                                              numpoints=1,
@@ -2968,7 +2968,7 @@ class cconv(DCVizPlotter):
                                 fmt="k"+heightFMT[int(i)],
                                 ecolor="k",
                                 linestyle="none",
-                                label=r"$h_l = %.1f$" % height,
+                                label=r"$\Delta h = %d$" % height,
                                 **my_props["fmt"])
 
             print height, heightFMT[int(i)]
@@ -3131,7 +3131,7 @@ class AutoCorrWoot(DCVizPlotter):
                 if type == "lattice" and height > 5:
                     Rfs[ih].text(0.75, 2.5, r"$\uparrow %.2f$" % max(RMSes))
 
-        label = r"\langle d_i\rangle"
+        label = r"\Delta h"
 
         def format_func0(v, i):
             return ""
@@ -3180,7 +3180,7 @@ class AutoCorrWoot(DCVizPlotter):
             cf.axes.yaxis.set_major_formatter(int_formatter)
 
             ax = cf.axes.twinx()
-            ax.set_ylabel(r"$%s=%.1f$" % (label, h), labelpad=15)
+            ax.set_ylabel(r"$%s=%d$" % (label, h), labelpad=15)
             ax.yaxis.set_ticks([])
             ax.yaxis.set_ticklabels([])
 
