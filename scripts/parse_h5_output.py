@@ -38,7 +38,11 @@ class ParseKMCHDF5:
 
         for self.filename in self.files:
 
-            file = h5py.File(self.filename, 'r')
+            try:
+                file = h5py.File(self.filename, 'r')
+            except IOError:
+                print "Skipping file %s: Unable to open." % self.filename
+                continue
 
             for l, run in file.items():
                 L, W = [int(x) for x in re.findall("(\d+)x(\d+)", l)[0]]
@@ -59,6 +63,7 @@ class ParseKMCHDF5:
         data = self.file[name]
 
         return data
+
     @staticmethod
     def get_ignis_data(data, name):
         return data["ignisData"][[desc.split("@")[0] for desc in list(data["ignisEventDescriptions"])[0]].index(name)]
