@@ -2550,12 +2550,19 @@ class LatticediffSpeeds(DCVizPlotter):
         mean_Ts = np.zeros(max_l)
         mean_cs = np.zeros(max_l)
 
+        sfac = 1
+
         for i, supersaturation in enumerate(supersaturations):
 
             l = lengths[i]
 
+            T = all_times[i, :l]
+            I = np.where(T <= t_min)
+            T = T[I]
+
             if "corr" in self.argv:
-                self.ceq_override = all_conc[i, (2*l)/3:(9*l)/10].mean()
+                l_c = len(all_conc[i, :l][I])
+                self.ceq_override = all_conc[i, :l][I][(3*l_c)/4:].mean()
 
             all_ceq.append(100*abs(self.ceq()-self.ceq_analytical())/self.ceq_analytical())
 
@@ -2565,17 +2572,6 @@ class LatticediffSpeeds(DCVizPlotter):
 
             all_ss.append(s0)
 
-            if supersaturation != s0:
-                print "ERRAH", supersaturation, s0
-
-            if "flip" in self.argv:
-                sfac = np.sign(supersaturation)
-            else:
-                sfac = 1
-
-            T = all_times[i, :l]
-            I = np.where(T <= t_min)
-            T = T[I]
 
             H = sfac*all_heights[i, :l][I]
             label = r"$\Omega(0)=%.2f$" % s0
