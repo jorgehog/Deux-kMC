@@ -113,34 +113,26 @@ def main():
 
             #Completely sealed
             if l != lmax:
-                if omega < 0:
-                    cval = 0
-
-                else:
-                    cval = L*W-1
+                cval = coverage[-1]
             else:
                 if omega == 0:
                     cval = coverage[start:].mean()
 
-                elif omega > 0:
+                else:
                     X = argrelextrema(coverage[start:], np.greater)
 
-                    if len(X[0]) == 0:
-                        cval = coverage[start:].mean()
-
-                        # print s0, alpha, Pl
-                        # plab.plot(coverage)
-                        # plab.hold('on')
-                        # plab.plot(X[0], coverage[start:][X], 'ro')
-                        # plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
-                        #plab.show()
-                    else:
+                    if len(X[0]) != 0:
                         cval = coverage[start:][X].mean()
-                else:
-                    print s0, Pl, alpha
-                    plab.plot(coverage)
-                    plab.show()
-                    cval = 0
+
+                        # if omega < 0 and cval > 100 and cval < 800:
+                        #     print omega, s0, Pl, alpha
+                        #     plab.plot(coverage[start:])
+                        #     plab.hold('on')
+                        #     plab.plot(X[0], coverage[start:][X], 'ro')
+                        #     plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
+                        #     plab.show()
+                    else:
+                        cval = coverage[start:].mean()
 
             cmat[is0, ia, ipl] += cval/float(L*W)
             ccounts[is0, ia, ipl] += 1.
