@@ -3249,13 +3249,29 @@ class ExtraNeighbor(DCVizPlotter):
 
     hugifyFonts = True
 
+    specific_fig_size = {"f2": [4.5, 8],
+                         "f3": [3.6, 8],
+                         "f4": [5, 8],
+                         "f5": [4.5, 8],
+                         "f6": [3.6, 8],
+                         "f7": [5, 8]}
     def adjust(self):
         for figname in self.figure_names:
-            self.adjust_maps[figname]["right"] = 0.8
-            self.adjust_maps[figname]["left"] = 0.15
-            self.adjust_maps[figname]["top"] = 0.99
-            self.adjust_maps[figname]["bottom"] = 0.1
+
+            if figname in ["f2", "f5"]:
+                self.adjust_maps[figname]["right"] = 0.94
+                self.adjust_maps[figname]["left"] = 0.2
+            elif figname in ["f3", "f6"]:
+                self.adjust_maps[figname]["right"] = 0.94
+                self.adjust_maps[figname]["left"] = 0.03
+            else:
+                self.adjust_maps[figname]["right"] = 0.68
+                self.adjust_maps[figname]["left"] = 0.03
+
+            self.adjust_maps[figname]["top"] = 0.97
+            self.adjust_maps[figname]["bottom"] = 0.10
             self.adjust_maps[figname]["hspace"] = 0.06
+
 
     def trans_mat(self, mat):
         return mat
@@ -3334,6 +3350,16 @@ class ExtraNeighbor(DCVizPlotter):
                 if io == 0:
                     sfig.set_ylabel(r"$P_\lambda$")
                     csfig.set_ylabel(r"$P_\lambda$")
+                else:
+                    sfig.yaxis.set_ticklabels([])
+                    csfig.yaxis.set_ticklabels([])
+
+                    if io == 2:
+                        sfig.yaxis.set_label_position("right")
+                        csfig.yaxis.set_label_position("right")
+                        sfig.set_ylabel(r"$\sigma_0 = %.1f$" % s0, labelpad=10)
+                        csfig.set_ylabel(r"$\sigma_0 = %.1f$" % s0, labelpad=10)
+
 
                 # sfig.text(0.1, 0.5, r"$\sigma_0 = %.2f$" % s0, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
@@ -3359,10 +3385,16 @@ class ExtraNeighbor(DCVizPlotter):
 
         cbar_ax = self.f4.add_axes([0.85, 0.2, 0.05, 0.7])
         cbar_ax2 = self.f7.add_axes([0.85, 0.2, 0.05, 0.7])
+
+        clabel = r'$\Theta$'
+        cbar_ax.set_title(clabel)
+        cbar_ax2.set_title(clabel)
+
         self.f4.colorbar(im, cax=cbar_ax)
         self.f7.colorbar(im, cax=cbar_ax2)
 
 
+<<<<<<< HEAD
 class GPlots(DCVizPlotter):
 
     nametag = "GPlots.txt"
@@ -3452,5 +3484,26 @@ class GPlots(DCVizPlotter):
             return r"$%.1f$" % v
 
         self.subfigure.xaxis.set_major_formatter(FuncFormatter(f))
+=======
+class Extraneighbor_cluster(DCVizPlotter):
+
+    nametag = "extran_cluster_(.*)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    figMap = {"figure1": "subfigure1", "figure2": "subfigure2"}
+
+    def plot(self, data):
+
+        size = self.get_family_member_data(data, "size")
+        n = self.get_family_member_data(data, "n")
+
+
+        self.subfigure1.plot(n)
+        self.subfigure2.plot(size)
+
+>>>>>>> 3f83ab7919f0694d72c1acdb0e54098b8cb6555b
 
 
