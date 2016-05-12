@@ -38,6 +38,7 @@ def periodify(im):
 
 
 def analyze(data, i,
+            covs,
             avg_cluster_sizes,
             n_clusters_list,
             avg_circs,
@@ -45,6 +46,8 @@ def analyze(data, i,
             n_gained):
 
     _s = data[i, :, :]
+
+    covs[i] = _s.mean()
 
     im_label = measure.label(_s)
     im_label[where(_s == 0)] = -1
@@ -109,21 +112,28 @@ def main():
 
     nThreads = 8
 
+    if len(sys.argv) > 2:
+        every = int(sys.argv[2])
+    else:
+        every = 1
+
     for data, L, W, run_id in parser:
 
         print L, W, run_id
 
-        coverage_matrix = data["coverage_matrix_eq"][()]
+        coverage_matrix = data["coverage_matrix_eq"][()][::every]
 
         n = coverage_matrix.shape[0]
 
+        covs = empty(n)
         avg_cluster_sizes = empty(n)
         n_clusters_list = empty(n)
         avg_circs = empty(n)
         n_broken = empty(n - 1)
         n_gained = empty(n - 1)
 
-        measures = [avg_cluster_sizes,
+        measures = [covs,
+                    avg_cluster_sizes,
                     n_clusters_list,
                     avg_circs,
                     n_broken,
@@ -151,8 +161,12 @@ def main():
         for thread in all_threads:
             thread.join()
 
+        save("/tmp/extran_cluster_covs.npy", covs)
         save("/tmp/extran_cluster_size.npy", avg_cluster_sizes)
         save("/tmp/extran_cluster_n.npy", n_clusters_list)
+        save("/tmp/extran_cluster_circs.npy", avg_circs)
+        save("/tmp/extran_cluster_nbroken.npy", n_broken)
+        save("/tmp/extran_cluster_ngained.npy", n_gained)
 
         break
 

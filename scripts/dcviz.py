@@ -3493,15 +3493,28 @@ class Extraneighbor_cluster(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"figure1": "subfigure1", "figure2": "subfigure2"}
+    figMap = {"figure0": "subfigure0",
+              "figure1": "subfigure1",
+              "figure2": "subfigure2",
+              "figure3": "subfigure3",
+              "figure4": "subfigure4",
+              "figure5": "subfigure5"}
 
     def plot(self, data):
 
+        covs = self.get_family_member_data(data, "covs")
         size = self.get_family_member_data(data, "size")
         n = self.get_family_member_data(data, "n")
+        circs = self.get_family_member_data(data, "circs")
+        nbroken = self.get_family_member_data(data, "nbroken")
+        ngained = self.get_family_member_data(data, "ngained")
 
 
+        self.subfigure0.plot(covs)
         self.subfigure1.plot(n)
         self.subfigure2.plot(size)
-
+        self.subfigure3.plot(circs)
+        self.subfigure4.plot(np.log(nbroken), "r")
+        self.subfigure4.plot(np.log(ngained), "g")
+        self.subfigure5.plot(size/circs)
 
