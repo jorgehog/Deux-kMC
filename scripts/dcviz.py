@@ -3394,7 +3394,6 @@ class ExtraNeighbor(DCVizPlotter):
         self.f7.colorbar(im, cax=cbar_ax2)
 
 
-<<<<<<< HEAD
 class GPlots(DCVizPlotter):
 
     nametag = "GPlots.txt"
@@ -3484,7 +3483,8 @@ class GPlots(DCVizPlotter):
             return r"$%.1f$" % v
 
         self.subfigure.xaxis.set_major_formatter(FuncFormatter(f))
-=======
+
+
 class Extraneighbor_cluster(DCVizPlotter):
 
     nametag = "extran_cluster_(.*)\.npy"
@@ -3503,7 +3503,5 @@ class Extraneighbor_cluster(DCVizPlotter):
 
         self.subfigure1.plot(n)
         self.subfigure2.plot(size)
-
->>>>>>> 3f83ab7919f0694d72c1acdb0e54098b8cb6555b
 
 
