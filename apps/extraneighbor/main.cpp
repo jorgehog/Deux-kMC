@@ -77,6 +77,10 @@ int main(int argv, char** argc)
     const Setting & cfgRoot = cfg.getRoot();
 
     const string path = getSetting<string>(cfgRoot, "path") + "/";
+
+    const uint &L = getSetting<uint>(cfgRoot, "L");
+    const uint &W = getSetting<uint>(cfgRoot, "W");
+
     const double Pl = getSetting<double>(cfgRoot, "Pl");
     const double alpha = getSetting<double>(cfgRoot, "alpha");
     const double omega = getSetting<double>(cfgRoot, "omega");
@@ -86,13 +90,11 @@ int main(int argv, char** argc)
 
     const uint nCycles = getSetting<uint>(cfgRoot, "nCycles");
     const uint interval = getSetting<uint>(cfgRoot, "interval");
-    const uint output = getSetting<uint>(cfgRoot, "output");
+    const uint ignisOutput = getSetting<uint>(cfgRoot, "ignisOutput");
+    const uint positionOutput = getSetting<uint>(cfgRoot, "positionOutput");
     const uint dumpCoverage = getSetting<uint>(cfgRoot, "dumpCoverage");
 
     rng.initialize(time(nullptr));
-
-    const uint L = 30;
-    const uint W = 30;
 
     const double eTerm = 1-exp(-1/ld);
     const double gamma0 = alpha*Pl/(ld*eTerm);
@@ -125,7 +127,7 @@ int main(int argv, char** argc)
 
     DumpSystem dumper(solver, interval, path);
 
-    if (output)
+    if (positionOutput)
     {
         lattice.addEvent(dumper);
     }
@@ -133,7 +135,7 @@ int main(int argv, char** argc)
     lattice.enableOutput(true, interval);
     lattice.enableProgressReport();
     lattice.enableEventValueStorage(true,
-                                    output,
+                                    ignisOutput,
                                     "ignisSOS.ign",
                                     "/tmp",
                                     interval);
@@ -189,7 +191,7 @@ int main(int argv, char** argc)
 
     DumpSystem dumper2(solver2, interval, path);
 
-    if (output)
+    if (positionOutput)
     {
         lattice2.addEvent(dumper2);
     }
@@ -197,7 +199,7 @@ int main(int argv, char** argc)
     lattice2.enableOutput(true, interval);
     lattice2.enableProgressReport();
     lattice2.enableEventValueStorage(true,
-                                     output,
+                                     ignisOutput,
                                      "ignisSOS2.ign",
                                      "/tmp",
                                      interval);

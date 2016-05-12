@@ -11,3 +11,4 @@ lib/
 fontconfig/
 kmc_dump*
 massif.out.*
+.ipynb_checkpoints/

@@ -113,7 +113,7 @@ def main():
 
             #Completely sealed
             if l != lmax:
-                cval = coverage[-1]
+                cval = L*W
             else:
                 if omega == 0:
                     cval = coverage[start:].mean()
