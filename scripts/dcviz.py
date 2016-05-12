@@ -3363,5 +3363,94 @@ class ExtraNeighbor(DCVizPlotter):
         self.f7.colorbar(im, cax=cbar_ax2)
 
 
+class GPlots(DCVizPlotter):
+
+    nametag = "GPlots.txt"
+
+    hugifyFonts = True
+
+    fig_size = [7, 5]
+
+    def dg_repulsion(self, di, s0, ld):
+        return s0*np.exp(-(di-1)/ld)
+
+    def g_repulsion(self, di, s0, ld):
+        st = s0/(1 - np.exp(-1./ld))
+
+        return st*np.exp(-(di-1)/ld)
+
+    def attraction_orig(self, di, s0, ld):
+        st = s0/(1 - np.exp(-1./ld))
+
+        return -(1 + st)/di**6
+
+    @staticmethod
+    def attraction_corr_serial(di, s0, ld):
+
+        if di >= 2:
+            return 0
+
+        st = s0/(1 - np.exp(-1./ld))
+
+        return -(3*di + 64./di**6 - 7)*(1+st)/60.
+
+    f = None
+    def attraction_corr(self, di, s0, ld):
+
+        if not self.f:
+            self.f = np.vectorize(self.attraction_corr_serial)
+
+        return self.f(di, s0, ld)
+
+    def adjust(self):
+        figname = "figure"
+
+        self.adjust_maps[figname]["right"] = 0.87
+        self.adjust_maps[figname]["left"] = 0.13
+        self.adjust_maps[figname]["top"] = 0.96
+        self.adjust_maps[figname]["bottom"] = 0.15
+
+    def plot(self, data):
+
+        di = np.linspace(1, 3, 1000)
+        s0 = 1.
+        ld = 1.0
+
+        g_rep = self.g_repulsion(di, s0, ld)
+        g_attr = self.attraction_corr(di, s0, ld)
+        g_attr_6 = self.attraction_orig(di, s0, ld)
+
+        styles = ['g-.', 'k--', 'r-', "0.0"]
+
+        self.subfigure.plot(di, g_rep, styles[0], label=r"$G_\lambda$", linewidth=2)
+        self.subfigure.plot(di, g_attr_6, styles[1], label=r"$\sim 1/d_i^6$", linewidth=2)
+        self.subfigure.plot(di, g_attr, styles[2], label=r"$\tilde G_l$", linewidth=2)
+        self.subfigure.plot(di, g_rep + g_attr, styles[3],
+                            label=r"$\tilde G_l + G_\lambda$", linewidth=3, linestyle=":")
+        lg = self.subfigure.legend(loc="center",
+                                   numpoints=1,
+                                   ncol=2,
+                                   handlelength=0.9,
+                                   borderpad=0.2,
+                                   labelspacing=0.2,
+                                   columnspacing=0.3,
+                                   handletextpad=0.25,
+                                   borderaxespad=0.0,
+                                   frameon=False,
+                                   bbox_to_anchor=(0.7, 0.2))
+
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        self.subfigure.set_xlabel(r"$d_i$")
+        self.subfigure.set_ylabel(r"$G(d_i)$")
+
+        self.subfigure.set_xlim(1-0.005, 3)
+
+        def f(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            return r"$%.1f$" % v
+
+        self.subfigure.xaxis.set_major_formatter(FuncFormatter(f))
 
 
