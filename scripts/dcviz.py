@@ -3268,7 +3268,7 @@ class ExtraNeighbor(DCVizPlotter):
                 self.adjust_maps[figname]["right"] = 0.68
                 self.adjust_maps[figname]["left"] = 0.03
 
-            self.adjust_maps[figname]["top"] = 0.97
+            self.adjust_maps[figname]["top"] = 0.95
             self.adjust_maps[figname]["bottom"] = 0.10
             self.adjust_maps[figname]["hspace"] = 0.06
 
@@ -3302,26 +3302,14 @@ class ExtraNeighbor(DCVizPlotter):
         alphas = self.get_family_member_data(data, "alphas")
         Pls = self.get_family_member_data(data, "Pls")
 
-        print omegas
-
-        da = (alphas[1]-alphas[0])/2
-        dp = (Pls[1]-Pls[0])/2
-
         X, Y = np.meshgrid(alphas, Pls, indexing='ij')
-
-        print len(alphas), len(Pls)
-        print X.shape, Y.shape,
-
 
         for io, omega in enumerate(omegas):
             cmat = self.get_family_member_data(data, "cmat_omega%d" % io)
-            print cmat.shape,
 
             null_formatter = FuncFormatter(lambda v, i: "")
 
             for is0, s0 in enumerate(s0s):
-
-                print io, is0
 
                 C = self.trans_mat(cmat[is0, :, :])
 
@@ -3347,9 +3335,14 @@ class ExtraNeighbor(DCVizPlotter):
                 for y, x in zip(*fail):
                     sfig.scatter(x+0.5, y+0.5, c = 'k', marker='x')
 
+                if is0 == 0:
+                    sfig.set_title(r"$\Omega = %.1f$" % omega)
+                    csfig.set_title(r"$\Omega = %.1f$" % omega)
+
                 if io == 0:
-                    sfig.set_ylabel(r"$P_\lambda$")
-                    csfig.set_ylabel(r"$P_\lambda$")
+                    label = r"$F_0/A$"
+                    sfig.set_ylabel(label)
+                    csfig.set_ylabel(label)
                 else:
                     sfig.yaxis.set_ticklabels([])
                     csfig.yaxis.set_ticklabels([])
@@ -3377,8 +3370,9 @@ class ExtraNeighbor(DCVizPlotter):
                     sfig.axes.xaxis.set_major_formatter(null_formatter)
                     csfig.axes.xaxis.set_major_formatter(null_formatter)
                 else:
-                    sfig.set_xlabel(r"$\alpha = E_b/kT$")
-                    csfig.set_xlabel(r"$\alpha = E_b/kT$")
+                    label = r"$E_b/kT$"
+                    sfig.set_xlabel(label)
+                    csfig.set_xlabel(label)
 
                 sfig.set_xlim(0, 16)
                 sfig.set_ylim(0, 20)
@@ -3483,6 +3477,100 @@ class GPlots(DCVizPlotter):
             return r"$%.1f$" % v
 
         self.subfigure.xaxis.set_major_formatter(FuncFormatter(f))
+
+
+class FPlots(DCVizPlotter):
+
+    nametag = "FPlots.txt"
+
+    hugifyFonts = True
+
+    fig_size = [7, 5]
+
+    def f_repulsion(self, di, s0, ld):
+        return -s0*np.exp(-(di-1)/ld)/ld
+
+    @staticmethod
+    def f_attraction_corr_serial(di, s0, ld):
+
+        if di >= 2:
+            return 0
+
+        st = s0/(1 - np.exp(-1./ld))
+
+        return (32./(5*di**7) - 1./20)*(1+st)
+
+    f = None
+    def f_attraction_corr(self, di, s0, ld):
+
+        if not self.f:
+            self.f = np.vectorize(self.f_attraction_corr_serial)
+
+        return self.f(di, s0, ld)
+
+    def adjust(self):
+        figname = "figure"
+
+        self.adjust_maps[figname]["right"] = 0.87
+        self.adjust_maps[figname]["left"] = 0.13
+        self.adjust_maps[figname]["top"] = 0.96
+        self.adjust_maps[figname]["bottom"] = 0.15
+
+    def plot(self, data):
+
+        di = np.linspace(1, 4, 1000)
+        ld = 1.0
+        s0 = 2.0
+
+        r0 = float(self.argv[0])
+        r1 = float(self.argv[1])
+
+        f_rep = self.f_repulsion(di, s0, ld)
+        f_attr = self.f_attraction_corr(di, s0, ld)
+
+        styles = ['g-.', 'k--', 'r-', "0.0"]
+
+        tot = -(f_rep + f_attr)
+        f0 = 0.5*(tot[-1]+tot.max())
+        self.subfigure.plot(di, tot, styles[2],
+                            label=r"$(F_l + F_\lambda)\cdot(-1)$", linewidth=3, linestyle="-")
+        self.subfigure.plot([di[0], di[-1]], [f0, f0], styles[1],
+                            label=r"$F_0$", linewidth=2)
+        self.subfigure.plot([r0], [f0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
+        self.subfigure.plot([r1], [f0], 'go', markersize=10)
+
+
+        lg = self.subfigure.legend(loc="center",
+                                   numpoints=1,
+                                   ncol=1,
+                                   handlelength=0.9,
+                                   borderpad=0.2,
+                                   labelspacing=0.2,
+                                   columnspacing=0.3,
+                                   handletextpad=0.25,
+                                   borderaxespad=0.0,
+                                   frameon=False,
+                                   bbox_to_anchor=(0.725, 0.8))
+
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        self.subfigure.set_xlabel(r"$h_l$", labelpad=10)
+        self.subfigure.set_ylabel(r"$F(h_l)$")
+
+        self.subfigure.set_xlim(1.5, 3.5)
+        ymin = -0.3
+        self.subfigure.set_ylim(f0+ymin, tot.max()-ymin/2)
+
+        def f(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            return r"$%.1f$" % v
+
+        #self.subfigure.xaxis.set_major_formatter(FuncFormatter(f))
+        self.subfigure.xaxis.set_ticks([])
+        self.subfigure.yaxis.set_ticks([])
+
+
 
 
 class Extraneighbor_cluster(DCVizPlotter):
