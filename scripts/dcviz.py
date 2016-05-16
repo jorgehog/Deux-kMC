@@ -3467,7 +3467,7 @@ class GPlots(DCVizPlotter):
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
         self.subfigure.set_xlabel(r"$d_i$")
-        self.subfigure.set_ylabel(r"$G(d_i)$")
+        self.subfigure.set_ylabel(r"$G(d_i)/E_b$")
 
         self.subfigure.set_xlim(1-0.005, 3)
 
@@ -3518,28 +3518,30 @@ class FPlots(DCVizPlotter):
 
     def plot(self, data):
 
-        di = np.linspace(1, 4, 1000)
+        di = np.linspace(1, 6, 1000)
         ld = 1.0
         s0 = 2.0
 
-        r0 = float(self.argv[0])
-        r1 = float(self.argv[1])
+        r0 = 1.67189
+        r1 = 2.3862
 
         f_rep = self.f_repulsion(di, s0, ld)
         f_attr = self.f_attraction_corr(di, s0, ld)
 
         styles = ['g-.', 'k--', 'r-', "0.0"]
 
-        tot = -(f_rep + f_attr)
-        f0 = 0.5*(tot[-1]+tot.max())
+        f0 = 0.5
+        tot = f_rep + f_attr + f0
         self.subfigure.plot(di, tot, styles[2],
-                            label=r"$(F_l + F_\lambda)\cdot(-1)$", linewidth=3, linestyle="-")
-        self.subfigure.plot([di[0], di[-1]], [f0, f0], styles[1],
-                            label=r"$F_0$", linewidth=2)
-        self.subfigure.plot([r0], [f0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
-        self.subfigure.plot([r1], [f0], 'go', markersize=10)
+                            label=r"$F_0 + F_l + F_\lambda$", linewidth=3, linestyle="-")
+        #self.subfigure.plot([di[0], di[-1]], [f0, f0], styles[1],
+        #                    label=r"$F_0$", linewidth=2)
+        self.subfigure.plot([di[0], di[-1]], [0, 0], "k-")
+        self.subfigure.plot([r0], [0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
+        self.subfigure.plot([r1], [0], 'go', markersize=10)
 
 
+        """
         lg = self.subfigure.legend(loc="center",
                                    numpoints=1,
                                    ncol=1,
@@ -3550,25 +3552,34 @@ class FPlots(DCVizPlotter):
                                    handletextpad=0.25,
                                    borderaxespad=0.0,
                                    frameon=False,
-                                   bbox_to_anchor=(0.725, 0.8))
+                                   bbox_to_anchor=(0.725, 0.55))
 
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
+        """
 
         self.subfigure.set_xlabel(r"$h_l$", labelpad=10)
-        self.subfigure.set_ylabel(r"$F(h_l)$")
+        self.subfigure.set_ylabel(r"$F_\mathrm{tot}(h_l)$")
 
-        self.subfigure.set_xlim(1.5, 3.5)
-        ymin = -0.3
-        self.subfigure.set_ylim(f0+ymin, tot.max()-ymin/2)
+        #self.subfigure.set_xlim(1.5, 3.5)
+        ymin = -0.1
+        self.subfigure.set_ylim(tot.min() + ymin, tot[-1] - ymin)
 
         def f(v, i):
-            if int(v) == v:
+            if v == f0:
+                return r"$\mathrm{F_0}$"
+            elif int(v) == v:
                 return r"$%d$" % v
+
             return r"$%.1f$" % v
 
-        #self.subfigure.xaxis.set_major_formatter(FuncFormatter(f))
-        self.subfigure.xaxis.set_ticks([])
-        self.subfigure.yaxis.set_ticks([])
+        self.subfigure.yaxis.set_major_formatter(FuncFormatter(f))
+        self.subfigure.xaxis.set_ticks([1, 2])
+        self.subfigure.yaxis.set_ticks([0, f0])
+
+        x0, x1 = self.subfigure.get_xlim()
+        y0, y1 = self.subfigure.get_ylim()
+        self.subfigure.text(3*x1/4, y0/3,  r"$\mathrm{Repulsion}$", verticalalignment="center", horizontalalignment="center", fontsize=30)
+        self.subfigure.text(3*x1/4, -y0/3, r"$\mathrm{Attraction}$", verticalalignment="center", horizontalalignment="center", fontsize=30)
 
 
 
