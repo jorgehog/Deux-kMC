@@ -83,7 +83,7 @@ int main(int argv, char** argc)
 
     const double Pl = getSetting<double>(cfgRoot, "Pl");
     const double alpha = getSetting<double>(cfgRoot, "alpha");
-    const double omega = getSetting<double>(cfgRoot, "omega");
+    const double omegaShift = getSetting<double>(cfgRoot, "omegaShift");
 
     const double ld = getSetting<double>(cfgRoot, "ld");
     const double s0 = getSetting<double>(cfgRoot, "s0");
@@ -122,7 +122,7 @@ int main(int argv, char** argc)
     lattice.addEvent(rdlSurface);
     lattice.addEvent(diff);
 
-    Coverage coverage(solver, (dumpCoverage == 1) && (omega == 0), interval, nCycles);
+    Coverage coverage(solver, dumpCoverage == 1, interval, nCycles);
     lattice.addEvent(coverage);
 
     DumpSystem dumper(solver, interval, path);
@@ -162,62 +162,82 @@ int main(int argv, char** argc)
      *
      */
 
-    double gamma2 = solver.gamma() + log(1 + omega);
-    SOSSolver solver2(L, W, alpha, gamma2, true);
+    H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "extraneighbor", "h5"));
+    H5Wrapper::Member &simRoot = setuph5(h5root, getProc(argv, argc), L, W);
 
-    setBoundariesFromIDs(&solver2, {0,0,0,0}, L, W);
+    simRoot["alpha"] = alpha;
+    simRoot["omegaShift"] = omegaShift;
+    simRoot["Pl"] = Pl;
+    simRoot["s0"] = s0;
+    simRoot["eq_coverage"] = lattice.storedEventValues().col(0).eval();
+    simRoot["interval"] = interval;
 
-    RDLPotential rdlpotential2(solver2, s0, ld);
-    solver2.addLocalPotential(&rdlpotential2);
-    solver2.registerObserver(&rdlpotential2);
-
-    ExtraNeighbor extraNeighbor2(solver2, s0/eTerm);
-    solver2.addLocalPotential(&extraNeighbor2);
-
-    RDLExtraNeighborSurface rdlSurface2(solver2, rdlpotential2, extraNeighbor2, Pl);
-
-    Diffusion *diff2;
-
-    diff2 = new ConstantConcentration(solver2);
-
-    Lattice lattice2;
-
-    lattice2.addEvent(solver2);
-    lattice2.addEvent(rdlSurface2);
-    lattice2.addEvent(diff2);
-
-    Coverage coverage2(solver2, dumpCoverage == 1, interval, nCycles);
-    lattice2.addEvent(coverage2);
-
-    DumpSystem dumper2(solver2, interval, path);
-
-    if (positionOutput)
+    if (dumpCoverage == 1)
     {
-        lattice2.addEvent(dumper2);
+        simRoot["eq_coverage_matrix"] = coverage.coverage();
     }
 
-    lattice2.enableOutput(true, interval);
-    lattice2.enableProgressReport();
-    lattice2.enableEventValueStorage(true,
-                                     ignisOutput,
-                                     "ignisSOS2.ign",
-                                     "/tmp",
-                                     interval);
-
-    solver2.setHeights(solver.heights(), false);
-    rdlSurface2.setHeight(rdlSurface.height());
-
-    double h;
-
-    if (omega == 0)
+    if (omegaShift == 0)
     {
-        h = rdlSurface.height();
+        return 0;
     }
 
-    else
+    ivec shifts = {-1, 1};
+    vector<string> names = {"pos", "neg"};
+
+    for (const int shift : shifts)
     {
+        double gamma2 = solver.gamma() + log(1 + shift*omegaShift);
+        SOSSolver solver2(L, W, alpha, gamma2, true);
+        setBoundariesFromIDs(&solver2, {0,0,0,0}, L, W);
+
+        RDLPotential rdlpotential2(solver2, s0, ld);
+        solver2.addLocalPotential(&rdlpotential2);
+        solver2.registerObserver(&rdlpotential2);
+
+        ExtraNeighbor extraNeighbor2(solver2, s0/eTerm);
+        solver2.addLocalPotential(&extraNeighbor2);
+
+        RDLExtraNeighborSurface rdlSurface2(solver2, rdlpotential2, extraNeighbor2, Pl);
+
+        ConstantConcentration diff2(solver2);
+
+        Lattice lattice2;
+
+        lattice2.addEvent(solver2);
+        lattice2.addEvent(rdlSurface2);
+        lattice2.addEvent(diff2);
+
+        Coverage coverage2(solver2, dumpCoverage == 1, interval, nCycles);
+        lattice2.addEvent(coverage2);
+
+        DumpSystem dumper2(solver2, interval, path);
+
+        if (positionOutput)
+        {
+            lattice2.addEvent(dumper2);
+        }
+
+        lattice2.enableOutput(true, interval);
+        lattice2.enableProgressReport();
+        lattice2.enableEventValueStorage(true,
+                                         ignisOutput,
+                                         "ignisSOS2.ign",
+                                         "/tmp",
+                                         interval);
+
+        solver2.setHeights(solver.heights(), false);
+        rdlSurface2.setHeight(rdlSurface.height());
+
         lattice2.eventLoop(nCycles);
-        h = rdlSurface2.height();
+
+        const string name = names.at((shift + 1)/2);
+        simRoot[name + "_coverage"] = lattice2.storedEventValues().col(0).eval();
+
+        if (dumpCoverage)
+        {
+            simRoot[name + "_coverage_matrix"] = coverage2.coverage();
+        }
     }
 
 
@@ -226,33 +246,6 @@ int main(int argv, char** argc)
      *
      *
      */
-
-
-    H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "extraneighbor", "h5"));
-    H5Wrapper::Member &simRoot = setuph5(h5root, getProc(argv, argc), L, W);
-
-    simRoot["alpha"] = alpha;
-    simRoot["omega"] = omega;
-    simRoot["Pl"] = Pl;
-    simRoot["s0"] = s0;
-    simRoot["h"] = h;
-    simRoot["eq_coverage"] = lattice.storedEventValues().col(0).eval();
-    simRoot["interval"] = interval;
-
-    if (omega != 0)
-    {
-        simRoot["coverage"] = lattice2.storedEventValues().col(0).eval();
-    }
-
-    if (dumpCoverage == 1)
-    {
-        simRoot["coverage_matrix_eq"] = coverage.coverage();
-
-        if (omega != 0)
-        {
-            simRoot["coverage_matrix"] = coverage2.coverage();
-        }
-    }
 
     return 0;
 }
