@@ -3539,6 +3539,8 @@ class FPlots(DCVizPlotter):
         self.subfigure.plot([di[0], di[-1]], [0, 0], "k-")
         self.subfigure.plot([r0], [0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
         self.subfigure.plot([r1], [0], 'go', markersize=10)
+        self.subfigure.plot([1], [0], 'go', markersize=10)
+
 
 
         """
@@ -3563,6 +3565,7 @@ class FPlots(DCVizPlotter):
         #self.subfigure.set_xlim(1.5, 3.5)
         ymin = -0.1
         self.subfigure.set_ylim(tot.min() + ymin, tot[-1] - ymin)
+        self.subfigure.set_xbound(0.9)
 
         def f(v, i):
             if v == f0:

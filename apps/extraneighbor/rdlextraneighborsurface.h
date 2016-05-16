@@ -15,7 +15,7 @@ public:
     void dumpProfile() const;
 
     //!Returns zero when in mechanical equilibrium and nonzero elsewize.
-    double mechanicalEquilibriumCondition(const double hl) const;
+    double totalForce(const double hl) const;
 
     double totalRepulsion() const;
     double totalAttraction() const;
@@ -30,9 +30,9 @@ private:
 
     void findNewHeight();
 
-    double iteratingExpression(const double hPrev) const;
+//    double iteratingExpression(const double hPrev) const;
 
-    void fixPointIteration();
+//    void fixPointIteration();
 
     void bisection();
     double bisect(const double min, const double max, double fmin,
