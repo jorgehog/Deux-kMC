@@ -285,35 +285,26 @@ void RDLExtraNeighborSurface::bisection()
     const double &currentHeight = height();
     const double currentForce = totalForce(currentHeight);
 
-    double farPoint = bisect(noAttractionHeight, farAttractionHeight, fNoAttraction);
-
-
-    bool chooseFarPoint;
+    double farHeight = bisect(noAttractionHeight, farAttractionHeight, fNoAttraction);
 
     //if we have a net repulsion, we always choose the far point.
     if (currentForce < 0)
     {
-        chooseFarPoint = true;
+        setHeight(farHeight);
     }
 
     else
     {
         //in this case we are attracted untill we reach the far point
-        if (currentHeight > farPoint)
+        if (currentHeight > farHeight)
         {
-            chooseFarPoint = true;
+            setHeight(farHeight);
         }
-    }
 
-
-    if (chooseFarPoint)
-    {
-        setHeight(farPoint);
-    }
-
-    else
-    {
-       setHeight(contactHeight);
+        else
+        {
+            setHeight(contactHeight);
+        }
     }
 }
 
