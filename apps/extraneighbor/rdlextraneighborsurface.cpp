@@ -64,34 +64,10 @@ void RDLExtraNeighborSurface::dumpProfile() const
 
 void RDLExtraNeighborSurface::findNewHeight()
 {
-    const int m = solver().heights().max();
-
-    //in this case there are no attractive surface-particle forces
-    if (height() > m + 2)
-    {
-        const double rdlEquilibrium = getRdlEquilibrium();
-
-        //if the found height is also outside the reach of the attractive interaction,
-        //we set it equal to the pure repulsive/imposed force balance, else
-        //we have to take into account the now added attractions by calling bisection
-        if (rdlEquilibrium > m + 2)
-        {
-            setHeight(rdlEquilibrium);
-        }
-
-        else
-        {
-            bisection();
-        }
-    }
-
-    else
-    {
-        bisection();
-    }
+    bisection();
 
     //we perform checks if the surfaces are not in contact if the forces are indeed balanced.
-    if (height() != m + 1)
+    if (height() != solver().heights().max() + 1)
     {
         BADAssClose(0, totalForce(height()), 1E-10, "hmm", [&] ()
         {
@@ -259,18 +235,11 @@ double RDLExtraNeighborSurface::totalAttraction() const
 
 void RDLExtraNeighborSurface::bisection()
 {
-    //this is where the magic happens.
-
-    const double delta = m_rdlPotential.lD()*log(m_rdlPotential.s0()/m_Pl);
-
     //this is the minimum height the solution can have
     const double contactHeight = solver().heights().max() + 1;
 
     //this is the height at which there are no particle-surface attraction
     const double noAttractionHeight = contactHeight + 1;
-
-    //this is the height at which the total force should be positive.
-    const double farAttractionHeight = noAttractionHeight + delta;
 
     //this is the minimum value of the force
     const double fNoAttraction = totalForce(noAttractionHeight);
@@ -282,13 +251,17 @@ void RDLExtraNeighborSurface::bisection()
         return;
     }
 
-    const double &currentHeight = height();
-    const double currentForce = totalForce(currentHeight);
+    double farHeight = getRdlEquilibrium();
+    BADAssClose(bisect(noAttractionHeight,
+                       noAttractionHeight + 1 + m_rdlPotential.lD()*log(m_rdlPotential.s0()/m_Pl),
+                       fNoAttraction),
+                farHeight,
+                1E-5);
 
-    double farHeight = bisect(noAttractionHeight, farAttractionHeight, fNoAttraction);
+    const double &currentHeight = height();
 
     //if we have a net repulsion, we always choose the far point.
-    if (currentForce < 0)
+    if (totalForce(currentHeight) < 0)
     {
         setHeight(farHeight);
     }

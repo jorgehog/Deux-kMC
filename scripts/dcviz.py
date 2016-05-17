@@ -3560,7 +3560,7 @@ class FPlots(DCVizPlotter):
         """
 
         self.subfigure.set_xlabel(r"$h_l$", labelpad=10)
-        self.subfigure.set_ylabel(r"$F_\mathrm{tot}(h_l)$")
+        self.subfigure.set_ylabel(r"$-F_\mathrm{tot}(h_l)$")
 
         #self.subfigure.set_xlim(1.5, 3.5)
         ymin = -0.1
