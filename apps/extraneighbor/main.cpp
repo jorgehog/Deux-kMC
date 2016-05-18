@@ -107,7 +107,7 @@ int main(int argv, char** argc)
     solver.addLocalPotential(&rdlpotential);
     solver.registerObserver(&rdlpotential);
 
-    ExtraNeighbor extraNeighbor(solver, s0/eTerm);
+    ExtraNeighbor extraNeighbor(solver);
     solver.addLocalPotential(&extraNeighbor);
 
     RDLExtraNeighborSurface rdlSurface(solver, rdlpotential, extraNeighbor, Pl);
@@ -193,7 +193,7 @@ int main(int argv, char** argc)
         solver2.addLocalPotential(&rdlpotential2);
         solver2.registerObserver(&rdlpotential2);
 
-        ExtraNeighbor extraNeighbor2(solver2, s0/eTerm);
+        ExtraNeighbor extraNeighbor2(solver2);
         solver2.addLocalPotential(&extraNeighbor2);
 
         RDLExtraNeighborSurface rdlSurface2(solver2, rdlpotential2, extraNeighbor2, Pl);

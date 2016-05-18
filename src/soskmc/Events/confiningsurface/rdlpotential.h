@@ -28,8 +28,6 @@ public:
 
     static double expSmallArg(double arg);
 
-    static constexpr int m_shift = 1; //tmp
-
 private:
 
     double m_expFac;

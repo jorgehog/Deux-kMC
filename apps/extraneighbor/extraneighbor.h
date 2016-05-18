@@ -5,13 +5,9 @@
 class ExtraNeighbor : public LocalCachedPotential
 {
 public:
-    ExtraNeighbor(SOSSolver &solver, const double energyShift);
+    ExtraNeighbor(SOSSolver &solver);
 
     double energyFunction(const double dh) const;
-
-private:
-
-    const double m_energyShift;
 
     // Observer interface
 public:

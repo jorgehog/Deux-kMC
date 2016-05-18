@@ -145,7 +145,7 @@ void RDLSurface::initializeObserver(const Subjects &subject)
 
     setupTheta();
 
-    setHeight(RDLPotential::m_shift + m_ldLogThetaPrev + m_potential.lD()*std::log(m_potential.s0()/(m_Pl*solver().area())));
+    setHeight(1 + m_ldLogThetaPrev + m_potential.lD()*std::log(m_potential.s0()/(m_Pl*solver().area())));
 
 }
 

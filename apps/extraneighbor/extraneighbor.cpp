@@ -1,8 +1,7 @@
 #include "extraneighbor.h"
 
-ExtraNeighbor::ExtraNeighbor(SOSSolver &solver, const double energyShift) :
-    LocalCachedPotential(solver),
-    m_energyShift(energyShift)
+ExtraNeighbor::ExtraNeighbor(SOSSolver &solver) :
+    LocalCachedPotential(solver)
 {
     solver.registerObserver(this);
 }
@@ -21,7 +20,7 @@ double ExtraNeighbor::energyFunction(const double dh) const
         const double dh2 = dh*dh;
         const double dh6 = dh2*dh2*dh2;
 
-        return (3*dh + 64/dh6 - 7)*(1 + m_energyShift)/60;
+        return (3*dh + 64/dh6 - 7)/60.;
     }
 }
 

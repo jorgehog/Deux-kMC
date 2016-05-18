@@ -17,7 +17,11 @@ double LocalCachedPotential::sum() const
 
 double LocalCachedPotential::potential(const uint x, const uint y) const
 {
-    BADAssClose(m_potentialValues(x, y), potentialFunction(x, y), 1E-5);
+    BADAssClose(m_potentialValues(x, y), potentialFunction(x, y), 1E-5, "incorrect cache", [&] ()
+    {
+        BADAssSimpleDump(m_potentialValues(x, y),
+                         potentialFunction(x, y));
+    });
     return m_potentialValues(x, y);
 }
 

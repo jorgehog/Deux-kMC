@@ -15,7 +15,12 @@ RDLPotential::RDLPotential(SOSSolver &solver,
 
 double RDLPotential::rdlEnergy(const double dh) const
 {
-    return -m_s0*std::exp(-(dh-m_shift)/m_lD);
+    if (dh == 1)
+    {
+        return 0.;
+    }
+
+    return -m_s0*std::exp(-(dh-1)/m_lD);
 }
 
 double RDLPotential::expSmallArg(double arg)
@@ -76,21 +81,31 @@ void RDLPotential::notifyObserver(const kMC::Subjects &subject)
             for (uint y = 0; y < solver().width(); ++y)
             {
                 SurfaceReaction &reaction = solver().surfaceReaction(x, y);
+                const double dhi = solver().confiningSurfaceEvent().height() - solver().height(x, y);
 
-                double rateChange = expSmallArg(-solver().alpha()*m_potentialValues(x, y)*(m_expFac - 1));
-
-                //For every affected particle we update only those who include the pressure term.
-                //Vector is set up in initialize based on virtual reaction function isPressureAffected().
-
-                double prevDiffRate = reaction.escapeRate();
-                reaction.setEscapeRate(prevDiffRate*rateChange);
-
-                m_potentialValues(x, y) *= m_expFac;
-
-                BADAssClose(potentialFunction(x, y), m_potentialValues(x, y), 1E-5, "incorrect pressure update", [&] ()
+                if (m_potentialValues(x, y) == 0 || dhi == 1)
                 {
-                    BADAssSimpleDump(x, y, rateChange, m_potentialValues(x, y), m_expFac, dh);
-                });
+                    m_potentialValues(x, y) = potentialFunction(x, y);
+                    reaction.calculateRate();
+                }
+
+                else
+                {
+                    double rateChange = expSmallArg(-solver().alpha()*m_potentialValues(x, y)*(m_expFac - 1));
+
+                    //For every affected particle we update only those who include the pressure term.
+                    //Vector is set up in initialize based on virtual reaction function isPressureAffected().
+
+                    double prevDiffRate = reaction.escapeRate();
+                    reaction.setEscapeRate(prevDiffRate*rateChange);
+
+                    m_potentialValues(x, y) *= m_expFac;
+
+                    BADAssClose(potentialFunction(x, y), m_potentialValues(x, y), 1E-5, "incorrect pressure update", [&] ()
+                    {
+                        BADAssSimpleDump(x, y, dhi, rateChange, m_potentialValues(x, y), m_expFac, dh);
+                    });
+                }
             }
         }
 
