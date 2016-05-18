@@ -9,7 +9,7 @@ RDLExtraNeighborSurface::RDLExtraNeighborSurface(SOSSolver &solver,
     m_rdlPotential(rdlPotential),
     m_extraNeighborPotential(extraNeighborPotential),
     m_Pl(Pl),
-    m_nFactor(rdlPotential.lD()*(1 - exp(-1/rdlPotential.lD()) + rdlPotential.s0())/20)
+    m_nFactor(rdlPotential.lD()*(1 - exp(-1/rdlPotential.lD()))/20)
 {
     registerObserver(&rdlPotential);
     registerObserver(&extraNeighborPotential);

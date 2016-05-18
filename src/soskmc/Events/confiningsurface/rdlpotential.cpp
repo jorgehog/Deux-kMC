@@ -86,7 +86,7 @@ void RDLPotential::notifyObserver(const kMC::Subjects &subject)
                 if (m_potentialValues(x, y) == 0 || dhi == 1)
                 {
                     m_potentialValues(x, y) = potentialFunction(x, y);
-                    reaction.calculateRate();
+                    solver().registerAffectedReaction(&reaction);
                 }
 
                 else

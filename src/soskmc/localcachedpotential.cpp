@@ -22,6 +22,7 @@ double LocalCachedPotential::potential(const uint x, const uint y) const
         BADAssSimpleDump(m_potentialValues(x, y),
                          potentialFunction(x, y));
     });
+
     return m_potentialValues(x, y);
 }
 
