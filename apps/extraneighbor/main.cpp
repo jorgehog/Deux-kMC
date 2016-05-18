@@ -198,7 +198,7 @@ int main(int argv, char** argc)
 
         RDLExtraNeighborSurface rdlSurface2(solver2, rdlpotential2, extraNeighbor2, Pl);
 
-        ConfinedConstantConcentration diff2(solver2);
+        ConstantConcentration diff2(solver2);
 
         Lattice lattice2;
 
