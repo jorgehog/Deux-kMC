@@ -26,6 +26,8 @@ public:
 
     double rdlEnergy(const double dh) const;
 
+    double rdlEnergyDeriv(const double dh) const;
+
     static double expSmallArg(double arg);
 
 private:

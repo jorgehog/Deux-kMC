@@ -185,7 +185,7 @@ int main(int argv, char** argc)
 
     for (const int shift : shifts)
     {
-        double gamma2 = solver.gamma() + log(1 + shift*omegaShift);
+        const double gamma2 = solver.gamma() + log(1 + shift*omegaShift);
         SOSSolver solver2(L, W, alpha, gamma2, true);
         setBoundariesFromIDs(&solver2, {0,0,0,0}, L, W);
 
@@ -198,7 +198,7 @@ int main(int argv, char** argc)
 
         RDLExtraNeighborSurface rdlSurface2(solver2, rdlpotential2, extraNeighbor2, Pl);
 
-        ConstantConcentration diff2(solver2);
+        ConfinedConstantConcentration diff2(solver2);
 
         Lattice lattice2;
 
@@ -237,7 +237,6 @@ int main(int argv, char** argc)
             simRoot[name + "_coverage_matrix"] = coverage2.coverage();
         }
     }
-
 
     /*
      *

@@ -23,6 +23,11 @@ double RDLPotential::rdlEnergy(const double dh) const
     return -m_s0*std::exp(-(dh-1)/m_lD);
 }
 
+double RDLPotential::rdlEnergyDeriv(const double dh) const
+{
+    return -rdlEnergy(dh)/m_lD;
+}
+
 double RDLPotential::expSmallArg(double arg)
 {
     if (arg > 0.1 || arg < -0.1)
@@ -73,6 +78,11 @@ void RDLPotential::notifyObserver(const kMC::Subjects &subject)
         const CurrentConfinementChange &ccc = solver().confiningSurfaceEvent().currentConfinementChange();
 
         double dh = solver().confiningSurfaceEvent().height() - ccc.prevHeight;
+
+        if (fabs(dh) < 1E-16)
+        {
+            return;
+        }
 
         m_expFac = expSmallArg(-dh/m_lD);
 

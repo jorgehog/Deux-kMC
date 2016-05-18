@@ -10,11 +10,13 @@ public:
                             RDLPotential &rdlPotential,
                             ExtraNeighbor &extraNeighborPotential, const double Pl);
 
-    double getRdlEquilibrium();
+    double getRdlEquilibrium() const;
 
     void dumpProfile() const;
 
     double totalForce(const double hl) const;
+
+    double totalForceDeriv(const double hl) const;
 
     double totalWdVAttraction(const double hl) const;
 
@@ -28,7 +30,7 @@ private:
 
     void findNewHeight();
 
-    double getHeightBisection();
+    double getHeightBisection() const;
     double bisect(const double min, const double max, double fmin,
                   const double eps=1E-12,
                   const uint nMax = std::numeric_limits<uint>::max()) const;
