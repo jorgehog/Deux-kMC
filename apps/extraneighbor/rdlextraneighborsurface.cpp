@@ -163,6 +163,13 @@ double RDLExtraNeighborSurface::getHeightBisection() const
     //this is the minimum height the solution can have
     const int contactHeight = solver().heights().max() + 1;
 
+    const double rdlEquilibrium = getRdlEquilibrium();
+
+    if (rdlEquilibrium > contactHeight + 1)
+    {
+        return rdlEquilibrium;
+    }
+
     double hNegative;
 
     if (totalForce(contactHeight) < 0)
@@ -172,9 +179,10 @@ double RDLExtraNeighborSurface::getHeightBisection() const
 
     else
     {
+        const uint nMax = 1000;
         uint n = 1;
         double dF;
-        hNegative = contactHeight + 1;
+        hNegative = rdlEquilibrium;
         const double delta = 1.0;
         do
         {
@@ -182,11 +190,9 @@ double RDLExtraNeighborSurface::getHeightBisection() const
             hNegative -= delta*dF/pow(n, 0.5);
             n++;
 
-            if (n > 1000)
+            if (n > nMax)
             {
-                dumpProfile();
-                cout << "TOO MANY ITEERS" << endl;
-                exit(1);
+                return contactHeight;
             }
 
             if (totalForce(hNegative) < 0)
@@ -211,7 +217,7 @@ double RDLExtraNeighborSurface::getHeightBisection() const
     //outside range of interactions
     if (hNegative > contactHeight + 1)
     {
-        farHeight = getRdlEquilibrium();
+        farHeight = rdlEquilibrium;
     }
 
     else
