@@ -20,8 +20,8 @@ def main():
     alphas = []
     Pls = []
     s0s = []
-    omegas = []
     lmax = 0
+    omegashift = None
 
     for data, L, W, run_id in parser:
 
@@ -46,19 +46,17 @@ def main():
         if s0 not in s0s:
             s0s.append(s0)
 
-        try:
-            omega = data.attrs["omega"]
-            omega = round(omega, 3)
-        except Exception as inst:
-            print inst
-            omega = 0
+        if not omegashift:
+            omegashift = data.attrs["omegaShift"]
+        else:
+            if data.attrs["omegaShift"] != omegashift:
+                raise RuntimeError("invalid omegaShift in datasets.")
 
-        if omega not in omegas:
-            omegas.append(omega)
-
-        l = len(data["coverage"])
+        l = data["eq_coverage"].shape[1]
         if l > lmax:
             lmax = l
+
+    omegas = [-omegashift, 0, omegashift]
 
     Pls = sorted(Pls)
     s0s = sorted(s0s)
@@ -70,67 +68,74 @@ def main():
     np.save("/tmp/extraneighbor_alphas.npy", alphas)
     np.save("/tmp/extraneighbor_Pls.npy", Pls)
 
-    for this_io, omega in enumerate(omegas):
+    all_cmat = {}
+    all_ccounts = {}
 
-        cmat = np.zeros(shape=(len(s0s), len(alphas), len(Pls)))
-        ccounts = np.zeros_like(cmat)
+    all_cmat["neg"] = np.zeros(shape=(len(s0s), len(alphas), len(Pls)))
+    all_cmat["eq"] = np.zeros_like(all_cmat["neg"])
+    all_cmat["pos"] = np.zeros_like(all_cmat["neg"])
 
-        for data, L, W, run_id in parser:
+    all_ccounts["neg"] = np.zeros_like(all_cmat["neg"])
+    all_ccounts["eq"] = np.zeros_like(all_cmat["neg"])
+    all_ccounts["pos"] = np.zeros_like(all_cmat["neg"])
 
-            try:
-                omega = data.attrs["omega"]
-                omega = round(omega, 3)
-            except Exception as inst:
-                print inst
-                omega = 0.0
+    for data, L, W, run_id in parser:
 
-            io = omegas.index(omega)
+        alpha = data.attrs["alpha"]
+        alpha = round(alpha, 3)
+        ia = alphas.index(alpha)
 
-            if io != this_io:
+        Pl = data.attrs["Pl"]
+        Pl = round(Pl, 3)
+        ipl = Pls.index(Pl)
+
+        s0 = data.attrs["s0"]
+        s0 = round(s0, 3)
+        is0 = s0s.index(s0)
+
+        for io, name in enumerate(["neg", "eq", "pos"]):
+
+            if name != "eq":
                 continue
 
-            alpha = data.attrs["alpha"]
-            alpha = round(alpha, 3)
-            ia = alphas.index(alpha)
+            cmat = all_cmat[name]
+            ccounts = all_ccounts[name]
 
-            Pl = data.attrs["Pl"]
-            Pl = round(Pl, 3)
-            ipl = Pls.index(Pl)
-
-            try:
-                s0 = data.attrs["s0"]
-                s0 = round(s0, 3)
-            except Exception as inst:
-                print inst
-                s0 = 1.0
-
-            is0 = s0s.index(s0)
-
-            coverage = data["coverage"][()]
+            coverage = data[name + "_coverage"][(0)]
 
             l = len(coverage)
-            start = (9*l)/10
+            start = l/2
 
             #Completely sealed
             if l != lmax:
                 cval = L*W
             else:
-                if omega == 0:
+                #equilibrium
+                if io == 1:
                     cval = coverage[start:].mean()
 
+                    # plab.plot(coverage[start:])
+                    # print alpha, Pl, s0, cval
+                    # plab.show()
+
                 else:
+                    print name, alpha, Pl, s0
+                    plab.plot(coverage)
+                    plab.show()
+
                     X = argrelextrema(coverage[start:], np.greater)
+
+                    print X
 
                     if len(X[0]) != 0:
                         cval = coverage[start:][X].mean()
 
-                        # if omega < 0 and cval > 100 and cval < 800:
-                        #     print omega, s0, Pl, alpha
-                        #     plab.plot(coverage[start:])
-                        #     plab.hold('on')
-                        #     plab.plot(X[0], coverage[start:][X], 'ro')
-                        #     plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
-                        #     plab.show()
+                        print name, s0, Pl, alpha
+                        plab.plot(coverage[start:])
+                        plab.hold('on')
+                        plab.plot(X[0], coverage[start:][X], 'ro')
+                        plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
+                        plab.show()
                     else:
                         cval = coverage[start:].mean()
 
@@ -141,14 +146,16 @@ def main():
             # print alpha, Pl, s0, cval
             # plab.show()
 
+    for io, name in enumerate(["neg", "eq", "pos"]):
+        cmat = all_cmat[name]
+        ccounts = all_ccounts[name]
+
         I = np.where(ccounts != 0)
         J = np.where(ccounts == 0)
 
         cmat[I] /= ccounts[I]
         cmat[J] = -1
-
-        np.save("/tmp/extraneighbor_cmat_omega%d.npy" % this_io, cmat)
-
+        np.save("/tmp/extraneighbor_cmat_omega%d.npy" % (2-io), cmat)
 
 if __name__ == "__main__":
     main()

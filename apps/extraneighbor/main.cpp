@@ -112,9 +112,7 @@ int main(int argv, char** argc)
 
     RDLExtraNeighborSurface rdlSurface(solver, rdlpotential, extraNeighbor, Pl);
 
-    Diffusion *diff;
-
-    diff = new ConfinedConstantConcentration(solver);
+    ConfinedConstantConcentration diff(solver);
 
     Lattice lattice;
 
@@ -144,7 +142,7 @@ int main(int argv, char** argc)
     const double h0 = rdlSurface.getRdlEquilibrium();
     const int hm = solver.heights().max();
 
-    if (hm > h0 - 1)
+    if (h0 < hm + 1)
     {
         rdlSurface.setHeight(hm+1);
     }
@@ -182,7 +180,7 @@ int main(int argv, char** argc)
         return 0;
     }
 
-    ivec shifts = {-1, 1};
+    ivec shifts = {1, -1};
     vector<string> names = {"pos", "neg"};
 
     for (const int shift : shifts)

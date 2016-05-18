@@ -14,11 +14,9 @@ public:
 
     void dumpProfile() const;
 
-    //!Returns zero when in mechanical equilibrium and nonzero elsewize.
     double totalForce(const double hl) const;
 
-    double totalRepulsion() const;
-    double totalAttraction() const;
+    double totalWdVAttraction(const double hl) const;
 
 private:
 
@@ -30,11 +28,7 @@ private:
 
     void findNewHeight();
 
-//    double iteratingExpression(const double hPrev) const;
-
-//    void fixPointIteration();
-
-    void bisection();
+    double getHeightBisection();
     double bisect(const double min, const double max, double fmin,
                   const double eps=1E-12,
                   const uint nMax = std::numeric_limits<uint>::max()) const;

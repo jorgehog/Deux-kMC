@@ -3219,7 +3219,7 @@ class AutoCorrWoot(DCVizPlotter):
 
 class ExtraNeighbor(DCVizPlotter):
 
-    nametag = "extraneighbor_(.*)\.npy"
+    nametag = "^extraneighbor_(.*)\.npy"
 
     isFamilyMember = True
 
@@ -3316,14 +3316,14 @@ class ExtraNeighbor(DCVizPlotter):
                 sfig = eval("self.subfigure%d%d" % (io+1, is0+1))
                 csfig = eval("self.csubfigure%d%d" % (io+1, is0+1))
 
-                im = sfig.pcolor(C.transpose(), vmin=0, vmax=1, cmap="gist_earth_r")
+                im = sfig.pcolor(C.transpose(), vmax=1, cmap="gist_earth_r")
 
-                d = 0.1
-                levs = [-1] + [d*i for i in range(1, int(1/d + 1))]
-                if 1 not in levs:
-                    levs = levs + [1]
+                # d = 0.1
+                # levs = [-1] + [d*i for i in range(1, int(1/d + 1))]
+                # if 1 not in levs:
+                #     levs = levs + [1]
 
-                im2 = csfig.contourf(X, Y, C, vmin=0, vmax=1, cmap="gist_earth_r", levels=levs)
+                im2 = csfig.contourf(X, Y, C, vmax=1, cmap="gist_earth_r")#, levels=levs)
 
                 fail = np.where(C == -1)
 
@@ -3620,3 +3620,21 @@ class Extraneighbor_cluster(DCVizPlotter):
         self.subfigure4.plot(np.log(ngained), "g")
         self.subfigure5.plot(size/circs)
 
+
+class ExtraneighborTest(DCVizPlotter):
+
+    nametag = "test_extraneighbor_(.*)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    def plot(self, data):
+
+        Pls = self.get_family_member_data(data, "Pls")
+        covs = self.get_family_member_data(data, "covs")
+
+        self.subfigure.plot(Pls, covs, "ks")
+
+        self.subfigure.set_xlabel("Pl")
+        self.subfigure.set_ylabel("cov")
