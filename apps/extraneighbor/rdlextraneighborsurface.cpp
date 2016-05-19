@@ -9,7 +9,8 @@ RDLExtraNeighborSurface::RDLExtraNeighborSurface(SOSSolver &solver,
     m_rdlPotential(rdlPotential),
     m_extraNeighborPotential(extraNeighborPotential),
     m_Pl(Pl),
-    m_nFactor(rdlPotential.lD()*(1 - exp(-1/rdlPotential.lD()))/20)
+    m_nFactor(rdlPotential.lD()*(1 - exp(-1/rdlPotential.lD()))/20),
+    m_prevMinSet(false)
 {
     registerObserver(&rdlPotential);
     registerObserver(&extraNeighborPotential);
@@ -50,16 +51,19 @@ void RDLExtraNeighborSurface::dumpProfile() const
 {
     const int m = solver().heights().max();
 
-    vec hls = linspace(m+1, m+5);
-    vec Fs(hls.size());
+    vec hls = linspace(m+1, m+4);
+
+    mat res(2, hls.size());
 
     for (uint i = 0; i < hls.size(); ++i)
     {
-        Fs(i) = totalForce(hls(i));
+        res(0, i) = hls(i);
+        res(1, i) = totalForce(hls(i));
     }
 
-    hls.save("/tmp/mechEqHls.arma");
-    Fs.save("/tmp/mechEqFs.arma");
+    string ending = to_string(cycle()) + ".arma";
+
+    res.save("/tmp/mechEq" + ending);
 }
 
 void RDLExtraNeighborSurface::findNewHeight()
@@ -147,7 +151,11 @@ double RDLExtraNeighborSurface::totalWdVAttraction(const double hl) const
     return extraNeighborContribution*m_nFactor;
 }
 
-double RDLExtraNeighborSurface::getHeightBisection() const
+//! First we find a negative point,
+//! and then we find the far equilibrium by bisection
+//! then we decide which equilibrium to choose
+//! based on the current force.
+double RDLExtraNeighborSurface::getHeightBisection()
 {
     const double &currentHeight = height();
 
@@ -170,46 +178,49 @@ double RDLExtraNeighborSurface::getHeightBisection() const
         return rdlEquilibrium;
     }
 
-    double hNegative;
+    const double contactForce = totalForce(contactHeight);
 
-    if (totalForce(contactHeight) < 0)
+    //if the maximum left value is negative there
+    //is no need to use bisection to obtain a negative value
+    double hNegative;
+    double minForce;
+    if (contactForce < 0)
     {
         hNegative = contactHeight;
+        minForce = contactForce;
     }
 
     else
     {
-        const uint nMax = 1000;
-        uint n = 1;
-        double dF;
-        hNegative = rdlEquilibrium;
-        const double delta = 1.0;
-        do
+        bool bisectForMin = true;
+        if (m_prevMinSet)
         {
-            dF = totalForceDeriv(hNegative);
-            hNegative -= delta*dF/pow(n, 0.5);
-            n++;
+            const double prevForce = totalForce(m_prevMin);
+            if (prevForce < 0)
+            {
+                hNegative = m_prevMin;
+                bisectForMin = false;
+                minForce = prevForce;
+            }
+        }
 
-            if (n > nMax)
+        if (bisectForMin)
+        {
+            hNegative = bisectMinima(contactHeight,
+                                     contactHeight + 2,
+                                     totalForceDeriv(contactHeight),
+                                     1E-3);
+
+            m_prevMinSet = true;
+            m_prevMin = hNegative;
+            minForce = totalForce(hNegative);
+
+            //no equilibriums (roots)
+            if (minForce > 0)
             {
                 return contactHeight;
             }
-
-            if (totalForce(hNegative) < 0)
-            {
-                break;
-            }
-
-        } while (fabs(dF) > 0.01);
-
-    }
-
-    const double negForce = totalForce(hNegative);
-
-    //no equilibriums (roots)
-    if (negForce > 0)
-    {
-        return contactHeight;
+        }
     }
 
     double farHeight;
@@ -222,13 +233,14 @@ double RDLExtraNeighborSurface::getHeightBisection() const
 
     else
     {
+        //DERP
         double hPositive = hNegative+1;
         while (totalForce(hPositive) < 0)
         {
             hPositive++;
         }
 
-        farHeight = bisect(hNegative, hPositive, negForce);
+        farHeight = bisect(hNegative, hPositive, minForce);
     }
 
     //repulsion always implies we choose the far point
@@ -295,9 +307,54 @@ double RDLExtraNeighborSurface::bisect(double min,
     return mid;
 }
 
+
+double RDLExtraNeighborSurface::bisectMinima(double min,
+                                             double max,
+                                             double fmin,
+                                             const double eps,
+                                             const uint nMax) const
+{
+    BADAss(min, <, max, "hmm", [&] ()
+    {
+        dumpProfile();
+    });
+
+    double fmid;
+    double mid = 0;
+
+    uint n = 0;
+    while ((n < nMax) && (max - min > eps))
+    {
+        mid = 0.5*(min + max);
+        fmid = totalForceDeriv(mid);
+
+        if ((mid == max) || (mid == min) || fmid == 0)
+        {
+            break;
+        }
+
+        else if (fmid*fmin < 0)
+        {
+            max = mid;
+        }
+
+        else
+        {
+            min = mid;
+            fmin = fmid;
+        }
+
+        n++;
+    }
+
+    return mid;
+}
+
 void RDLExtraNeighborSurface::initializeObserver(const Subjects &subject)
 {
     (void) subject;
+
+    m_prevMinSet = false;
 
     findNewHeight();
 }
@@ -323,7 +380,9 @@ void RDLExtraNeighborSurface::notifyObserver(const Subjects &subject)
 
 void RDLExtraNeighborSurface::execute()
 {
-
+#ifndef NDEBUG
+    dumpProfile();
+#endif
 }
 
 bool RDLExtraNeighborSurface::hasSurface() const

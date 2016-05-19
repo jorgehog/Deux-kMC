@@ -2841,18 +2841,14 @@ class MechEq(DCVizPlotter):
 
     isFamilyMember = True
 
+    loadLatest = True
+
     hugifyFonts = True
 
     def plot(self, data):
-
-        hls = self.get_family_member_data(data, "Hls");
-        Fs = self.get_family_member_data(data, "Fs");
-
+        hls, Fs = data
         self.subfigure.plot(hls, Fs)
-
-        print Fs.min()
-
-        self.subfigure.set_ylim(-0.5, 0.5)
+        self.subfigure.plot([hls[0], hls[-1]], [0, 0], "k--")
 
 
 class mftpc(DCVizPlotter):

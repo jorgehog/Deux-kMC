@@ -30,10 +30,16 @@ private:
 
     void findNewHeight();
 
-    double getHeightBisection() const;
+    double getHeightBisection();
     double bisect(const double min, const double max, double fmin,
                   const double eps=1E-12,
                   const uint nMax = std::numeric_limits<uint>::max()) const;
+    double bisectMinima(const double min, const double max, double fmin,
+                        const double eps=1E-12,
+                        const uint nMax = std::numeric_limits<uint>::max()) const;
+
+    double m_prevMin;
+    bool m_prevMinSet;
 
     // Observer interface
 public:
