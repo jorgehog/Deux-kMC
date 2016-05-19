@@ -185,6 +185,7 @@ int main(int argv, char** argc)
 
     for (const int shift : shifts)
     {
+        if (shift == 1) continue;
         const double gamma2 = solver.gamma() + log(1 + shift*omegaShift);
         SOSSolver solver2(L, W, alpha, gamma2, true);
         setBoundariesFromIDs(&solver2, {0,0,0,0}, L, W);

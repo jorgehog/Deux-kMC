@@ -3317,12 +3317,13 @@ class ExtraNeighbor(DCVizPlotter):
 
                 im = sfig.pcolor(C.transpose(), vmax=1, cmap="gist_earth_r")
 
-                # d = 0.1
-                # levs = [-1] + [d*i for i in range(1, int(1/d + 1))]
-                # if 1 not in levs:
-                #     levs = levs + [1]
+                d = 0.1
+                levs = [-1] + [d*i for i in range(1, int(1/d + 1))]
+                if 1 not in levs:
+                    levs = levs + [1]
 
-                im2 = csfig.contourf(X, Y, C, vmax=1, cmap="gist_earth_r")#, levels=levs)
+                levs = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+                im2 = csfig.contourf(X, Y, C, vmax=1, cmap="gist_earth_r", levels=levs)
 
                 fail = np.where(C == -1)
 
@@ -3373,8 +3374,8 @@ class ExtraNeighbor(DCVizPlotter):
                     sfig.set_xlabel(label)
                     csfig.set_xlabel(label)
 
-                sfig.set_xlim(0, 16)
-                sfig.set_ylim(0, 20)
+                sfig.set_xlim(0, len(alphas))
+                sfig.set_ylim(0, len(F0s))
 
         cbar_ax = self.f4.add_axes([0.85, 0.2, 0.05, 0.7])
         cbar_ax2 = self.f7.add_axes([0.85, 0.2, 0.05, 0.7])

@@ -104,7 +104,7 @@ def main():
             coverage = data[name + "_coverage"][(0)]
 
             l = len(coverage)
-            start = l/2
+            start = -1000
 
             #Completely sealed
             if l != lmax:
@@ -114,7 +114,7 @@ def main():
                 if io == 1:
                     cval = coverage[start:].mean()
 
-                    plab.plot(coverage[start:])
+                    plab.plot(coverage)
                     #print alpha, Pl, s0, cval
                     #plab.show()
 
