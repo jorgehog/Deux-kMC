@@ -3297,8 +3297,11 @@ class ExtraNeighbor(DCVizPlotter):
         s0s = self.get_family_member_data(data, "s0s")
         alphas = self.get_family_member_data(data, "alphas")
         Pls = self.get_family_member_data(data, "Pls")
+        ld = 5.0
+        conv = ld*(1-exp(-1./ld))
+        F0s = Pls/conv
 
-        X, Y = np.meshgrid(alphas, Pls, indexing='ij')
+        X, Y = np.meshgrid(alphas, F0s, indexing='ij')
 
         for io, omega in enumerate(omegas):
             cmat = self.get_family_member_data(data, "cmat_omega%d" % io)

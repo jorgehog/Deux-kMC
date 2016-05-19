@@ -114,14 +114,14 @@ def main():
                 if io == 1:
                     cval = coverage[start:].mean()
 
-                    # plab.plot(coverage[start:])
-                    # print alpha, Pl, s0, cval
-                    # plab.show()
+                    plab.plot(coverage[start:])
+                    #print alpha, Pl, s0, cval
+                    #plab.show()
 
                 else:
                     print name, alpha, Pl, s0
                     plab.plot(coverage)
-                    plab.show()
+                    #plab.show()
 
                     X = argrelextrema(coverage[start:], np.greater)
 
@@ -130,12 +130,12 @@ def main():
                     if len(X[0]) != 0:
                         cval = coverage[start:][X].mean()
 
-                        print name, s0, Pl, alpha
-                        plab.plot(coverage[start:])
-                        plab.hold('on')
-                        plab.plot(X[0], coverage[start:][X], 'ro')
-                        plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
-                        plab.show()
+                        # print name, s0, Pl, alpha
+                        # plab.plot(coverage[start:])
+                        # plab.hold('on')
+                        # plab.plot(X[0], coverage[start:][X], 'ro')
+                        # plab.plot([0, len(coverage[start:]) - 1], [cval, cval], "k-")
+                        # plab.show()
                     else:
                         cval = coverage[start:].mean()
 
@@ -144,7 +144,7 @@ def main():
 
             # plab.plot(coverage)
             # print alpha, Pl, s0, cval
-            # plab.show()
+    plab.show()
 
     for io, name in enumerate(["neg", "eq", "pos"]):
         cmat = all_cmat[name]
