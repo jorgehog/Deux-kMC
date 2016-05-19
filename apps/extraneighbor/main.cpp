@@ -67,6 +67,51 @@ public:
     }
 };
 
+class DetectZeroCoverage : public SOSEvent
+{
+public:
+    DetectZeroCoverage(const Coverage *coverage, const uint nBeforeBreak) :
+        SOSEvent(coverage->solver(), "DetectZeroCoverage"),
+        m_coverage(coverage),
+        m_nBeforeBreak(nBeforeBreak)
+    {
+        setDependency(coverage);
+    }
+
+private:
+
+    const Coverage *m_coverage;
+    const uint m_nBeforeBreak;
+
+    uint n;
+
+
+    // Event interface
+public:
+    void execute()
+    {
+        if (n >= m_nBeforeBreak)
+        {
+            terminateLoop("The coverage is zero. Ending...");
+        }
+
+        if (m_coverage->value() == 0)
+        {
+            n++;
+        }
+
+        else
+        {
+            n = 0;
+        }
+
+    }
+    void initialize()
+    {
+        n = 0;
+    }
+};
+
 int main(int argv, char** argc)
 {
     string cfgName = getCfgName(argv, argc, "extraneighbor");
@@ -93,6 +138,8 @@ int main(int argv, char** argc)
     const uint ignisOutput = getSetting<uint>(cfgRoot, "ignisOutput");
     const uint positionOutput = getSetting<uint>(cfgRoot, "positionOutput");
     const uint dumpCoverage = getSetting<uint>(cfgRoot, "dumpCoverage");
+
+    const uint nZerosBeforeTermination = 10000;
 
     rng.initialize(time(nullptr));
 
@@ -122,6 +169,9 @@ int main(int argv, char** argc)
 
     Coverage coverage(solver, dumpCoverage == 1, interval, nCycles);
     lattice.addEvent(coverage);
+
+    DetectZeroCoverage detectZeroCoverage(&coverage, nZerosBeforeTermination);
+    lattice.addEvent(detectZeroCoverage);
 
     DumpSystem dumper(solver, interval, path);
 
@@ -208,6 +258,9 @@ int main(int argv, char** argc)
 
         Coverage coverage2(solver2, dumpCoverage == 1, interval, nCycles);
         lattice2.addEvent(coverage2);
+
+        DetectZeroCoverage detectZeroCoverage2(&coverage, nZerosBeforeTermination);
+        lattice2.addEvent(detectZeroCoverage2);
 
         DumpSystem dumper2(solver2, interval, path);
 
