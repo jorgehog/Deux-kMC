@@ -3268,6 +3268,7 @@ class ExtraNeighbor(DCVizPlotter):
             self.adjust_maps[figname]["bottom"] = 0.10
             self.adjust_maps[figname]["hspace"] = 0.06
 
+    plotOnly = ["f4", "f2", "f3"]
 
     def trans_mat(self, mat):
         return mat
@@ -3319,11 +3320,8 @@ class ExtraNeighbor(DCVizPlotter):
 
                 d = 0.1
                 levs = [-d] + [d*i for i in range(0, int(1/d + 2))]
-                if 1 not in levs:
-                    levs = levs + [1]
 
                 #levs = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
-                print levs
                 im2 = csfig.contourf(X, Y, C, vmin=0, vmax=1, cmap="gist_earth_r", levels=levs)
 
                 fail = np.where(C == -1)
