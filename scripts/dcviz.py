@@ -3395,36 +3395,40 @@ class GPlots(DCVizPlotter):
 
     fig_size = [7, 5]
 
-    def dg_repulsion(self, di, s0, ld):
-        return s0*np.exp(-(di-1)/ld)
+    @staticmethod
+    def g_repulsion_serial(di, Z0, ld):
+        return Z0*np.exp(-(di-1)/ld)*(di > 1)
 
-    def g_repulsion(self, di, s0, ld):
-        st = s0/(1 - np.exp(-1./ld))
+    g = None
+    def g_repulsion(self, di, Z0, ld):
 
-        return st*np.exp(-(di-1)/ld)
+        if not self.g:
+            self.g = np.vectorize(self.g_repulsion_serial)
 
-    def attraction_orig(self, di, s0, ld):
-        st = s0/(1 - np.exp(-1./ld))
+        return self.g(di, Z0, ld)
+
+    def attraction_orig(self, di):
+        st = 0
 
         return -(1 + st)/di**6
 
     @staticmethod
-    def attraction_corr_serial(di, s0, ld):
+    def attraction_corr_serial(di):
 
         if di >= 2:
             return 0
 
-        st = s0/(1 - np.exp(-1./ld))
+        st = 0
 
         return -(3*di + 64./di**6 - 7)*(1+st)/60.
 
     f = None
-    def attraction_corr(self, di, s0, ld):
+    def attraction_corr(self, di):
 
         if not self.f:
             self.f = np.vectorize(self.attraction_corr_serial)
 
-        return self.f(di, s0, ld)
+        return self.f(di)
 
     def adjust(self):
         figname = "figure"
@@ -3436,21 +3440,27 @@ class GPlots(DCVizPlotter):
 
     def plot(self, data):
 
-        di = np.linspace(1, 3, 1000)
-        s0 = 1.
+        di = np.linspace(1, 5, 1000)
+        Z0 = 1.
         ld = 1.0
+        f0 = 1./5
 
-        g_rep = self.g_repulsion(di, s0, ld)
-        g_attr = self.attraction_corr(di, s0, ld)
-        g_attr_6 = self.attraction_orig(di, s0, ld)
+        g_rep = self.g_repulsion(di, Z0, ld)
+        g_attr = self.attraction_corr(di)
+        g_attr_6 = self.attraction_orig(di)
+        g_f0 = (di-1)*f0
 
         styles = ['g-.', 'k--', 'r-', "0.0"]
 
+        self.subfigure.plot(di, g_f0, styles[3], label=r"$F_0d_i$", linewidth=1)
         self.subfigure.plot(di, g_rep, styles[0], label=r"$G_\lambda$", linewidth=2)
-        self.subfigure.plot(di, g_attr_6, styles[1], label=r"$\sim 1/d_i^6$", linewidth=2)
-        self.subfigure.plot(di, g_attr, styles[2], label=r"$\tilde G_l$", linewidth=2)
-        self.subfigure.plot(di, g_rep + g_attr, styles[3],
-                            label=r"$\tilde G_l + G_\lambda$", linewidth=3, linestyle=":")
+        self.subfigure.plot(di, g_attr_6, styles[1], label=r"$-1/d_i^6$", linewidth=2)
+        self.subfigure.plot(di, g_attr, styles[2], label=r"$\tilde G_\mathrm{wv}$", linewidth=2)
+        self.subfigure.plot(di, g_rep + g_attr + g_f0, styles[3],
+                            label=r"$G_\mathrm{tot}$", linewidth=3, linestyle=":")
+
+
+
         lg = self.subfigure.legend(loc="center",
                                    numpoints=1,
                                    ncol=2,
@@ -3468,13 +3478,15 @@ class GPlots(DCVizPlotter):
         self.subfigure.set_xlabel(r"$d_i$")
         self.subfigure.set_ylabel(r"$G(d_i)/E_b$")
 
-        self.subfigure.set_xlim(1-0.005, 3)
+        self.subfigure.set_xbound(1-0.1)
+        self.subfigure.set_ylim(-1.1, max(g_rep)+0.1)
 
         def f(v, i):
             if int(v) == v:
                 return r"$%d$" % v
-            return r"$%.1f$" % v
+            return ""
 
+        self.subfigure.yaxis.set_ticks([-1, 0, 1])
         self.subfigure.xaxis.set_major_formatter(FuncFormatter(f))
 
 
@@ -3487,33 +3499,31 @@ class FPlots(DCVizPlotter):
     fig_size = [7, 5]
 
     def f_repulsion(self, di, s0, ld):
-        return -s0*np.exp(-(di-1)/ld)/ld
+        return s0*np.exp(-(di-1)/ld)/ld*(di > 1)
 
     @staticmethod
-    def f_attraction_corr_serial(di, s0, ld):
+    def f_attraction_corr_serial(di):
 
         if di >= 2:
             return 0
 
-        st = s0/(1 - np.exp(-1./ld))
-
-        return (32./(5*di**7) - 1./20)*(1+st)
+        return -(128./di**7 - 1.)/20
 
     f = None
-    def f_attraction_corr(self, di, s0, ld):
+    def f_attraction_corr(self, di):
 
         if not self.f:
             self.f = np.vectorize(self.f_attraction_corr_serial)
 
-        return self.f(di, s0, ld)
+        return self.f(di)
 
     def adjust(self):
         figname = "figure"
 
-        self.adjust_maps[figname]["right"] = 0.87
-        self.adjust_maps[figname]["left"] = 0.13
+        self.adjust_maps[figname]["right"] = 0.85
+        self.adjust_maps[figname]["left"] = 0.15
         self.adjust_maps[figname]["top"] = 0.96
-        self.adjust_maps[figname]["bottom"] = 0.15
+        self.adjust_maps[figname]["bottom"] = 0.17
 
     def plot(self, data):
 
@@ -3521,24 +3531,29 @@ class FPlots(DCVizPlotter):
         ld = 1.0
         s0 = 2.0
 
-        r0 = 1.67189
-        r1 = 2.3862
+        r0 = 1.29714
+        r1 = 2.38629
 
         f_rep = self.f_repulsion(di, s0, ld)
-        f_attr = self.f_attraction_corr(di, s0, ld)
+        f_attr = self.f_attraction_corr(di)
 
         styles = ['g-.', 'k--', 'r-', "0.0"]
 
         f0 = 0.5
-        tot = f_rep + f_attr + f0
+        tot = f_rep + f_attr - f0
+        ymin = -0.1
+
         self.subfigure.plot(di, tot, styles[2],
-                            label=r"$F_0 + F_l + F_\lambda$", linewidth=3, linestyle="-")
+                            label=r"$F_0 + F_l + F_\lambda$", linewidth=3, linestyle="-", zorder=1)
+        self.subfigure.plot([r1, r1], [-2*f0 + ymin, tot.max() - ymin], "k--", zorder=2)
         #self.subfigure.plot([di[0], di[-1]], [f0, f0], styles[1],
         #                    label=r"$F_0$", linewidth=2)
-        self.subfigure.plot([di[0], di[-1]], [0, 0], "k-")
-        self.subfigure.plot([r0], [0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
-        self.subfigure.plot([r1], [0], 'go', markersize=10)
-        self.subfigure.plot([1], [0], 'go', markersize=10)
+        self.subfigure.plot([0, di[-1]], [0, 0], "k-", zorder=0)
+        #self.subfigure.plot([r0], [0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
+        #self.subfigure.plot([r1], [0], 'go', markersize=10)
+        #self.subfigure.plot([1], [0], 'go', markersize=10)
+        self.subfigure.scatter(1, 0, s=50, c="r", edgecolors='none', zorder=2)
+
 
 
 
@@ -3559,29 +3574,29 @@ class FPlots(DCVizPlotter):
         """
 
         self.subfigure.set_xlabel(r"$h_l$", labelpad=10)
-        self.subfigure.set_ylabel(r"$-F_\mathrm{tot}(h_l)$")
+        self.subfigure.set_ylabel(r"$F_\mathrm{tot}(h_l)$")
 
-        #self.subfigure.set_xlim(1.5, 3.5)
-        ymin = -0.1
-        self.subfigure.set_ylim(tot.min() + ymin, tot[-1] - ymin)
-        self.subfigure.set_xbound(0.9)
+        self.subfigure.set_ylim(-2*f0  + ymin, tot.max() - ymin)
+        self.subfigure.set_xlim(0.9, di[-1])
 
         def f(v, i):
-            if v == f0:
-                return r"$\mathrm{F_0}$"
+            if v == -f0:
+                return r"$-\mathrm{F_0}$"
             elif int(v) == v:
                 return r"$%d$" % v
 
             return r"$%.1f$" % v
 
         self.subfigure.yaxis.set_major_formatter(FuncFormatter(f))
-        self.subfigure.xaxis.set_ticks([1, 2])
-        self.subfigure.yaxis.set_ticks([0, f0])
+        self.subfigure.xaxis.set_ticks([1, r1])
+        self.subfigure.xaxis.set_ticklabels([r"$h_c$", r"$h_\lambda$"])
+        self.subfigure.yaxis.set_ticks([-f0, 0])
+        self.subfigure.axes.tick_params(axis='x', which='major', pad=10)
 
         x0, x1 = self.subfigure.get_xlim()
         y0, y1 = self.subfigure.get_ylim()
-        self.subfigure.text(3*x1/4, y0/3,  r"$\mathrm{Repulsion}$", verticalalignment="center", horizontalalignment="center", fontsize=30)
-        self.subfigure.text(3*x1/4, -y0/3, r"$\mathrm{Attraction}$", verticalalignment="center", horizontalalignment="center", fontsize=30)
+        self.subfigure.text(4*x1/5, -y0/5,  r"$\mathrm{Repulsion}$", verticalalignment="center", horizontalalignment="center", fontsize=30)
+        self.subfigure.text(4*x1/5, +y0/5, r"$\mathrm{Attraction}$", verticalalignment="center", horizontalalignment="center", fontsize=30)
 
 
 
