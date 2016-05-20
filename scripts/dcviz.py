@@ -3315,15 +3315,16 @@ class ExtraNeighbor(DCVizPlotter):
                 sfig = eval("self.subfigure%d%d" % (io+1, is0+1))
                 csfig = eval("self.csubfigure%d%d" % (io+1, is0+1))
 
-                im = sfig.pcolor(C.transpose(), vmax=1, cmap="gist_earth_r")
+                im = sfig.pcolor(C.transpose(), vmin=0, vmax=1, cmap="gist_earth_r")
 
                 d = 0.1
-                levs = [-1] + [d*i for i in range(1, int(1/d + 1))]
+                levs = [-d] + [d*i for i in range(0, int(1/d + 2))]
                 if 1 not in levs:
                     levs = levs + [1]
 
-                levs = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
-                im2 = csfig.contourf(X, Y, C, vmax=1, cmap="gist_earth_r", levels=levs)
+                #levs = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+                print levs
+                im2 = csfig.contourf(X, Y, C, vmin=0, vmax=1, cmap="gist_earth_r", levels=levs)
 
                 fail = np.where(C == -1)
 

@@ -94,10 +94,6 @@ def main():
         is0 = s0s.index(s0)
 
         for io, name in enumerate(["neg", "eq", "pos"]):
-
-            if name != "eq":
-                continue
-
             cmat = all_cmat[name]
             ccounts = all_ccounts[name]
 
@@ -108,7 +104,10 @@ def main():
 
             #Completely sealed
             if l != lmax:
-                cval = L*W
+                if coverage[-1] == 0:
+                    cval = 0
+                else:
+                    cval = L*W
             else:
                 #equilibrium
                 if io == 1:
@@ -119,13 +118,11 @@ def main():
                     #plab.show()
 
                 else:
-                    print name, alpha, Pl, s0
-                    plab.plot(coverage)
+#                    print name, alpha, Pl, s0
+                    #plab.plot(coverage)
                     #plab.show()
 
                     X = argrelextrema(coverage[start:], np.greater)
-
-                    print X
 
                     if len(X[0]) != 0:
                         cval = coverage[start:][X].mean()
@@ -144,7 +141,7 @@ def main():
 
             # plab.plot(coverage)
             # print alpha, Pl, s0, cval
-    plab.show()
+    #plab.show()
 
     for io, name in enumerate(["neg", "eq", "pos"]):
         cmat = all_cmat[name]
