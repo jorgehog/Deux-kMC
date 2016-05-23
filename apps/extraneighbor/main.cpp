@@ -7,6 +7,34 @@
 
 using ignis::Lattice;
 
+class DumpForceProfile : public SOSEvent
+{
+public:
+    DumpForceProfile(const RDLExtraNeighborSurface &surface,
+                     const uint interval) :
+        SOSEvent(surface.solver(),
+                 "DumpForceProfile"),
+        m_surface(surface),
+        m_interval(interval)
+    {
+
+    }
+
+private:
+    const RDLExtraNeighborSurface &m_surface;
+    const uint m_interval;
+
+    // Event interface
+public:
+    void execute()
+    {
+        if (cycle() % m_interval == 0)
+        {
+            m_surface.dumpProfile(cycle()/m_interval);
+        }
+    }
+};
+
 class Coverage : public SOSEvent
 {
 public:
@@ -137,6 +165,7 @@ int main(int argv, char** argc)
     const uint interval = getSetting<uint>(cfgRoot, "interval");
     const uint ignisOutput = getSetting<uint>(cfgRoot, "ignisOutput");
     const uint positionOutput = getSetting<uint>(cfgRoot, "positionOutput");
+    const uint forceOutput = getSetting<uint>(cfgRoot, "forceOutput");
     const uint dumpCoverage = getSetting<uint>(cfgRoot, "dumpCoverage");
 
     const uint nZerosBeforeTermination = 10000;
@@ -157,7 +186,7 @@ int main(int argv, char** argc)
     ExtraNeighbor extraNeighbor(solver);
     solver.addLocalPotential(&extraNeighbor);
 
-    RDLExtraNeighborSurface rdlSurface(solver, rdlpotential, extraNeighbor, Pl);
+    RDLExtraNeighborSurface rdlExtraSurface(solver, rdlpotential, extraNeighbor, Pl);
 
     ConfinedConstantConcentration diff(solver);
 
@@ -165,7 +194,7 @@ int main(int argv, char** argc)
     Lattice lattice;
 
     lattice.addEvent(solver);
-    lattice.addEvent(rdlSurface);
+    lattice.addEvent(rdlExtraSurface);
     lattice.addEvent(diff);
 
     Coverage coverage(solver, dumpCoverage == 1, interval, nCycles);
@@ -177,9 +206,16 @@ int main(int argv, char** argc)
     DetectZeroCoverage detectZeroCoverage(&coverage, nZerosBeforeTermination);
     lattice.addEvent(detectZeroCoverage);
 
+    DumpForceProfile forceProfile(rdlExtraSurface, interval);
+
+    if (forceOutput == 1)
+    {
+        lattice.addEvent(forceProfile);
+    }
+
     DumpSystem dumper(solver, interval, path);
 
-    if (positionOutput)
+    if (positionOutput == 1)
     {
         lattice.addEvent(dumper);
     }
@@ -187,22 +223,22 @@ int main(int argv, char** argc)
     lattice.enableOutput(true, interval);
     lattice.enableProgressReport();
     lattice.enableEventValueStorage(true,
-                                    ignisOutput,
+                                    ignisOutput == 1,
                                     "ignisSOS.ign",
                                     "/tmp",
                                     interval);
 
     initializeSurface(solver, "random");
-    const double h0 = rdlSurface.getRdlEquilibrium();
+    const double h0 = rdlExtraSurface.getRdlEquilibrium();
     const int hm = solver.heights().max();
 
     if (h0 < hm + 1)
     {
-        rdlSurface.setHeight(hm+1);
+        rdlExtraSurface.setHeight(hm+1);
     }
     else
     {
-        rdlSurface.setHeight(h0);
+        rdlExtraSurface.setHeight(h0);
     }
 
     lattice.eventLoop(nCycles);

@@ -2841,7 +2841,7 @@ class MechEq(DCVizPlotter):
 
     isFamilyMember = True
 
-    loadLatest = True
+    loadSequential = True
 
     hugifyFonts = True
 
@@ -3213,9 +3213,9 @@ class AutoCorrWoot(DCVizPlotter):
         l.get_frame().set_fill(not (self.toFile and self.transparent))
 
 
-class ExtraNeighbor(DCVizPlotter):
+class ExtraNeighborPrev(DCVizPlotter):
 
-    nametag = "^extraneighbor_(.*)\.npy"
+    nametag = "^DEPR_extraneighbor_(.*)\.npy"
 
     isFamilyMember = True
 
@@ -3378,6 +3378,152 @@ class ExtraNeighbor(DCVizPlotter):
 
         cbar_ax = self.f4.add_axes([0.85, 0.2, 0.05, 0.7])
         cbar_ax2 = self.f7.add_axes([0.85, 0.2, 0.05, 0.7])
+
+        clabel = r'$\Theta$'
+        cbar_ax.set_title(clabel)
+        cbar_ax2.set_title(clabel)
+
+        self.f4.colorbar(im, cax=cbar_ax)
+        self.f7.colorbar(im, cax=cbar_ax2)
+
+
+class ExtraNeighbor(DCVizPlotter):
+
+    nametag = "^extraneighbor_(.*)\.npy"
+
+    isFamilyMember = True
+
+    figMap = {"f2" : ["subfigure11",
+                      "subfigure12"],
+
+              "f3" : ["subfigure21",
+                      "subfigure22"],
+
+              "f4" : ["subfigure31",
+                      "subfigure32"],
+
+              "f5" : ["csubfigure11",
+                      "csubfigure12"],
+
+              "f6" : ["csubfigure21",
+                      "csubfigure22"],
+
+              "f7" : ["csubfigure31",
+                      "csubfigure32"]}
+
+    hugifyFonts = True
+
+    specific_fig_size = {"f2": [4.5, 8],
+                         "f3": [3.6, 8],
+                         "f4": [5, 8],
+                         "f5": [4.5, 8],
+                         "f6": [3.6, 8],
+                         "f7": [5, 8]}
+
+    def adjust(self):
+        for figname in self.figure_names:
+            if figname in ["f2", "f5"]:
+                self.adjust_maps[figname]["right"] = 0.97
+                self.adjust_maps[figname]["left"] = 0.23
+            elif figname in ["f3", "f6"]:
+                self.adjust_maps[figname]["right"] = 0.94
+                self.adjust_maps[figname]["left"] = 0.03
+            else:
+                self.adjust_maps[figname]["right"] = 0.68
+                self.adjust_maps[figname]["left"] = 0.03
+
+            self.adjust_maps[figname]["top"] = 0.93
+            self.adjust_maps[figname]["bottom"] = 0.13
+            self.adjust_maps[figname]["hspace"] = 0.10
+
+    plotOnly = ["f2", "f3", "f4"]
+    #plotOnly = "f3"
+
+    def plot(self, data):
+
+        omegas = self.get_family_member_data(data, "omegas")
+        s0s = self.get_family_member_data(data, "s0s")
+        alphas = self.get_family_member_data(data, "alphas")
+        Pls = self.get_family_member_data(data, "Pls")
+        cmat = self.get_family_member_data(data, "cmat")
+
+        ld = 5.0
+        conv = ld*(1-exp(-1./ld))
+        F0s = Pls/conv
+
+        X, Y = np.meshgrid(alphas, F0s, indexing='ij')
+
+        null_formatter = FuncFormatter(lambda v, i: "")
+        xes = []
+        for x in range(1, len(alphas), 2):
+            xes.append(x + 0.5)
+
+        fes = []
+        for y in range(0, len(F0s), 3):
+            fes.append(y+0.5)
+
+        for io, omega in enumerate(omegas):
+
+            for is0, s0 in enumerate(s0s):
+
+                C = cmat[io, is0, :, :]
+
+                sfig = eval("self.subfigure%d%d" % (is0+1, io+1))
+                csfig = eval("self.csubfigure%d%d" % (is0+1, io+1))
+
+                im = sfig.pcolor(C.transpose(), vmin=0, vmax=1, cmap="gist_earth_r")
+
+                d = 0.1
+                levs = [-d] + [d*i for i in range(0, int(1/d + 2))]
+
+                csfig.contourf(X, Y, C, vmin=0, vmax=1, cmap="gist_earth_r", levels=levs)
+
+                fail = np.where(C == -1)
+
+                for y, x in zip(*fail):
+                    sfig.scatter(x + 0.5, y + 0.5, c='k', marker='x')
+
+                if io == 0:
+                    sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
+                    csfig.set_title(r"$\sigma_0 = %.1f$" % s0)
+
+                ax = sfig.axes
+                ax.set_xticks(xes)
+                ax.set_xticklabels([r"$%.1f$" % alphas[np.floor(ai)] for ai in ax.get_xticks()], minor=False)
+                ax.set_yticks(fes)
+
+                if is0 == 0:
+                    label = r"$F_0/A$"
+                    sfig.set_ylabel(label)
+                    csfig.set_ylabel(label)
+
+                    ax.set_yticklabels([r"$%.2f$" % F0s[np.floor(fi)] for fi in ax.get_yticks()], minor=False)
+
+                else:
+                    sfig.yaxis.set_ticklabels([])
+                    csfig.yaxis.set_ticklabels([])
+
+                    if is0 == 2:
+                        sfig.yaxis.set_label_position("right")
+                        csfig.yaxis.set_label_position("right")
+                        sfig.set_ylabel(r"$\Omega = %.1f$" % omega, labelpad=10)
+                        csfig.set_ylabel(r"$\Omega = %.1f$" % omega, labelpad=10)
+
+                if io == 0:
+                    sfig.axes.xaxis.set_major_formatter(null_formatter)
+                    csfig.axes.xaxis.set_major_formatter(null_formatter)
+                else:
+                    label = r"$E_b/kT$"
+                    sfig.set_xlabel(label)
+                    csfig.set_xlabel(label)
+
+                sfig.set_xlim(0, len(alphas))
+                sfig.set_ylim(0, len(F0s))
+        print Pls[-2], F0s[-2]
+
+        pos = [0.85, 0.175, 0.05, 0.7]
+        cbar_ax = self.f4.add_axes(pos)
+        cbar_ax2 = self.f7.add_axes(pos)
 
         clabel = r'$\Theta$'
         cbar_ax.set_title(clabel)

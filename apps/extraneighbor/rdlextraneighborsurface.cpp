@@ -47,7 +47,7 @@ double RDLExtraNeighborSurface::getRdlEquilibrium() const
 
 }
 
-void RDLExtraNeighborSurface::dumpProfile() const
+void RDLExtraNeighborSurface::dumpProfile(const uint n) const
 {
     const int m = solver().heights().max();
 
@@ -61,7 +61,7 @@ void RDLExtraNeighborSurface::dumpProfile() const
         res(1, i) = totalForce(hls(i));
     }
 
-    string ending = to_string(cycle()) + ".arma";
+    string ending = to_string(n) + ".arma";
 
     res.save("/tmp/mechEq" + ending);
 }
@@ -125,30 +125,6 @@ double RDLExtraNeighborSurface::totalForceDeriv(const double hl) const
     rdlContribution /= solver().area();
 
     return rdlContribution + extraNeighborContribution*m_nFactor;
-}
-
-double RDLExtraNeighborSurface::totalWdVAttraction(const double hl) const
-{
-    double extraNeighborContribution = 0;
-
-    for (uint x = 0; x < solver().length(); ++x)
-    {
-        for (uint y = 0; y < solver().width(); ++y)
-        {
-            const int &hi = solver().height(x, y);
-
-            const double dh = hl - hi;
-
-            if (dh < 2)
-            {
-                extraNeighborContribution += 128/pow(dh, 7) - 1;
-            }
-        }
-    }
-
-    extraNeighborContribution /= solver().area();
-
-    return extraNeighborContribution*m_nFactor;
 }
 
 //! First we find a negative point,

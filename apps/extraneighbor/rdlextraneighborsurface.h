@@ -12,13 +12,11 @@ public:
 
     double getRdlEquilibrium() const;
 
-    void dumpProfile() const;
+    void dumpProfile(const uint n) const;
 
     double totalForce(const double hl) const;
 
     double totalForceDeriv(const double hl) const;
-
-    double totalWdVAttraction(const double hl) const;
 
 private:
 
