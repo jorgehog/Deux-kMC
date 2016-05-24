@@ -249,7 +249,7 @@ double RDLExtraNeighborSurface::bisect(double min,
 {
     BADAss(min, <, max, "hmm", [&] ()
     {
-        dumpProfile();
+        dumpProfile(0);
     });
 
     double fmid;
@@ -292,7 +292,7 @@ double RDLExtraNeighborSurface::bisectMinima(double min,
 {
     BADAss(min, <, max, "hmm", [&] ()
     {
-        dumpProfile();
+        dumpProfile(0);
     });
 
     double fmid;
@@ -349,7 +349,7 @@ void RDLExtraNeighborSurface::notifyObserver(const Subjects &subject)
     {
         BADAssClose(0, totalForce(height()), 1E-10, "hmm", [&] ()
         {
-            dumpProfile();
+            dumpProfile(0);
         });
     }
 }
@@ -357,7 +357,7 @@ void RDLExtraNeighborSurface::notifyObserver(const Subjects &subject)
 void RDLExtraNeighborSurface::execute()
 {
 #ifndef NDEBUG
-    dumpProfile();
+    dumpProfile(cycle());
 #endif
 }
 

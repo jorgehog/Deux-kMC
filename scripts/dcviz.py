@@ -6,7 +6,7 @@ import numpy as np
 import os
 import re
 import sys
-from numpy import exp
+from numpy import exp, floor, ceil
 from scipy.stats import linregress
 from scipy.optimize import curve_fit
 from scipy.special import lambertw
@@ -3339,7 +3339,7 @@ class ExtraNeighborPrev(DCVizPlotter):
                     csfig.set_title(r"$\Omega = %.1f$" % omega)
 
                 if io == 0:
-                    label = r"$F_0/A$"
+                    label = r"$F_0/E_bA$"
                     sfig.set_ylabel(label)
                     csfig.set_ylabel(label)
                 else:
@@ -3458,6 +3458,8 @@ class ExtraNeighbor(DCVizPlotter):
         for x in range(1, len(alphas), 2):
             xes.append(x + 0.5)
 
+        print (cmat[0, :] - cmat[1, :]).sum()
+
         fes = []
         for y in range(0, len(F0s), 3):
             fes.append(y+0.5)
@@ -3493,7 +3495,7 @@ class ExtraNeighbor(DCVizPlotter):
                 ax.set_yticks(fes)
 
                 if is0 == 0:
-                    label = r"$F_0/A$"
+                    label = r"$F_0/E_bA$"
                     sfig.set_ylabel(label)
                     csfig.set_ylabel(label)
 
@@ -3521,12 +3523,12 @@ class ExtraNeighbor(DCVizPlotter):
                 sfig.set_ylim(0, len(F0s))
         print Pls[-2], F0s[-2]
 
-        pos = [0.85, 0.175, 0.05, 0.7]
+        pos = [0.85, 0.2, 0.05, 0.7]
         cbar_ax = self.f4.add_axes(pos)
         cbar_ax2 = self.f7.add_axes(pos)
 
-        clabel = r'$\Theta$'
-        cbar_ax.set_title(clabel)
+        clabel = r'$\rho_\mathrm{WV}$'
+        cbar_ax.set_title(clabel, position=(0, -0.05), horizontalalignment="left", verticalalignment="center", transform=cbar_ax.transAxes)
         cbar_ax2.set_title(clabel)
 
         self.f4.colorbar(im, cax=cbar_ax)
@@ -3798,3 +3800,109 @@ class ExtraneighborTest(DCVizPlotter):
 
         self.subfigure.set_xlabel("Pl")
         self.subfigure.set_ylabel("cov")
+
+
+class ExtraneighborResonance(DCVizPlotter):
+
+    nametag = "resonance_(.*)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    def plot(self, data):
+
+        F0s = self.get_family_member_data(data, "F0s")
+        cvec = self.get_family_member_data(data, "cvec")
+
+        self.subfigure.plot(F0s, cvec, "r-")
+
+        resonances = [0.74, 0.91, 1.11]
+
+        for res in resonances:
+            self.subfigure.plot([res, res], [0, 1], "k--")
+
+
+        self.subfigure.set_xlabel(r"$F_0/E_bA$")
+        self.subfigure.set_ylabel(r"$\rho_\mathrm{WV}$")
+
+        self.subfigure.set_ylim(0, 1)
+        self.subfigure.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+        self.subfigure.set_xlim(0.7, 1.3)
+
+
+
+
+class ResonancePlots(DCVizPlotter):
+
+    nametag = "resonance\.txt"
+
+    hugifyFonts = True
+
+    def RHS(self, ld, s0, F0EbA):
+        xi = (1 - np.exp(-1./ld))
+
+        return ld*np.log(s0/(ld*xi*F0EbA))
+
+    def find_integer_crossings(self, f):
+        n0 = int(floor(f[0]))
+        n1 = int(ceil(f[-1]))
+
+        ints = range(n1, n0 + 1)
+        idx = np.zeros(len(ints))
+
+        i = 0
+        for j, fi in enumerate(f):
+            if fi < ints[len(ints) - i - 1]:
+                idx[i] = j
+                i += 1
+
+                if i == len(ints):
+                    break
+
+        return idx[::-1]
+
+
+    def plot(self, data):
+
+        F0 = 0.7
+        F1 = 1.3
+        s0 = 1.5
+        ld = 5.
+
+        F0EbA = np.linspace(F0, F1, 1000)
+
+        rhs = self.RHS(ld, s0, F0EbA)
+
+        n0 = int(floor(rhs[0]))
+        n1 = int(ceil(rhs[-1]))
+
+        idx = self.find_integer_crossings(rhs)
+        print [round(F0EbA[i], 2) for i in idx][::-1]
+
+        txtshift = 0.01
+        for i, n in enumerate(range(n1, n0 + 1)):
+            p = F0EbA[idx[i]]
+            self.subfigure.plot([F0EbA[0], p], [n, n], "k--")
+            self.subfigure.plot([p, p], [rhs.min(), n], "k--")
+            self.subfigure.text(p+txtshift, n, r"$%.2f$" % p)
+
+        self.subfigure.plot(F0EbA, rhs, "r-", linewidth=3)
+
+        self.subfigure.set_xlabel(r"$F_0/E_bA$")
+        self.subfigure.set_ylabel(r"$\lambda_D \log \left(\frac{\sigma_0/\lambda_D\xi }{F_0/E_bA}\right)$")
+
+        self.subfigure.set_xlim(F0, F1)
+        self.subfigure.set_ylim(rhs.min(), rhs.max())
+
+        def intformatter(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            else:
+                return ""
+
+        self.subfigure.yaxis.set_major_formatter(FuncFormatter(intformatter))
+
+
+
+

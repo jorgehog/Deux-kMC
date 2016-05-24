@@ -10,125 +10,66 @@ sys.path.append(join(os.getcwd(), ".."))
 
 from parse_h5_output import ParseKMCHDF5
 
-def find_peaks(coverage):
-
-    diff = coverage[1:] - coverage[:-1]
-
-    m = coverage.max()
-    return np.where(diff < -m/2)
-
 def main():
 
     input_file = sys.argv[1]
 
     parser = ParseKMCHDF5(input_file)
 
-    alphas = []
-    Pls = []
-    s0s = []
+    F0s = []
     lmax = 0
-    omegashift = None
 
     for data, L, W, run_id in parser:
 
-        alpha = data.attrs["alpha"]
-        alpha = round(alpha, 3)
-        if alpha not in alphas:
-            alphas.append(alpha)
-
-        Pl = data.attrs["Pl"]
-        Pl = round(Pl, 3)
-        if Pl not in Pls:
-            Pls.append(Pl)
-
-        s0 = data.attrs["s0"]
-        s0 = round(s0, 3)
-        if s0 not in s0s:
-            s0s.append(s0)
-
-        if not omegashift:
-            omegashift = data.attrs["omegaShift"]
-        else:
-            if data.attrs["omegaShift"] != omegashift:
-                raise RuntimeError("invalid omegashift in datasets.")
+        F0 = data.attrs["F0"]
+        F0 = round(F0, 5)
+        if F0 not in F0s:
+            F0s.append(F0)
 
         l = data["eq_storedEventValues"].shape[1]
         if l > lmax:
             lmax = l
 
-    Pls = sorted(Pls)
-    s0s = sorted(s0s)
-    alphas = sorted(alphas)
+    F0s = sorted(F0s)
 
-    np.save("/tmp/extraneighbor_omegas.npy", [0, omegashift])
-    np.save("/tmp/extraneighbor_s0s.npy", s0s)
-    np.save("/tmp/extraneighbor_alphas.npy", alphas)
-    np.save("/tmp/extraneighbor_Pls.npy", Pls)
+    np.save("/tmp/resonance_F0s.npy", F0s)
 
-    cmat = np.zeros(shape=(2, len(s0s), len(alphas), len(Pls)))
-    ccounts = np.zeros(shape=(2, len(s0s), len(alphas), len(Pls)))
+    cvec = np.zeros(len(F0s))
+    counts = np.zeros_like(cvec)
 
     for data, L, W, run_id in parser:
-
-        alpha = data.attrs["alpha"]
-        alpha = round(alpha, 3)
-        ia = alphas.index(alpha)
-
-        Pl = data.attrs["Pl"]
-        Pl = round(Pl, 3)
-        ipl = Pls.index(Pl)
-
-        s0 = data.attrs["s0"]
-        s0 = round(s0, 3)
-        is0 = s0s.index(s0)
+        F0 = data.attrs["F0"]
+        F0 = round(F0, 5)
+        if0 = F0s.index(F0)
 
         eq_coverage = data["eq_storedEventValues"][(0)]
-        omega_coverage = data["omega_storedEventValues"][(0)]
 
-        cval = None
-        for i, coverage in enumerate([eq_coverage, omega_coverage]):
+        l = len(eq_coverage)
+        start = (9*l)/10
 
-            l = len(eq_coverage)
-            start = (9*l)/10
+        if l != lmax:
+            if sum(eq_coverage) != 0:
+                print eq_coverage.mean()
+            cval = 0
+        else:
+            cval = eq_coverage[start:].mean()
 
-            if l != lmax:
-                #The system clogged
-                if coverage[-1] > (L*W)/10:
-                    cval = L*W
+        #plab.plot(eq_coverage)
 
-                #Because there was no change in coverage
-                else:
-                    cval = 0
-            else:
-                #equilibrium
-                if i == 0:
-                    cval = coverage[start:].mean()
+        cvec[if0] += cval/float(L*W)
+        counts[if0] += 1.
 
-                    if Pl == 0.861 and s0 == 1.5 and alpha >= 1.5:
-                        print alpha, cval
-                        plab.plot(coverage)
-                        plab.show()
+    #plab.show()
+    print counts.max(), counts.min()
 
-                else:
-                    X = find_peaks(coverage)
-
-                    if len(X[0]) != 0:
-                        cval = coverage[X].mean()
-                    else:
-                        cval = coverage[start:].mean()
-
-            cmat[i, is0, ia, ipl] += cval/float(L*W)
-            ccounts[i, is0, ia, ipl] += 1.
-
-    print ccounts.max(), ccounts.min()
+    if counts.max() != counts.min():
+        print np.array(F0s)[np.where(counts == counts.max())]
+        print np.array(F0s)[np.where(counts == counts.min())]
 
 
-    I = np.where(ccounts != 0)
-    J = np.where(ccounts == 0)
+    cvec /= counts
 
-    cmat[I] /= ccounts[I]
-    cmat[J] = -1
-    np.save("/tmp/extraneighbor_cmat.npy", cmat)
+    np.save("/tmp/resonance_cvec.npy", cvec)
 
 if __name__ == "__main__":
     main()

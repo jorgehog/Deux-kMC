@@ -88,13 +88,14 @@ def main():
         cval = None
         for i, coverage in enumerate([eq_coverage, omega_coverage]):
 
-            l = len(eq_coverage)
+            l = len(coverage)
             start = (9*l)/10
 
             if l != lmax:
                 #The system clogged
                 if coverage[-1] > (L*W)/10:
                     cval = L*W
+                    print i, coverage[-1], (L*W)/10
 
                 #Because there was no change in coverage
                 else:
@@ -103,11 +104,11 @@ def main():
                 #equilibrium
                 if i == 0:
                     cval = coverage[start:].mean()
-
-                    if Pl == 0.861 and s0 == 1.5 and alpha >= 1.5:
-                        print alpha, cval
-                        plab.plot(coverage)
-                        plab.show()
+                    #
+                    # if Pl == 0.861 and s0 == 1.5 and alpha >= 1.5:
+                    #     print alpha, cval
+                    #     plab.plot(coverage)
+                    #     plab.show()
 
                 else:
                     X = find_peaks(coverage)

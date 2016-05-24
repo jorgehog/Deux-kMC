@@ -172,7 +172,7 @@ int main(int argv, char** argc)
 
     rng.initialize(time(nullptr));
 
-    const double eTerm = 1-exp(-1/ld);
+    const double xi = 1-exp(-1/ld);
     const double gamma0 = alpha*F0;
 
     SOSSolver solver(L, W, alpha, gamma0, true);
@@ -186,7 +186,7 @@ int main(int argv, char** argc)
     ExtraNeighbor extraNeighbor(solver);
     solver.addLocalPotential(&extraNeighbor);
 
-    const double Pl = ld*eTerm*F0;
+    const double Pl = ld*xi*F0;
     RDLExtraNeighborSurface rdlExtraSurface(solver, rdlpotential, extraNeighbor, Pl);
 
     ConfinedConstantConcentration diff(solver);
@@ -275,6 +275,7 @@ int main(int argv, char** argc)
 
     solver.setGamma(solver.gamma() + log(1 + omegaShift));
 
+    diff.fixConcentration();
     lattice.eventLoop(nCycles);
 
     simRoot["omega_storedEventValues"] = lattice.storedEventValues();

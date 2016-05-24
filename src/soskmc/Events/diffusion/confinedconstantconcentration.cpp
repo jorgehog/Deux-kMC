@@ -4,7 +4,8 @@
 #include "../confiningsurface/confiningsurface.h"
 
 ConfinedConstantConcentration::ConfinedConstantConcentration(SOSSolver &solver) :
-    ConstantConcentration(solver)
+    ConstantConcentration(solver),
+    m_fix(false)
 {
 
 }
@@ -42,6 +43,11 @@ void ConfinedConstantConcentration::initializeObserver(const Subjects &subject)
 void ConfinedConstantConcentration::reset()
 {
     BADAssClose(m_V0 - m_deltaSum, solver().freeVolume(), 1E-10);
+
+    if (m_fix)
+    {
+        return;
+    }
 
     if (m_deltaSum < m_N0 && m_deltaSum < m_V0)
     {

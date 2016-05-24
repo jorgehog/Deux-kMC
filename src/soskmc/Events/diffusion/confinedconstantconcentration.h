@@ -8,11 +8,18 @@ class ConfinedConstantConcentration : public ConstantConcentration
 public:
     ConfinedConstantConcentration(SOSSolver &solver);
 
+    void fixConcentration(const bool value = true)
+    {
+        m_fix = value;
+    }
+
 private:
     double m_V0;
     double m_N0;
 
     double m_deltaSum;
+
+    bool m_fix;
 
     // kMC::Observer interface
 public:
