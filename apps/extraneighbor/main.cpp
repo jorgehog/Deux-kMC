@@ -154,26 +154,26 @@ int main(int argv, char** argc)
     const uint &L = getSetting<uint>(cfgRoot, "L");
     const uint &W = getSetting<uint>(cfgRoot, "W");
 
-    const double Pl = getSetting<double>(cfgRoot, "Pl");
-    const double alpha = getSetting<double>(cfgRoot, "alpha");
-    const double omegaShift = getSetting<double>(cfgRoot, "omegaShift");
+    const double &F0 = getSetting<double>(cfgRoot, "F0");
+    const double &alpha = getSetting<double>(cfgRoot, "alpha");
+    const double &omegaShift = getSetting<double>(cfgRoot, "omegaShift");
 
-    const double ld = getSetting<double>(cfgRoot, "ld");
-    const double s0 = getSetting<double>(cfgRoot, "s0");
+    const double &ld = getSetting<double>(cfgRoot, "ld");
+    const double &s0 = getSetting<double>(cfgRoot, "s0");
 
-    const uint nCycles = getSetting<uint>(cfgRoot, "nCycles");
-    const uint interval = getSetting<uint>(cfgRoot, "interval");
-    const uint ignisOutput = getSetting<uint>(cfgRoot, "ignisOutput");
-    const uint positionOutput = getSetting<uint>(cfgRoot, "positionOutput");
-    const uint forceOutput = getSetting<uint>(cfgRoot, "forceOutput");
-    const uint dumpCoverage = getSetting<uint>(cfgRoot, "dumpCoverage");
+    const uint &nCycles = getSetting<uint>(cfgRoot, "nCycles");
+    const uint &interval = getSetting<uint>(cfgRoot, "interval");
+    const uint &ignisOutput = getSetting<uint>(cfgRoot, "ignisOutput");
+    const uint &positionOutput = getSetting<uint>(cfgRoot, "positionOutput");
+    const uint &forceOutput = getSetting<uint>(cfgRoot, "forceOutput");
+    const uint &dumpCoverage = getSetting<uint>(cfgRoot, "dumpCoverage");
 
     const uint nZerosBeforeTermination = 10000;
 
     rng.initialize(time(nullptr));
 
     const double eTerm = 1-exp(-1/ld);
-    const double gamma0 = alpha*Pl/(ld*eTerm);
+    const double gamma0 = alpha*F0;
 
     SOSSolver solver(L, W, alpha, gamma0, true);
 
@@ -186,6 +186,7 @@ int main(int argv, char** argc)
     ExtraNeighbor extraNeighbor(solver);
     solver.addLocalPotential(&extraNeighbor);
 
+    const double Pl = ld*eTerm*F0;
     RDLExtraNeighborSurface rdlExtraSurface(solver, rdlpotential, extraNeighbor, Pl);
 
     ConfinedConstantConcentration diff(solver);
@@ -255,8 +256,9 @@ int main(int argv, char** argc)
 
     simRoot["alpha"] = alpha;
     simRoot["omegaShift"] = omegaShift;
-    simRoot["Pl"] = Pl;
+    simRoot["F0"] = F0;
     simRoot["s0"] = s0;
+    simRoot["ld"] = ld;
     simRoot["interval"] = interval;
 
     simRoot["eq_storedEventValues"] = lattice.storedEventValues();
