@@ -3387,9 +3387,9 @@ class ExtraNeighborPrev(DCVizPlotter):
         self.f7.colorbar(im, cax=cbar_ax2)
 
 
-class ExtraNeighbor(DCVizPlotter):
+class ExtraNeighborPrev2(DCVizPlotter):
 
-    nametag = "^extraneighbor_(.*)\.npy"
+    nametag = "^DEPRextraneighbor_(.*)\.npy"
 
     isFamilyMember = True
 
@@ -3534,6 +3534,99 @@ class ExtraNeighbor(DCVizPlotter):
         self.f4.colorbar(im, cax=cbar_ax)
         self.f7.colorbar(im, cax=cbar_ax2)
 
+class ExtraNeighbor(DCVizPlotter):
+
+    nametag = "^extraneighbor_(.*)\.npy"
+
+    isFamilyMember = True
+
+    figMap = {"f2" : "subfigure11",
+              "f3" : "subfigure21",
+              "f4" : "subfigure31"}
+
+    hugifyFonts = True
+
+    specific_fig_size = {"f2": [4.5, 5],
+                         "f3": [3.6, 5],
+                         "f4": [5, 5]}
+
+    def adjust(self):
+        for figname in self.figure_names:
+            if figname in ["f2", "f5"]:
+                self.adjust_maps[figname]["right"] = 0.97
+                self.adjust_maps[figname]["left"] = 0.23
+            elif figname in ["f3", "f6"]:
+                self.adjust_maps[figname]["right"] = 0.97
+                self.adjust_maps[figname]["left"] = 0.03
+            else:
+                self.adjust_maps[figname]["right"] = 0.68
+                self.adjust_maps[figname]["left"] = 0.03
+
+            self.adjust_maps[figname]["top"] = 0.91
+            self.adjust_maps[figname]["bottom"] = 0.15
+
+    #plotOnly = "f3"
+
+    def plot(self, data):
+        s0s = self.get_family_member_data(data, "s0s")
+        alphas = self.get_family_member_data(data, "alphas")
+        Pls = self.get_family_member_data(data, "Pls")
+        cmat = self.get_family_member_data(data, "cmat")
+
+        ld = 5.0
+        conv = ld*(1-exp(-1./ld))
+        F0s = Pls/conv
+
+        xes = []
+        for x in range(1, len(alphas), 2):
+            xes.append(x + 0.5)
+
+        fes = []
+        for y in range(0, len(F0s), 3):
+            fes.append(y+0.5)
+
+        for is0, s0 in enumerate(s0s):
+
+            C = cmat[0, is0, :, :]
+
+            sfig = eval("self.subfigure%d1" % (is0+1))
+            sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
+                
+            im = sfig.pcolor(C.transpose(), vmin=0, vmax=1, cmap="gist_earth_r")
+            
+            fail = np.where(C == -1)
+
+            for y, x in zip(*fail):
+                sfig.scatter(x + 0.5, y + 0.5, c='k', marker='x')
+
+            ax = sfig.axes
+            ax.set_xticks(xes)
+            ax.set_xticklabels([r"$%.1f$" % alphas[np.floor(ai)] for ai in ax.get_xticks()], minor=False)
+            ax.set_yticks(fes)
+
+            if is0 == 0:
+                label = r"$F_0/E_bA$"
+                sfig.set_ylabel(label)
+
+                ax.set_yticklabels([r"$%.2f$" % F0s[np.floor(fi)] for fi in ax.get_yticks()], minor=False)
+
+            else:
+                sfig.yaxis.set_ticklabels([])
+
+            label = r"$E_b/kT$"
+            sfig.set_xlabel(label)
+
+            sfig.set_xlim(0, len(alphas))
+            sfig.set_ylim(0, len(F0s))
+       
+        pos = [0.78, 0.18, 0.05, 0.7]
+        cbar_ax = self.f4.add_axes(pos)
+       
+        clabel = r'$\rho_\mathrm{WV}$'
+        cbar_ax.set_title(clabel, position=(0, -0.09), horizontalalignment="left", verticalalignment="center", transform=cbar_ax.transAxes)
+       
+        self.f4.colorbar(im, cax=cbar_ax)
+       
 
 class GPlots(DCVizPlotter):
 
@@ -3817,18 +3910,27 @@ class ExtraneighborResonance(DCVizPlotter):
 
         self.subfigure.plot(F0s, cvec, "r-")
 
-        resonances = [0.74, 0.91, 1.11]
+        self.subfigure.set_xlabel(r"$F_0/E_bA$")
+        self.subfigure.set_ylabel(r"$\rho_\mathrm{WV}$")
+
+        if self.argv:
+            sigma0 = float(self.argv[0])
+        else:
+            sigma0 = 1.5
+
+        if sigma0 == 1.5:
+            resonances = [1.36, 1.11, 0.91, 0.74, 0.61, 0.5, 0.41, 0.33, 0.27, 0.22, 0.18, 0.15, 0.12, 0.1]
+        elif sigma0 == 0.5:
+            resonances = [1.5, 1.23, 1.01, 0.82, 0.67, 0.55, 0.45, 0.37, 0.3, 0.25, 0.2, 0.17, 0.14, 0.11]
+        else:
+            resonances = []
 
         for res in resonances:
             self.subfigure.plot([res, res], [0, 1], "k--")
 
-
-        self.subfigure.set_xlabel(r"$F_0/E_bA$")
-        self.subfigure.set_ylabel(r"$\rho_\mathrm{WV}$")
-
         self.subfigure.set_ylim(0, 1)
         self.subfigure.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
-        self.subfigure.set_xlim(0.7, 1.3)
+        self.subfigure.set_xlim(F0s[0], F0s[-1])
 
 
 
@@ -3865,20 +3967,23 @@ class ResonancePlots(DCVizPlotter):
 
     def plot(self, data):
 
-        F0 = 0.7
-        F1 = 1.3
-        s0 = 1.5
+        F0 = 0.1
+        F1 = 0.6
+        s0 = 0.5
         ld = 5.
 
         F0EbA = np.linspace(F0, F1, 1000)
+        F0EbAFull = np.linspace(0.1, 1.5, 10000)
 
         rhs = self.RHS(ld, s0, F0EbA)
+        rhsFull = self.RHS(ld, s0, F0EbAFull)
 
         n0 = int(floor(rhs[0]))
         n1 = int(ceil(rhs[-1]))
 
+        print [round(F0EbAFull[x], 2) for x in self.find_integer_crossings(rhsFull)]
+
         idx = self.find_integer_crossings(rhs)
-        print [round(F0EbA[i], 2) for i in idx][::-1]
 
         txtshift = 0.01
         for i, n in enumerate(range(n1, n0 + 1)):
@@ -3904,5 +4009,35 @@ class ResonancePlots(DCVizPlotter):
         self.subfigure.yaxis.set_major_formatter(FuncFormatter(intformatter))
 
 
+class NonEqNeigz(DCVizPlotter):
 
+    nametag = "noneq_neigz_(.*)\.npy"
 
+    hugifyFonts = True
+
+    isFamilyMember = True
+
+    figMap = {"figure" : ["growthfig", "dissfig"]}
+
+    def madjust(self):
+        return
+
+    stack = "H"
+
+    fig_size = [10, 6]
+
+    def plot(self, data):
+
+        growth_cov = self.get_family_member_data(data, "growth_cov")
+        diss_cov = self.get_family_member_data(data, "diss_cov")
+
+        growth_time = self.get_family_member_data(data, "growth_time")
+        diss_time = self.get_family_member_data(data, "diss_time")
+
+        eqtimes = self.get_family_member_data(data, "eqtimes")
+
+        growth_time /= eqtimes[0]
+        diss_time /= eqtimes[1]
+
+        self.growthfig.plot(growth_time[::100], growth_cov[::100]/900.)
+        self.dissfig.plot(diss_time, diss_cov/900.)

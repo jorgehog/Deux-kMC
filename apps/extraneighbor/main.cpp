@@ -156,7 +156,7 @@ int main(int argv, char** argc)
 
     const double &F0 = getSetting<double>(cfgRoot, "F0");
     const double &alpha = getSetting<double>(cfgRoot, "alpha");
-    const double &omegaShift = getSetting<double>(cfgRoot, "omegaShift");
+    const int &omegaSign = getSetting<int>(cfgRoot, "omegaSign");
 
     const double &ld = getSetting<double>(cfgRoot, "ld");
     const double &s0 = getSetting<double>(cfgRoot, "s0");
@@ -191,18 +191,21 @@ int main(int argv, char** argc)
 
     ConfinedConstantConcentration diff(solver);
 
-
     Lattice lattice;
 
     lattice.addEvent(solver);
     lattice.addEvent(rdlExtraSurface);
     lattice.addEvent(diff);
 
+
     Coverage coverage(solver, dumpCoverage == 1, interval, nCycles);
     lattice.addEvent(coverage);
 
     Time time(solver);
     lattice.addEvent(time);
+
+    ConcentrationTracker conc(solver);
+    lattice.addEvent(conc);
 
     DetectZeroCoverage detectZeroCoverage(&coverage, nZerosBeforeTermination);
     lattice.addEvent(detectZeroCoverage);
@@ -255,7 +258,7 @@ int main(int argv, char** argc)
     H5Wrapper::Member &simRoot = setuph5(h5root, getProc(argv, argc), L, W);
 
     simRoot["alpha"] = alpha;
-    simRoot["omegaShift"] = omegaShift;
+    simRoot["omegaSign"] = omegaSign;
     simRoot["F0"] = F0;
     simRoot["s0"] = s0;
     simRoot["ld"] = ld;
@@ -268,14 +271,26 @@ int main(int argv, char** argc)
         simRoot["eq_coverage_matrix"] = coverage.coverage();
     }
 
-    if (omegaShift == 0)
+    h5root.flush();
+
+    if (omegaSign == 0)
     {
         return 0;
     }
 
-    solver.setGamma(solver.gamma() + log(1 + omegaShift));
+    //either infinite source or sink
+    else if (omegaSign < 0)
+    {
+        solver.setZeroConcentration();
+    }
+
+    else
+    {
+        solver.setConcentration(1.0);
+    }
 
     diff.fixConcentration();
+
     lattice.eventLoop(nCycles);
 
     simRoot["omega_storedEventValues"] = lattice.storedEventValues();

@@ -49,7 +49,7 @@ def main():
 
         if l != lmax:
             if sum(eq_coverage) != 0:
-                print eq_coverage.mean()
+                print eq_coverage.mean(), l, lmax
             cval = 0
         else:
             cval = eq_coverage[start:].mean()
