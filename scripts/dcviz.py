@@ -4019,12 +4019,16 @@ class NonEqNeigz(DCVizPlotter):
 
     figMap = {"figure" : ["growthfig", "dissfig"]}
 
-    def madjust(self):
-        return
+    def adjust(self):
+        self.adjust_maps["figure"]["wspace"] = 0.05
+        self.adjust_maps["figure"]["top"] = 0.96
+        self.adjust_maps["figure"]["bottom"] = 0.15
+        self.adjust_maps["figure"]["left"] = 0.08
+        self.adjust_maps["figure"]["right"] = 0.99
 
     stack = "H"
 
-    fig_size = [10, 6]
+    fig_size = [10, 5]
 
     def plot(self, data):
 
@@ -4039,5 +4043,20 @@ class NonEqNeigz(DCVizPlotter):
         growth_time /= eqtimes[0]
         diss_time /= eqtimes[1]
 
-        self.growthfig.plot(growth_time[::100], growth_cov[::100]/900.)
-        self.dissfig.plot(diss_time, diss_cov/900.)
+        every = 100
+        self.growthfig.plot(growth_time[::every], growth_cov[::every]/900., "r-")
+        self.dissfig.plot(diss_time[::every], diss_cov[::every]/900., "r-")
+
+        ticks = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
+        self.dissfig.set_yticks(ticks)
+        self.dissfig.set_yticklabels([])
+
+        self.growthfig.set_yticks(ticks)
+
+        self.growthfig.set_ylabel(r"$\rho_\mathrm{WV}$")
+        self.growthfig.set_xlabel(r"$t/t_\mathrm{eq}$")
+        self.dissfig.set_xlabel(r"$t/t_\mathrm{eq}$")
+
+        self.growthfig.set_xlim(0, growth_time[::every][-1]*1.05)
+        self.dissfig.set_xlim(0, diss_time[::every][-1]*1.05)

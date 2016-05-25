@@ -4,8 +4,8 @@ import numpy as np
 
 def main():
 
-    id_diss = ["/home/jorgehog/tmp/extraneighbor.h5", 1464174780766]
-    id_growth = ["/tmp/extraneighbor.h5", 1464181228224]
+    id_diss = ["/home/jorgehog/Dropbox/PhD/papers/paper3/data/extran_noneq/extraneighbor_0.h5", 1464217682529]
+    id_growth = ["/home/jorgehog/Dropbox/PhD/papers/paper3/data/extran_noneq/extraneighbor_1.h5", 11464217683030]
 
     eq_times = []
     for id_set, name in zip([id_growth, id_diss], ["growth", "diss"]):

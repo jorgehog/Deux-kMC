@@ -10,7 +10,7 @@ def run_kmc(proc, combination, path, app, cfg):
 
     print "Running ",
     for value in combination:
-        print "%.3f" % value,
+        print "%s" % str(value),
     print
 
     cfgdir, _ = os.path.split(cfg)

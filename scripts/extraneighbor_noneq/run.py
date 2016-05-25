@@ -1,6 +1,5 @@
 import sys
 import os
-import numpy as np
 
 sys.path.append(os.path.join(os.getcwd(), ".."))
 
@@ -16,7 +15,8 @@ def main():
                              "nCycles\s*=\s*(.*)\;"])
     OS = ParameterSet(cfg, "omegaSign\s*=\s*(.*)\;")
 
-    F0s.initialize_set([0.6, 1.0], [2000000, 30000])
+    F0s.initialize_set([[0.45], [200000]])
+    OS.initialize_set([-1, 1])
 
     controller.register_parameter_set(F0s)
     controller.register_parameter_set(OS)
