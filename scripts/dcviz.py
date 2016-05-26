@@ -4017,46 +4017,99 @@ class NonEqNeigz(DCVizPlotter):
 
     isFamilyMember = True
 
-    figMap = {"figure" : ["growthfig", "dissfig"]}
+    figMap = {"figure_low" : ["dissfig_low", "zoom_diss_low", "growthfig_low", "zoom_growth_low"],
+              "figure_high" : ["dissfig_high", "zoom_diss_high","growthfig_high", "zoom_growth_high"]}
 
     def adjust(self):
-        self.adjust_maps["figure"]["wspace"] = 0.05
-        self.adjust_maps["figure"]["top"] = 0.96
-        self.adjust_maps["figure"]["bottom"] = 0.15
-        self.adjust_maps["figure"]["left"] = 0.08
-        self.adjust_maps["figure"]["right"] = 0.99
+        for figure in self.figure_names:
+            self.adjust_maps[figure]["wspace"] = 0.10
+            self.adjust_maps[figure]["left"] = 0.04
+            self.adjust_maps[figure]["right"] = 0.97
+
+        self.adjust_maps["figure_low"]["top"] = 0.96
+        self.adjust_maps["figure_high"]["top"] = 0.89
+
+        self.adjust_maps["figure_low"]["bottom"] = 0.16
+        self.adjust_maps["figure_high"]["bottom"] = 0.09
 
     stack = "H"
 
-    fig_size = [10, 5]
+    fig_size = [20, 5]
 
     def plot(self, data):
 
-        growth_cov = self.get_family_member_data(data, "growth_cov")
-        diss_cov = self.get_family_member_data(data, "diss_cov")
-
-        growth_time = self.get_family_member_data(data, "growth_time")
-        diss_time = self.get_family_member_data(data, "diss_time")
-
+        F0s = self.get_family_member_data(data, "F0s")
         eqtimes = self.get_family_member_data(data, "eqtimes")
 
-        growth_time /= eqtimes[0]
-        diss_time /= eqtimes[1]
+        figs = [[self.dissfig_high, self.growthfig_high],
+                [self.dissfig_low, self.growthfig_low]]
 
-        every = 100
-        self.growthfig.plot(growth_time[::every], growth_cov[::every]/900., "r-")
-        self.dissfig.plot(diss_time[::every], diss_cov[::every]/900., "r-")
+        zoomfigs = [[self.zoom_diss_high, self.zoom_growth_high],
+                    [self.zoom_diss_low, self.zoom_growth_low]]
 
-        ticks = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+        total_points = 2000
+        ticks = [[0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                 [0, 0.1, 0.2, 0.3, 0.4, 0.5]]
 
-        self.dissfig.set_yticks(ticks)
-        self.dissfig.set_yticklabels([])
+        tmaxes = [[], []]
+        titles = [r"$\mathrm{Dissolution}$", r"$\mathrm{Growth}$"]
 
-        self.growthfig.set_yticks(ticks)
+        total_points_zoom = [10000, total_points]
+        log_scales = [4, 3]
 
-        self.growthfig.set_ylabel(r"$\rho_\mathrm{WV}$")
-        self.growthfig.set_xlabel(r"$t/t_\mathrm{eq}$")
-        self.dissfig.set_xlabel(r"$t/t_\mathrm{eq}$")
+        for i in range(2):
+            F0 = F0s[i]
+            for j in range(2):
+                fig = figs[i][j]
+                zoomfig = zoomfigs[i][j]
+                cov = self.get_family_member_data(data, "%d%d_cov" % (i, j))
+                t = self.get_family_member_data(data, "%d%d_time" % (i, j))
 
-        self.growthfig.set_xlim(0, growth_time[::every][-1]*1.05)
-        self.dissfig.set_xlim(0, diss_time[::every][-1]*1.05)
+                zoom_points = total_points_zoom[j]
+                log_scale = log_scales[j]
+
+                t /= eqtimes[i][i]
+
+                every = max([1, len(t)/total_points])
+
+                fig.plot(t[::every], cov[::every], "r-")
+
+                fig.set_yticks(ticks[i])
+
+                k = np.where(t == 1.0)[0][0]
+
+                if len(cov[k:]) < zoom_points:
+                    cov = np.concatenate([cov, np.zeros(zoom_points - len(cov[k:]))])
+
+                print k, zoom_points, np.arange(zoom_points).shape, cov[k:k+zoom_points].shape
+                zoomfig.plot(np.arange(zoom_points)/10.0**(log_scale-1), cov[k:k+zoom_points], "r-")
+                zoomfig.set_yticks(ticks[i])
+                zoomfig.set_yticklabels([])
+
+                if i == 1:
+                    zoomfig.set_xlabel(r"$10^%d\,\,\mathrm{cycles}$" % log_scale)
+                else:
+                    zoomfig.set_xticklabels([])
+
+                if j == 1:
+                    zoomfig.yaxis.set_label_position("right")
+                    zoomfig.set_ylabel(r"$F_0/E_bA = %.2f$" % F0, labelpad=10)
+                    fig.set_yticklabels([])
+                else:
+                    fig.set_ylabel(r"$\rho_\mathrm{WV}$")
+
+                if i == 1:
+                    fig.set_xlabel(r"$t/t_\mathrm{eq}$")
+                else:
+                    fig.set_title(titles[j])
+                    fig.set_xticklabels([])
+
+                tmaxes[j].append(t[-1])
+
+                fig.set_ylim(0, ticks[i][-1])
+
+        funcs = [max, min]
+        winners = [f(l) for (f, l) in zip(funcs, tmaxes)]
+        for i in range(2):
+            for j in range(2):
+                figs[i][j].set_xlim(0, winners[j])
