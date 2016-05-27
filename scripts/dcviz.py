@@ -4047,14 +4047,16 @@ class NonEqNeigz(DCVizPlotter):
         zoomfigs = [[self.zoom_diss_high, self.zoom_growth_high],
                     [self.zoom_diss_low, self.zoom_growth_low]]
 
-        total_points = 2000
+        total_points = 3000
         ticks = [[0, 0.2, 0.4, 0.6, 0.8, 1.0],
                  [0, 0.1, 0.2, 0.3, 0.4, 0.5]]
 
         tmaxes = [[], []]
-        titles = [r"$\mathrm{Dissolution}$", r"$\mathrm{Growth}$"]
+        titles = [r"$\mathrm{Equilibration+Dissolution}$", r"$\mathrm{Equilibration+Growth}$"]
+        zoom_titles = [r"$\mathrm{Dissolution}$", r"$\mathrm{Growth\,Closeup}$"]
+        zoom_labels = [r"Dissolution\,Cycles", r"Growth\,Cycles"]
 
-        total_points_zoom = [10000, total_points]
+        total_points_zoom = [15000, total_points]
         log_scales = [4, 3]
 
         for i in range(2):
@@ -4066,6 +4068,7 @@ class NonEqNeigz(DCVizPlotter):
                 t = self.get_family_member_data(data, "%d%d_time" % (i, j))
 
                 zoom_points = total_points_zoom[j]
+                zoom_label = zoom_labels[j]
                 log_scale = log_scales[j]
 
                 t /= eqtimes[i][i]
@@ -4081,13 +4084,14 @@ class NonEqNeigz(DCVizPlotter):
                 if len(cov[k:]) < zoom_points:
                     cov = np.concatenate([cov, np.zeros(zoom_points - len(cov[k:]))])
 
-                print k, zoom_points, np.arange(zoom_points).shape, cov[k:k+zoom_points].shape
-                zoomfig.plot(np.arange(zoom_points)/10.0**(log_scale-1), cov[k:k+zoom_points], "r-")
+                X = np.arange(zoom_points)/10.0**(log_scale-1)
+                zoomfig.plot(X, cov[k:k+zoom_points], "r-")
                 zoomfig.set_yticks(ticks[i])
                 zoomfig.set_yticklabels([])
+                zoomfig.set_xlim(0, X[-1])
 
                 if i == 1:
-                    zoomfig.set_xlabel(r"$10^%d\,\,\mathrm{cycles}$" % log_scale)
+                    zoomfig.set_xlabel(r"$10^%d\,\,\mathrm{%s}$" % (log_scale, zoom_label))
                 else:
                     zoomfig.set_xticklabels([])
 
@@ -4102,6 +4106,7 @@ class NonEqNeigz(DCVizPlotter):
                     fig.set_xlabel(r"$t/t_\mathrm{eq}$")
                 else:
                     fig.set_title(titles[j])
+                    zoomfig.set_title(zoom_titles[j])
                     fig.set_xticklabels([])
 
                 tmaxes[j].append(t[-1])
