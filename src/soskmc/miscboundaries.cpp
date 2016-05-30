@@ -1,4 +1,4 @@
-#include "averageheightlineboundary.h"
+#include "miscboundaries.h"
 
 AverageHeightLineBoundary::AverageHeightLineBoundary(SOSSolver &solver,
                                                      const Boundary::orientations orientation,
@@ -14,6 +14,7 @@ AverageHeightLineBoundary::AverageHeightLineBoundary(SOSSolver &solver,
     {
         m_x0 = 0;
         m_x1 = depth;
+        m_location = 0;
     }
 
     else
@@ -22,12 +23,14 @@ AverageHeightLineBoundary::AverageHeightLineBoundary(SOSSolver &solver,
         {
             m_x0 = solver.length() - depth;
             m_x1 = solver.length();
+            m_location = solver.length();
         }
 
         else
         {
             m_x0 = solver.width() - depth;
             m_x1 = solver.width();
+            m_location = solver.width();
         }
     }
 }
@@ -41,7 +44,7 @@ int AverageHeightLineBoundary::transformLatticeCoordinate(const int xi, const in
 
 bool AverageHeightLineBoundary::isBlockedLattice(const int xi, const int xj, const int xk) const
 {
-    if (orientation() == Boundary::orientations::FIRST)
+    if (orientation() == First)
     {
         if (xi >= 0)
         {
@@ -51,96 +54,55 @@ bool AverageHeightLineBoundary::isBlockedLattice(const int xi, const int xj, con
 
     else
     {
-        if (m_dim == 0)
+        if (xi < int(m_location))
         {
-            if (xi < int(solver().length()))
-            {
-                return false;
-            }
-        }
-
-        else
-        {
-            if (xi < int(solver().width()))
-            {
-                return false;
-            }
+            return false;
         }
     }
 
     double hAvg = 0;
 
-    if (m_dim == 0)
+    for (uint coor = m_x0; coor < m_x1; ++coor)
     {
-        for (uint x = m_x0; x < m_x1; ++x)
+        if (m_dim == 0)
         {
-            hAvg += solver().height(x, xj);
-        }
-
-        hAvg /= m_depth;
-
-        if (orientation() == Boundary::orientations::FIRST)
-        {
-            if (solver().height(0, xj) < round(hAvg))
-            {
-                return false;
-            }
-
-            else
-            {
-                return true;
-            }
+            hAvg += solver().height(coor, xj);
         }
 
         else
         {
-            if (solver().height(solver().length() - 1, xj) < round(hAvg))
-            {
-                return false;
-            }
+            hAvg += solver().height(xj, coor);
+        }
+    }
 
-            else
-            {
-                return true;
-            }
+    hAvg /= m_depth;
+
+    const int hBoundary = int(std::round(hAvg));
+
+    if (orientation() == First)
+    {
+        if (xk <= hBoundary)
+        {
+            return true;
+        }
+
+        else
+        {
+            return false;
         }
     }
 
     else
     {
-        for (uint y = m_x0; y < m_x1; ++y)
+        if (xk <= hBoundary)
         {
-            hAvg += solver().height(xj, y);
-        }
-
-        hAvg /= m_depth;
-
-        if (orientation() == Boundary::orientations::FIRST)
-        {
-            if (xk <= round(hAvg))
-            {
-                return true;
-            }
-
-            else
-            {
-                return false;
-            }
+            return true;
         }
 
         else
         {
-            if (xk <= round(hAvg))
-            {
-                return true;
-            }
-
-            else
-            {
-                return false;
-            }
+            return false;
         }
-
     }
 
 }
@@ -194,6 +156,30 @@ void AverageHeightLineBoundary::notifyObserver(const Subjects &subject)
         for (uint x = 0; x < solver().length(); ++x)
         {
             solver().registerChangedSite(x, loc);
+        }
+    }
+}
+
+
+ReflConstantHybrid::ReflConstantHybrid(SOSSolver &solver, const int h, const Boundary::orientations orientation, const uint dim) :
+    SOSBoundary(solver, orientation),
+    m_h(h)
+{
+    if (orientation == First)
+    {
+        m_location = 0;
+    }
+
+    else
+    {
+        if (dim == 0)
+        {
+            m_location = solver.length();
+        }
+
+        else
+        {
+            m_location = solver.width();
         }
     }
 }

@@ -162,9 +162,12 @@ int main(int argv, char** argc)
     const double &s0 = getSetting<double>(cfgRoot, "s0");
 
     const uint &nCycles = getSetting<uint>(cfgRoot, "nCycles");
-    const uint &interval = getSetting<uint>(cfgRoot, "interval");
     const uint &ignisOutput = getSetting<uint>(cfgRoot, "ignisOutput");
+    const uint &interval = getSetting<uint>(cfgRoot, "interval");
+
     const uint &positionOutput = getSetting<uint>(cfgRoot, "positionOutput");
+    const uint &positionInverval = getSetting<uint>(cfgRoot, "positionInterval");
+
     const uint &forceOutput = getSetting<uint>(cfgRoot, "forceOutput");
     const uint &dumpCoverage = getSetting<uint>(cfgRoot, "dumpCoverage");
 
@@ -217,7 +220,7 @@ int main(int argv, char** argc)
         lattice.addEvent(forceProfile);
     }
 
-    DumpSystem dumper(solver, interval, path);
+    DumpSystem dumper(solver, positionInverval, path);
 
     if (positionOutput == 1)
     {

@@ -31,7 +31,7 @@ static_assert(sizeof(arma::sword) == 4, "64 bit armadillo is not supported.");
 #include "../src/soskmc/averageheightboundary.h"
 #include "../src/soskmc/reflavghybrid.h"
 #include "../src/soskmc/longeststripboundary.h"
-#include "../src/soskmc/averageheightlineboundary.h"
+#include "../src/soskmc/miscboundaries.h"
 
 #include "../src/soskmc/sosdiffusionreaction.h"
 #include "../src/soskmc/dissolutiondeposition.h"

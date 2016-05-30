@@ -64,7 +64,7 @@ void Diffusion::dump(const uint frameNumber, const string path, const string ext
                               << x
                               << y
                               << zSurface
-                              << 0;
+                              << 6;
             }
 
             surfacewriter << 2
@@ -74,7 +74,7 @@ void Diffusion::dump(const uint frameNumber, const string path, const string ext
 
             if (solver().surfaceReaction(x, y).isAllowed())
             {
-                surfacewriter << solver().surfaceReaction(x, y).escapeRate();
+                surfacewriter << solver().nNeighbors(x, y);
             }
 
             else

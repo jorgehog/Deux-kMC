@@ -32,7 +32,7 @@ int main(int argv, char **argc)
     const double cBath = getSetting<double>(cfgRoot, "cBath");
 
     const uint size = getSetting<uint>(cfgRoot, "size");
-//    const uint interval = getSetting<uint>(cfgRoot, "interval");
+    const uint interval = getSetting<uint>(cfgRoot, "interval");
 
     const uint boundaryDepth = getSetting<uint>(cfgRoot, "boundaryDepth");
 
@@ -41,19 +41,11 @@ int main(int argv, char **argc)
 
     SOSSolver solver(L, W, alpha, 0, true);
 
-    AverageHeightBoundary leftBoundary(solver, boundaryDepth, 0, L, W, Boundary::orientations::FIRST, 0);
-    ConstantHeight rightBoundary(0, L-1, Boundary::orientations::LAST);
+    ReflConstantHybrid topBoundary(solver, 0, Boundary::orientations::LAST, 1);
+    ReflConstantHybrid rightBoundary(solver, 0, Boundary::orientations::LAST, 0);
 
-//    Periodic leftBoundary(L, Boundary::orientations::FIRST);
-//    Periodic rightBoundary(L, Boundary::orientations::LAST);
-
-
-//    LongestStripBoundary bottomBoundary(solver, 1, Boundary::orientations::FIRST);
-//    LongestStripBoundary topBoundary(solver, 1, Boundary::orientations::LAST);
-//    ConstantHeight bottomBoundary(0, 0, Boundary::orientations::FIRST);
-    ConstantHeight topBoundary(0, W-1, Boundary::orientations::LAST);
-    AverageHeightLineBoundary bottomBoundary(solver, Boundary::orientations::FIRST, 1, boundaryDepth);
-//    AverageHeightLineBoundary topBoundary(solver, Boundary::orientations::LAST, 1, boundaryDepth);
+    AverageHeightLineBoundaryRefl leftBoundary(solver, Boundary::orientations::FIRST, 0, boundaryDepth);
+    AverageHeightLineBoundaryOpen bottomBoundary(solver, Boundary::orientations::FIRST, 1, boundaryDepth);
 
     solver.setBoundaries({{&leftBoundary, &rightBoundary}, {&bottomBoundary, &topBoundary}});
 
@@ -72,27 +64,15 @@ int main(int argv, char **argc)
     lattice.addEvent(confinement);
     lattice.addEvent(concProfile);
 
-    //    InsertStep insertStep(solver, interval, size);
-    //    lattice.addEvent(insertStep);
-
-
-    DumpSystem dumper(solver, 1000, path);
+    DumpSystem dumper(solver, interval, path);
 
     lattice.addEvent(dumper);
 
         for (uint x = 0; x < size; ++x)
         {
-//            const uint ym = sqrt(size*size - x*x);
+            const uint ym = sqrt(size*size - x*x);
 
-//            for (uint y = 0; y < ym; ++y)
-//            {
-//                solver.setHeight(x, y, 1, false);
-//                solver.setHeight(L-x-1, y, 1, false);
-//            }
-//            solver.freezeSurfaceParticle(x, 0);
-//            solver.freezeSurfaceParticle(L-x-1, 0);
-
-            for (uint y = 0; y < W; ++y)
+            for (uint y = 0; y < ym; ++y)
             {
                 solver.setHeight(x, y, 1, false);
             }
@@ -102,19 +82,8 @@ int main(int argv, char **argc)
     lattice.eventLoop(nCycles);
     //
 
-
     H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "felixexp", "h5"));
-
-    stringstream sizeDesc;
-    sizeDesc << L << "x" << W;
-    H5Wrapper::Member &sizeRoot = h5root.addMember(sizeDesc.str());
-
-    timeval tv;
-    gettimeofday(&tv, nullptr);
-
-    __int64_t run_ID = 1000*tv.tv_sec + tv.tv_usec/1000 + 10000000000000u*getProc(argv, argc);
-
-    H5Wrapper::Member &simRoot = sizeRoot.addMember(run_ID);
+    H5Wrapper::Member &simRoot = setuph5(h5root, getProc(argv, argc), L, W);
 
     simRoot["L"] = L;
     simRoot["W"] = W;
@@ -123,7 +92,11 @@ int main(int argv, char **argc)
 
     simRoot["cBath"] = cBath;
 
-    simRoot["halfSize"] = halfSize;
+    simRoot[""
+            ""
+            ""
+            ""
+            "e"] = halfSize;
     simRoot["maxdt"] = maxdt;
 
     return 0;

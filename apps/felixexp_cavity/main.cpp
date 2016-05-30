@@ -91,67 +91,6 @@ public:
 };
 
 
-//class ReflConstantHybrid : public SOSBoundary
-//{
-//public:
-
-//    ReflConstantHybrid(SOSSolver &solver) :
-//        SOSBoundary(solver, Boundary::orientations::LAST)
-//    {
-
-//    }
-
-//    // Boundary interface
-//public:
-//    double transformContinousCoordinate(const double xi, const double xj, const double xk) const
-//    {
-//        (void) xj;
-//        (void) xk;
-
-//        if (xi >= solver().length() - 0.5)
-//        {
-
-//            return 2*solver().length() - xi - 1;
-//        }
-
-//        else
-//        {
-//            return xi;
-//        }
-//    }
-
-//    int transformLatticeCoordinate(const int xi, const int xj, const int xk) const
-//    {
-//        (void) xj;
-//        (void) xk;
-
-//        return xi;
-//    }
-
-//    bool isBlockedContinous(const double xi, const double xj, const double xk) const
-//    {
-//        (void) xi;
-//        (void) xj;
-//        (void) xk;
-
-//        return false;
-//    }
-
-//    bool isBlockedLattice(const int xi, const int xj, const int xk) const
-//    {
-//        (void) xj;
-
-//        const int loc = solver().length();
-//        const int h = 0;
-
-//        return (xi >= loc) && (xk <= h);
-//    }
-
-//    void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const
-//    {
-//        noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
-//    }
-//};
 
 
 class StoreHeights : public SOSEvent
