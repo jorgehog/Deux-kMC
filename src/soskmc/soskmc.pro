@@ -42,7 +42,8 @@ SOURCES += \
     Events/confiningsurface/rdlpotential.cpp \
     localcachedpotential.cpp \
     longeststripboundary.cpp \
-    averageheightlineboundary.cpp
+    averageheightlineboundary.cpp \
+    reflavghybrid.cpp
 
 
 HEADERS += \
@@ -87,7 +88,8 @@ HEADERS += \
     Events/confiningsurface/rdlpotential.h \
     localcachedpotential.h \
     longeststripboundary.h \
-    averageheightlineboundary.h
+    averageheightlineboundary.h \
+    reflavghybrid.h
 
 LIBS += -lkMC
 

@@ -91,114 +91,67 @@ public:
 };
 
 
-class ReflConstantHybrid : public SOSBoundary
-{
-public:
+//class ReflConstantHybrid : public SOSBoundary
+//{
+//public:
 
-    ReflConstantHybrid(SOSSolver &solver) :
-        SOSBoundary(solver, Boundary::orientations::LAST)
-    {
+//    ReflConstantHybrid(SOSSolver &solver) :
+//        SOSBoundary(solver, Boundary::orientations::LAST)
+//    {
 
-    }
+//    }
 
-    // Boundary interface
-public:
-    double transformContinousCoordinate(const double xi, const double xj, const double xk) const
-    {
-        (void) xj;
-        (void) xk;
+//    // Boundary interface
+//public:
+//    double transformContinousCoordinate(const double xi, const double xj, const double xk) const
+//    {
+//        (void) xj;
+//        (void) xk;
 
-        if (xi >= solver().length() - 0.5)
-        {
+//        if (xi >= solver().length() - 0.5)
+//        {
 
-            return 2*solver().length() - xi - 1;
-        }
+//            return 2*solver().length() - xi - 1;
+//        }
 
-        else
-        {
-            return xi;
-        }
-    }
+//        else
+//        {
+//            return xi;
+//        }
+//    }
 
-    int transformLatticeCoordinate(const int xi, const int xj, const int xk) const
-    {
-        (void) xj;
-        (void) xk;
+//    int transformLatticeCoordinate(const int xi, const int xj, const int xk) const
+//    {
+//        (void) xj;
+//        (void) xk;
 
-        return xi;
-    }
+//        return xi;
+//    }
 
-    bool isBlockedContinous(const double xi, const double xj, const double xk) const
-    {
-        (void) xi;
-        (void) xj;
-        (void) xk;
+//    bool isBlockedContinous(const double xi, const double xj, const double xk) const
+//    {
+//        (void) xi;
+//        (void) xj;
+//        (void) xk;
 
-        return false;
-    }
+//        return false;
+//    }
 
-    bool isBlockedLattice(const int xi, const int xj, const int xk) const
-    {
-        (void) xj;
+//    bool isBlockedLattice(const int xi, const int xj, const int xk) const
+//    {
+//        (void) xj;
 
-        const int loc = solver().length();
-        const int h = 0;
+//        const int loc = solver().length();
+//        const int h = 0;
 
-        return (xi >= loc) && (xk <= h);
-    }
+//        return (xi >= loc) && (xk <= h);
+//    }
 
-    void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const
-    {
-        noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
-    }
-};
-
-
-class ReflAvgHybrid : public AverageHeightBoundary
-{
-public:
-
-    ReflAvgHybrid(SOSSolver &solver, const uint averageHeightDepth) :
-        AverageHeightBoundary(solver, averageHeightDepth, 0,
-                              solver.length(), solver.width(),
-                              Boundary::orientations::LAST, solver.length() - 1)
-    {
-
-    }
-
-    // Boundary interface
-public:
-    double transformContinousCoordinate(const double xi, const double xj, const double xk) const
-    {
-        (void) xj;
-        (void) xk;
-
-        if (xi >= solver().length() - 0.5)
-        {
-
-            return 2*solver().length() - xi - 1;
-        }
-
-        else
-        {
-            return xi;
-        }
-    }
-
-    bool isBlockedContinous(const double xi, const double xj, const double xk) const
-    {
-        (void) xi;
-        (void) xj;
-        (void) xk;
-
-        return false;
-    }
-
-    void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const
-    {
-        noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
-    }
-};
+//    void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const
+//    {
+//        noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
+//    }
+//};
 
 
 class StoreHeights : public SOSEvent

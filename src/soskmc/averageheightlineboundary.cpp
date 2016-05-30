@@ -32,27 +32,11 @@ AverageHeightLineBoundary::AverageHeightLineBoundary(SOSSolver &solver,
     }
 }
 
-double AverageHeightLineBoundary::transformContinousCoordinate(const double xi, const double xj, const double xk) const
-{
-    (void) xj;
-    (void) xk;
-    return xi;
-}
-
 int AverageHeightLineBoundary::transformLatticeCoordinate(const int xi, const int xj, const int xk) const
 {
     (void) xj;
     (void) xk;
     return xi;
-}
-
-bool AverageHeightLineBoundary::isBlockedContinous(const double xi, const double xj, const double xk) const
-{
-    (void) xi;
-    (void) xj;
-    (void) xk;
-
-    return false;
 }
 
 bool AverageHeightLineBoundary::isBlockedLattice(const int xi, const int xj, const int xk) const

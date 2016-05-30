@@ -32,7 +32,7 @@ int main(int argv, char **argc)
     const double cBath = getSetting<double>(cfgRoot, "cBath");
 
     const uint size = getSetting<uint>(cfgRoot, "size");
-    const uint interval = getSetting<uint>(cfgRoot, "interval");
+//    const uint interval = getSetting<uint>(cfgRoot, "interval");
 
     const uint boundaryDepth = getSetting<uint>(cfgRoot, "boundaryDepth");
 
@@ -65,15 +65,15 @@ int main(int argv, char **argc)
 
     ConstantConfinement confinement(solver, h0);
 
-    InsertStep insertStep(solver, interval, size);
-
     Lattice lattice;
     lattice.enableProgressReport();
 
     lattice.addEvent(solver);
-    //    lattice.addEvent(insertStep);
     lattice.addEvent(confinement);
     lattice.addEvent(concProfile);
+
+    //    InsertStep insertStep(solver, interval, size);
+    //    lattice.addEvent(insertStep);
 
 
     DumpSystem dumper(solver, 1000, path);
