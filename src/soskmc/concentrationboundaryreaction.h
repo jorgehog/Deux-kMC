@@ -30,7 +30,7 @@ public:
 
     int heightAtBoundary(const uint n) const; //!height at boundary site n
 
-    bool pointIsOnBoundary(const uint x, const uint y) const;
+    bool pointIsOnBoundary(const int x, const int y) const;
 
     const uint &dim() const
     {

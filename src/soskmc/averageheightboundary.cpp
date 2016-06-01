@@ -60,16 +60,16 @@ double AverageHeightBoundary::calcAverage() const
     return average / cutoffArea();
 }
 
-bool AverageHeightBoundary::isInsideCutoff(const uint x, const uint y) const
+bool AverageHeightBoundary::isInsideCutoff(const int x, const int y) const
 {
     if (m_dim == 0)
     {
-        return (x >= m_x0) && (x < m_x1);
+        return (x >= (int)m_x0) && (x < (int)m_x1);
     }
 
     else
     {
-        return (y >= m_y0) && (y < m_y1);
+        return (y >= (int)m_y0) && (y < (int)m_y1);
     }
 }
 
@@ -159,8 +159,8 @@ void AverageHeightBoundary::notifyObserver(const Subjects &subject)
 
     else
     {
-        const uint &x1 = solver().currentSurfaceChange().x1;
-        const uint &y1 = solver().currentSurfaceChange().y1;
+        const int &x1 = solver().currentSurfaceChange().x1;
+        const int &y1 = solver().currentSurfaceChange().y1;
 
         const bool startInside = isInsideCutoff(x, y);
         const bool endInside = isInsideCutoff(x1, y1);

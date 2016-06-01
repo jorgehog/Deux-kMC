@@ -38,7 +38,7 @@ public:
         return m_averageHeightDepth*m_yspan;
     }
 
-    bool isInsideCutoff(const uint x, const uint y) const;
+    bool isInsideCutoff(const int x, const int y) const;
 
     void getStartsAndEnds(uint &x0,
                           uint &y0,

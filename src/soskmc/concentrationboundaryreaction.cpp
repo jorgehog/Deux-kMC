@@ -72,16 +72,16 @@ int ConcentrationBoundaryReaction::heightAtBoundary(const uint n) const
     }
 }
 
-bool ConcentrationBoundaryReaction::pointIsOnBoundary(const uint x, const uint y) const
+bool ConcentrationBoundaryReaction::pointIsOnBoundary(const int x, const int y) const
 {
     if (dim() == 0)
     {
-        return x == location();
+        return x == (int)location();
     }
 
     else
     {
-        return y == location();
+        return y == (int)location();
     }
 }
 
@@ -218,8 +218,8 @@ void ConcentrationBoundaryReaction::notifyObserver(const Subjects &subject)
 
         if (solver().currentSurfaceChange().type == ChangeTypes::Double)
         {
-            const uint &x1 = solver().currentSurfaceChange().x1;
-            const uint &y1 = solver().currentSurfaceChange().y1;
+            const int &x1 = solver().currentSurfaceChange().x1;
+            const int &y1 = solver().currentSurfaceChange().y1;
 
             onBoundary = onBoundary || pointIsOnBoundary(x1, y1);
         }

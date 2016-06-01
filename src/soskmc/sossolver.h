@@ -31,8 +31,8 @@ struct CurrentSurfaceChange
 {
     uint x;
     uint y;
-    uint x1;
-    uint y1;
+    int x1;
+    int y1;
     ChangeTypes type;
     int value;
 };

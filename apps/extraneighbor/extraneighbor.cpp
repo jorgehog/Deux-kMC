@@ -51,22 +51,25 @@ void ExtraNeighbor::notifyObserver(const Subjects &subject)
                 m_potentialValues(x, y) = potentialFunction(x, y);
 
                 r.setEscapeRate(r.escapeRate() - prevRate + m_potentialValues(x, y));
-            }   
+            }
         }
 
         else
         {
-            const uint &xEnd = csc.x1;
-            const uint &yEnd = csc.y1;
-
-            SurfaceReaction &rEnd = solver().surfaceReaction(xEnd, yEnd);
-
             r.setEscapeRate(r.escapeRate() - m_potentialValues(x, y));
             m_potentialValues(x, y) = 0;
 
-            double prevRate = m_potentialValues(xEnd, yEnd);
-            m_potentialValues(xEnd, yEnd) = potentialFunction(xEnd, yEnd);
-            rEnd.setEscapeRate(rEnd.escapeRate() - prevRate + m_potentialValues(xEnd, yEnd));
+            const int &xEnd = csc.x1;
+            const int &yEnd = csc.y1;
+
+            if (!solver().isOutsideBox(xEnd, yEnd))
+            {
+                SurfaceReaction &rEnd = solver().surfaceReaction(xEnd, yEnd);
+
+                double prevRate = m_potentialValues(xEnd, yEnd);
+                m_potentialValues(xEnd, yEnd) = potentialFunction(xEnd, yEnd);
+                rEnd.setEscapeRate(rEnd.escapeRate() - prevRate + m_potentialValues(xEnd, yEnd));
+            }
         }
 
     }

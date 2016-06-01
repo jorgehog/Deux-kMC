@@ -64,10 +64,13 @@ void RDLPotential::notifyObserver(const kMC::Subjects &subject)
 
         if (csc.type == ChangeTypes::Double)
         {
-            const uint &x1 = csc.x1;
-            const uint &y1 = csc.y1;
+            const int &x1 = csc.x1;
+            const int &y1 = csc.y1;
 
-            m_potentialValues(x1, y1) = potentialFunction(x1, y1);
+            if (!solver().isOutsideBox(x1, y1))
+            {
+                m_potentialValues(x1, y1) = potentialFunction(x1, y1);
+            }
         }
 
         m_potentialValues(x, y) = potentialFunction(x, y);

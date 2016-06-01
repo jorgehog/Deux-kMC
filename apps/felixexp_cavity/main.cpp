@@ -2,6 +2,8 @@
 
 #include "../apputils.h"
 
+#include "../extraneighbor/extraneighbor.h"
+
 using ignis::Lattice;
 
 class NoAdatomBonds : public LocalPotential, public Observer<Subjects>
@@ -276,8 +278,7 @@ int main(int argv, char** argc)
 
     solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
 
-
-    const uint depositionBoxHalfSize = 3;
+    const uint depositionBoxHalfSize = 5;
     const double maxDt = 0.01;
 
     RadialFirstPassage diff(solver, maxDt, depositionBoxHalfSize, getMFPTConstant(height, alpha, 0));
@@ -293,6 +294,9 @@ int main(int argv, char** argc)
     PartialNeighbors pnRight(solver, x1);
     solver.addLocalPotential(&pnRight);
     solver.registerObserver(&pnRight);
+
+    ExtraNeighbor en(solver);
+    solver.addLocalPotential(&en);
 
     Time time(solver);
     VS vs(solver);

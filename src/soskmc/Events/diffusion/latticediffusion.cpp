@@ -348,13 +348,18 @@ void LatticeDiffusion::onHeightChanged()
 
     if (csc.type == ChangeTypes::Double)
     {
-        const uint &x1 = csc.x1;
-        const uint &y1 = csc.y1;
+        const int &x1 = csc.x1;
+        const int &y1 = csc.y1;
 
         const int h = solver().height(x, y) + 1;
         registerAffectedAround(x, y, h);
 
         BADAssEqual(h, solver().height(x1, y1));
+
+        if (solver().isOutsideBox(x1, y1))
+        {
+            return;
+        }
 
         if (isBlockedPosition(x1, y1, h+1))
         {
