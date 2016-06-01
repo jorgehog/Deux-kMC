@@ -55,19 +55,22 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
             //Remove particle based on the probability of it being the deposited
             if (value == 1)
             {
-                double Rtot = 0;
-                for (uint n = 0; n < nOfflatticeParticles(); ++n)
+                if (!solver().concentrationBoundaryDeposition())
                 {
-                    //use old rates to calculate probability of depositing
-                    Rtot += localRates(x, y, n);
-                    m_accuRatesForSite(n) = Rtot;
+                    double Rtot = 0;
+                    for (uint n = 0; n < nOfflatticeParticles(); ++n)
+                    {
+                        //use old rates to calculate probability of depositing
+                        Rtot += localRates(x, y, n);
+                        m_accuRatesForSite(n) = Rtot;
+                    }
+
+                    const uint N = chooseFromTotalRate(m_accuRatesForSite.memptr(), nOfflatticeParticles(), Rtot);
+
+                    BADAss(localRates(x, y, N), !=, 0);
+
+                    removeParticle(N);
                 }
-
-                const uint N = chooseFromTotalRate(m_accuRatesForSite.memptr(), nOfflatticeParticles(), Rtot);
-
-                BADAss(localRates(x, y, N), !=, 0);
-
-                removeParticle(N);
             }
 
             //Add a particle on a unit sphere around the site;
@@ -282,8 +285,8 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
         diffuseSingleParticle(n, dt, prefac);
     }
 
-//    dump(m_dumpCounter);
-//    m_dumpCounter++;
+    //    dump(m_dumpCounter);
+    //    m_dumpCounter++;
 }
 
 void OfflatticeMonteCarlo::diffuseFull(const double dtFull)
@@ -493,8 +496,8 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
             else
             {
                 if (solver().isBlockedPosition(particlePositions(0, n),
-                                                particlePositions(1, n),
-                                                particlePositions(2, n)))
+                                               particlePositions(1, n),
+                                               particlePositions(2, n)))
                 {
                     available = false;
                 }
@@ -520,6 +523,11 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
 
     if (noWhereToGo)
     {
+//        if (noAvailablePositions())
+//        {
+//            return;
+//        }
+
         double x0;
         double y0;
         double z0;
@@ -543,6 +551,24 @@ void OfflatticeMonteCarlo::scanForDisplacement(const uint n, uint &dim, double &
     m_scanAbsDeltas.min(minLoc);
     delta = m_scanDeltas(minLoc);
     dim = minLoc/2;
+}
+
+bool OfflatticeMonteCarlo::noAvailablePositions() const
+{
+    const double &h = solver().confiningSurfaceEvent().height();
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            if (h - solver().height(x, y) - 2 > 0)
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 void OfflatticeMonteCarlo::dumpDiffusingParticles(const uint frameNumber, const string path, const string ext) const
@@ -664,6 +690,9 @@ void OfflatticeMonteCarlo::findRandomPosition(double &x0, double &y0, double &z0
     const double zMin = solver().heights().min() + 1;
     const double &h = solver().confiningSurfaceEvent().height() - 1;
 
+    const uint nMax = 10000;
+    uint n = 0;
+
     do
     {
         double x0Raw = -0.5 + rng.uniform()*solver().length();
@@ -671,6 +700,13 @@ void OfflatticeMonteCarlo::findRandomPosition(double &x0, double &y0, double &z0
         z0 = zMin + rng.uniform()*(h - zMin);
 
         solver().boundaryContinousTransform(x0, y0, x0Raw, y0Raw, z0);
+
+        n++;
+
+        if (n > nMax)
+        {
+            throw std::runtime_error("random position asked for, but no positions are legal.");
+        }
 
     } while(solver().isBlockedPosition(x0, y0, z0));
 }

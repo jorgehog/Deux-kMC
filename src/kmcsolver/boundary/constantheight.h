@@ -42,12 +42,12 @@ bool ConstantHeight::blockedFunction(const T &xi, const T &xj, const T &xk) cons
 
     if (orientation() == orientations::FIRST)
     {
-        return (xi < m_location) && (xk <= m_height);
+        return (xi < T(m_location)) && (xk <= m_height);
     }
 
     else
     {
-        return (xi > m_location) && (xk <= m_height);
+        return (xi > T(m_location)) && (xk <= m_height);
     }
 }
 

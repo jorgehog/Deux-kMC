@@ -33,8 +33,8 @@ public:
 template<typename T>
 const T Reflecting::transformFunction(const T &xi) const
 {
-    bool isBelow = (xi < m_location) && (orientation() == orientations::FIRST);
-    bool isAbove = (xi > m_location) && (orientation() == orientations::LAST);
+    bool isBelow = (xi < T(m_location)) && (orientation() == orientations::FIRST);
+    bool isAbove = (xi > T(m_location)) && (orientation() == orientations::LAST);
 
     if (isBelow)
     {

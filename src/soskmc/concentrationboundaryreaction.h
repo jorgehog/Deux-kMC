@@ -20,7 +20,13 @@ public:
 
     ~ConcentrationBoundaryReaction();
 
-    double freeBoundaryArea() const;
+
+    uint nBoundarySites() const;
+    uint nBoundarySites(const int hlInt) const;
+
+//    double freeBoundaryArea() const;
+//    double topSpacing() const;
+//    double topSpacing(const double hl, const int hlInt) const;
 
     int heightAtBoundary(const uint n) const; //!height at boundary site n
 
@@ -51,7 +57,7 @@ public:
         return m_span;
     }
 
-    double _rateExpression(const double area) const;
+    double _rateExpression(const uint nBoundaryParticles) const;
 
 
 private:
@@ -66,6 +72,13 @@ private:
 
     vec m_boundaryHeights;
     vec m_accuBoundaryHeights;
+
+    void insertParticle(const uint xi, const int h);
+
+    SOSSolver &solver()
+    {
+        return m_solver;
+    }
 
     // Reaction interface
 public:

@@ -36,6 +36,8 @@ public:
 
     void scanForDisplacement(const uint n, uint &dim, double &delta, const double stepSize = 0.05);
 
+    bool noAvailablePositions() const;
+
     const double &maxdt() const
     {
         return m_maxdt;

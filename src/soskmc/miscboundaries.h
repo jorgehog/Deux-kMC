@@ -219,6 +219,14 @@ public:
         return false;
     }
 
+    bool isBlockedLattice(const int xi, const int xj, const int xk) const
+    {
+        (void) xj;
+        (void) xk;
+
+        return xi >= (int)solver().length();
+    }
+
     void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const
     {
         noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);

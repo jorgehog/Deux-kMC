@@ -666,6 +666,12 @@ void initializeSurface(SOSSolver &solver, const string type,
 
 inline double getMFPTConstant(const double h0, const double alpha, const int type)
 {
+    //here there is only 1 particle, so it's not really working well.
+    if (alpha == 3)
+    {
+        return 0.1;
+    }
+
     using maptype = std::map<pair<uint, uint>, double>;
 
     const maptype valueMapRadial = {{{ 0,  0}, 0.048},

@@ -9,7 +9,7 @@ AverageHeightBoundary::AverageHeightBoundary(SOSSolver &solver,
                                              const uint span,
                                              const uint yspan,
                                              Boundary::orientations orientation,
-                                             const double location) :
+                                             const uint location) :
     SOSBoundary(solver, orientation),
     m_averageHeightDepth(averageHeightDepth == 0 ? span : averageHeightDepth),
     m_dim(dim),

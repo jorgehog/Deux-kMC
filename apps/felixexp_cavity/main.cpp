@@ -4,6 +4,65 @@
 
 using ignis::Lattice;
 
+class NoAdatomBonds : public LocalPotential, public Observer<Subjects>
+{
+public:
+    NoAdatomBonds(SOSSolver &solver,
+                  AverageHeightBoundary &ahb) :
+        LocalPotential(solver),
+        Observer(),
+        m_ahb(ahb)
+    {
+
+    }
+
+private:
+    AverageHeightBoundary &m_ahb;
+    int m_hCurrent;
+
+
+
+
+    // Observer interface
+public:
+    void initializeObserver(const Subjects &subject)
+    {
+        (void) subject;
+
+        m_hCurrent = round(m_ahb.average());
+    }
+
+    void notifyObserver(const Subjects &subject)
+    {
+        (void) subject;
+
+        const int hNew = round(m_ahb.average());
+
+        if (hNew != m_hCurrent)
+        {
+            m_hCurrent = hNew;
+            m_ahb.affectSurfaceSites();
+        }
+    }
+
+    // LocalPotential interface
+public:
+    double potential(const uint x, const uint y) const
+    {
+        const bool atBoundary = x == solver().length() - 1;
+
+        if (atBoundary && (solver().height(x, y) > m_hCurrent))
+        {
+            return -1;
+        }
+
+        else
+        {
+            return 0;
+        }
+    }
+};
+
 class PartialNeighbors : public LocalPotential, public Observer<Subjects>
 {
 public:
@@ -32,7 +91,17 @@ public:
     {
         (void) y;
 
-        const bool atBoundary = x == 0;
+        bool atBoundary;
+
+        if (m_ahb.dim() == 0)
+        {
+            atBoundary = x == m_ahb.location();
+        }
+
+        else
+        {
+            atBoundary = y == m_ahb.location();
+        }
 
         if (atBoundary)
         {
@@ -52,11 +121,6 @@ public:
                 //This means that there is a contribution Eb already
                 if (probFilled >= 0.5)
                 {
-                    BADAssBool(m_ahb.isBlockedLattice(-1, y, solver().height(x, y)), "hmm", [&] ()
-                    {
-                        BADAssSimpleDump(corr, m_ahb.average());
-                    });
-
                     return corr - Eb;
                 }
 
@@ -123,9 +187,9 @@ class StoreParticles : public SOSEvent
 {
 public:
     StoreParticles(const SOSSolver &solver,
-                 const OfflatticeMonteCarlo &omc,
-                 const uint interval,
-                 H5Wrapper::Member &h5group) :
+                   const OfflatticeMonteCarlo &omc,
+                   const uint interval,
+                   H5Wrapper::Member &h5group) :
         SOSEvent(solver, "storeparticles"),
         m_omc(omc),
         m_interval(interval),
@@ -152,6 +216,22 @@ public:
 };
 
 
+class VS : public SOSEvent
+{
+public:
+    VS(const SOSSolver &solver) :
+        SOSEvent(solver, "VS", "", true)
+    {
+
+    }
+
+    // Event interface
+public:
+    void execute()
+    {
+        setValue(solver().volume() - solver().diffusionEvent().numberOfParticles());
+    }
+};
 
 int main(int argv, char** argc)
 {
@@ -169,6 +249,7 @@ int main(int argv, char** argc)
 
     const double &alpha = getSetting<double>(cfgRoot, "alpha");
     const double &omega = getSetting<double>(cfgRoot, "omega");
+    const double &omegaEq = getSetting<double>(cfgRoot, "omegaEq");
     const double &height = getSetting<double>(cfgRoot, "height");
 
     const uint &nCycles = getSetting<uint>(cfgRoot, "nCycles");
@@ -176,33 +257,45 @@ int main(int argv, char** argc)
     const uint &output = getSetting<uint>(cfgRoot, "output");
 
     rng.initialize(time(nullptr));
-//        rng.initialize(100101010);
+    const string initType = "flat";
+//    const string initType = "random";
 
-    const string initType = "thermalized";
-//        const string initType = "random";
+    //        rng.initialize(100101010);
 
     const double gamma = log(1 + omega);
 
     SOSSolver solver(L, W, alpha, gamma, true);
 
-    AverageHeightBoundary x0(solver, 5, 0, L, W, Boundary::orientations::FIRST, 0);
-    ReflAvgHybrid x1(solver, 5);
+    const uint boundaryDepth = 3;
+
+    AverageHeightBoundary x0(solver, boundaryDepth, 0, L, W, Boundary::orientations::FIRST, 0);
+    AverageHeightBoundary x1(solver, boundaryDepth, 0, L, W, Boundary::orientations::LAST, L-1);
 
     Periodic y0(W, Boundary::orientations::FIRST);
     Periodic y1(W, Boundary::orientations::LAST);
 
     solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
 
-    RadialFirstPassage diff(solver, 0.01, 3, getMFPTConstant(height, alpha, 0));
+
+    const uint depositionBoxHalfSize = 3;
+    const double maxDt = 0.01;
+
+    RadialFirstPassage diff(solver, maxDt, depositionBoxHalfSize, getMFPTConstant(height, alpha, 0));
     FixedSurface confSurface(solver, height);
 
     solver.addConcentrationBoundary(0, Boundary::orientations::FIRST, omega);
+    solver.addConcentrationBoundary(0, Boundary::orientations::LAST, omegaEq);
 
-    PartialNeighbors pn(solver, x0);
-    solver.addLocalPotential(&pn);
-    solver.registerObserver(&pn);
+    PartialNeighbors pnLeft(solver, x0);
+    solver.addLocalPotential(&pnLeft);
+    solver.registerObserver(&pnLeft);
+
+    PartialNeighbors pnRight(solver, x1);
+    solver.addLocalPotential(&pnRight);
+    solver.registerObserver(&pnRight);
 
     Time time(solver);
+    VS vs(solver);
 
     DumpSystem dumper(solver, interval, path, getTail(argv, argc));
 
@@ -226,6 +319,7 @@ int main(int argv, char** argc)
     lattice.addEvent(confSurface);
     lattice.addEvent(diff);
     lattice.addEvent(time);
+    lattice.addEvent(vs);
 
     if (output)
     {

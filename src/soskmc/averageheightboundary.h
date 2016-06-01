@@ -14,7 +14,7 @@ public:
     AverageHeightBoundary(SOSSolver &solver, const uint averageHeightDepth,
                           const uint dim, const uint span, const uint yspan,
                           orientations orientation,
-                          const double location);
+                          const uint location);
     virtual ~AverageHeightBoundary();
 
     template<typename T>
@@ -45,6 +45,16 @@ public:
                           uint &x1,
                           uint &y1);
 
+    const uint &dim() const
+    {
+        return m_dim;
+    }
+
+    const uint &location() const
+    {
+        return m_location;
+    }
+
 private:
 
     uint m_x0;
@@ -58,7 +68,7 @@ private:
     const uint m_span;
     const uint m_yspan;
 
-    const double m_location;
+    const uint m_location;
     double m_prevAverage;
 
     double m_average;
@@ -97,12 +107,12 @@ bool AverageHeightBoundary::blockedFunction(const T &xi, const T &xj, const T& x
 
     if (orientation() == orientations::FIRST)
     {
-        return (xi < m_location) && (xk <= averageHeight);
+        return (xi < T(m_location)) && (xk <= averageHeight);
     }
 
     else
     {
-        return (xi > m_location) && (xk <= averageHeight);
+        return (xi > T(m_location)) && (xk <= averageHeight);
     }
 }
 

@@ -51,7 +51,7 @@ void Diffusion::dump(const uint frameNumber, const string path, const string ext
                               << x
                               << y
                               << h
-                              << 0;
+                              << 0.;
             }
 
             int cut = solver().height(x, y) - cutfactor;
@@ -64,7 +64,7 @@ void Diffusion::dump(const uint frameNumber, const string path, const string ext
                               << x
                               << y
                               << zSurface
-                              << 6;
+                              << 1.;
             }
 
             surfacewriter << 2
@@ -74,12 +74,12 @@ void Diffusion::dump(const uint frameNumber, const string path, const string ext
 
             if (solver().surfaceReaction(x, y).isAllowed())
             {
-                surfacewriter << solver().nNeighbors(x, y);
+                surfacewriter << solver().calculateNNeighbors(x, y)/6.;
             }
 
             else
             {
-                surfacewriter << 0;
+                surfacewriter << 0.;
             }
 
         }

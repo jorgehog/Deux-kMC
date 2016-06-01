@@ -329,6 +329,16 @@ public:
 
     void freezeSurfaceParticle(const uint x, const uint y);
 
+    void registerConcentrationBoundaryDeposition(const bool value = true)
+    {
+        m_concentrationBoundaryDeposition = value;
+    }
+
+    bool concentrationBoundaryDeposition() const
+    {
+        return m_concentrationBoundaryDeposition;
+    }
+
 private:
 
     const bool m_surfaceDiffusion;
@@ -355,6 +365,8 @@ private:
     umat m_nNeighbors;
 
     double m_averageHeight;
+
+    bool m_concentrationBoundaryDeposition;
 
 
     field<SurfaceReaction*> m_surfaceReactions;

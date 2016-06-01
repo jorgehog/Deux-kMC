@@ -300,7 +300,6 @@ uint SOSSolver::calculateNNeighbors(const uint x, const uint y, const int h) con
     }
 
     return n;
-
 }
 
 uint SOSSolver::numberOfSurroundingSites(const uint x, const uint y)
@@ -1160,6 +1159,8 @@ void SOSSolver::execute()
 
 void SOSSolver::initialize()
 {
+    m_concentrationBoundaryDeposition = false;
+
     if (!m_heightsSet)
     {
         m_heights.zeros();

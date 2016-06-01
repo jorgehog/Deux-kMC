@@ -11,7 +11,7 @@ ConcentrationBoundaryReaction::ConcentrationBoundaryReaction(const uint dim,
     Reaction(),
     m_dim(dim),
     m_orientation(orientation),
-    m_location(orientation == 0 ? 0 : (dim == 0 ? solver.length() : solver.width())),
+    m_location(orientation == 0 ? 0 : (dim == 0 ? solver.length() - 1 : solver.width() - 1)),
     m_span(dim == 0 ? solver.width() : solver.length()),
     m_solver(solver),
     m_c((omega + 1)*solver.c0()),
@@ -26,26 +26,37 @@ ConcentrationBoundaryReaction::~ConcentrationBoundaryReaction()
 
 }
 
-double ConcentrationBoundaryReaction::freeBoundaryArea() const
+//double ConcentrationBoundaryReaction::freeBoundaryArea() const
+//{
+//    const double &hl = solver().confiningSurfaceEvent().height();
+//    const int hlInt = int(floor(hl));
+
+//    return topSpacing(hl, hlInt) + nBoundarySites(hlInt);
+//}
+
+uint ConcentrationBoundaryReaction::nBoundarySites() const
 {
     const double &hl = solver().confiningSurfaceEvent().height();
+    const int hlInt = int(floor(hl));
 
-    double dhSum = 0;
+    return nBoundarySites(hlInt);
+}
+
+uint ConcentrationBoundaryReaction::nBoundarySites(const int hlInt) const
+{
+    uint nSites = 0;
     for (uint xi = 0; xi < span(); ++xi)
     {
         const int h = heightAtBoundary(xi);
 
-        double dh = hl - h - 2;
+        const uint n = hlInt - h - 1;
 
-        if (dh < 0)
-        {
-            dh = 0;
-        }
+        BADAss(h, <, hlInt);
 
-        dhSum += dh;
+        nSites += n;
     }
 
-    return dhSum;
+    return nSites;
 }
 
 int ConcentrationBoundaryReaction::heightAtBoundary(const uint n) const
@@ -74,64 +85,120 @@ bool ConcentrationBoundaryReaction::pointIsOnBoundary(const uint x, const uint y
     }
 }
 
-double ConcentrationBoundaryReaction::_rateExpression(const double freeArea) const
+double ConcentrationBoundaryReaction::_rateExpression(const uint nBoundaryParticles) const
 {
     BADAssBool(!solver().concentrationIsZero());
 
-    return m_c*freeArea*solver().diffusionEvent().DScaled();
+    return m_c*nBoundaryParticles*solver().diffusionEvent().DScaled();
+}
+
+void ConcentrationBoundaryReaction::insertParticle(const uint xi, const int h)
+{
+    if (dim() == 0)
+    {
+        if (solver().isSurfaceSite(location(), xi, h))
+        {
+            solver().registerConcentrationBoundaryDeposition(true);
+            solver().registerHeightChange(location(), xi, +1);
+            solver().registerConcentrationBoundaryDeposition(false);
+        }
+
+        else
+        {
+            solver().diffusionEvent().executeConcentrationBoundaryReaction(location(), xi, h);
+        }
+    }
+    else
+    {
+        if (solver().isSurfaceSite(xi, location(), h))
+        {
+            solver().registerConcentrationBoundaryDeposition(true);
+            solver().registerHeightChange(xi, location(), +1);
+            solver().registerConcentrationBoundaryDeposition(false);
+        }
+
+        else
+        {
+            solver().diffusionEvent().executeConcentrationBoundaryReaction(xi, location(), h);
+        }
+    }
 }
 
 bool ConcentrationBoundaryReaction::isAllowed() const
 {
-    return freeBoundaryArea() != 0;
+    return nBoundarySites() != 0;
 }
 
 void ConcentrationBoundaryReaction::executeAndUpdate()
 {
-    double dhSum = 0;
     const double &hl = solver().confiningSurfaceEvent().height();
+    const int hlInt = int(floor(hl));
+
+    const uint nSites = nBoundarySites(hlInt);
+
+    const uint whichSite = rng.uniform()*nSites;
+
+    uint scan = 0;
     for (uint xi = 0; xi < span(); ++xi)
     {
-        const int h = heightAtBoundary(xi);
-
-        double dh = hl - h - 2;
-
-        if (dh < 0)
+        for (int h = heightAtBoundary(xi) + 1; h < hlInt; ++h)
         {
-            dh = 0;
+            if (scan == whichSite)
+            {
+                insertParticle(xi, h);
+                return;
+            }
+
+            scan += 1;
         }
-
-        m_boundaryHeights(xi) = dh;
-
-        dhSum += dh;
-        m_accuBoundaryHeights(xi) = dhSum;
     }
 
-    BADAss(dhSum, >=, 0);
+//    const double dhl = topSpacing(hl, hlInt);
 
-    const double R = rng.uniform()*dhSum;
+//    double dhSum = 0;
+//    const double &hl = solver().confiningSurfaceEvent().height();
+//    for (uint xi = 0; xi < span(); ++xi)
+//    {
+//        const int h = heightAtBoundary(xi);
 
-    const uint x0 = binarySearchAndScan(m_accuBoundaryHeights.memptr(),
-                                        span(),
-                                        R);
+//        double dh = hl - h - 2;
 
-    const int h0 = heightAtBoundary(x0);
+//        if (dh < 0)
+//        {
+//            dh = 0;
+//        }
 
-    const double z0 = h0 + 1 + m_accuBoundaryHeights(x0) - R;
+//        m_boundaryHeights(xi) = dh;
 
-    if (dim() == 0)
-    {
-        solver().diffusionEvent().executeConcentrationBoundaryReaction(location(), x0, z0);
-    }
-    else
-    {
-        solver().diffusionEvent().executeConcentrationBoundaryReaction(x0, location(), z0);
-    }
+//        dhSum += dh;
+//        m_accuBoundaryHeights(xi) = dhSum;
+//    }
+
+//    BADAss(dhSum, >=, 0);
+
+//    const double R = rng.uniform()*dhSum;
+
+//    const uint x0 = binarySearchAndScan(m_accuBoundaryHeights.memptr(),
+//                                        span(),
+//                                        R);
+
+//    const int h0 = heightAtBoundary(x0);
+
+//    const double z0 = h0 + 1 + m_accuBoundaryHeights(x0) - R;
+
+//    if (dim() == 0)
+//    {
+//        solver().diffusionEvent().executeConcentrationBoundaryReaction(location(), x0, z0);
+//    }
+//    else
+//    {
+//        solver().diffusionEvent().executeConcentrationBoundaryReaction(x0, location(), z0);
+//    }
 }
 
 double ConcentrationBoundaryReaction::rateExpression()
 {
-    return _rateExpression(freeBoundaryArea());
+    return _rateExpression(nBoundarySites());
 }
 
 
@@ -165,8 +232,13 @@ void ConcentrationBoundaryReaction::notifyObserver(const Subjects &subject)
 
     else
     {
-        const double heightChange = solver().confiningSurfaceEvent().height() -
-                solver().confiningSurfaceEvent().currentConfinementChange().prevHeight;
-        changeRate(rate() + _rateExpression(heightChange*span()));
+        if (floor(solver().confiningSurfaceEvent().height()) !=
+                floor(solver().confiningSurfaceEvent().currentConfinementChange().prevHeight))
+        {
+            calculateRate();
+        }
+//        const double heightChange = solver().confiningSurfaceEvent().height() -
+//                solver().confiningSurfaceEvent().currentConfinementChange().prevHeight;
+//        changeRate(rate() + _rateExpression(heightChange*span()));
     }
 }

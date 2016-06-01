@@ -31,12 +31,12 @@ bool Edge::blockedFunction(const T &xi) const
 {
     if (orientation() == orientations::FIRST)
     {
-        return xi < m_location;
+        return xi < T(m_location);
     }
 
     else
     {
-        return xi > m_location;
+        return xi > T(m_location);
     }
 }
 
