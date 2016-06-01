@@ -916,25 +916,60 @@ H5Wrapper::Member &setuph5(H5Wrapper::Root &h5root, const uint proc, const uint 
     return sizeRoot.addMember(run_ID);
 }
 
+class StoreHeights : public SOSEvent
+{
+public:
+    StoreHeights(const SOSSolver &solver, const uint interval, H5Wrapper::Member &h5group) :
+        SOSEvent(solver, "storeheights"),
+        m_interval(interval),
+        m_h5group(h5group.addMember("stored_heights"))
+    {
 
+    }
 
+private:
+    const uint m_interval;
+    H5Wrapper::Member &m_h5group;
 
+    // Event interface
+public:
+    void execute()
+    {
+        if (cycle() % m_interval == 0)
+        {
+            m_h5group[to_string(cycle())] = solver().heights();
+        }
+    }
+};
 
+class StoreParticles : public SOSEvent
+{
+public:
+    StoreParticles(const SOSSolver &solver,
+                   const OfflatticeMonteCarlo &omc,
+                   const uint interval,
+                   H5Wrapper::Member &h5group) :
+        SOSEvent(solver, "storeparticles"),
+        m_omc(omc),
+        m_interval(interval),
+        m_h5group(h5group.addMember("stored_particles"))
+    {
 
+    }
 
+private:
+    const OfflatticeMonteCarlo &m_omc;
+    const uint m_interval;
+    H5Wrapper::Member &m_h5group;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // Event interface
+public:
+    void execute()
+    {
+        if (cycle() % m_interval == 0)
+        {
+            m_h5group[to_string(cycle())] = m_omc.particlePositions()(span::all,
+                                                                      span(0, m_omc.nOfflatticeParticles() - 1)).eval();
+        }
+    }
+};
