@@ -27,6 +27,7 @@ def main():
             os.mkdir(dir)
 
         stored_heights = data["stored_heights"]
+        stored_particles = data["stored_particles"]
 
         n_file = 0
         every = 100
@@ -36,11 +37,17 @@ def main():
                 continue
 
             heights = stored_heights[heights_id][()].transpose()
-
-            bottom = heights.min()
+            particles = stored_particles[heights_id][()]
 
             xyz = ""
             n = 0
+
+            for x, y, z in particles:
+                xyz += "2 %.3f %.3f %.3f\n" % (x, y, z)
+                n += 1
+
+            bottom = heights.min()
+
             for x in range(L):
                 for y in range(W):
                     h = heights[x, y]
@@ -64,6 +71,8 @@ def main():
             n_file += 1
 
         del stored_heights
+
+
         print "fin", dir
 
     print "fin"

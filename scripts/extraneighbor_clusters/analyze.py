@@ -110,10 +110,10 @@ def main():
 
     parser = ParseKMCHDF5(input_file)
 
-    nThreads = 8
+    nThreads = int(sys.argv[2])
 
-    if len(sys.argv) > 2:
-        every = int(sys.argv[2])
+    if len(sys.argv) > 3:
+        every = int(sys.argv[3])
     else:
         every = 1
 
@@ -121,7 +121,7 @@ def main():
 
         print L, W, run_id
 
-        coverage_matrix = data["coverage_matrix_eq"][()][::every]
+        coverage_matrix = data["eq_coverage_matrix"][()][::every]
 
         n = coverage_matrix.shape[0]
 

@@ -208,9 +208,6 @@ int main(int argv, char** argc)
     Time time(solver);
     lattice.addEvent(time);
 
-    ConcentrationTracker conc(solver);
-    lattice.addEvent(conc);
-
     DetectZeroCoverage detectZeroCoverage(&coverage, nZerosBeforeTermination);
     lattice.addEvent(detectZeroCoverage);
 

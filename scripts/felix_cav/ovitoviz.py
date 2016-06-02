@@ -47,5 +47,5 @@ def makemovie(path):
 
 dirs = glob.glob("/tmp/felix_*")
 for i, dir in enumerate(dirs):
-    print("Entering %s : %d/%d", dir, i+1, len(dirs))
+    print("Entering %s : %d/%d" % (dir, i+1, len(dirs)))
     makemovie(dir)
