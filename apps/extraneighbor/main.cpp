@@ -163,6 +163,7 @@ int main(int argv, char** argc)
 
     const uint &nCycles = getSetting<uint>(cfgRoot, "nCycles");
     const uint &ignisOutput = getSetting<uint>(cfgRoot, "ignisOutput");
+    const uint &stdoutInterval = getSetting<uint>(cfgRoot, "stdoutInterval");
     const uint &interval = getSetting<uint>(cfgRoot, "interval");
 
     const uint &positionOutput = getSetting<uint>(cfgRoot, "positionOutput");
@@ -227,7 +228,7 @@ int main(int argv, char** argc)
         lattice.addEvent(dumper);
     }
 
-    lattice.enableOutput(true, interval);
+    lattice.enableOutput(true, stdoutInterval);
     lattice.enableProgressReport();
     lattice.enableEventValueStorage(true,
                                     ignisOutput == 1,
