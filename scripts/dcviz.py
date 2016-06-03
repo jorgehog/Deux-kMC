@@ -3855,8 +3855,9 @@ class Extraneighbor_cluster(DCVizPlotter):
               "figure2": "subfigure2",
               "figure3": "subfigure3",
               "figure4": "subfigure4",
-              "figure5": "subfigure5",
-              "figure6": "subfigure6"}
+              "figure5": "subfigure5"}
+
+    plotOnly = "figure5"
 
     def plot(self, data):
 
@@ -3864,9 +3865,18 @@ class Extraneighbor_cluster(DCVizPlotter):
         size = self.get_family_member_data(data, "size")
         n = self.get_family_member_data(data, "n")
         circs = self.get_family_member_data(data, "circs")
-        eccs = self.get_family_member_data(data, "eccs")
         nbroken = self.get_family_member_data(data, "nbroken")
         ngained = self.get_family_member_data(data, "ngained")
+
+        sphericity = np.sqrt(4*np.pi*(size+circs/2+np.pi/4))/circs
+
+        if self.argv:
+            n_conv = int(self.argv[0])
+        else:
+            n_conv = 0
+
+        sphericity[:n_conv] = 0
+        box = np.sqrt(np.pi)/2.
 
 
         self.subfigure0.plot(covs)
@@ -3875,16 +3885,18 @@ class Extraneighbor_cluster(DCVizPlotter):
         self.subfigure3.plot(circs)
         self.subfigure4.plot(np.log(nbroken), "r")
         self.subfigure4.plot(np.log(ngained), "g")
-        self.subfigure5.plot(sizec/circs)
-        self.subfigure6.plot(eccs)
+        self.subfigure5.plot(sphericity)
+        self.subfigure5.plot([0, len(sphericity)], [box, box], "k--", linewidth=3)
+
+        self.subfigure5.set_xbound(n_conv)
+
 
         self.subfigure0.set_ylabel("coverage")
         self.subfigure1.set_ylabel("n clusters")
         self.subfigure2.set_ylabel("avg c size")
         self.subfigure3.set_ylabel("avg circumference")
         self.subfigure4.set_ylabel("nbroken and gained")
-        self.subfigure5.set_ylabel("area over circ")
-        self.subfigure6.set_ylabel("eccs")
+        self.subfigure5.set_ylabel("sphericity")
 
 
 class ExtraneighborTest(DCVizPlotter):
