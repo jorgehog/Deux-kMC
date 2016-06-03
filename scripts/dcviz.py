@@ -3850,23 +3850,75 @@ class Extraneighbor_cluster(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"figure0": "subfigure0",
+    figMap = {"figure3D" : [],
+              "figure0": "subfigure0",
               "figure1": "subfigure1",
               "figure2": "subfigure2",
               "figure3": "subfigure3",
               "figure4": "subfigure4",
               "figure5": "subfigure5"}
 
-    plotOnly = "figure5"
+    #plotOnly = "figure5"
+
+    tight=False
+
+    def make3Dplot(self, ax, trace):
+        max_size = 20
+        min_size = 5
+
+        proj_props = {
+            "s" : max_size,
+            "marker" : "x",
+            "c" : "k",
+            "linewidth" : 1
+        }
+
+        colors = ['r', 'g', 'b', 'k', 's', 'm', 'y']
+
+        for xi, yi, zi, ri, ci in trace:
+            si = min_size + ri*(max_size-min_size)
+
+            ax.scatter(zi, xi, yi, s=si, c=colors[int(ci)], edgecolors='none')
+
+
+            if zi % 10 == 0:
+                #ax.scatter(len(data), xi, yi, s=sproj, c='k', edgecolors='none')
+                # ax.scatter(zi, x1, yi, **proj_props)
+                ax.scatter(zi, xi, 0, **proj_props)
+
+        ax.set_xbound(0)
+        ax.set_zbound(0)
+        ax.set_zbound(0)
+
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_zticklabels([])
+
+        pad = 1
+        ax.xaxis._axinfo['label']['space_factor'] = pad
+        ax.yaxis._axinfo['label']['space_factor'] = pad
+        ax.zaxis._axinfo['label']['space_factor'] = pad
+
+        fs = 30
+        ax.set_xlabel(r"$\nu t$", size=fs)
+        ax.set_ylabel(r"$x$", size=fs)
+        ax.set_zlabel(r"$y$", size=fs)
+
 
     def plot(self, data):
 
+        time = self.get_family_member_data(data, "time")
+        trace = self.get_family_member_data(data, "trace")
         covs = self.get_family_member_data(data, "covs")
         size = self.get_family_member_data(data, "size")
         n = self.get_family_member_data(data, "n")
         circs = self.get_family_member_data(data, "circs")
         nbroken = self.get_family_member_data(data, "nbroken")
         ngained = self.get_family_member_data(data, "ngained")
+
+        ax3d = Axes3D(self.figure3D)
+
+        self.make3Dplot(ax3d, trace)
 
         sphericity = np.sqrt(4*np.pi*(size+circs/2+np.pi/4))/circs
 
@@ -3878,18 +3930,24 @@ class Extraneighbor_cluster(DCVizPlotter):
         sphericity[:n_conv] = 0
         box = np.sqrt(np.pi)/2.
 
+        self.subfigure0.plot(time, covs)
+        self.subfigure1.plot(time, n)
+        self.subfigure2.plot(time, size)
+        self.subfigure3.plot(time, circs)
+        self.subfigure4.plot(time[:-1], nbroken, "r")
+        self.subfigure4.plot(time[:-1], ngained, "g")
+        self.subfigure5.plot(time, sphericity)
+        self.subfigure5.plot([time[0], time[-1]], [box, box], "k--", linewidth=3)
 
-        self.subfigure0.plot(covs)
-        self.subfigure1.plot(n)
-        self.subfigure2.plot(size)
-        self.subfigure3.plot(circs)
-        self.subfigure4.plot(np.log(nbroken), "r")
-        self.subfigure4.plot(np.log(ngained), "g")
-        self.subfigure5.plot(sphericity)
-        self.subfigure5.plot([0, len(sphericity)], [box, box], "k--", linewidth=3)
+        self.subfigure5.set_xbound(time[n_conv])
 
-        self.subfigure5.set_xbound(n_conv)
 
+        self.subfigure0.set_xlabel(r"$\nu t$")
+        self.subfigure1.set_xlabel(r"$\nu t$")
+        self.subfigure2.set_xlabel(r"$\nu t$")
+        self.subfigure3.set_xlabel(r"$\nu t$")
+        self.subfigure4.set_xlabel(r"$\nu t$")
+        self.subfigure5.set_xlabel(r"$\nu t$")
 
         self.subfigure0.set_ylabel("coverage")
         self.subfigure1.set_ylabel("n clusters")

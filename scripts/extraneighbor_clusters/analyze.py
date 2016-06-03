@@ -172,8 +172,14 @@ class AnalyzeThread(Thread):
 
 def calculate_cluster_trace(data, L, W):
     max_size = 20
-    min_size = 3
-    sproj = 2
+    min_size = 5
+
+    proj_props = {
+        "s" : max_size,
+        "marker" : "x",
+        "c" : "k",
+        "linewidth" : 1
+    }
 
     max_cluster_size = max(data, key=lambda x: 0 if x == [] else max(x, key=lambda y: y[0]))[0][0]
 
@@ -189,17 +195,13 @@ def calculate_cluster_trace(data, L, W):
     y0 = yc - W/2
     y1 = yc + W/2
 
-    aspect = 2.0
-    aspect_fac = aspect*L/float(len(data))
+    all_points = []
 
-    xyz = ""
-
-    n = 0
     for zi, c in enumerate(data):
-
         for ci, cluster in enumerate(c):
             size = cluster[0]
-            si = min_size + float(size)/max_cluster_size*(max_size-min_size)
+            ri = float(size)/max_cluster_size
+            si = min_size + ri*(max_size-min_size)
 
             for xi, yi in cluster[1]:
 
@@ -207,24 +209,35 @@ def calculate_cluster_trace(data, L, W):
                     continue
                 elif (yi < y0) or (yi >= y1):
                     continue
+                else:
+                    all_points.append([xi-x0, yi-y0, zi, ri, ci])
 
                 ax.scatter(zi, xi, yi, s=si, c=colors[ci], edgecolors='none')
 
-                #ax.scatter(len(data), xi, yi, s=sproj, c='k', edgecolors='none')
-                #ax.scatter(zi, x1, yi, s=sproj, c='k', edgecolors='none')
-                ax.scatter(zi, xi, y0, s=sproj, c='k', marker="o")
-
-                xyz += "%d %g %g %g %g\n" % (ci, zi*aspect_fac, xi, yi, float(size)/max_cluster_size)
-
-                n += 1
-
-    with open("/tmp/viz_extran_cluster.xyz", 'w') as f:
-        f.write("%d\n-\n" % n)
-        f.write(xyz)
+                if zi % 10 == 0:
+                    #ax.scatter(len(data), xi, yi, s=sproj, c='k', edgecolors='none')
+                    # ax.scatter(zi, x1, yi, **proj_props)
+                    ax.scatter(zi, xi, y0, **proj_props)
 
     ax.set_xbound(0)
 
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.set_zticklabels([])
+
+    pad = 1
+    ax.xaxis._axinfo['label']['space_factor'] = pad
+    ax.yaxis._axinfo['label']['space_factor'] = pad
+    ax.zaxis._axinfo['label']['space_factor'] = pad
+
+    fs = 30
+    ax.set_xlabel(r"$\nu t$", size=fs)
+    ax.set_ylabel(r"$x$", size=fs)
+    ax.set_zlabel(r"$y$", size=fs)
+
     plab.show()
+
+    return all_points
 
 
 def main():
@@ -245,12 +258,13 @@ def main():
         print L, W, run_id
 
         coverage_matrix_h5 = data["eq_coverage_matrix"]
-        coverage_matrix = np.zeros(shape=(len(coverage_matrix_h5)/every))
+        event_values_h5 = data["eq_storedEventValues"]
+        coverage_matrix = np.zeros(shape=(len(coverage_matrix_h5)/every, L, W))
+        time = np.zeros(shape=len(coverage_matrix_h5)/every)
 
         for i, n in enumerate(range(0, len(coverage_matrix_h5), every)):
             coverage_matrix[i] = coverage_matrix_h5[n]
-
-        #coverage_matrix = np.load("/tmp/eq_coverage_new.npy")[::every]
+            time[i] = event_values_h5[1][n]
 
         n = coverage_matrix.shape[0]
 
@@ -259,7 +273,6 @@ def main():
         n_clusters_list = empty(n)
         avg_circs = empty(n)
         centeroids = []
-        areas = []
         n_broken = empty(n - 1)
         n_gained = empty(n - 1)
 
@@ -297,8 +310,10 @@ def main():
             for i in range(n):
                 analyze(coverage_matrix, i, *measures)
 
-        calculate_cluster_trace(centeroids, L, W)
+        trace = calculate_cluster_trace(centeroids[::10], L, W)
 
+        save("/tmp/extran_cluster_time.npy", time)
+        save("/tmp/extran_cluster_trace.npy", trace)
         save("/tmp/extran_cluster_covs.npy", covs)
         save("/tmp/extran_cluster_size.npy", avg_cluster_sizes)
         save("/tmp/extran_cluster_n.npy", n_clusters_list)
