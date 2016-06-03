@@ -2,10 +2,10 @@
 
 from DCViz_sup import DCVizPlotter
 
+import numpy
 import numpy as np
 import os
 import re
-import sys
 from numpy import exp, floor, ceil
 from scipy.stats import linregress
 from scipy.optimize import curve_fit
@@ -29,6 +29,7 @@ my_props = {
     }
 
 }
+
 
 class SteadyState(DCVizPlotter):
 
@@ -3858,7 +3859,11 @@ class Extraneighbor_cluster(DCVizPlotter):
               "figure4": "subfigure4",
               "figure5": "subfigure5"}
 
-    #plotOnly = "figure5"
+    plotOnly = ["figure3D",
+                "figure0",
+                "figure1",
+                "figure4",
+                "figure5"]
 
     tight=False
 
@@ -3904,6 +3909,8 @@ class Extraneighbor_cluster(DCVizPlotter):
         ax.set_ylabel(r"$x$", size=fs)
         ax.set_zlabel(r"$y$", size=fs)
 
+    def diff(self, x, t):
+        return x
 
     def plot(self, data):
 
@@ -3916,6 +3923,16 @@ class Extraneighbor_cluster(DCVizPlotter):
         nbroken = self.get_family_member_data(data, "nbroken")
         ngained = self.get_family_member_data(data, "ngained")
 
+        l = len(time)
+        c_first = l - 1
+        c_coal = l - 1
+
+        while n[c_coal - 1] == 1:
+            c_coal -= 1
+
+        while n[c_first - 1] != 0:
+            c_first -= 1
+
         ax3d = Axes3D(self.figure3D)
 
         self.make3Dplot(ax3d, trace)
@@ -3923,24 +3940,58 @@ class Extraneighbor_cluster(DCVizPlotter):
         sphericity = np.sqrt(4*np.pi*(size+circs/2+np.pi/4))/circs
 
         if self.argv:
-            n_conv = int(self.argv[0])
+            tmax = int(self.argv[0])
         else:
-            n_conv = 0
+            tmax = time[-1]
 
-        sphericity[:n_conv] = 0
+        sphericity[:c_coal] = 0
         box = np.sqrt(np.pi)/2.
+
+        dt = time[1:] - time[:-1]
+
+        cumnbroken = self.diff(np.cumsum(nbroken), dt)
+        cumngained = self.diff(np.cumsum(ngained), dt)
 
         self.subfigure0.plot(time, covs)
         self.subfigure1.plot(time, n)
         self.subfigure2.plot(time, size)
         self.subfigure3.plot(time, circs)
-        self.subfigure4.plot(time[:-1], nbroken, "r")
-        self.subfigure4.plot(time[:-1], ngained, "g")
+        self.subfigure4.plot(time[:-1], cumnbroken, "r--", linewidth=2)
+        self.subfigure4.plot(time[:-1], cumngained, "g", linewidth=2)
         self.subfigure5.plot(time, sphericity)
         self.subfigure5.plot([time[0], time[-1]], [box, box], "k--", linewidth=3)
 
-        self.subfigure5.set_xbound(time[n_conv])
+        self.subfigure5.set_xbound(time[c_coal])
 
+        x_first = [time[c_first], time[c_first]]
+        x_coal = [time[c_coal], time[c_coal]]
+
+        def y(*args):
+            _min = min([min(v) for v in args])
+            _max = max([max(v) for v in args])
+
+            return [_min, _max]
+
+        y0 = y(covs)
+        y1 = y(n)
+        y2 = y(size)
+        y3 = y(circs)
+        y4 = y(cumnbroken, cumngained)
+        y5 = y(sphericity)
+
+        self.subfigure0.plot(x_first, y0, "k--")
+        self.subfigure1.plot(x_first, y1, "k--")
+        self.subfigure2.plot(x_first, y2, "k--")
+        self.subfigure3.plot(x_first, y3, "k--")
+        self.subfigure4.plot(x_first, y4, "k--")
+        self.subfigure5.plot(x_first, y5, "k--")
+
+        self.subfigure0.plot(x_coal, y0, "k--")
+        self.subfigure1.plot(x_coal, y1, "k--")
+        self.subfigure2.plot(x_coal, y2, "k--")
+        self.subfigure3.plot(x_coal, y3, "k--")
+        self.subfigure4.plot(x_coal, y4, "k--")
+        self.subfigure5.plot(x_coal, y5, "k--")
 
         self.subfigure0.set_xlabel(r"$\nu t$")
         self.subfigure1.set_xlabel(r"$\nu t$")
@@ -3955,6 +4006,24 @@ class Extraneighbor_cluster(DCVizPlotter):
         self.subfigure3.set_ylabel("avg circumference")
         self.subfigure4.set_ylabel("nbroken and gained")
         self.subfigure5.set_ylabel("sphericity")
+
+        self.subfigure0.set_ylim(y0)
+        self.subfigure1.set_ylim(y1)
+        self.subfigure2.set_ylim(y2)
+        self.subfigure3.set_ylim(y3)
+        self.subfigure4.set_ylim(y4)
+        self.subfigure5.set_ylim(y5)
+
+        self.subfigure0.set_xlim(0, tmax)
+        self.subfigure1.set_xlim(0, tmax)
+        self.subfigure2.set_xlim(0, tmax)
+        self.subfigure3.set_xlim(0, tmax)
+        self.subfigure4.set_xlim(0, tmax)
+        self.subfigure5.set_xlim(time[c_coal], tmax)
+
+
+
+
 
 
 class ExtraneighborTest(DCVizPlotter):
