@@ -225,6 +225,11 @@ int main(int argv, char** argc)
         lattice.addEvent(dumper);
     }
 
+    H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "extraneighbor", "h5"));
+    H5Wrapper::Member &simRoot = setuph5(h5root, getProc(argv, argc), L, W);
+
+    StoreHeights storeHeights(solver, interval, simRoot);
+
     lattice.enableOutput(true, stdoutInterval);
     lattice.enableProgressReport();
     lattice.enableEventValueStorage(true,
@@ -246,6 +251,11 @@ int main(int argv, char** argc)
         rdlExtraSurface.setHeight(h0);
     }
 
+    if (omegaSign == 0 && dumpCoverage == 1)
+    {
+        lattice.addEvent(storeHeights);
+    }
+
     lattice.eventLoop(nCycles);
 
 
@@ -254,9 +264,6 @@ int main(int argv, char** argc)
      *
      *
      */
-
-    H5Wrapper::Root h5root(path +  addProcEnding(argv, argc, "extraneighbor", "h5"));
-    H5Wrapper::Member &simRoot = setuph5(h5root, getProc(argv, argc), L, W);
 
     simRoot["alpha"] = alpha;
     simRoot["omegaSign"] = omegaSign;
@@ -279,6 +286,11 @@ int main(int argv, char** argc)
     if (omegaSign == 0)
     {
         return 0;
+    }
+
+    if (dumpCoverage == 1)
+    {
+        lattice.addEvent(storeHeights);
     }
 
     //either infinite source or sink
