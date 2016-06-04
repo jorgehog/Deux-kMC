@@ -267,6 +267,8 @@ int main(int argv, char** argc)
 
     simRoot["eq_storedEventValues"] = lattice.storedEventValues();
 
+    simRoot["eq_heights"] = solver.heights();
+
     if (dumpCoverage == 1)
     {
         simRoot["eq_coverage_matrix"] = coverage.coverage();
@@ -295,6 +297,8 @@ int main(int argv, char** argc)
     lattice.eventLoop(nCycles);
 
     simRoot["omega_storedEventValues"] = lattice.storedEventValues();
+
+    simRoot["omega_heighs"] = solver.heights();
 
     if (dumpCoverage)
     {
