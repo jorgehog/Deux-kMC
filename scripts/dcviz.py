@@ -3878,12 +3878,12 @@ class Extraneighbor_cluster(DCVizPlotter):
             "linewidth" : 1
         }
 
-        colors = ['r', 'g', 'b', 'k', 's', 'm', 'y']
+        colors = ['r', 'g', 'b', 'k', 'm', 'y']
 
         for xi, yi, zi, ri, ci in trace:
             si = min_size + ri*(max_size-min_size)
 
-            ax.scatter(zi, xi, yi, s=si, c=colors[int(ci)], edgecolors='none')
+            ax.scatter(zi, xi, yi, s=si, c=colors[int(ci)%len(colors)], edgecolors='none')
 
 
             if zi % 10 == 0:
@@ -3930,8 +3930,14 @@ class Extraneighbor_cluster(DCVizPlotter):
         while n[c_coal - 1] == 1:
             c_coal -= 1
 
+            if c_coal == 0:
+                break
+
         while n[c_first - 1] != 0:
             c_first -= 1
+
+            if c_first == 0:
+                break
 
         ax3d = Axes3D(self.figure3D)
 

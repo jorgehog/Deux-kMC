@@ -183,7 +183,7 @@ def calculate_cluster_trace(data, L, W):
 
     max_cluster_size = max(data, key=lambda x: 0 if x == [] else max(x, key=lambda y: y[0]))[0][0]
 
-    colors = ['r', 'g', 'b', 'k', 's', 'm', 'y']
+    colors = ['r', 'g', 'b', 'k', 'm', 'y']
 
     fig = plab.figure()
     ax = fig.gca(projection='3d')
@@ -206,13 +206,13 @@ def calculate_cluster_trace(data, L, W):
             for xi, yi in cluster[1]:
 
                 if (xi < x0) or (xi >= x1):
-                    continue
+                    pass
                 elif (yi < y0) or (yi >= y1):
-                    continue
+                    pass
                 else:
                     all_points.append([xi-x0, yi-y0, zi, ri, ci])
 
-                ax.scatter(zi, xi, yi, s=si, c=colors[ci], edgecolors='none')
+                ax.scatter(zi, xi, yi, s=si, c=colors[ci%len(colors)], edgecolors='none')
 
                 if zi % 10 == 0:
                     #ax.scatter(len(data), xi, yi, s=sproj, c='k', edgecolors='none')
@@ -240,6 +240,40 @@ def calculate_cluster_trace(data, L, W):
     return all_points
 
 
+def makeXYZ_single(data, xyz_dir, n):
+    XYZ = ""
+    L, W = data.shape
+
+    h_min = data.min()
+
+    count = 0
+    for x in range(L):
+        for y in range(W):
+            for z in range(h_min, data[x, y]+1):
+                XYZ += "0 %g %g %g\n" % (x, y, z)
+                count += 1
+
+    with open("%s/cluster%d.xyz" % (xyz_dir, n), 'w') as f:
+        f.write("%d\n-\n%s" % (count, XYZ))
+
+
+def makeXYZ(heights, dir, every):
+
+    xyz_dir = "%s/XYZ/" % dir
+
+    if not os.path.exists(xyz_dir):
+        os.mkdir(xyz_dir)
+
+    n = 0
+    for step in sorted(heights.keys(), key=lambda x: int(x))[::every]:
+        data = heights[step][()]
+        makeXYZ_single(data, xyz_dir, n)
+        n += 1
+
+        sys.stdout.flush()
+        print "\rStoring %d/%d" % (n, len(heights)/every),
+    print
+
 def main():
 
     input_file = sys.argv[1]
@@ -255,12 +289,19 @@ def main():
 
     for data, L, W, run_id in parser:
 
-        print L, W, run_id
+        dir = "/tmp/cluster_%s" % run_id
+
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+
+        print L, W, run_id, data.attrs["F0"]
 
         coverage_matrix_h5 = data["eq_coverage_matrix"]
         event_values_h5 = data["eq_storedEventValues"]
         coverage_matrix = np.zeros(shape=(len(coverage_matrix_h5)/every, L, W))
         time = np.zeros(shape=len(coverage_matrix_h5)/every)
+
+        makeXYZ(data["stored_heights"], dir, 10*every)
 
         for i, n in enumerate(range(0, len(coverage_matrix_h5), every)):
             coverage_matrix[i] = coverage_matrix_h5[n]
@@ -312,16 +353,14 @@ def main():
 
         trace = calculate_cluster_trace(centeroids[::10], L, W)
 
-        save("/tmp/extran_cluster_time.npy", time)
-        save("/tmp/extran_cluster_trace.npy", trace)
-        save("/tmp/extran_cluster_covs.npy", covs)
-        save("/tmp/extran_cluster_size.npy", avg_cluster_sizes)
-        save("/tmp/extran_cluster_n.npy", n_clusters_list)
-        save("/tmp/extran_cluster_circs.npy", avg_circs)
-        save("/tmp/extran_cluster_nbroken.npy", n_broken)
-        save("/tmp/extran_cluster_ngained.npy", n_gained)
-
-        break
+        save("%s/extran_cluster_time.npy" % dir, time)
+        save("%s/extran_cluster_trace.npy" % dir, trace)
+        save("%s/extran_cluster_covs.npy" % dir, covs)
+        save("%s/extran_cluster_size.npy" % dir, avg_cluster_sizes)
+        save("%s/extran_cluster_n.npy" % dir, n_clusters_list)
+        save("%s/extran_cluster_circs.npy" % dir, avg_circs)
+        save("%s/extran_cluster_nbroken.npy" % dir, n_broken)
+        save("%s/extran_cluster_ngained.npy" % dir, n_gained)
 
 
 if __name__ == "__main__":
