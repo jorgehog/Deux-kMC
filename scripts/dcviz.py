@@ -3852,18 +3852,11 @@ class Extraneighbor_cluster(DCVizPlotter):
     hugifyFonts = True
 
     figMap = {"figure3D" : [],
-              "figure0": "subfigure0",
+              "figure0": ["subfigure0", "subfigure4"],
               "figure1": "subfigure1",
-              "figure2": "subfigure2",
-              "figure3": "subfigure3",
-              "figure4": "subfigure4",
-              "figure5": "subfigure5"}
+              "figure2": "subfigure5"}
 
-    plotOnly = ["figure3D",
-                "figure0",
-                "figure1",
-                "figure4",
-                "figure5"]
+    plotOnly = ["figure0"]
 
     tight=False
 
@@ -3909,10 +3902,17 @@ class Extraneighbor_cluster(DCVizPlotter):
         ax.set_ylabel(r"$x$", size=fs)
         ax.set_zlabel(r"$y$", size=fs)
 
-    def diff(self, x, t):
-        return x
+    def adjust(self):
+        self.adjust_maps["figure0"]["left"] = 0.1
+        self.adjust_maps["figure0"]["right"] = 0.9
+        self.adjust_maps["figure0"]["top"] = 0.97
+        self.adjust_maps["figure0"]["bottom"] = 0.12
+        self.adjust_maps["figure0"]["hspace"] = 0.05
+
 
     def plot(self, data):
+
+        A = 900.
 
         time = self.get_family_member_data(data, "time")
         trace = self.get_family_member_data(data, "trace")
@@ -3927,17 +3927,19 @@ class Extraneighbor_cluster(DCVizPlotter):
         c_first = l - 1
         c_coal = l - 1
 
-        while n[c_coal - 1] == 1:
-            c_coal -= 1
+        help_lines = []
 
-            if c_coal == 0:
-                break
-
-        while n[c_first - 1] != 0:
-            c_first -= 1
-
-            if c_first == 0:
-                break
+        # while n[c_coal - 1] == 1:
+        #     c_coal -= 1
+        #
+        #     if c_coal == 0:
+        #         break
+        #
+        # while n[c_first - 1] != 0:
+        #     c_first -= 1
+        #
+        #     if c_first == 0:
+        #         break
 
         ax3d = Axes3D(self.figure3D)
 
@@ -3947,90 +3949,86 @@ class Extraneighbor_cluster(DCVizPlotter):
 
         if self.argv:
             tmax = int(self.argv[0])
+
+            if len(self.argv) > 1:
+                for x in self.argv[1:]:
+                    help_lines.append([float(x), float(x)])
         else:
             tmax = time[-1]
 
-        sphericity[:c_coal] = 0
+
         box = np.sqrt(np.pi)/2.
 
-        dt = time[1:] - time[:-1]
-
-        cumnbroken = self.diff(np.cumsum(nbroken), dt)
-        cumngained = self.diff(np.cumsum(ngained), dt)
+        cumnbroken = np.cumsum(nbroken)
+        cumngained = np.cumsum(ngained)
 
         self.subfigure0.plot(time, covs)
         self.subfigure1.plot(time, n)
-        self.subfigure2.plot(time, size)
-        self.subfigure3.plot(time, circs)
-        self.subfigure4.plot(time[:-1], cumnbroken, "r--", linewidth=2)
-        self.subfigure4.plot(time[:-1], cumngained, "g", linewidth=2)
+        self.subfigure4.plot(time[:-1], cumngained/A, "g", linewidth=2, label=r"$n_\mathrm{Formed}$")
+        self.subfigure4.plot(time[:-1], cumnbroken/A, "r--", linewidth=2, label=r"$n_\mathrm{Broken}$")
         self.subfigure5.plot(time, sphericity)
         self.subfigure5.plot([time[0], time[-1]], [box, box], "k--", linewidth=3)
 
         self.subfigure5.set_xbound(time[c_coal])
 
-        x_first = [time[c_first], time[c_first]]
-        x_coal = [time[c_coal], time[c_coal]]
-
         def y(*args):
-            _min = min([min(v) for v in args])
-            _max = max([max(v) for v in args])
+            _min = min([min(v[np.where(time < tmax)]) for v in args])
+            _max = max([max(v[np.where(time < tmax)]) for v in args])
 
             return [_min, _max]
 
-        y0 = y(covs)
+        y0 = [0, np.ceil(10*max(covs[np.where(time<tmax)]))/10.]
         y1 = y(n)
-        y2 = y(size)
-        y3 = y(circs)
-        y4 = y(cumnbroken, cumngained)
+        y4 = y(cumnbroken/A, cumngained/A)
         y5 = y(sphericity)
 
-        self.subfigure0.plot(x_first, y0, "k--")
-        self.subfigure1.plot(x_first, y1, "k--")
-        self.subfigure2.plot(x_first, y2, "k--")
-        self.subfigure3.plot(x_first, y3, "k--")
-        self.subfigure4.plot(x_first, y4, "k--")
-        self.subfigure5.plot(x_first, y5, "k--")
+        for x in help_lines:
+            self.subfigure0.plot(x, y0, "k--")
+            self.subfigure1.plot(x, y1, "k--")
+            self.subfigure4.plot(x, y4, "k--")
+            self.subfigure5.plot(x, y5, "k--")
 
-        self.subfigure0.plot(x_coal, y0, "k--")
-        self.subfigure1.plot(x_coal, y1, "k--")
-        self.subfigure2.plot(x_coal, y2, "k--")
-        self.subfigure3.plot(x_coal, y3, "k--")
-        self.subfigure4.plot(x_coal, y4, "k--")
-        self.subfigure5.plot(x_coal, y5, "k--")
-
-        self.subfigure0.set_xlabel(r"$\nu t$")
+        #self.subfigure0.set_xlabel(r"$\nu t$")
         self.subfigure1.set_xlabel(r"$\nu t$")
-        self.subfigure2.set_xlabel(r"$\nu t$")
-        self.subfigure3.set_xlabel(r"$\nu t$")
         self.subfigure4.set_xlabel(r"$\nu t$")
         self.subfigure5.set_xlabel(r"$\nu t$")
 
-        self.subfigure0.set_ylabel("coverage")
+        self.subfigure0.set_ylabel(r"$\rho_\mathrm{WV}$")
         self.subfigure1.set_ylabel("n clusters")
-        self.subfigure2.set_ylabel("avg c size")
-        self.subfigure3.set_ylabel("avg circumference")
-        self.subfigure4.set_ylabel("nbroken and gained")
+        self.subfigure4.set_ylabel(r"$n/A$")
         self.subfigure5.set_ylabel("sphericity")
 
         self.subfigure0.set_ylim(y0)
         self.subfigure1.set_ylim(y1)
-        self.subfigure2.set_ylim(y2)
-        self.subfigure3.set_ylim(y3)
         self.subfigure4.set_ylim(y4)
         self.subfigure5.set_ylim(y5)
 
         self.subfigure0.set_xlim(0, tmax)
         self.subfigure1.set_xlim(0, tmax)
-        self.subfigure2.set_xlim(0, tmax)
-        self.subfigure3.set_xlim(0, tmax)
         self.subfigure4.set_xlim(0, tmax)
         self.subfigure5.set_xlim(time[c_coal], tmax)
 
 
+        self.subfigure0.set_xticks([])
+        self.subfigure4.legend(loc="center",
+                               handlelength=1.5,
+                               markerscale=20.0,
+                               borderpad=0.2,
+                               labelspacing=0.2,
+                               columnspacing=1.0,
+                               handletextpad=0.5,
+                               borderaxespad=0.0,
+                               frameon=False,
+                               fontsize=20,
+                               bbox_to_anchor=(0.8, 0.3))
 
+        def format0(v, _):
+            if abs(v - round(v, 1)) < 1e-3:
+                return r"$%.1f$" % v
+            else:
+                return r""
 
-
+        self.subfigure0.yaxis.set_major_formatter(FuncFormatter(format0))
 
 class ExtraneighborTest(DCVizPlotter):
 
