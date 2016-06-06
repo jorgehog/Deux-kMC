@@ -170,6 +170,9 @@ class AnalyzeThread(Thread):
         for i in self.thread_i:
             analyze(self.data, i, *self.m)
 
+
+colors = ['r', 'g', 'b', 'k', 'm', 'y']
+
 def calculate_cluster_trace(data, L, W):
     max_size = 20
     min_size = 5
@@ -181,14 +184,26 @@ def calculate_cluster_trace(data, L, W):
         "linewidth" : 1
     }
 
-    max_cluster_size = max(data, key=lambda x: 0 if x == [] else max(x, key=lambda y: y[0]))[0][0]
+    max_cluster_size = max(data, key=lambda x: 0 if x == [] else max(x, key=lambda y: y[0]))
 
-    colors = ['r', 'g', 'b', 'k', 'm', 'y']
+    if not max_cluster_size:
+        return
+    else:
+        max_cluster_size = max_cluster_size[0][0]
 
-    fig = plab.figure()
-    ax = fig.gca(projection='3d')
+    i = len(data) - 1
+    while not data[i]:
+        i -= 1
 
-    xc, yc = data[-1][0][1][0]
+        if i == -1:
+            return
+
+    last_centeroid = data[i][0][1]
+
+    xc, yc = last_centeroid[0]
+
+    # fig = plab.figure()
+    # ax = fig.gca(projection='3d')
 
     x0 = xc - L/2
     x1 = xc + L/2
@@ -212,30 +227,28 @@ def calculate_cluster_trace(data, L, W):
                 else:
                     all_points.append([xi-x0, yi-y0, zi, ri, ci])
 
-                ax.scatter(zi, xi, yi, s=si, c=colors[ci%len(colors)], edgecolors='none')
+                # ax.scatter(zi, xi, yi, s=si, c=colors[ci%len(colors)], edgecolors='none')
+                #
+                # if zi % 10 == 0:
+                #     #ax.scatter(len(data), xi, yi, s=sproj, c='k', edgecolors='none')
+                #     # ax.scatter(zi, x1, yi, **proj_props)
+                #     ax.scatter(zi, xi, y0, **proj_props)
 
-                if zi % 10 == 0:
-                    #ax.scatter(len(data), xi, yi, s=sproj, c='k', edgecolors='none')
-                    # ax.scatter(zi, x1, yi, **proj_props)
-                    ax.scatter(zi, xi, y0, **proj_props)
-
-    ax.set_xbound(0)
-
-    ax.set_xticklabels([])
-    ax.set_yticklabels([])
-    ax.set_zticklabels([])
-
-    pad = 1
-    ax.xaxis._axinfo['label']['space_factor'] = pad
-    ax.yaxis._axinfo['label']['space_factor'] = pad
-    ax.zaxis._axinfo['label']['space_factor'] = pad
-
-    fs = 30
-    ax.set_xlabel(r"$\nu t$", size=fs)
-    ax.set_ylabel(r"$x$", size=fs)
-    ax.set_zlabel(r"$y$", size=fs)
-
-    plab.show()
+    # ax.set_xbound(0)
+    #
+    # ax.set_xticklabels([])
+    # ax.set_yticklabels([])
+    # ax.set_zticklabels([])
+    #
+    # pad = 1
+    # ax.xaxis._axinfo['label']['space_factor'] = pad
+    # ax.yaxis._axinfo['label']['space_factor'] = pad
+    # ax.zaxis._axinfo['label']['space_factor'] = pad
+    #
+    # fs = 30
+    # ax.set_xlabel(r"$\nu t$", size=fs)
+    # ax.set_ylabel(r"$x$", size=fs)
+    # ax.set_zlabel(r"$y$", size=fs)
 
     return all_points
 
@@ -287,19 +300,32 @@ def main():
     else:
         every = 1
 
+    lmax = 0
+    for data, L, W, run_id in parser:
+        l = len(data["eq_storedEventValues"][0])
+
+        if l > lmax:
+            lmax = l
+
     for data, L, W, run_id in parser:
 
-        dir = "/tmp/cluster_%s" % run_id
+        dir_tag = "a%.3fF0%.3f" % (data.attrs["alpha"], data.attrs["F0"])
+
+        dir = "/tmp/cluster_%s" % dir_tag
+        dir = "/tmp/cluster_%s" % dir_tag
 
         if not os.path.exists(dir):
             os.mkdir(dir)
 
-        print L, W, run_id, data.attrs["F0"]
+        print L, W, run_id, data.attrs["alpha"], data.attrs["F0"]
 
         coverage_matrix_h5 = data["eq_coverage_matrix"]
         event_values_h5 = data["eq_storedEventValues"]
         coverage_matrix = np.zeros(shape=(len(coverage_matrix_h5)/every, L, W))
         time = np.zeros(shape=len(coverage_matrix_h5)/every)
+
+        if len(event_values_h5[1]) != lmax:
+            continue
 
         makeXYZ(data["stored_heights"], dir, 10*every)
 
@@ -362,6 +388,8 @@ def main():
         save("%s/extran_cluster_nbroken.npy" % dir, n_broken)
         save("%s/extran_cluster_ngained.npy" % dir, n_gained)
 
+
+    # plab.show()
 
 if __name__ == "__main__":
     main()

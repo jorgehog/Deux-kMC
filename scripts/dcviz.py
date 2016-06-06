@@ -3856,7 +3856,7 @@ class Extraneighbor_cluster(DCVizPlotter):
               "figure1": "subfigure1",
               "figure2": "subfigure5"}
 
-    plotOnly = ["figure0"]
+    # plotOnly = ["figure0"]
 
     tight=False
 
