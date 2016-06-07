@@ -1,7 +1,9 @@
 import sys
 import os
+import shutil
 from os.path import join
 import numpy as np
+from scipy.stats import linregress
 from numpy import where, empty, save, zeros
 from skimage import measure
 from threading import Thread
@@ -266,8 +268,11 @@ def makeXYZ_single(data, xyz_dir, n):
                 XYZ += "0 %g %g %g\n" % (x, y, z)
                 count += 1
 
-    with open("%s/cluster%d.xyz" % (xyz_dir, n), 'w') as f:
+    name = "%s/cluster%d.xyz" % (xyz_dir, n)
+    with open(name, 'w') as f:
         f.write("%d\n-\n%s" % (count, XYZ))
+
+    return name
 
 
 def makeXYZ(heights, dir, every):
@@ -280,44 +285,95 @@ def makeXYZ(heights, dir, every):
     n = 0
     for step in sorted(heights.keys(), key=lambda x: int(x))[::every]:
         data = heights[step][()]
-        makeXYZ_single(data, xyz_dir, n)
+        name = makeXYZ_single(data, xyz_dir, n)
         n += 1
 
         sys.stdout.flush()
         print "\rStoring %d/%d" % (n, len(heights)/every),
     print
 
+    return name
+
+def filter_background(n):
+
+    x = np.arange(len(n))
+    a, b, _, _, _ = linregress(x, n)
+
+    return n - (a*x + b)
+
+def get_cov_std(covs, nbroken, ngained):
+
+        neq = (3*len(covs))/4
+
+        stdcov = covs[neq:].std()
+        stdbroken = filter_background(nbroken[neq:]).std()
+        stdgained = filter_background(ngained[neq:]).std()
+
+        return stdcov, stdbroken, stdgained, covs[neq:].mean()
+
 def main():
 
     input_file = sys.argv[1]
+    path = sys.argv[2]
+    every = int(sys.argv[3])
+    every2 = int(sys.argv[4])
 
     parser = ParseKMCHDF5(input_file)
 
-    nThreads = int(sys.argv[2])
-
-    if len(sys.argv) > 3:
-        every = int(sys.argv[3])
-    else:
-        every = 1
-
+    alphas = []
+    F0s = []
     lmax = 0
+    N = 0
     for data, L, W, run_id in parser:
         l = len(data["eq_storedEventValues"][0])
 
         if l > lmax:
             lmax = l
 
-    for data, L, W, run_id in parser:
+        alpha = round(data.attrs["alpha"], 5)
+        F0 = round(data.attrs["F0"], 5)
 
-        dir_tag = "a%.3fF0%.3f" % (data.attrs["alpha"], data.attrs["F0"])
+        if alpha not in alphas:
+            alphas.append(alpha)
+        if F0 not in F0s:
+            F0s.append(F0)
 
-        dir = "/tmp/cluster_%s" % dir_tag
-        dir = "/tmp/cluster_%s" % dir_tag
+        N += 1
 
-        if not os.path.exists(dir):
-            os.mkdir(dir)
+    alphas = sorted(alphas)
+    F0s = sorted(F0s)
 
-        print L, W, run_id, data.attrs["alpha"], data.attrs["F0"]
+    print "Found %d entries" % N
+
+    stds = np.zeros(shape=(len(alphas), len(F0s), 3))
+    all_covs = np.zeros(shape=(len(alphas), len(F0s)))
+
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    all_xyz_path = os.path.join(path, "all_xyz")
+    if not os.path.exists(all_xyz_path):
+        os.mkdir(all_xyz_path)
+
+    std_path = os.path.join(path, "stds")
+    if not os.path.exists(std_path):
+        os.mkdir(std_path)
+
+    last_xyz_txt = ""
+    last_xyz_count = 0
+    for count, (data, L, W, run_id) in enumerate(parser):
+
+        alpha = round(data.attrs["alpha"], 5)
+        ai = alphas.index(alpha)
+
+        F0 = round(data.attrs["F0"], 5)
+        F0i = F0s.index(F0)
+
+        dir_tag = "a%.3fF0%.3f" % (alpha, F0)
+
+        dir = "%s/cluster_%s" % (path, dir_tag)
+
+        print "%d/%d" % (count+1, N), L, W, run_id, alpha, F0
 
         coverage_matrix_h5 = data["eq_coverage_matrix"]
         event_values_h5 = data["eq_storedEventValues"]
@@ -327,11 +383,18 @@ def main():
         if len(event_values_h5[1]) != lmax:
             continue
 
-        makeXYZ(data["stored_heights"], dir, 10*every)
+        if not os.path.exists(dir):
+            os.mkdir(dir)
 
         for i, n in enumerate(range(0, len(coverage_matrix_h5), every)):
             coverage_matrix[i] = coverage_matrix_h5[n]
             time[i] = event_values_h5[1][n]
+
+        last_xyz = makeXYZ(data["stored_heights"], dir, every2)
+        xyz_name = os.path.join(all_xyz_path, "all_xyz%d.xyz" % last_xyz_count)
+        shutil.copy(last_xyz, xyz_name)
+        last_xyz_txt += "%d %.3f %.3f %g\n" % (last_xyz_count, alpha, F0, all_covs[ai, F0i])
+        last_xyz_count += 1
 
         n = coverage_matrix.shape[0]
 
@@ -351,33 +414,17 @@ def main():
                     n_gained,
                     centeroids]
 
-        if nThreads != 1:
-            all_threads = []
-            all_i = range(n)
-            all_given_i = []
-            for thread in range(nThreads):
+        for i in range(n):
+            analyze(coverage_matrix, i, *measures)
 
-                if thread != nThreads - 1:
-                    thread_i = all_i[thread::nThreads]
-                    all_given_i += thread_i
-                else:
-                    thread_i = []
-                    for i in all_i:
-                        if i not in all_given_i:
-                            thread_i.append(i)
+        stdcov, stdbroken, stdgained, cov = get_cov_std(covs,
+                                                        n_broken/float(L*W),
+                                                        n_gained/float(L*W))
 
-                all_threads.append(AnalyzeThread(coverage_matrix, thread_i, *measures))
+        stds[ai, F0i, :] = [stdcov, stdbroken, stdgained]
+        all_covs[ai, F0i] = cov
 
-            for thread in all_threads:
-                thread.start()
-
-            for thread in all_threads:
-                thread.join()
-        else:
-            for i in range(n):
-                analyze(coverage_matrix, i, *measures)
-
-        trace = calculate_cluster_trace(centeroids[::10], L, W)
+        trace = calculate_cluster_trace(centeroids[::(every2/every)], L, W)
 
         save("%s/extran_cluster_time.npy" % dir, time)
         save("%s/extran_cluster_trace.npy" % dir, trace)
@@ -388,8 +435,13 @@ def main():
         save("%s/extran_cluster_nbroken.npy" % dir, n_broken)
         save("%s/extran_cluster_ngained.npy" % dir, n_gained)
 
+    np.save("%s/cov_clusters_alphas.npy" % std_path, alphas)
+    np.save("%s/cov_clusters_F0.npy" % std_path, F0s)
+    np.save("%s/cov_clusters_stds.npy" % std_path, stds)
+    np.save("%s/cov_clusters_covs.npy" % std_path, all_covs)
 
-    # plab.show()
+    with open(os.path.join(all_xyz_path, "desc.txt"), 'w') as f:
+        f.write(last_xyz_txt)
 
 if __name__ == "__main__":
     main()

@@ -4087,37 +4087,38 @@ class ExtraneighborResonance(DCVizPlotter):
         self.subfigure.set_xlim(F0s[0], F0s[-1])
 
 
+def RHS(ld, s0, F0EbA):
+    xi = (1 - np.exp(-1./ld))
 
+    return ld*np.log(s0/(ld*xi*F0EbA))
+
+def find_integer_crossings(f):
+    n0 = int(floor(f[0]))
+    n1 = int(ceil(f[-1]))
+
+    ints = range(n1, n0 + 1)
+    idx = np.zeros(len(ints))
+
+    i = 0
+    for j, fi in enumerate(f):
+        if fi < ints[len(ints) - i - 1]:
+            idx[i] = j
+            i += 1
+
+            if i == len(ints):
+                break
+
+    return idx[::-1]
+
+def resonance_points(s0, ld, F0, F1, n=1000):
+    Fs = np.linspace(F0, F1, n)
+    return [Fs[x] for x in find_integer_crossings(RHS(ld, s0, Fs))]
 
 class ResonancePlots(DCVizPlotter):
 
     nametag = "resonance\.txt"
 
     hugifyFonts = True
-
-    def RHS(self, ld, s0, F0EbA):
-        xi = (1 - np.exp(-1./ld))
-
-        return ld*np.log(s0/(ld*xi*F0EbA))
-
-    def find_integer_crossings(self, f):
-        n0 = int(floor(f[0]))
-        n1 = int(ceil(f[-1]))
-
-        ints = range(n1, n0 + 1)
-        idx = np.zeros(len(ints))
-
-        i = 0
-        for j, fi in enumerate(f):
-            if fi < ints[len(ints) - i - 1]:
-                idx[i] = j
-                i += 1
-
-                if i == len(ints):
-                    break
-
-        return idx[::-1]
-
 
     def plot(self, data):
 
@@ -4129,15 +4130,15 @@ class ResonancePlots(DCVizPlotter):
         F0EbA = np.linspace(F0, F1, 1000)
         F0EbAFull = np.linspace(0.1, 1.5, 10000)
 
-        rhs = self.RHS(ld, s0, F0EbA)
-        rhsFull = self.RHS(ld, s0, F0EbAFull)
+        rhs = RHS(ld, s0, F0EbA)
+        rhsFull = RHS(ld, s0, F0EbAFull)
 
         n0 = int(floor(rhs[0]))
         n1 = int(ceil(rhs[-1]))
 
-        print [round(F0EbAFull[x], 2) for x in self.find_integer_crossings(rhsFull)]
+        print [round(F0EbAFull[x], 2) for x in find_integer_crossings(rhsFull)]
 
-        idx = self.find_integer_crossings(rhs)
+        idx = find_integer_crossings(rhs)
 
         txtshift = 0.01
         for i, n in enumerate(range(n1, n0 + 1)):
@@ -4272,3 +4273,142 @@ class NonEqNeigz(DCVizPlotter):
         for i in range(2):
             for j in range(2):
                 figs[i][j].set_xlim(0, winners[j])
+
+
+class ExtraN_cluster_yo(DCVizPlotter):
+
+    nametag = "cov_clusters_(.*)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    figMap = {
+        "fLeft":  ["std0", "rho0"],
+        "fMid":   ["std1", "rho1"],
+        "fRight": ["std2", "rho2"],
+        "lonelyfig1": "sfig1",
+        "lonelyfig2": "sfig2"
+
+    }
+
+    specific_fig_size = {
+        "fLeft":  [6.95, 6],
+        "fMid":   [6, 6],
+        "fRight": [6, 6]
+    }
+
+    def adjust(self):
+
+        for figure in self.figure_names:
+            if "lonelyfig" in figure:
+                self.adjust_maps[figure]["left"] = 0.11
+                self.adjust_maps[figure]["right"] = 0.89
+                self.adjust_maps[figure]["top"] = 0.97
+                self.adjust_maps[figure]["bottom"] = 0.13
+            else:
+                self.adjust_maps[figure]["hspace"] = 0.15
+                self.adjust_maps[figure]["bottom"] = 0.13
+                self.adjust_maps[figure]["top"] = 0.94
+                self.adjust_maps[figure]["right"] = 0.965
+
+                if figure == "fLeft":
+                    lval = 0.13
+                else:
+                    lval = 0.01
+
+                self.adjust_maps[figure]["left"] = lval
+
+#    plotOnly = "lonelyfig"
+
+    def plot(self, data):
+
+        alphas = self.get_family_member_data(data, "alphas")
+        F0s = self.get_family_member_data(data, "F0")
+        stds = self.get_family_member_data(data, "stds")
+        covs = self.get_family_member_data(data, "covs")
+
+        sorted_alphas = sorted(alphas)
+
+        ymax = stds[:, :, 0].max()*100*900*1.1
+
+        markers = ['s', '^', 'o']
+        colors = ['k', 'r', '0.3']
+        stdlabel = r"$\sigma(\rho_\mathrm{WV})[\%]$"
+
+        if len(self.argv) > 1:
+            res = resonance_points(1., 5., 0.25, 1.0, 10000)
+        else:
+            res = []
+
+        ypr = [0, 1]
+        yps = [0, ymax]
+        print res
+
+        for ia, a in enumerate(alphas):
+            ias = sorted_alphas.index(a)
+            stdfig = eval("self.std%d" % ias)
+            rhofig = eval("self.rho%d" % ias)
+
+            I = np.where(covs[ias, :] != 0)
+
+            stdfig.plot(F0s, stds[ia, :, 0]*900*100, '*')
+            rhofig.plot(F0s, covs[ia, :]*900, '*')
+
+            for r in res:
+                xp = [r, r]
+                stdfig.plot(xp, yps, "k--")
+                rhofig.plot(xp, ypr, "k--")
+
+            for i in [1, 2]:
+                sfig = eval("self.sfig%d" % i)
+                std_yo = stds[ias, :, i]*100
+                sfig.plot(F0s[I], std_yo[I], markers[ias],
+                          color=colors[ias],
+                          label=r"$\alpha=%g$" % alphas[ias],
+                          **my_props["fmt"])
+
+            rhofig.set_xlabel(r"$F_0/E_b A$")
+
+            stdfig.xaxis.set_ticklabels([])
+            stdfig.set_title(r"$\alpha = %g$" % a)
+
+            stdfig.set_ylim(0, ymax)
+            rhofig.set_ylim(0, 1)
+
+            stdfig.set_xbound(0.25)
+            rhofig.set_xbound(0.25)
+
+            if ias == 0:
+                stdfig.set_ylabel(stdlabel)
+                rhofig.set_ylabel(r"$\rho_\mathrm{WV}$")
+            else:
+                stdfig.yaxis.set_ticklabels([])
+                rhofig.yaxis.set_ticklabels([])
+
+        y1 = self.sfig1.get_ylim()[1]
+        y2 = self.sfig2.get_ylim()[1]
+        for r in res:
+            xp = [r, r]
+            self.sfig1.plot(xp, [0, y1], "k--")
+            self.sfig2.plot(xp, [0, y2], "k--")
+
+        self.sfig1.legend(loc="center",
+                          numpoints=1,
+                          handlelength=1.5,
+                          markerscale=1.0,
+                          borderpad=0.2,
+                          labelspacing=0.2,
+                          columnspacing=1.0,
+                          handletextpad=0.5,
+                          borderaxespad=0.0,
+                          frameon=False,
+                          fontsize=20,
+                          bbox_to_anchor=(0.15, 0.8))
+
+        self.sfig1.set_xlabel(r"$F_0/E_bA$")
+        self.sfig1.set_ylabel(stdlabel)
+        self.sfig1.set_xbound(0.23)
+
+        self.sfig1.set_xlabel(r"$F_0/E_bA$")
+        self.sfig1.set_xbound(0.23)
