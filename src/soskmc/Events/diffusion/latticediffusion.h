@@ -1,6 +1,7 @@
 #pragma once
 
 #include "diffusion.h"
+#include <boost/functional/hash.hpp>
 
 #include <unordered_map>
 using std::unordered_map;
