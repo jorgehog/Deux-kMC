@@ -390,12 +390,6 @@ def main():
             coverage_matrix[i] = coverage_matrix_h5[n]
             time[i] = event_values_h5[1][n]
 
-        last_xyz = makeXYZ(data["stored_heights"], dir, every2)
-        xyz_name = os.path.join(all_xyz_path, "all_xyz%d.xyz" % last_xyz_count)
-        shutil.copy(last_xyz, xyz_name)
-        last_xyz_txt += "%d %.3f %.3f %g\n" % (last_xyz_count, alpha, F0, all_covs[ai, F0i])
-        last_xyz_count += 1
-
         n = coverage_matrix.shape[0]
 
         covs = empty(n)
@@ -425,6 +419,12 @@ def main():
         all_covs[ai, F0i] = cov
 
         trace = calculate_cluster_trace(centeroids[::(every2/every)], L, W)
+
+        last_xyz = makeXYZ(data["stored_heights"], dir, every2)
+        xyz_name = os.path.join(all_xyz_path, "all_xyz%d.xyz" % last_xyz_count)
+        shutil.copy(last_xyz, xyz_name)
+        last_xyz_txt += "%d %.3f %.3f %g\n" % (last_xyz_count, alpha, F0, cov)
+        last_xyz_count += 1
 
         save("%s/extran_cluster_time.npy" % dir, time)
         save("%s/extran_cluster_trace.npy" % dir, trace)

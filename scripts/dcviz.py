@@ -4302,10 +4302,16 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         for figure in self.figure_names:
             if "lonelyfig" in figure:
-                self.adjust_maps[figure]["left"] = 0.11
-                self.adjust_maps[figure]["right"] = 0.89
-                self.adjust_maps[figure]["top"] = 0.97
+                self.adjust_maps[figure]["top"] = 0.92
                 self.adjust_maps[figure]["bottom"] = 0.13
+
+                if figure == "lonelyfig1":
+                    self.adjust_maps[figure]["left"] = 0.11
+                    self.adjust_maps[figure]["right"] = 0.98
+                else:
+                    self.adjust_maps[figure]["left"] = 0.02
+                    self.adjust_maps[figure]["right"] = 0.89
+
             else:
                 self.adjust_maps[figure]["hspace"] = 0.15
                 self.adjust_maps[figure]["bottom"] = 0.13
@@ -4335,6 +4341,8 @@ class ExtraN_cluster_yo(DCVizPlotter):
         markers = ['s', '^', 'o']
         colors = ['k', 'r', '0.3']
         stdlabel = r"$\sigma(\rho_\mathrm{WV})[\%]$"
+        stdnlabel = r"$\sigma(n_\pm/A)[\%]$"
+
 
         if len(self.argv) > 1:
             res = resonance_points(1., 5., 0.25, 1.0, 10000)
@@ -4352,8 +4360,8 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
             I = np.where(covs[ias, :] != 0)
 
-            stdfig.plot(F0s, stds[ia, :, 0]*900*100, '*')
-            rhofig.plot(F0s, covs[ia, :]*900, '*')
+            stdfig.plot(F0s, stds[ia, :, 0]*900*100, 'ks', **my_props["fmt"])
+            rhofig.plot(F0s, covs[ia, :]*900, 'ks', **my_props["fmt"])
 
             for r in res:
                 xp = [r, r]
@@ -4362,7 +4370,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
             for i in [1, 2]:
                 sfig = eval("self.sfig%d" % i)
-                std_yo = stds[ias, :, i]*100
+                std_yo = stds[ias, :, 3-i]*100
                 sfig.plot(F0s[I], std_yo[I], markers[ias],
                           color=colors[ias],
                           label=r"$\alpha=%g$" % alphas[ias],
@@ -4376,8 +4384,8 @@ class ExtraN_cluster_yo(DCVizPlotter):
             stdfig.set_ylim(0, ymax)
             rhofig.set_ylim(0, 1)
 
-            stdfig.set_xbound(0.25)
-            rhofig.set_xbound(0.25)
+            stdfig.set_xlim(0.23, 1.02)
+            rhofig.set_xlim(0.23, 1.02)
 
             if ias == 0:
                 stdfig.set_ylabel(stdlabel)
@@ -4388,10 +4396,21 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         y1 = self.sfig1.get_ylim()[1]
         y2 = self.sfig2.get_ylim()[1]
+
+        self.sfig1.set_ybound(0)
+        self.sfig2.set_ybound(0)
+
+        if y1 > y2:
+            self.sfig2.set_ylim(0, y1)
+            ym = y1
+        else:
+            self.sfig1.set_ylim(0, y2)
+            ym = y2
+
         for r in res:
             xp = [r, r]
-            self.sfig1.plot(xp, [0, y1], "k--")
-            self.sfig2.plot(xp, [0, y2], "k--")
+            self.sfig1.plot(xp, [0, ym], "k--")
+            self.sfig2.plot(xp, [0, ym], "k--")
 
         self.sfig1.legend(loc="center",
                           numpoints=1,
@@ -4407,8 +4426,12 @@ class ExtraN_cluster_yo(DCVizPlotter):
                           bbox_to_anchor=(0.15, 0.8))
 
         self.sfig1.set_xlabel(r"$F_0/E_bA$")
-        self.sfig1.set_ylabel(stdlabel)
-        self.sfig1.set_xbound(0.23)
+        self.sfig1.set_xlim(0.23, 1.02)
+        self.sfig1.set_ylabel(stdnlabel)
 
-        self.sfig1.set_xlabel(r"$F_0/E_bA$")
-        self.sfig1.set_xbound(0.23)
+        self.sfig2.set_xlabel(r"$F_0/E_bA$")
+        self.sfig2.set_xlim(0.23, 1.02)
+        self.sfig2.set_yticklabels([])
+
+        self.sfig1.set_title(r"$\#\mathrm{Gained}\,\,(n_+)$")
+        self.sfig2.set_title(r"$\#\mathrm{Broken}\,\,(n_-)$")

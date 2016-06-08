@@ -619,4 +619,7 @@ void AutoCorrelation1D::initialize()
     m_acf.zeros();
 }
 
-
+void FreeVolumeTracker::execute()
+{
+    setValue(solver().freeVolume());
+}

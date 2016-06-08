@@ -14,10 +14,10 @@ public:
     }
 
 private:
-    double m_V0;
     double m_N0;
 
     double m_deltaSum;
+    double m_vCorr;
 
     bool m_fix;
 

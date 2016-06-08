@@ -160,10 +160,7 @@ public:
 
     double volume() const;
 
-    double freeVolume() const
-    {
-        return volume() - area();
-    }
+    double freeVolume() const;
 
     void calculateHeightDependentValues();
 

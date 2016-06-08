@@ -401,3 +401,15 @@ public:
 
     void execute();
 };
+
+class FreeVolumeTracker : public SOSEvent
+{
+public:
+    FreeVolumeTracker(const SOSSolver &solver) :
+        SOSEvent(solver, "FreeVolume", "", true, true)
+    {
+
+    }
+
+    void execute();
+};

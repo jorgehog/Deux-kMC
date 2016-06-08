@@ -243,6 +243,38 @@ double SOSSolver::volume() const
     return (m_confiningSurfaceEvent->height() - 1)*area() - arma::accu(m_heights);
 }
 
+double SOSSolver::freeVolume() const
+{
+    const double &hl = confiningSurfaceEvent().height();
+
+    double v = 0;
+    for (uint x = 0; x < m_length; ++x)
+    {
+        for (uint y = 0; y < m_width; ++y)
+        {
+            const int &h = m_heights(x, y);
+            const double dv = hl - h - 2;
+
+            if (dv > 0)
+            {
+                v += dv;
+            }
+        }
+    }
+
+    BADAssBool((hl < m_heights.max() + 2) || (fabs(v - (volume() - area())) < 1E-5), "incorrect free volume", [&] ()
+    {
+        const double diff = v - (volume() - area());
+        BADAssSimpleDump(heights().max(),
+                         volume(),
+                         area(),
+                         v,
+                         diff);
+    });
+
+    return v;
+}
+
 void SOSSolver::calculateHeightDependentValues()
 {
     m_averageHeight = arma::accu(m_heights)/double(area());

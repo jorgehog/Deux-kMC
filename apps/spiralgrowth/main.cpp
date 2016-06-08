@@ -230,6 +230,7 @@ int main(int argv, char** argc)
     //
 
     ConcentrationTracker conc(solver);
+    FreeVolumeTracker fvt(solver);
 
     AverageHeight averageHeight(solver);
 
@@ -276,6 +277,7 @@ int main(int argv, char** argc)
     GrowthSpeed speed(solver);
 
     lattice.addEvent(conc);
+    lattice.addEvent(fvt);
     lattice.addEvent(currentTime);
     lattice.addEvent(averageHeight);
     lattice.addEvent(nNeighbors);
