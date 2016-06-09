@@ -3571,12 +3571,8 @@ class ExtraNeighbor(DCVizPlotter):
     def plot(self, data):
         s0s = self.get_family_member_data(data, "s0s")
         alphas = self.get_family_member_data(data, "alphas")
-        Pls = self.get_family_member_data(data, "Pls")
+        F0s = self.get_family_member_data(data, "F0s")
         cmat = self.get_family_member_data(data, "cmat")
-
-        ld = 5.0
-        conv = ld*(1-exp(-1./ld))
-        F0s = Pls/conv
 
         xes = []
         for x in range(1, len(alphas), 2):
@@ -3588,7 +3584,7 @@ class ExtraNeighbor(DCVizPlotter):
 
         for is0, s0 in enumerate(s0s):
 
-            C = cmat[0, is0, :, :]
+            C = cmat[is0, :, :]
 
             sfig = eval("self.subfigure%d1" % (is0+1))
             sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
@@ -4049,44 +4045,6 @@ class ExtraneighborTest(DCVizPlotter):
         self.subfigure.set_ylabel("cov")
 
 
-class ExtraneighborResonance(DCVizPlotter):
-
-    nametag = "resonance_(.*)\.npy"
-
-    isFamilyMember = True
-
-    hugifyFonts = True
-
-    def plot(self, data):
-
-        F0s = self.get_family_member_data(data, "F0s")
-        cvec = self.get_family_member_data(data, "cvec")
-
-        self.subfigure.plot(F0s, cvec, "r-")
-
-        self.subfigure.set_xlabel(r"$F_0/E_bA$")
-        self.subfigure.set_ylabel(r"$\rho_\mathrm{WV}$")
-
-        if self.argv:
-            sigma0 = float(self.argv[0])
-        else:
-            sigma0 = 1.5
-
-        if sigma0 == 1.5:
-            resonances = [1.36, 1.11, 0.91, 0.74, 0.61, 0.5, 0.41, 0.33, 0.27, 0.22, 0.18, 0.15, 0.12, 0.1]
-        elif sigma0 == 0.5:
-            resonances = [1.5, 1.23, 1.01, 0.82, 0.67, 0.55, 0.45, 0.37, 0.3, 0.25, 0.2, 0.17, 0.14, 0.11]
-        else:
-            resonances = []
-
-        for res in resonances:
-            self.subfigure.plot([res, res], [0, 1], "k--")
-
-        self.subfigure.set_ylim(0, 1)
-        self.subfigure.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
-        self.subfigure.set_xlim(F0s[0], F0s[-1])
-
-
 def RHS(ld, s0, F0EbA):
     xi = (1 - np.exp(-1./ld))
 
@@ -4113,6 +4071,77 @@ def find_integer_crossings(f):
 def resonance_points(s0, ld, F0, F1, n=1000):
     Fs = np.linspace(F0, F1, n)
     return [Fs[x] for x in find_integer_crossings(RHS(ld, s0, Fs))]
+
+
+
+class ExtraneighborResonance(DCVizPlotter):
+
+    nametag = "resonance_(.*)\.npy"
+
+    isFamilyMember = True
+
+    hugifyFonts = True
+
+    figMap = {
+        "fig": ["sfig0",
+                "sfig1"]
+    }
+
+    stack = "H"
+
+    fig_size = [8, 6]
+
+    def adjust(self):
+        self.adjust_maps["fig"]["left"] = 0.1
+        self.adjust_maps["fig"]["right"] = 0.9
+        self.adjust_maps["fig"]["top"] = 0.93
+        self.adjust_maps["fig"]["bottom"] = 0.13
+        self.adjust_maps["fig"]["wspace"] = 0.21
+
+    def plot(self, data):
+
+        s0s = self.get_family_member_data(data, "s0s")
+
+        for i in [0, 1]:
+            subfigure = eval("self.sfig%d" % i)
+
+            F0s = self.get_family_member_data(data, "F0s%d" % i)
+            cvec = self.get_family_member_data(data, "cvec%d" % i)
+
+            start = np.where(cvec != 0)[0][0]
+
+            F0s = F0s[start:]
+            cvec = cvec[start:]
+
+            subfigure.plot(F0s, cvec, "r-")
+
+            subfigure.set_xlabel(r"$F_0/E_bA$")
+
+            resonances = resonance_points(s0s[i], 5.0, F0s.min(), F0s.max())
+            for res in resonances:
+                subfigure.plot([res, res], [0, 1], "k--")
+
+            if i == 1:
+                f0max = F0s.max()
+            else:
+                f0max = 0.5
+
+            subfigure.set_ylim(0, 1)
+            subfigure.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+            subfigure.set_xlim(F0s.min(), f0max)
+            subfigure.set_xticks(np.arange(round(10*F0s.min())/10.,
+                                           f0max + 0.001,
+                                           0.1))
+
+            subfigure.set_title(r"$\sigma_0 = %.2f$" % s0s[i])
+
+            if i == 0:
+                subfigure.set_ylabel(r"$\rho_\mathrm{WV}$")
+            else:
+                subfigure.set_yticklabels([])
+
+
+
 
 class ResonancePlots(DCVizPlotter):
 
@@ -4336,7 +4365,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         sorted_alphas = sorted(alphas)
 
-        ymax = stds[:, :, 0].max()*100*900*1.1
+        ymax = stds[:, :, 0].max()*100*1.1
 
         markers = ['s', '^', 'o']
         colors = ['k', 'r', '0.3']
@@ -4344,8 +4373,8 @@ class ExtraN_cluster_yo(DCVizPlotter):
         stdnlabel = r"$\sigma(n_\pm/A)[\%]$"
 
 
-        if len(self.argv) > 1:
-            res = resonance_points(1., 5., 0.25, 1.0, 10000)
+        if self.argv:
+            res = resonance_points(1., 5., F0s.min(), F0s.max(), 10000)
         else:
             res = []
 
@@ -4360,8 +4389,8 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
             I = np.where(covs[ias, :] != 0)
 
-            stdfig.plot(F0s, stds[ia, :, 0]*900*100, 'ks', **my_props["fmt"])
-            rhofig.plot(F0s, covs[ia, :]*900, 'ks', **my_props["fmt"])
+            stdfig.plot(F0s, stds[ia, :, 0]*100, 'ks', **my_props["fmt"])
+            rhofig.plot(F0s, covs[ia, :], 'ks', **my_props["fmt"])
 
             for r in res:
                 xp = [r, r]

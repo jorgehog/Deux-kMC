@@ -332,6 +332,16 @@ def main():
 
         alpha = round(data.attrs["alpha"], 5)
         F0 = round(data.attrs["F0"], 5)
+        #
+        # if alpha == 1 and F0 == 0.475:
+        #     print data.attrs["interval"]
+        #     eqc = data["eq_coverage_matrix"][()]
+        #     a = []
+        #     for mat in eqc:
+        #         a.append(mat.mean())
+        #     plab.plot(a)
+        #     plab.show()
+        #     return
 
         if alpha not in alphas:
             alphas.append(alpha)
@@ -360,7 +370,6 @@ def main():
         os.mkdir(std_path)
 
     last_xyz_txt = ""
-    last_xyz_count = 0
     for count, (data, L, W, run_id) in enumerate(parser):
 
         alpha = round(data.attrs["alpha"], 5)
@@ -372,6 +381,7 @@ def main():
         dir_tag = "a%.3fF0%.3f" % (alpha, F0)
 
         dir = "%s/cluster_%s" % (path, dir_tag)
+        xyz_name = os.path.join(all_xyz_path, "all_xyz%d.xyz" % count)
 
         print "%d/%d" % (count+1, N), L, W, run_id, alpha, F0
 
@@ -381,59 +391,59 @@ def main():
         time = np.zeros(shape=len(coverage_matrix_h5)/every)
 
         if len(event_values_h5[1]) != lmax:
-            continue
+            last_xyz = makeXYZ_single(coverage_matrix_h5[-1], "/tmp", 0)
+            cov = 0
+        else:
+            if not os.path.exists(dir):
+                os.mkdir(dir)
 
-        if not os.path.exists(dir):
-            os.mkdir(dir)
+            for i, n in enumerate(range(0, len(coverage_matrix_h5), every)):
+                coverage_matrix[i] = coverage_matrix_h5[n]
+                time[i] = event_values_h5[1][n]
 
-        for i, n in enumerate(range(0, len(coverage_matrix_h5), every)):
-            coverage_matrix[i] = coverage_matrix_h5[n]
-            time[i] = event_values_h5[1][n]
+            n = coverage_matrix.shape[0]
 
-        n = coverage_matrix.shape[0]
+            covs = empty(n)
+            avg_cluster_sizes = empty(n)
+            n_clusters_list = empty(n)
+            avg_circs = empty(n)
+            centeroids = []
+            n_broken = empty(n - 1)
+            n_gained = empty(n - 1)
 
-        covs = empty(n)
-        avg_cluster_sizes = empty(n)
-        n_clusters_list = empty(n)
-        avg_circs = empty(n)
-        centeroids = []
-        n_broken = empty(n - 1)
-        n_gained = empty(n - 1)
+            measures = [covs,
+                        avg_cluster_sizes,
+                        n_clusters_list,
+                        avg_circs,
+                        n_broken,
+                        n_gained,
+                        centeroids]
 
-        measures = [covs,
-                    avg_cluster_sizes,
-                    n_clusters_list,
-                    avg_circs,
-                    n_broken,
-                    n_gained,
-                    centeroids]
+            for i in range(n):
+                analyze(coverage_matrix, i, *measures)
 
-        for i in range(n):
-            analyze(coverage_matrix, i, *measures)
+            stdcov, stdbroken, stdgained, cov = get_cov_std(covs,
+                                                            n_broken/float(L*W),
+                                                            n_gained/float(L*W))
 
-        stdcov, stdbroken, stdgained, cov = get_cov_std(covs,
-                                                        n_broken/float(L*W),
-                                                        n_gained/float(L*W))
+            stds[ai, F0i, :] = [stdcov, stdbroken, stdgained]
+            all_covs[ai, F0i] = cov
 
-        stds[ai, F0i, :] = [stdcov, stdbroken, stdgained]
-        all_covs[ai, F0i] = cov
+            trace = calculate_cluster_trace(centeroids[::(every2/every)], L, W)
 
-        trace = calculate_cluster_trace(centeroids[::(every2/every)], L, W)
+            last_xyz = makeXYZ(data["stored_heights"], dir, every2)
 
-        last_xyz = makeXYZ(data["stored_heights"], dir, every2)
-        xyz_name = os.path.join(all_xyz_path, "all_xyz%d.xyz" % last_xyz_count)
+            save("%s/extran_cluster_time.npy" % dir, time)
+            save("%s/extran_cluster_trace.npy" % dir, trace)
+            save("%s/extran_cluster_covs.npy" % dir, covs)
+            save("%s/extran_cluster_size.npy" % dir, avg_cluster_sizes)
+            save("%s/extran_cluster_n.npy" % dir, n_clusters_list)
+            save("%s/extran_cluster_circs.npy" % dir, avg_circs)
+            save("%s/extran_cluster_nbroken.npy" % dir, n_broken)
+            save("%s/extran_cluster_ngained.npy" % dir, n_gained)
+
         shutil.copy(last_xyz, xyz_name)
-        last_xyz_txt += "%d %.3f %.3f %g\n" % (last_xyz_count, alpha, F0, cov)
-        last_xyz_count += 1
-
-        save("%s/extran_cluster_time.npy" % dir, time)
-        save("%s/extran_cluster_trace.npy" % dir, trace)
-        save("%s/extran_cluster_covs.npy" % dir, covs)
-        save("%s/extran_cluster_size.npy" % dir, avg_cluster_sizes)
-        save("%s/extran_cluster_n.npy" % dir, n_clusters_list)
-        save("%s/extran_cluster_circs.npy" % dir, avg_circs)
-        save("%s/extran_cluster_nbroken.npy" % dir, n_broken)
-        save("%s/extran_cluster_ngained.npy" % dir, n_gained)
+        last_xyz_txt += "%d %.3f %.3f %g\n" % (count, alpha, F0, cov)
 
     np.save("%s/cov_clusters_alphas.npy" % std_path, alphas)
     np.save("%s/cov_clusters_F0.npy" % std_path, F0s)
