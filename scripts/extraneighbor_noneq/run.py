@@ -17,7 +17,7 @@ def main():
                             "omegaVal\s*=\s*(.*)\;"])
 
     F0s.initialize_set([[0.5, 1.0], [1000000, 100000]])
-    OS.initialize_set([[-1, 1], 0.5, 0.01])
+    OS.initialize_set([[-1, 1], [0.5, 0.01]])
 
     controller.register_parameter_set(F0s)
     controller.register_parameter_set(OS)

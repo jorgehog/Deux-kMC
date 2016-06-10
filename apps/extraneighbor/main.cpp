@@ -157,7 +157,7 @@ int main(int argv, char** argc)
     const double &F0 = getSetting<double>(cfgRoot, "F0");
     const double &alpha = getSetting<double>(cfgRoot, "alpha");
     const int &omegaSign = getSetting<int>(cfgRoot, "omegaSign");
-    const int &omegaVal = getSetting<double>(cfgRoot, "omegaVal");
+    const double &omegaVal = getSetting<double>(cfgRoot, "omegaVal");
 
     const double &ld = getSetting<double>(cfgRoot, "ld");
     const double &s0 = getSetting<double>(cfgRoot, "s0");
