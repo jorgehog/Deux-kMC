@@ -13,17 +13,15 @@ def main():
 
     F0s = ParameterSet(cfg, ["F0\s*=\s*(.*)\;",
                              "nCycles\s*=\s*(.*)\;"])
-    OS = ParameterSet(cfg, "omegaSign\s*=\s*(.*)\;")
+    OS = ParameterSet(cfg, ["omegaSign\s*=\s*(.*)\;",
+                            "omegaVal\s*=\s*(.*)\;"])
 
-    F0s.initialize_set([[0.45], [200000]])
-    OS.initialize_set([-1, 1])
+    F0s.initialize_set([[0.5, 1.0], [1000000, 100000]])
+    OS.initialize_set([[-1, 1], 0.5, 0.01])
 
     controller.register_parameter_set(F0s)
     controller.register_parameter_set(OS)
 
-    # controller.set_repeats(10)
-
-    print path
     controller.run(run_kmc, path, app, cfg, ask=not controller.use_mpi, n_procs=n_procs, shuffle=True)
 
 if __name__ == "__main__":

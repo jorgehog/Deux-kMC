@@ -181,6 +181,12 @@ void KMCSolver::execute()
     //reset/initialize function.
     getCumsumAndTotalRate();
 
+    //Loop is terminated.
+    if (m_totalRate == 0)
+    {
+        return;
+    }
+
     BADAss(m_cumsumRates.size(), >=, numberOfReactions());
     uint choice = chooseFromTotalRate(m_cumsumRates, m_totalRate, numberOfReactions());
 
@@ -193,6 +199,12 @@ void KMCSolver::execute()
 
 void KMCSolver::reset()
 {
+    //Loop is terminated.
+    if (m_totalRate == 0)
+    {
+        return;
+    }
+
     m_nextRandomLogNumber = getRandomLogNumber();
 
     updateTime();

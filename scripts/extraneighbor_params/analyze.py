@@ -61,7 +61,7 @@ def main():
     ccounts = np.zeros(shape=(len(s0s), len(alphas), len(F0s)))
 
     facSmall = 9/10.
-    facBig = 5/6.
+    facBig = 9/10.
     plotevery = 100
     for data, L, W, run_id in parser:
 

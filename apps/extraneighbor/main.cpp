@@ -157,11 +157,13 @@ int main(int argv, char** argc)
     const double &F0 = getSetting<double>(cfgRoot, "F0");
     const double &alpha = getSetting<double>(cfgRoot, "alpha");
     const int &omegaSign = getSetting<int>(cfgRoot, "omegaSign");
+    const int &omegaVal = getSetting<double>(cfgRoot, "omegaVal");
 
     const double &ld = getSetting<double>(cfgRoot, "ld");
     const double &s0 = getSetting<double>(cfgRoot, "s0");
 
     const uint &nCycles = getSetting<uint>(cfgRoot, "nCycles");
+    const uint &nCyclesOmega = getSetting<uint>(cfgRoot, "nCyclesOmega");
     const uint &ignisOutput = getSetting<uint>(cfgRoot, "ignisOutput");
     const uint &stdoutInterval = getSetting<uint>(cfgRoot, "stdoutInterval");
     const uint &interval = getSetting<uint>(cfgRoot, "interval");
@@ -267,6 +269,7 @@ int main(int argv, char** argc)
 
     simRoot["alpha"] = alpha;
     simRoot["omegaSign"] = omegaSign;
+    simRoot["omegaVal"] = omegaVal;
     simRoot["F0"] = F0;
     simRoot["s0"] = s0;
     simRoot["ld"] = ld;
@@ -293,20 +296,11 @@ int main(int argv, char** argc)
         lattice.addEvent(storeHeights);
     }
 
-    //either infinite source or sink
-    else if (omegaSign < 0)
-    {
-        solver.setZeroConcentration();
-    }
-
-    else
-    {
-        solver.setConcentration(1.0);
-    }
+    solver.setGamma(solver.gamma() + log(1 + omegaSign*omegaVal));
 
     diff.fixConcentration();
 
-    lattice.eventLoop(nCycles);
+    lattice.eventLoop(nCyclesOmega);
 
     simRoot["omega_storedEventValues"] = lattice.storedEventValues();
 
