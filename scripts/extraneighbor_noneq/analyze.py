@@ -1,50 +1,63 @@
-import h5py
+import os
+import sys
 import numpy as np
+from os.path import join
+
+sys.path.append(join(os.getcwd(), ".."))
+
+from parse_h5_output import ParseKMCHDF5
 
 def main():
-    id_diss_low = ["/home/jorgehog/Dropbox/PhD/papers/paper3/data/extran_noneq/extraneighbor_0.h5", 1464212767497]
-    id_diss_high = ["/home/jorgehog/Dropbox/PhD/papers/paper3/data/extran_noneq/extraneighbor_0.h5", 1464217682529]
-    id_growth_low = ["/home/jorgehog/Dropbox/PhD/papers/paper3/data/extran_noneq/extraneighbor_2.h5", 21464212760854]
-    id_growth_high = ["/home/jorgehog/Dropbox/PhD/papers/paper3/data/extran_noneq/extraneighbor_1.h5", 11464217683030]
 
-    ids = [[id_diss_high, id_growth_high],
-           [id_diss_low, id_growth_low]]
+    input_file = sys.argv[1]
+    parser = ParseKMCHDF5(input_file)
 
-    eq_times = [[], []]
     F0s = []
+    omegas = []
 
-    L = 30
-    W = 30
-    g = "%dx%d" % (L, W)
+    for data, L, W, run_id in parser:
 
-    for i, id_set in enumerate(ids):
+        os = data.attrs["omegaSign"]
+        omegaVal = data.attrs["omegaVal"]
+        omega = os*omegaVal
 
-        for j, id_pair in enumerate(id_set):
+        if omega not in omegas:
+            omegas.append(omega)
 
-            path, id = id_pair
+        F0 = round(data.attrs["F0"], 5)
+        if F0 not in F0s:
+            F0s.append(F0)
 
-            f = h5py.File(path, 'r')
 
-            group = f[g][str(id)]
+    F0s = sorted(F0s)
+    omegas = sorted(omegas)
 
-            if j == 0:
-                F0s.append(group.attrs["F0"])
+    for data, L, W, run_id in parser:
 
-            eq_set = group["eq_storedEventValues"][0]
-            neq_set = group["omega_storedEventValues"][0]
+        scale = L*W
 
-            eq_time = group["eq_storedEventValues"][1]
-            neq_time = group["omega_storedEventValues"][1]
+        os = data.attrs["omegaSign"]
+        omegaVal = data.attrs["omegaVal"]
+        omega = os*omegaVal
+        io = omegas.index(omega)
 
-            eq_times[i].append(eq_time[-1])
-            full_set = np.concatenate([eq_set, neq_set])
-            full_time = np.concatenate([eq_time, neq_time + eq_time[-1] + neq_time[1]])
+        F0 = round(data.attrs["F0"], 5)
+        iF0 = F0s.index(F0)
 
-            np.save("/tmp/noneq_neigz_%d%d_cov.npy" % (i, j), full_set/float(L*W))
-            np.save("/tmp/noneq_neigz_%d%d_time.npy" % (i, j), full_time)
+        eq_cov = data["eq_storedEventValues"][0]/scale
+        neq_cov = data["omega_storedEventValues"][0]/scale
 
-    np.save("/tmp/noneq_neigz_eqtimes.npy", eq_times)
+        eq_time = data["eq_storedEventValues"][1]
+        neq_time = data["omega_storedEventValues"][1]
+
+        _tuple = (iF0, io)
+        np.save("/tmp/noneq_neigz_eqcov%d%d.npy" % _tuple, eq_cov)
+        np.save("/tmp/noneq_neigz_eqtime%d%d.npy" % _tuple, eq_time)
+        np.save("/tmp/noneq_neigz_neqcov%d%d.npy" % _tuple, neq_cov)
+        np.save("/tmp/noneq_neigz_neqtime%d%d.npy" % _tuple, neq_time)
+
     np.save("/tmp/noneq_neigz_F0s.npy", F0s)
+    np.save("/tmp/noneq_neigz_omegas.npy", omegas)
 
 if __name__ == "__main__":
     main()

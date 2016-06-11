@@ -6,9 +6,6 @@ import numpy as np
 from scipy.stats import linregress
 from numpy import where, empty, save, zeros
 from skimage import measure
-from threading import Thread
-from matplotlib import pylab as plab
-from mpl_toolkits.mplot3d import Axes3D
 
 sys.path.append(join(os.getcwd(), ".."))
 
@@ -94,18 +91,32 @@ def periodify(im):
     return im
 
 
-def analyze(data, i,
+def analyze(data,
+            do_cluster_analysis,
+            i,
             covs,
-            avg_cluster_sizes,
-            n_clusters_list,
-            avg_circs,
             n_broken,
             n_gained,
-            centeroids):
+            *cluster_measures):
 
     _s = data[i, :, :]
 
     covs[i] = _s.mean()
+
+    if i == data.shape[0] - 1:
+        return
+
+    _s_next = data[i+1, :, :]
+
+    delta = _s_next - _s
+
+    n_broken[i] = len(where(delta == -1)[0])
+    n_gained[i] = len(where(delta == 1)[0])
+
+    if not do_cluster_analysis:
+        return
+
+    avg_cluster_sizes, n_clusters_list, avg_circs, centeroids = cluster_measures
 
     im_label = measure.label(_s)
     im_label[where(_s == 0)] = -1
@@ -145,46 +156,9 @@ def analyze(data, i,
     n_clusters_list[i] = n_clusters
     avg_circs[i] = avg_circ
 
-    if i == data.shape[0] - 1:
-        return
-
-    _s_next = data[i+1, :, :]
-
-    delta = _s_next - _s
-
-    n_broken[i] = len(where(delta == -1)[0])
-    n_gained[i] = len(where(delta == 1)[0])
-
-
-class AnalyzeThread(Thread):
-
-    def __init__(self, data, thread_i, *m):
-
-        self.data = data
-        self.thread_i = thread_i
-
-        self.m = m
-
-        super(AnalyzeThread, self).__init__()
-
-    def run(self):
-
-        for i in self.thread_i:
-            analyze(self.data, i, *self.m)
-
-
 colors = ['r', 'g', 'b', 'k', 'm', 'y']
 
 def calculate_cluster_trace(data, L, W):
-    max_size = 20
-    min_size = 5
-
-    proj_props = {
-        "s" : max_size,
-        "marker" : "x",
-        "c" : "k",
-        "linewidth" : 1
-    }
 
     max_cluster_size = max(data, key=lambda x: 0 if x == [] else max(x, key=lambda y: y[0]))
 
@@ -204,9 +178,6 @@ def calculate_cluster_trace(data, L, W):
 
     xc, yc = last_centeroid[0]
 
-    # fig = plab.figure()
-    # ax = fig.gca(projection='3d')
-
     x0 = xc - L/2
     x1 = xc + L/2
     y0 = yc - W/2
@@ -218,7 +189,6 @@ def calculate_cluster_trace(data, L, W):
         for ci, cluster in enumerate(c):
             size = cluster[0]
             ri = float(size)/max_cluster_size
-            si = min_size + ri*(max_size-min_size)
 
             for xi, yi in cluster[1]:
 
@@ -228,29 +198,6 @@ def calculate_cluster_trace(data, L, W):
                     pass
                 else:
                     all_points.append([xi-x0, yi-y0, zi, ri, ci])
-
-                # ax.scatter(zi, xi, yi, s=si, c=colors[ci%len(colors)], edgecolors='none')
-                #
-                # if zi % 10 == 0:
-                #     #ax.scatter(len(data), xi, yi, s=sproj, c='k', edgecolors='none')
-                #     # ax.scatter(zi, x1, yi, **proj_props)
-                #     ax.scatter(zi, xi, y0, **proj_props)
-
-    # ax.set_xbound(0)
-    #
-    # ax.set_xticklabels([])
-    # ax.set_yticklabels([])
-    # ax.set_zticklabels([])
-    #
-    # pad = 1
-    # ax.xaxis._axinfo['label']['space_factor'] = pad
-    # ax.yaxis._axinfo['label']['space_factor'] = pad
-    # ax.zaxis._axinfo['label']['space_factor'] = pad
-    #
-    # fs = 30
-    # ax.set_xlabel(r"$\nu t$", size=fs)
-    # ax.set_ylabel(r"$x$", size=fs)
-    # ax.set_zlabel(r"$y$", size=fs)
 
     return all_points
 
@@ -314,9 +261,15 @@ def get_cov_std(covs, nbroken, ngained):
 def main():
 
     input_file = sys.argv[1]
-    path = sys.argv[2]
-    every = int(sys.argv[3])
-    every2 = int(sys.argv[4])
+
+    single = sys.argv[2] == "single"
+    if single:
+        s_alpha = float(sys.argv[3])
+        s_F0 = float(sys.argv[4])
+    else:
+        path = sys.argv[2]
+        every = int(sys.argv[3])
+        every2 = int(sys.argv[4])
 
     parser = ParseKMCHDF5(input_file)
 
@@ -332,23 +285,36 @@ def main():
 
         alpha = round(data.attrs["alpha"], 5)
         F0 = round(data.attrs["F0"], 5)
-        #
-        # if alpha == 1 and F0 == 0.475:
-        #     print data.attrs["interval"]
-        #     eqc = data["eq_coverage_matrix"][()]
-        #     a = []
-        #     for mat in eqc:
-        #         a.append(mat.mean())
-        #     plab.plot(a)
-        #     plab.show()
-        #     return
 
         if alpha not in alphas:
             alphas.append(alpha)
         if F0 not in F0s:
             F0s.append(F0)
 
+        if single:
+            if alpha == s_alpha and F0 == s_F0:
+                time = data["eq_storedEventValues"][1][()]
+
+                covs = np.zeros(len(time))
+                nbroken = np.zeros(len(time) - 1)
+                ngained = np.zeros(len(time) - 1)
+
+                coverage_matrix = data["eq_coverage_matrix"]
+
+                for i in range(len(time)):
+                    analyze(coverage_matrix, False, i, covs, nbroken, ngained)
+
+                save("/tmp/extran_cluster_time.npy", time)
+                save("/tmp/extran_cluster_covs.npy", covs)
+                save("/tmp/extran_cluster_nbroken.npy", nbroken)
+                save("/tmp/extran_cluster_ngained.npy", ngained)
+
+                return
         N += 1
+
+    if single:
+        print "alpha=%g and F0=%g not found in set." % (s_alpha, s_F0)
+        return
 
     alphas = sorted(alphas)
     F0s = sorted(F0s)
@@ -412,15 +378,15 @@ def main():
             n_gained = empty(n - 1)
 
             measures = [covs,
+                        n_broken,
+                        n_gained,
                         avg_cluster_sizes,
                         n_clusters_list,
                         avg_circs,
-                        n_broken,
-                        n_gained,
                         centeroids]
 
             for i in range(n):
-                analyze(coverage_matrix, i, *measures)
+                analyze(coverage_matrix, True, i, *measures)
 
             stdcov, stdbroken, stdgained, cov = get_cov_std(covs,
                                                             n_broken/float(L*W),
@@ -434,13 +400,13 @@ def main():
             last_xyz = makeXYZ(data["stored_heights"], dir, every2)
 
             save("%s/extran_cluster_time.npy" % dir, time)
-            save("%s/extran_cluster_trace.npy" % dir, trace)
             save("%s/extran_cluster_covs.npy" % dir, covs)
+            save("%s/extran_cluster_nbroken.npy" % dir, n_broken)
+            save("%s/extran_cluster_ngained.npy" % dir, n_gained)
+            save("%s/extran_cluster_trace.npy" % dir, trace)
             save("%s/extran_cluster_size.npy" % dir, avg_cluster_sizes)
             save("%s/extran_cluster_n.npy" % dir, n_clusters_list)
             save("%s/extran_cluster_circs.npy" % dir, avg_circs)
-            save("%s/extran_cluster_nbroken.npy" % dir, n_broken)
-            save("%s/extran_cluster_ngained.npy" % dir, n_gained)
 
         shutil.copy(last_xyz, xyz_name)
         last_xyz_txt += "%d %.3f %.3f %g\n" % (count, alpha, F0, cov)

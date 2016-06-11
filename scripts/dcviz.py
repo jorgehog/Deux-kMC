@@ -3852,7 +3852,7 @@ class Extraneighbor_cluster(DCVizPlotter):
               "figure1": "subfigure1",
               "figure2": "subfigure5"}
 
-    # plotOnly = ["figure0"]
+    plotOnly = ["figure3D"]
 
     tight=False
 
@@ -3911,38 +3911,19 @@ class Extraneighbor_cluster(DCVizPlotter):
         A = 900.
 
         time = self.get_family_member_data(data, "time")
-        trace = self.get_family_member_data(data, "trace")
         covs = self.get_family_member_data(data, "covs")
-        size = self.get_family_member_data(data, "size")
-        n = self.get_family_member_data(data, "n")
-        circs = self.get_family_member_data(data, "circs")
+
         nbroken = self.get_family_member_data(data, "nbroken")
         ngained = self.get_family_member_data(data, "ngained")
+        cumnbroken = np.cumsum(nbroken)
+        cumngained = np.cumsum(ngained)
 
-        l = len(time)
-        c_first = l - 1
-        c_coal = l - 1
+        if "force_zero" in self.argv:
+            self.argv.remove("force_zero")
+            idx = np.argmin(covs)
+            covs[idx] = 0
 
         help_lines = []
-
-        # while n[c_coal - 1] == 1:
-        #     c_coal -= 1
-        #
-        #     if c_coal == 0:
-        #         break
-        #
-        # while n[c_first - 1] != 0:
-        #     c_first -= 1
-        #
-        #     if c_first == 0:
-        #         break
-
-        ax3d = Axes3D(self.figure3D)
-
-        self.make3Dplot(ax3d, trace)
-
-        sphericity = np.sqrt(4*np.pi*(size+circs/2+np.pi/4))/circs
-
         if self.argv:
             tmax = int(self.argv[0])
 
@@ -3952,37 +3933,56 @@ class Extraneighbor_cluster(DCVizPlotter):
         else:
             tmax = time[-1]
 
-
-        box = np.sqrt(np.pi)/2.
-
-        cumnbroken = np.cumsum(nbroken)
-        cumngained = np.cumsum(ngained)
-
-        self.subfigure0.plot(time, covs)
-        self.subfigure1.plot(time, n)
-        self.subfigure4.plot(time[:-1], cumngained/A, "g", linewidth=2, label=r"$n_\mathrm{Formed}$")
-        self.subfigure4.plot(time[:-1], cumnbroken/A, "r--", linewidth=2, label=r"$n_\mathrm{Broken}$")
-        self.subfigure5.plot(time, sphericity)
-        self.subfigure5.plot([time[0], time[-1]], [box, box], "k--", linewidth=3)
-
-        self.subfigure5.set_xbound(time[c_coal])
-
         def y(*args):
             _min = min([min(v[np.where(time < tmax)]) for v in args])
             _max = max([max(v[np.where(time < tmax)]) for v in args])
 
             return [_min, _max]
 
+        try:
+            n = self.get_family_member_data(data, "n")
+            self.subfigure1.plot(time, n)
+            y1 = y(n)
+
+            for x in help_lines:
+                self.subfigure1.plot(x, y1, "k--")
+
+            self.subfigure1.set_ylim(y1)
+        except:
+            pass
+
+        try:
+            circs = self.get_family_member_data(data, "circs")
+            size = self.get_family_member_data(data, "size")
+            sphericity = np.sqrt(4*np.pi*(size+circs/2+np.pi/4))/circs
+            box = np.sqrt(np.pi)/2.
+            self.subfigure5.plot(time, sphericity)
+            self.subfigure5.plot([time[0], time[-1]], [box, box], "k--", linewidth=3)
+            y5 = y(sphericity)
+            for x in help_lines:
+                self.subfigure5.plot(x, y5, "k--")
+            self.subfigure5.set_ylim(y5)
+
+        except:
+            pass
+
+        try:
+            trace = self.get_family_member_data(data, "trace")
+            ax3d = Axes3D(self.figure3D)
+            self.make3Dplot(ax3d, trace)
+        except:
+            pass
+
+        self.subfigure0.plot(time, covs)
+        self.subfigure4.plot(time[:-1], cumngained/A, "g", linewidth=2, label=r"$n_\mathrm{Formed}$")
+        self.subfigure4.plot(time[:-1], cumnbroken/A, "r--", linewidth=2, label=r"$n_\mathrm{Broken}$")
+
         y0 = [0, np.ceil(10*max(covs[np.where(time<tmax)]))/10.]
-        y1 = y(n)
         y4 = y(cumnbroken/A, cumngained/A)
-        y5 = y(sphericity)
 
         for x in help_lines:
             self.subfigure0.plot(x, y0, "k--")
-            self.subfigure1.plot(x, y1, "k--")
             self.subfigure4.plot(x, y4, "k--")
-            self.subfigure5.plot(x, y5, "k--")
 
         #self.subfigure0.set_xlabel(r"$\nu t$")
         self.subfigure1.set_xlabel(r"$\nu t$")
@@ -3995,14 +3995,12 @@ class Extraneighbor_cluster(DCVizPlotter):
         self.subfigure5.set_ylabel("sphericity")
 
         self.subfigure0.set_ylim(y0)
-        self.subfigure1.set_ylim(y1)
         self.subfigure4.set_ylim(y4)
-        self.subfigure5.set_ylim(y5)
 
         self.subfigure0.set_xlim(0, tmax)
         self.subfigure1.set_xlim(0, tmax)
         self.subfigure4.set_xlim(0, tmax)
-        self.subfigure5.set_xlim(time[c_coal], tmax)
+        self.subfigure5.set_xlim(0, tmax)
 
 
         self.subfigure0.set_xticks([])
@@ -4081,6 +4079,10 @@ class ExtraneighborResonance(DCVizPlotter):
     isFamilyMember = True
 
     hugifyFonts = True
+    labelSize= 50
+    ticklabelSize=40
+    fontSize = 40  # Only invoked by hugifyFonts = True
+    tickSize = 4
 
     figMap = {
         "fig": ["sfig0",
@@ -4089,18 +4091,20 @@ class ExtraneighborResonance(DCVizPlotter):
 
     stack = "H"
 
-    fig_size = [8, 6]
+    fig_size = [16, 6]
 
     def adjust(self):
-        self.adjust_maps["fig"]["left"] = 0.1
-        self.adjust_maps["fig"]["right"] = 0.9
-        self.adjust_maps["fig"]["top"] = 0.93
-        self.adjust_maps["fig"]["bottom"] = 0.13
-        self.adjust_maps["fig"]["wspace"] = 0.21
+        self.adjust_maps["fig"]["left"] = 0.09
+        self.adjust_maps["fig"]["right"] = 0.98
+        self.adjust_maps["fig"]["top"] = 0.87
+        self.adjust_maps["fig"]["bottom"] = 0.22
+        self.adjust_maps["fig"]["wspace"] = 0.05
 
     def plot(self, data):
 
         s0s = self.get_family_member_data(data, "s0s")
+
+        xmax1 = float(self.argv[0])
 
         for i in [0, 1]:
             subfigure = eval("self.sfig%d" % i)
@@ -4113,13 +4117,13 @@ class ExtraneighborResonance(DCVizPlotter):
             F0s = F0s[start:]
             cvec = cvec[start:]
 
-            subfigure.plot(F0s, cvec, "r-")
+            subfigure.plot(F0s, cvec, "r-", linewidth=3)
 
             subfigure.set_xlabel(r"$F_0/E_bA$")
 
             resonances = resonance_points(s0s[i], 5.0, F0s.min(), F0s.max())
             for res in resonances:
-                subfigure.plot([res, res], [0, 1], "k--")
+                subfigure.plot([res, res], [0, 1], "k--", linewidth=3)
 
             if i == 1:
                 f0max = F0s.max()
@@ -4140,6 +4144,8 @@ class ExtraneighborResonance(DCVizPlotter):
             else:
                 subfigure.set_yticklabels([])
 
+
+        self.sfig0.set_xlim(self.sfig0.get_xlim()[0], xmax1)
 
 
 
@@ -4201,107 +4207,114 @@ class NonEqNeigz(DCVizPlotter):
 
     isFamilyMember = True
 
-    figMap = {"figure_low" : ["dissfig_low", "zoom_diss_low", "growthfig_low", "zoom_growth_low"],
-              "figure_high" : ["dissfig_high", "zoom_diss_high","growthfig_high", "zoom_growth_high"]}
+    figMap = {"figure_high" : ["dissfig_high", "growthfig_high"],
+              "figure_low": ["dissfig_low", "growthfig_low"],
+              "zoomfig": ["zoom_diss", "zoom_growth"]}
 
     def adjust(self):
         for figure in self.figure_names:
-            self.adjust_maps[figure]["wspace"] = 0.10
-            self.adjust_maps[figure]["left"] = 0.04
-            self.adjust_maps[figure]["right"] = 0.97
 
-        self.adjust_maps["figure_low"]["top"] = 0.96
-        self.adjust_maps["figure_high"]["top"] = 0.89
+            self.adjust_maps[figure]["wspace"] = 0.16
+            self.adjust_maps[figure]["left"] = 0.095
+            self.adjust_maps[figure]["right"] = 0.95
 
-        self.adjust_maps["figure_low"]["bottom"] = 0.16
-        self.adjust_maps["figure_high"]["bottom"] = 0.09
+        self.adjust_maps["zoomfig"]["top"] = 0.95
+        self.adjust_maps["zoomfig"]["bottom"] = 0.175
+
+        self.adjust_maps["figure_high"]["top"] = 0.95
+        self.adjust_maps["figure_high"]["bottom"] = 0.08
+
+        self.adjust_maps["figure_low"]["top"] = 0.91
+        self.adjust_maps["figure_low"]["bottom"] = 0.08
 
     stack = "H"
 
-    fig_size = [20, 5]
+    fig_size = [10, 5]
+    specific_fig_size = {
+        "figure_high": [10, 4],
+        "figure_low": [10, 4.2],
+        "zoomfig": [10, 4.5]
+    }
 
     def plot(self, data):
 
+        from matplotlib import rcParams
+        print rcParams["figure.figsize"]
+
+        logscale=3
+        tscale = 10**logscale
+
+        do_zoom = not self.argv
+        growth_end = 5.773
+        diss_start = 16.75
+
         F0s = self.get_family_member_data(data, "F0s")
-        eqtimes = self.get_family_member_data(data, "eqtimes")
+        omegas = self.get_family_member_data(data, "omegas")
 
-        figs = [[self.dissfig_high, self.growthfig_high],
-                [self.dissfig_low, self.growthfig_low]]
+        figs = [[self.dissfig_low,  self.growthfig_low],
+                [self.dissfig_high, self.growthfig_high]]
 
-        zoomfigs = [[self.zoom_diss_high, self.zoom_growth_high],
-                    [self.zoom_diss_low, self.zoom_growth_low]]
+        ylims = [0.35, 1.0]
+        xlims = [8, 19.75]
 
-        total_points = 3000
-        ticks = [[0, 0.2, 0.4, 0.6, 0.8, 1.0],
-                 [0, 0.1, 0.2, 0.3, 0.4, 0.5]]
+        zylims = [0.3, 0.1]
 
-        tmaxes = [[], []]
-        titles = [r"$\mathrm{Equilibration+Dissolution}$", r"$\mathrm{Equilibration+Growth}$"]
-        zoom_titles = [r"$\mathrm{Dissolution}$", r"$\mathrm{Growth\,Closeup}$"]
-        zoom_labels = [r"Dissolution\,Cycles", r"Growth\,Cycles"]
-
-        total_points_zoom = [15000, total_points]
-        log_scales = [4, 3]
+        xzl = r"$t\,\,[10^%d/\nu]$" % logscale
 
         for i in range(2):
             F0 = F0s[i]
             for j in range(2):
+                omega = omegas[j]
                 fig = figs[i][j]
-                zoomfig = zoomfigs[i][j]
-                cov = self.get_family_member_data(data, "%d%d_cov" % (i, j))
-                t = self.get_family_member_data(data, "%d%d_time" % (i, j))
+                eqcov = self.get_family_member_data(data, "eqcov%d%d" % (i, j))
+                neqcov = self.get_family_member_data(data, "neqcov%d%d" % (i, j))
 
-                zoom_points = total_points_zoom[j]
-                zoom_label = zoom_labels[j]
-                log_scale = log_scales[j]
+                eqtime = self.get_family_member_data(data, "eqtime%d%d" % (i, j))/tscale
+                neqtime = eqtime[-1] + self.get_family_member_data(data, "neqtime%d%d" % (i, j))/tscale
 
-                t /= eqtimes[i][i]
+                fig.plot([eqtime[-1], eqtime[-1]], [0, 1], "k--")
 
-                every = max([1, len(t)/total_points])
+                fig.set_ylim(0, ylims[i])
+                fig.set_xlim(0, xlims[i])
 
-                fig.plot(t[::every], cov[::every], "r-")
+                fig.yaxis.set_major_formatter(FuncFormatter(lambda v, i: r"$%.1f$" % round(v, 1) if abs(round(v, 1) - v) < 1E-3 else ""))
 
-                fig.set_yticks(ticks[i])
+                #high pressure growth
+                if i == 1 and j == 1:
+                    fig.plot([neqtime[-1], neqtime[-1]], [neqcov[-1], 1.0], "r-")
 
-                k = np.where(t == 1.0)[0][0]
+                if do_zoom:
+                    #high pressure dissolution
+                    if i == 1 and j == 0:
+                        k = np.where(neqtime > diss_start)[0][0]
+                        self.zoom_diss.plot(neqtime[k:], neqcov[k:], 'r-')
+                        self.zoom_diss.set_xlim(neqtime[k], xlims[i])
+                        self.zoom_diss.set_ylim(0, zylims[i])
+                        self.zoom_diss.set_xlabel(xzl)
+                        self.zoom_diss.set_ylabel(r"$\rho_\mathrm{WV}$")
 
-                if len(cov[k:]) < zoom_points:
-                    cov = np.concatenate([cov, np.zeros(zoom_points - len(cov[k:]))])
+                    #low pressure growth
+                    elif i == 0 and j == 1:
+                        k = np.where(neqtime < growth_end)[0][-1]
+                        self.zoom_growth.plot(neqtime[:k], neqcov[:k], 'r-')
+                        self.zoom_growth.set_xlim(neqtime[0], neqtime[k])
+                        self.zoom_growth.set_ylim(0, zylims[i])
+                        self.zoom_growth.set_xlabel(xzl)
 
-                X = np.arange(zoom_points)/10.0**(log_scale-1)
-                zoomfig.plot(X, cov[k:k+zoom_points], "r-")
-                zoomfig.set_yticks(ticks[i])
-                zoomfig.set_yticklabels([])
-                zoomfig.set_xlim(0, X[-1])
-
-                if i == 1:
-                    zoomfig.set_xlabel(r"$10^%d\,\,\mathrm{%s}$" % (log_scale, zoom_label))
-                else:
-                    zoomfig.set_xticklabels([])
+                fig.plot(eqtime, eqcov, "r-")
+                fig.plot(neqtime, neqcov, "r-")
 
                 if j == 1:
-                    zoomfig.yaxis.set_label_position("right")
-                    zoomfig.set_ylabel(r"$F_0/E_bA = %.2f$" % F0, labelpad=10)
+                    fig.yaxis.set_label_position("right")
+                    fig.set_ylabel(r"$F_0/E_bA = %g$" % F0, labelpad=10)
                     fig.set_yticklabels([])
+
                 else:
-                    fig.set_ylabel(r"$\rho_\mathrm{WV}$")
+                    fig.set_ylabel(r"$\rho_\mathrm{WV}$", labelpad=16)
 
-                if i == 1:
-                    fig.set_xlabel(r"$t/t_\mathrm{eq}$")
-                else:
-                    fig.set_title(titles[j])
-                    zoomfig.set_title(zoom_titles[j])
-                    fig.set_xticklabels([])
-
-                tmaxes[j].append(t[-1])
-
-                fig.set_ylim(0, ticks[i][-1])
-
-        funcs = [max, min]
-        winners = [f(l) for (f, l) in zip(funcs, tmaxes)]
-        for i in range(2):
-            for j in range(2):
-                figs[i][j].set_xlim(0, winners[j])
+                if i == 0:
+                    fig.set_title(r"$\Omega = %g$" % omega)
+                    # fig.set_xticklabels([])
 
 
 class ExtraN_cluster_yo(DCVizPlotter):
@@ -4365,7 +4378,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         sorted_alphas = sorted(alphas)
 
-        ymax = stds[:, :, 0].max()*100*1.1
+        ymax = float(self.argv.pop(0))
 
         markers = ['s', '^', 'o']
         colors = ['k', 'r', '0.3']
@@ -4389,8 +4402,8 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
             I = np.where(covs[ias, :] != 0)
 
-            stdfig.plot(F0s, stds[ia, :, 0]*100, 'ks', **my_props["fmt"])
-            rhofig.plot(F0s, covs[ia, :], 'ks', **my_props["fmt"])
+            stdfig.plot(F0s, stds[ia, :, 0]*100, 'kd', **my_props["fmt"])
+            rhofig.plot(F0s, covs[ia, :], 'kd', **my_props["fmt"])
 
             for r in res:
                 xp = [r, r]
@@ -4450,7 +4463,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
                           columnspacing=1.0,
                           handletextpad=0.5,
                           borderaxespad=0.0,
-                          frameon=False,
+                          frameon=True,
                           fontsize=20,
                           bbox_to_anchor=(0.15, 0.8))
 
