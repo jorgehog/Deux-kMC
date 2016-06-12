@@ -3852,7 +3852,7 @@ class Extraneighbor_cluster(DCVizPlotter):
               "figure1": "subfigure1",
               "figure2": "subfigure5"}
 
-    plotOnly = ["figure3D"]
+    #plotOnly = ["figure0"]
 
     tight=False
 
@@ -3908,7 +3908,7 @@ class Extraneighbor_cluster(DCVizPlotter):
 
     def plot(self, data):
 
-        A = 900.
+        A = 900
 
         time = self.get_family_member_data(data, "time")
         covs = self.get_family_member_data(data, "covs")

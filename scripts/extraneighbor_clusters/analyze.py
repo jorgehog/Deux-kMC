@@ -335,6 +335,7 @@ def main():
     if not os.path.exists(std_path):
         os.mkdir(std_path)
 
+    all_counts = {}
     last_xyz_txt = ""
     for count, (data, L, W, run_id) in enumerate(parser):
 
@@ -345,6 +346,12 @@ def main():
         F0i = F0s.index(F0)
 
         dir_tag = "a%.3fF0%.3f" % (alpha, F0)
+
+        if dir_tag in all_counts.keys():
+            all_counts[dir_tag] += 1
+            dir_tag += "_%d" % all_counts[dir_tag]
+        else:
+            all_counts[dir_tag] = 0
 
         dir = "%s/cluster_%s" % (path, dir_tag)
         xyz_name = os.path.join(all_xyz_path, "all_xyz%d.xyz" % count)

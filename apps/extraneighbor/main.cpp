@@ -176,7 +176,7 @@ int main(int argv, char** argc)
 
     const uint nZerosBeforeTermination = 10000;
 
-    rng.initialize(time(nullptr));
+    rng.initialize((time(nullptr) % 1000000) + getProc(argv, argc));
 
     const double xi = 1-exp(-1/ld);
     const double gamma0 = alpha*F0;
