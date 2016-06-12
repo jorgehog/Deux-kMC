@@ -222,7 +222,11 @@ def makeXYZ_single(data, xyz_dir, n):
     return name
 
 
-def makeXYZ(heights, dir, every):
+def makeXYZ(heights, dir):
+
+    tot = 100
+    N = len(heights)
+    every = N/tot
 
     xyz_dir = "%s/XYZ/" % dir
 
@@ -404,7 +408,7 @@ def main():
 
             trace = calculate_cluster_trace(centeroids[::(every2/every)], L, W)
 
-            last_xyz = makeXYZ(data["stored_heights"], dir, every2)
+            last_xyz = makeXYZ(data["stored_heights"], dir)
 
             save("%s/extran_cluster_time.npy" % dir, time)
             save("%s/extran_cluster_covs.npy" % dir, covs)

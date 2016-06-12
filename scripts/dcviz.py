@@ -3927,6 +3927,9 @@ class Extraneighbor_cluster(DCVizPlotter):
         if self.argv:
             tmax = int(self.argv[0])
 
+            if tmax > time[-1]:
+                tmax = time[-1]
+
             if len(self.argv) > 1:
                 for x in self.argv[1:]:
                     help_lines.append([float(x), float(x)])
@@ -4207,34 +4210,29 @@ class NonEqNeigz(DCVizPlotter):
 
     isFamilyMember = True
 
-    figMap = {"figure_high" : ["dissfig_high", "growthfig_high"],
-              "figure_low": ["dissfig_low", "growthfig_low"],
-              "zoomfig": ["zoom_diss", "zoom_growth"]}
+    figMap = {"figure_high" : ["dissfig_high", "growthfig_high", "zoom_diss"],
+              "figure_low": ["dissfig_low", "growthfig_low", "zoom_growth"]}
 
     def adjust(self):
         for figure in self.figure_names:
-
             self.adjust_maps[figure]["wspace"] = 0.16
-            self.adjust_maps[figure]["left"] = 0.095
-            self.adjust_maps[figure]["right"] = 0.95
-
-        self.adjust_maps["zoomfig"]["top"] = 0.95
-        self.adjust_maps["zoomfig"]["bottom"] = 0.175
+            self.adjust_maps[figure]["left"] = 0.055
+            self.adjust_maps[figure]["right"] = 0.965
 
         self.adjust_maps["figure_high"]["top"] = 0.95
-        self.adjust_maps["figure_high"]["bottom"] = 0.08
+        self.adjust_maps["figure_high"]["bottom"] = 0.16
 
         self.adjust_maps["figure_low"]["top"] = 0.91
         self.adjust_maps["figure_low"]["bottom"] = 0.08
 
     stack = "H"
 
-    fig_size = [10, 5]
-    specific_fig_size = {
-        "figure_high": [10, 4],
-        "figure_low": [10, 4.2],
-        "zoomfig": [10, 4.5]
-    }
+    fig_size = [15, 5]
+    # specific_fig_size = {
+    #     "figure_high": [10, 4],
+    #     "figure_low": [10, 4.2],
+    #     "zoomfig": [10, 4.5]
+    # }
 
     def plot(self, data):
 
@@ -4257,7 +4255,7 @@ class NonEqNeigz(DCVizPlotter):
         ylims = [0.35, 1.0]
         xlims = [8, 19.75]
 
-        zylims = [0.3, 0.1]
+        zylims = [0.35, 0.1]
 
         xzl = r"$t\,\,[10^%d/\nu]$" % logscale
 
@@ -4291,7 +4289,8 @@ class NonEqNeigz(DCVizPlotter):
                         self.zoom_diss.set_xlim(neqtime[k], xlims[i])
                         self.zoom_diss.set_ylim(0, zylims[i])
                         self.zoom_diss.set_xlabel(xzl)
-                        self.zoom_diss.set_ylabel(r"$\rho_\mathrm{WV}$")
+                        self.zoom_diss.yaxis.set_label_position("right")
+                        self.zoom_diss.set_ylabel(r"$F_0/E_bA = %g$" % F0, labelpad=10)
 
                     #low pressure growth
                     elif i == 0 and j == 1:
@@ -4299,21 +4298,24 @@ class NonEqNeigz(DCVizPlotter):
                         self.zoom_growth.plot(neqtime[:k], neqcov[:k], 'r-')
                         self.zoom_growth.set_xlim(neqtime[0], neqtime[k])
                         self.zoom_growth.set_ylim(0, zylims[i])
-                        self.zoom_growth.set_xlabel(xzl)
+                        self.zoom_growth.yaxis.set_label_position("right")
+                        self.zoom_growth.set_ylabel(r"$F_0/E_bA = %g$" % F0, labelpad=10)
+                        self.zoom_growth.set_yticklabels([])
+                        self.zoom_growth.set_title(r"$\mathrm{Zoom}$")
 
-                fig.plot(eqtime, eqcov, "r-")
+                fig.plot(eqtime, eqcov, "k-")
                 fig.plot(neqtime, neqcov, "r-")
 
                 if j == 1:
-                    fig.yaxis.set_label_position("right")
-                    fig.set_ylabel(r"$F_0/E_bA = %g$" % F0, labelpad=10)
                     fig.set_yticklabels([])
 
                 else:
-                    fig.set_ylabel(r"$\rho_\mathrm{WV}$", labelpad=16)
+                    fig.set_ylabel(r"$\rho_\mathrm{WV}$")
 
                 if i == 0:
                     fig.set_title(r"$\Omega = %g$" % omega)
+                else:
+                    fig.set_xlabel(xzl)
                     # fig.set_xticklabels([])
 
 
