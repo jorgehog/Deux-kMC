@@ -192,6 +192,8 @@ int main(int argv, char** argc)
     const double &omegaEq = getSetting<double>(cfgRoot, "omegaEq");
     const double &height = getSetting<double>(cfgRoot, "height");
 
+    const uint &boundaryDepth = getSetting<uint>(cfgRoot, "boundaryDepth");
+
     const uint &nCycles = getSetting<uint>(cfgRoot, "nCycles");
     const uint &interval = getSetting<uint>(cfgRoot, "interval");
     const uint &output = getSetting<uint>(cfgRoot, "output");
@@ -206,8 +208,6 @@ int main(int argv, char** argc)
 
     SOSSolver solver(L, W, alpha, gamma, true);
 
-    const uint boundaryDepth = 3;
-
     AverageHeightBoundary x0(solver, boundaryDepth, 0, L, W, Boundary::orientations::FIRST, 0);
     AverageHeightBoundary x1(solver, boundaryDepth, 0, L, W, Boundary::orientations::LAST, L-1);
 
@@ -216,7 +216,7 @@ int main(int argv, char** argc)
 
     solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
 
-    const uint depositionBoxHalfSize = 5;
+    const uint depositionBoxHalfSize = 3;
     const double maxDt = 0.01;
 
     RadialFirstPassage diff(solver, maxDt, depositionBoxHalfSize, getMFPTConstant(height, alpha, 0));
