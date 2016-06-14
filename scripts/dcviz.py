@@ -10,9 +10,9 @@ from numpy import exp, floor, ceil
 from scipy.stats import linregress
 from scipy.optimize import curve_fit
 from scipy.special import lambertw
-from matplotlib.ticker import FormatStrFormatter, MultipleLocator, FuncFormatter
+from matplotlib.ticker import FormatStrFormatter, FuncFormatter
 
-from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import Axes3D, proj3d
 
 E0_tex = r"P_\lambda"
 fig_4_x = 0.05
@@ -3856,7 +3856,7 @@ class Extraneighbor_cluster(DCVizPlotter):
 
     tight=False
 
-    def make3Dplot(self, ax, trace):
+    def make3Dplot(self, ax, L, W, tmax, time, trace):
         max_size = 20
         min_size = 5
 
@@ -3872,17 +3872,28 @@ class Extraneighbor_cluster(DCVizPlotter):
         for xi, yi, zi, ri, ci in trace:
             si = min_size + ri*(max_size-min_size)
 
-            ax.scatter(zi, xi, yi, s=si, c=colors[int(ci)%len(colors)], edgecolors='none')
+            ax.scatter(time[zi], xi, yi, s=si, c=colors[int(ci)%len(colors)], edgecolors='none')
 
 
-            if zi % 10 == 0:
+            if zi % 20 == 0:
                 #ax.scatter(len(data), xi, yi, s=sproj, c='k', edgecolors='none')
                 # ax.scatter(zi, x1, yi, **proj_props)
-                ax.scatter(zi, xi, 0, **proj_props)
+                ax.scatter(time[zi], xi, 0, **proj_props)
 
-        ax.set_xbound(0)
-        ax.set_zbound(0)
-        ax.set_zbound(0)
+        #
+        # def orthogonal_proj(zfront, zback):
+        #     a = (zfront+zback)/(zfront-zback)
+        #     b = -2*(zfront*zback)/(zfront-zback)
+        #     return numpy.array([[1,0,0,0],
+        #                         [0,1,0,0],
+        #                         [0,0,a,b],
+        #                         [0,0,0,zback]])
+        #
+        # proj3d.persp_transformation = orthogonal_proj
+
+        ax.set_xlim(0, tmax)
+        ax.set_zlim(0, L)
+        ax.set_zlim(0, W)
 
         ax.set_xticklabels([])
         ax.set_yticklabels([])
@@ -3901,14 +3912,16 @@ class Extraneighbor_cluster(DCVizPlotter):
     def adjust(self):
         self.adjust_maps["figure0"]["left"] = 0.1
         self.adjust_maps["figure0"]["right"] = 0.9
-        self.adjust_maps["figure0"]["top"] = 0.97
+        self.adjust_maps["figure0"]["top"] = 0.93
         self.adjust_maps["figure0"]["bottom"] = 0.12
         self.adjust_maps["figure0"]["hspace"] = 0.05
 
 
     def plot(self, data):
 
-        A = 900
+        L = 30
+        W = 30
+        A = L*W
 
         time = self.get_family_member_data(data, "time")
         covs = self.get_family_member_data(data, "covs")
@@ -3917,6 +3930,9 @@ class Extraneighbor_cluster(DCVizPlotter):
         ngained = self.get_family_member_data(data, "ngained")
         cumnbroken = np.cumsum(nbroken)
         cumngained = np.cumsum(ngained)
+
+        F0 = self.argv.pop(0)
+        self.subfigure0.set_title(r"$F_0 = %s$" % F0)
 
         if "force_zero" in self.argv:
             self.argv.remove("force_zero")
@@ -3972,7 +3988,8 @@ class Extraneighbor_cluster(DCVizPlotter):
         try:
             trace = self.get_family_member_data(data, "trace")
             ax3d = Axes3D(self.figure3D)
-            self.make3Dplot(ax3d, trace)
+            ax3d.view_init(elev=20., azim=-65)
+            self.make3Dplot(ax3d, L, W, tmax, time, trace)
         except:
             pass
 
@@ -4219,20 +4236,20 @@ class NonEqNeigz(DCVizPlotter):
             self.adjust_maps[figure]["left"] = 0.055
             self.adjust_maps[figure]["right"] = 0.965
 
-        self.adjust_maps["figure_high"]["top"] = 0.95
-        self.adjust_maps["figure_high"]["bottom"] = 0.16
+        self.adjust_maps["figure_high"]["top"] = 0.94
+        self.adjust_maps["figure_high"]["bottom"] = 0.25
 
-        self.adjust_maps["figure_low"]["top"] = 0.91
-        self.adjust_maps["figure_low"]["bottom"] = 0.08
+        self.adjust_maps["figure_low"]["top"] = 0.87
+        self.adjust_maps["figure_low"]["bottom"] = 0.12
 
     stack = "H"
 
-    fig_size = [15, 5]
-    # specific_fig_size = {
-    #     "figure_high": [10, 4],
-    #     "figure_low": [10, 4.2],
-    #     "zoomfig": [10, 4.5]
-    # }
+   # fig_size = [15, 3]
+    specific_fig_size = {
+        "figure_high": [15, 3.25],
+        "figure_low": [15, 3],
+        "zoomfig": [10, 4.5]
+    }
 
     def plot(self, data):
 
