@@ -968,8 +968,15 @@ public:
     {
         if (cycle() % m_interval == 0)
         {
-            m_h5group[to_string(cycle())] = m_omc.particlePositions()(span::all,
-                                                                      span(0, m_omc.nOfflatticeParticles() - 1)).eval();
+            if (m_omc.nOfflatticeParticles() == 0)
+            {
+                m_h5group[to_string(cycle())] = mat(3, 0);
+            }
+            else
+            {
+                m_h5group[to_string(cycle())] = m_omc.particlePositions()(span::all,
+                                                                          span(0, m_omc.nOfflatticeParticles() - 1)).eval();
+            }
         }
     }
 };

@@ -106,7 +106,8 @@ public:
             const int type,
             const uint nThermCycles,
             const uint nCyclesPerEquilibrium,
-            const bool toFile) :
+            const bool toFile,
+            const bool constantN) :
         m_L(L),
         m_W(W),
         m_alpha(alpha),
@@ -114,7 +115,8 @@ public:
         m_type(type),
         m_nThermCycles(nThermCycles),
         m_nCyclesPerEquilibrium(nCyclesPerEquilibrium),
-        m_toFile(toFile)
+        m_toFile(toFile),
+        m_constantN(constantN)
     {
 
     }
@@ -196,12 +198,9 @@ public:
 
         ParticleNumberConservator pnc(solver);
 
-        diffusion->setDependency(pnc);
-
         GrowthSpeed speed(solver);
         speed.setOnsetTime(m_nThermCycles);
         AverageHeight avgHeight(solver);
-
 
         Lattice lattice;
 
@@ -212,7 +211,13 @@ public:
 
         lattice.addEvent(solver);
         lattice.addEvent(confiningSurface);
-        lattice.addEvent(pnc);
+
+        if (m_constantN)
+        {
+            diffusion->setDependency(pnc);
+            lattice.addEvent(pnc);
+        }
+
         lattice.addEvent(diffusion);
         lattice.addEvent(avgHeight);
         lattice.addEvent(speed);
@@ -255,6 +260,8 @@ private:
 
     const bool m_toFile;
 
+    const bool m_constantN;
+
 };
 
 int main(int argv, char **argc)
@@ -275,6 +282,8 @@ int main(int argv, char **argc)
     const uint nThermCycles = getSetting<uint>(cfgRoot, "nThermCycles");
     const uint nCyclesPerEquilibrium = getSetting<uint>(cfgRoot, "nCyclesPerEquilibrium");
 
+    const bool constantN = getSetting<uint>(cfgRoot, "constantN") == 1;
+
     const double a0 = getSetting<double>(cfgRoot, "a");
     const double b0 = getSetting<double>(cfgRoot, "b");
 
@@ -290,7 +299,7 @@ int main(int argv, char **argc)
 
     BisectC bc(L, W, alpha, h0, type,
                nThermCycles, nCyclesPerEquilibrium,
-               toFile);
+               toFile, constantN);
 
     double a = a0;
     double b = b0;

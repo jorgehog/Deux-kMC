@@ -17,7 +17,7 @@ rs = RenderSettings(
 rs.renderer.antialiasing = False
 
 def makemovie(path):
-    files = sorted(glob.glob(path + "/*.xyz"), key= lambda x: int(re.findall("surfaces(\d+)\.xyz", x)[0]))[::2]
+    files = sorted(glob.glob(path + "/*.xyz"), key= lambda x: int(re.findall("surfaces(\d+)\.xyz", x)[0]))
     name = path.split("/")[-1] + ".gif"
 
     imgs = []

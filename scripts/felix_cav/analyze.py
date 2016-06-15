@@ -12,6 +12,11 @@ def main():
 
     input_file = sys.argv[1]
 
+    if len(sys.argv) > 2:
+        NXYZ = int(sys.argv[2])
+    else:
+        NXYZ = 1000
+
     parser = ParseKMCHDF5(input_file)
 
 
@@ -30,14 +35,18 @@ def main():
         stored_particles = data["stored_particles"]
 
         n_file = 0
-        every = 100
+        every = max([1, len(stored_heights)/NXYZ])
+
         for hi, heights_id in enumerate(sorted(stored_heights, key=lambda x: int(x))):
 
             if hi % every != 0:
                 continue
 
             heights = stored_heights[heights_id][()].transpose()
-            particles = stored_particles[heights_id][()]
+            try:
+                particles = stored_particles[heights_id][()]
+            except:
+                particles = []
 
             xyz = ""
             n = 0
@@ -63,7 +72,7 @@ def main():
             xyz_file = "%d\n---\n%s" % (n, xyz)
 
             sys.stdout.flush()
-            print "\rStored %s xyz %5d / %5d" % (dir, int(hi), len(stored_heights))
+            print "\rStored %s xyz %5d / %5d" % (dir, hi/every, len(stored_heights)/every)
 
             with open("%s/surfaces%d.xyz" % (dir, n_file), 'w') as f:
                 f.write(xyz_file)
