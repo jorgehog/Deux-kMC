@@ -4496,3 +4496,67 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         self.sfig1.set_title(r"$\#\mathrm{Gained}\,\,(n_+)$")
         self.sfig2.set_title(r"$\#\mathrm{Broken}\,\,(n_-)$")
+
+class FelixParticleH(DCVizPlotter):
+
+    nametag = "felix_cav_phist_(.*)\.npy"
+    isFamilyMember = True
+    hugifyFonts = True
+
+    def plot(self, data):
+
+        omegas = self.get_family_member_data(data, "omegas")
+        X = self.get_family_member_data(data, "X")
+        H = self.get_family_member_data(data, "H")
+
+        omega0 = 0.25
+
+        for i, omega1 in enumerate(omegas):
+            h = H[i]
+
+            omega = (omega1 + 1)/(omega0 + 1) - 1
+
+            self.subfigure.plot(X[:-1], h[:-1], '-s', label=r"$\Omega = %.2f$" % omega)
+
+
+        self.subfigure.legend(loc="lower center",
+                              numpoints=1,
+                              ncol=3,
+                              handlelength=1.0,
+                              borderpad=0.2,
+                              labelspacing=0.2,
+                              columnspacing=1.0,
+                              handletextpad=0.5,
+                              borderaxespad=0.0,
+                              frameon=False,
+                              fontsize=25)
+
+class FelixParticleHDyn(DCVizPlotter):
+
+    nametag = "fcav_evo_(\d+)\.npy"
+    isFamilyMember = True
+    loadSequential = True
+    hugifyFonts = True
+    ziggyMagicNumber = 1
+
+    ymin = None
+    ymax = None
+
+    def plot(self, data):
+        self.subfigure.plot(data[:-1], "k-s")
+        self.subfigure.set_title("step %d" % (self.nextInLine/self.ziggyMagicNumber))
+        self.subfigure.set_xlabel(r"$x$")
+        self.subfigure.set_ylabel(r"$P(x)$")
+
+        _min = min(data[:-1])
+        _max = max(data[:-1])
+        if not self.ymax:
+            self.ymax = _max
+            self.ymin = _min
+
+        if _min < self.ymin:
+            self.ymin = _min
+        if _max > self.ymax:
+            self.ymax = _max
+
+        self.subfigure.set_ylim(self.ymin, self.ymax)

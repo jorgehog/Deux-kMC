@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 from os.path import join
 
 
@@ -19,10 +20,31 @@ def main():
 
     parser = ParseKMCHDF5(input_file)
 
+    nbins = 20
+
+    omegas = []
+    for data, L, W, run_id in parser:
+
+        omega = data.attrs["omega"]
+
+        if omega not in omegas:
+            omegas.append(omega)
+
+    omegas = sorted(omegas)
+
+    X = np.linspace(-0.5, L - 0.5, nbins)
+    dx = X[1]-X[0]
+    H = np.zeros(shape=(len(omegas), nbins))
 
     for data, L, W, run_id in parser:
 
         omega = data.attrs["omega"]
+        alpha = data.attrs["alpha"]
+
+        if alpha != 3:
+            continue
+
+        io = omegas.index(omega)
         conf_height = data.attrs["height"]
 
         pathname = "felix_o%.2f_h%d" % (omega, conf_height)
@@ -37,16 +59,40 @@ def main():
         n_file = 0
         every = max([1, len(stored_heights)/NXYZ])
 
+        time = data["time"]
+        t_prev = 0
+        T = time[-1]
+
         for hi, heights_id in enumerate(sorted(stored_heights, key=lambda x: int(x))):
 
-            if hi % every != 0:
-                continue
+            t_new = time[hi]
+            dt = t_new - t_prev
+            t_prev = t_new
 
-            heights = stored_heights[heights_id][()].transpose()
             try:
                 particles = stored_particles[heights_id][()]
             except:
                 particles = []
+
+            heights = stored_heights[heights_id][()].transpose()
+
+            for x, y, _ in particles:
+                xl = round(x)
+                yl = round(y)
+                dh = conf_height - heights[xl, yl] - 1
+
+                if dh == 0:
+                    print "error..."
+                    continue
+
+                bin = int((x+0.5)/dx)
+                H[io, bin] += dt/dh
+
+            if hi % every != 0:
+                continue
+
+            if hi != 0:
+                np.save("%s/fcav_evo_%d.npy" % (dir, int(hi/every) - 1), H[io]/time[hi])
 
             xyz = ""
             n = 0
@@ -81,8 +127,13 @@ def main():
 
         del stored_heights
 
+        H[io] /= T
 
         print "fin", dir
+
+    np.save("/tmp/felix_cav_phist_omegas.npy", omegas)
+    np.save("/tmp/felix_cav_phist_X.npy", X)
+    np.save("/tmp/felix_cav_phist_H.npy", H)
 
     print "fin"
 
