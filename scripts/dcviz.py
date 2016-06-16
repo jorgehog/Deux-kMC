@@ -4537,14 +4537,14 @@ class FelixParticleHDyn(DCVizPlotter):
     isFamilyMember = True
     loadSequential = True
     hugifyFonts = True
-    ziggyMagicNumber = 1
+    ziggyMagicNumber = 100
 
     ymin = None
     ymax = None
 
     def plot(self, data):
         self.subfigure.plot(data[:-1], "k-s")
-        self.subfigure.set_title("step %d" % (self.nextInLine/self.ziggyMagicNumber))
+        self.subfigure.set_title("step %d" % self.nextInLine)
         self.subfigure.set_xlabel(r"$x$")
         self.subfigure.set_ylabel(r"$P(x)$")
 
