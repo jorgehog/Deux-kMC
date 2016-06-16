@@ -1,3 +1,7 @@
+#ifndef KMC_NO_OMP
+#include <omp.h>
+#endif
+
 #include "firstpassagecontinuum.h"
 
 #include "../../sossolver.h"
@@ -48,18 +52,6 @@ void FirstPassageContinuum::setc(const double c)
 
     calculateLocalRatesAndUpdateDepositionRates();
 }
-
-void FirstPassageContinuum::resetDepositionRates()
-{
-    for (uint x = 0; x < solver().length(); ++x)
-    {
-        for (uint y = 0; y < solver().width(); ++y)
-        {
-            solver().surfaceReaction(x, y).setDepositionRate(0);
-        }
-    }
-}
-
 
 double FirstPassageContinuum::localRateOverD(const double rSquared) const
 {

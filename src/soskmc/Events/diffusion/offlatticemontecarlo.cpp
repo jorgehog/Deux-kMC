@@ -260,15 +260,12 @@ void OfflatticeMonteCarlo::removeRandomParticle()
     removeParticle(n);
 }
 
-void OfflatticeMonteCarlo::diffuse(const double dt)
+void OfflatticeMonteCarlo::diffuse(const double dt, const double prefac)
 {
     if (nOfflatticeParticles() == 0 || dt < 1E-15)
     {
         return;
     }
-
-    //we use DUnscaled because dt is in unscaled units
-    const double prefac = sqrt(2*DUnscaled()*dt);
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
@@ -284,18 +281,16 @@ void OfflatticeMonteCarlo::diffuse(const double dt)
 
         diffuseSingleParticle(n, dt, prefac);
     }
-
-    //    dump(m_dumpCounter);
-    //    m_dumpCounter++;
 }
 
 void OfflatticeMonteCarlo::diffuseFull(const double dtFull)
 {
     const uint N = dtFull/maxdt();
 
+    const double maxPrefac = sqrt(2*DUnscaled()*maxdt());
     for (uint i = 0; i < N; ++i)
     {
-        diffuse(maxdt());
+        diffuse(maxdt(), maxPrefac);
     }
 
     diffuse(dtFull - N*maxdt());
@@ -387,11 +382,7 @@ void OfflatticeMonteCarlo::diffuseSingleParticle(const uint n, const double dt, 
         m_particlePositions(0, n) = x1;
         m_particlePositions(1, n) = y1;
         m_particlePositions(2, n) = z1;
-
-        m_accepted++;
     }
-
-    m_trials++;
 }
 
 void OfflatticeMonteCarlo::removeParticle(const uint n)
@@ -719,10 +710,6 @@ double OfflatticeMonteCarlo::volume() const
 void OfflatticeMonteCarlo::initialize()
 {
     releaseLockedParticles();
-
-    m_accepted = 0;
-    m_trials = 0;
-
     m_dumpCounter = 0;
 }
 

@@ -45,8 +45,6 @@ public:
         return m_depositionBoxHalfSize;
     }
 
-    void resetDepositionRates();
-
     double localRateOverD(const double rSquared) const;
 
     void getTrans(int &xTrans, int &yTrans,

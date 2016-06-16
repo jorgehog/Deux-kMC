@@ -47,7 +47,10 @@ public:
         return m_solver;
     }
 
-    double DUnscaled() const;
+    double DUnscaled() const
+    {
+        return 1.;
+    }
 
     double DScaled() const;
 

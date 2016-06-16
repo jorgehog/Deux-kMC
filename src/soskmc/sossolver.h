@@ -270,6 +270,16 @@ public:
         return *m_surfaceReactions(x, y);
     }
 
+    field<SurfaceReaction*> &surfaceReactions()
+    {
+        return m_surfaceReactions;
+    }
+
+    const field<SurfaceReaction*> &surfaceReactions() const
+    {
+        return m_surfaceReactions;
+    }
+
     void setGamma(const double gamma);
 
     void setConcentration(const double concentration);

@@ -173,12 +173,6 @@ TEST_F(CDiffTest, diffusion)
     m_cdiffusionEvent->diffuseFull(T);
     m_cdiffusionEvent->calculateLocalRatesAndUpdateDepositionRates();
 
-    EXPECT_NEAR(1, m_cdiffusionEvent->acceptanceRatio(), 1E-3);
-
-    const uint N = T/m_cdiffusionEvent->maxdt();
-
-    EXPECT_NEAR(N*solver().area(), m_cdiffusionEvent->trials(), 1E-3);
-
     for (uint x = 0; x < m_L; ++x)
     {
         for (uint y = 0; y < m_W; ++y)

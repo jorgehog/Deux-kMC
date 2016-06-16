@@ -98,11 +98,6 @@ uint Diffusion::numberOfParticles() const
     return 0;
 }
 
-double Diffusion::DUnscaled() const
-{
-    return 1.;
-}
-
 double Diffusion::DScaled() const
 {
     return DUnscaled()*solver().timeUnit();

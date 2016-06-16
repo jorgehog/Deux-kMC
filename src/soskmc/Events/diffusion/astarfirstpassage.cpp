@@ -47,17 +47,12 @@ AStarFirstPassage::~AStarFirstPassage()
 
 void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 {
-    resetDepositionRates();
-
     const int &l = depositionBoxHalfSize();
 
     int xTrans;
     int yTrans;
 
     double r;
-
-    SurfaceReaction *reaction;
-    double localRate;
 
     const int hmax = solver().heights().max();
     const double hUpper = solver().confiningSurfaceEvent().height() - 2;
@@ -72,9 +67,16 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
     writer.setSystemSize(2*l+1, 2*l+1, 2*l+1);
 #endif
 
-    m_localRates.zeros();
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
+        for (uint x = 0; x < solver().length(); ++x)
+        {
+            for (uint y = 0; y < solver().width(); ++y)
+            {
+                m_localRates(x, y, n) = 0;
+            }
+        }
+
         m_nPathFinds = 0;
         m_world->ResetBlocks();
 
@@ -237,11 +239,7 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 #ifdef dumpastar
             writer << 3+i << crumb->x << crumb->y << crumb->z;
 #endif
-
-            reaction = &solver().surfaceReaction(xTrans, yTrans);
-            localRate = localRateOverD(r*r);
-            m_localRates(xTrans, yTrans, n) = localRate;
-            reaction->setDepositionRate(reaction->depositionRate() + localRate*D);
+            m_localRates(xTrans, yTrans, n) = localRateOverD(r*r);
         }
 
 #ifdef dumpastar
@@ -254,6 +252,17 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
         surf.finalize();
 #endif
 
+    }
+
+    for (SurfaceReaction *r : solver().surfaceReactions())
+    {
+        double localrate = 0;
+        for (uint n = 0; n < nOfflatticeParticles(); ++n)
+        {
+            localrate += m_localRates(r->x(), r->y(), n);
+        }
+
+        r->setDepositionRate(localrate*D);
     }
 
 #ifdef dumpastar

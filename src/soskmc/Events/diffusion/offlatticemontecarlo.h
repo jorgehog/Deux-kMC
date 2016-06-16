@@ -15,7 +15,13 @@ public:
 
     virtual ~OfflatticeMonteCarlo();
 
-    void diffuse(const double dt);
+    void diffuse(const double dt, const double prefac);
+    void diffuse(const double dt)
+    {
+        //we use DUnscaled because dt is in unscaled units
+        const double prefac = sqrt(2*DUnscaled()*dt);
+        return diffuse(dt, prefac);
+    }
 
     void diffuseFull(const double dtFull);
 
@@ -41,21 +47,6 @@ public:
     const double &maxdt() const
     {
         return m_maxdt;
-    }
-
-    double acceptanceRatio() const
-    {
-        return m_accepted/m_trials;
-    }
-
-    const long double &trials() const
-    {
-        return m_trials;
-    }
-
-    const long double &accepted() const
-    {
-        return m_accepted;
     }
 
     const double &particlePositions(const uint i, const uint j) const

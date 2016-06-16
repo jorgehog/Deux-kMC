@@ -32,25 +32,28 @@ void RadialFirstPassage::execute()
 
 void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 {
-    resetDepositionRates();
-
     const int &l = depositionBoxHalfSize();
 
     int xTrans;
     int yTrans;
 
-    SurfaceReaction *r;
     double r2;
-    double localRate;
 
     const int hmax = solver().heights().max();
     const double hUpper = solver().confiningSurfaceEvent().height() - 2;
 
     const double D = DScaled();
 
-    m_localRates.zeros();
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
+        for (uint x = 0; x < solver().length(); ++x)
+        {
+            for (uint y = 0; y < solver().width(); ++y)
+            {
+                m_localRates(x, y, n) = 0;
+            }
+        }
+
         const double &zp = particlePositions(2, n);
 
         if (zp > hmax + l + 1)
@@ -93,13 +96,20 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                     r2 = dz2 + (xscan + dx)*(xscan + dx) + (yscan + dy)*(yscan+dy);
 
                     BADAssClose(r2, solver().closestSquareDistance(xTrans, yTrans, h+1, xp, yp, zp), 1E-3);
-
-                    r = &solver().surfaceReaction(xTrans, yTrans);
-                    localRate = c()/(r2*r2);
-                    m_localRates(xTrans, yTrans, n) = localRate;
-                    r->setDepositionRate(r->depositionRate() + localRate*D);
+                    m_localRates(xTrans, yTrans, n) = c()/(r2*r2);
                 }
             }
         }
+    }
+
+    for (SurfaceReaction *r : solver().surfaceReactions())
+    {
+        double localrate = 0;
+        for (uint n = 0; n < nOfflatticeParticles(); ++n)
+        {
+            localrate += m_localRates(r->x(), r->y(), n);
+        }
+
+        r->setDepositionRate(localrate*D);
     }
 }
