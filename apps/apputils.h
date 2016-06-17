@@ -666,12 +666,6 @@ void initializeSurface(SOSSolver &solver, const string type,
 
 inline double getMFPTConstant(const double h0, const double alpha, const int type)
 {
-    //here there is only 1 particle, so it's not really working well.
-    if (alpha == 3)
-    {
-        return 0.1;
-    }
-
     using maptype = std::map<pair<uint, uint>, double>;
 
     const maptype valueMapRadial = {{{ 0,  0}, 0.048},
@@ -836,13 +830,9 @@ inline double getMFPTConstant(const double h0, const double alpha, const int typ
     {
         ia = knownAlpha(0);
     }
-
     else
     {
-        while (alpha > knownAlphas(ia))
-        {
-            ia++;
-        }
+        return 0.1;
     }
 
     uint ih = 0;
@@ -850,55 +840,12 @@ inline double getMFPTConstant(const double h0, const double alpha, const int typ
     if (hKnown)
     {
         ih = knownHeight(0);
-    }
-
-    else
-    {
-        while (h0 != knownHeights(ih))
-        {
-            ih++;
-
-            if (ih == knownHeights.size())
-            {
-                ih--;
-                break;
-            }
-        }
-    }
-
-
-    if (alphaKnown)
-    {
         return valueMap->at({ih, ia});
     }
-
-    double c0, c1;
-    double da;
-    double daa;
-
-    if (valueMap->find({ih, ia}) == valueMap->end())
-    {
-        throw std::runtime_error("combination not found.");
-    }
-
-    if (ia != 0)
-    {
-        c0 = valueMap->at({ih, ia-1});
-        c1 = valueMap->at({ih, ia});
-
-        da = alpha - knownAlphas(ia-1);
-        daa = knownAlphas(ia) - knownAlphas(ia-1);
-    }
     else
     {
-        c0 = valueMap->at({ih, ia});
-        c1 = valueMap->at({ih, ia+1});
-
-        da = alpha - knownAlphas(ia);
-        daa = knownAlphas(ia+1) - knownAlphas(ia);
+        return 0.1;
     }
-
-    return c0 + (c1-c0)*da/daa;
 
 }
 
