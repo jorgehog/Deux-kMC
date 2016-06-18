@@ -20,6 +20,14 @@ def main():
 
     parser = ParseKMCHDF5(input_file)
 
+    if "cavity" in input_file:
+        masterdir = "/tmp/cavity"
+    else:
+        masterdir = "/tmp/front"
+
+    if not os.path.exists(masterdir):
+        os.mkdir(masterdir)
+
     nbins = 20
 
     omegas = []
@@ -33,8 +41,11 @@ def main():
     omegas = sorted(omegas)
 
     X = np.linspace(-0.5, L - 0.5, nbins)
+    Y = np.linspace(-0.5, W - 0.5, nbins)
     dx = X[1]-X[0]
-    H = np.zeros(shape=(len(omegas), nbins))
+    dy = Y[1]-Y[0]
+    Hx = np.zeros(shape=(len(omegas), nbins))
+    Hy = np.zeros_like(Hx)
 
     for data, L, W, run_id in parser:
 
@@ -49,9 +60,16 @@ def main():
 
         pathname = "felix_o%.2f_h%d" % (omega, conf_height)
 
-        dir = "/tmp/%s" % pathname
+        dir = join(masterdir, pathname)
+        xdir = join(dir, "x")
+        ydir = join(dir, "y")
+
         if not os.path.exists(dir):
             os.mkdir(dir)
+        if not os.path.exists(xdir):
+            os.mkdir(xdir)
+        if not os.path.exists(ydir):
+            os.mkdir(ydir)
 
         stored_heights = data["stored_heights"]
         stored_particles = data["stored_particles"]
@@ -69,9 +87,9 @@ def main():
             dt = t_new - t_prev
             t_prev = t_new
 
-            try:
+            if heights_id in stored_particles:
                 particles = stored_particles[heights_id][()]
-            except:
+            else:
                 particles = []
 
             heights = stored_heights[heights_id][()].transpose()
@@ -85,14 +103,15 @@ def main():
                     print "error..."
                     continue
 
-                bin = int((x+0.5)/dx)
-                H[io, bin] += dt/dh
+                Hx[io, int((x+0.5)/dx)] += dt/dh
+                Hy[io, int((y+0.5)/dy)] += dt/dh
 
             if hi % every != 0:
                 continue
 
             if hi != 0:
-                np.save("%s/fcav_evo_%d.npy" % (dir, int(hi/every) - 1), H[io]/time[hi])
+                np.save("%s/fcav_evo_%d.npy" % (xdir, int(hi/every) - 1), Hx[io]/time[hi])
+                np.save("%s/fcav_evo_%d.npy" % (ydir, int(hi/every) - 1), Hy[io]/time[hi])
 
             xyz = ""
             n = 0
@@ -127,13 +146,14 @@ def main():
 
         del stored_heights
 
-        H[io] /= T
+        Hx[io] /= T
+        Hy[io] /= T
 
         print "fin", dir
 
-    np.save("/tmp/felix_cav_phist_omegas.npy", omegas)
-    np.save("/tmp/felix_cav_phist_X.npy", X)
-    np.save("/tmp/felix_cav_phist_H.npy", H)
+    # np.save("/tmp/felix_cav_phist_omegas.npy", omegas)
+    # np.save("/tmp/felix_cav_phist_X.npy", X)
+    # np.save("/tmp/felix_cav_phist_H.npy", H)
 
     print "fin"
 

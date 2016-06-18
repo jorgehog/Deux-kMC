@@ -115,7 +115,7 @@ int main(int argv, char **argc)
     //
 
     simRoot["alpha"] = alpha;
-    simRoot["h0"] = h0;
+    simRoot["height"] = h0;
 
     simRoot["omega"] = omega;
     simRoot["omegaEq"] = omegaEq;

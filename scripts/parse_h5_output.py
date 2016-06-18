@@ -30,6 +30,10 @@ class ParseKMCHDF5:
                 self.filenames.append(file)
 
         else:
+
+            if not os.path.isfile(which_file):
+                raise RuntimeError("%s is not a file." % which_file)
+
             self.files = [which_file]
 
         self.only_n = None

@@ -18,7 +18,7 @@ def main():
     for data, L, W, run_id in parser:
 
         omega = data.attrs["omega"]
-        conf_height = data.attrs["height"]
+        conf_height = data.attrs["h0"]
 
         pathname = "felix_o%.2f_h%d" % (omega, conf_height)
 
