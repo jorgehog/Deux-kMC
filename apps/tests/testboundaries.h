@@ -163,9 +163,9 @@ TEST_F(SOSkMCTest, boundaries_refl)
 {
     rng.initialize(time(nullptr));
 
-    const uint L = 10;
-    const uint W = 10;
-    const double alpha = 1.0;
+    const uint L = 30;
+    const uint W = 30;
+    const double alpha = 3.0;
     const double gamma = 0;
     const double height = 10.3;
 
@@ -189,9 +189,9 @@ TEST_F(SOSkMCTest, boundaries_periodic)
 {
     rng.initialize(time(nullptr));
 
-    const uint L = 10;
-    const uint W = 10;
-    const double alpha = 1.0;
+    const uint L = 30;
+    const uint W = 30;
+    const double alpha = 3.0;
     const double gamma = 0;
     const double height = 10.3;
 
