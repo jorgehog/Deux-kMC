@@ -40,12 +40,9 @@ def main():
 
     omegas = sorted(omegas)
 
-    X = np.linspace(-0.5, L - 0.5, nbins)
-    Y = np.linspace(-0.5, W - 0.5, nbins)
-    dx = X[1]-X[0]
-    dy = Y[1]-Y[0]
-    Hx = np.zeros(shape=(len(omegas), nbins))
-    Hy = np.zeros_like(Hx)
+    hmat = np.zeros(shape=(len(omegas), nbins, nbins))
+    dx = L/nbins
+    dy = W/nbins
 
     for data, L, W, run_id in parser:
 
@@ -56,20 +53,20 @@ def main():
             continue
 
         io = omegas.index(omega)
-        conf_height = data.attrs["height"]
+        try:
+            conf_height = data.attrs["height"]
+        except:
+            conf_height = data.attrs["h0"]
 
         pathname = "felix_o%.2f_h%d" % (omega, conf_height)
 
         dir = join(masterdir, pathname)
-        xdir = join(dir, "x")
-        ydir = join(dir, "y")
+        hdir = join(dir, "x")
 
         if not os.path.exists(dir):
             os.mkdir(dir)
-        if not os.path.exists(xdir):
-            os.mkdir(xdir)
-        if not os.path.exists(ydir):
-            os.mkdir(ydir)
+        if not os.path.exists(hdir):
+            os.mkdir(hdir)
 
         stored_heights = data["stored_heights"]
         stored_particles = data["stored_particles"]
@@ -99,19 +96,13 @@ def main():
                 yl = round(y)
                 dh = conf_height - heights[xl, yl] - 1
 
-                if dh == 0:
-                    print "error..."
-                    continue
-
-                Hx[io, int((x+0.5)/dx)] += dt/dh
-                Hy[io, int((y+0.5)/dy)] += dt/dh
+                hmat[io, int((x+0.5)/dx), int((y+0.5)/dy)] += dt/dh
 
             if hi % every != 0:
                 continue
 
             if hi != 0:
-                np.save("%s/fcav_evo_%d.npy" % (xdir, int(hi/every) - 1), Hx[io]/time[hi])
-                np.save("%s/fcav_evo_%d.npy" % (ydir, int(hi/every) - 1), Hy[io]/time[hi])
+                np.save("%s/fcav_evo_%d.npy" % (hdir, int(hi/every) - 1), hmat[io]/time[hi])
 
             xyz = ""
             n = 0
@@ -146,8 +137,7 @@ def main():
 
         del stored_heights
 
-        Hx[io] /= T
-        Hy[io] /= T
+        hmat[io] /= T
 
         print "fin", dir
 

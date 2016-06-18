@@ -103,146 +103,181 @@ TEST_F(SOSkMCTest, boundaries_blocked)
     EXPECT_EQ(m_solver->nNeighbors(1, 2), 4);
 }
 
+
+void testDiffYo(RadialFirstPassage *diff)
+{
+    const uint np = 1000;
+    for (uint p = 0; p < np; ++p)
+    {
+        diff->insertRandomParticle();
+    }
+
+    uint nH = 20;
+    mat hist(nH, nH, fill::zeros);
+    const double delta = const_cast<const RadialFirstPassage*>(diff)->solver().length()/double(nH);
+
+    const uint N = 1000000;
+
+//    double x, y, z;
+    for (uint n = 0; n < N; ++n)
+    {
+        diff->diffuse(0.01);
+
+        for (uint p = 0; p < np; ++p)
+        {
+//            diff->findRandomPosition(x, y, z);
+            const double &x = diff->particlePositions(0, p);
+            const double &y = diff->particlePositions(1, p);
+
+            const uint nx = uint((x+0.5)/delta);
+            const uint ny = uint((y+0.5)/delta);
+
+            hist(nx, ny)++;
+        }
+
+        if (n % 100 == 0)
+        {
+            cout.flush();
+            cout << "\r" << n/double(N-1);
+        }
+    }
+
+    hist /= N;
+    hist /= hist.max();
+
+    cout << endl;
+    cout << hist << endl;
+
+    for (uint i = 0; i < nH; ++i)
+    {
+        for (uint j = 0; j < nH; ++j)
+        {
+            const double hval = hist(i, j);
+
+            EXPECT_NEAR(1, hval, 0.05);
+        }
+    }
+}
+
+TEST_F(SOSkMCTest, boundaries_refl)
+{
+    rng.initialize(time(nullptr));
+
+    const uint L = 10;
+    const uint W = 10;
+    const double alpha = 1.0;
+    const double gamma = 0;
+    const double height = 10.3;
+
+    m_solver = new SOSSolver(L, W, alpha, gamma, true);
+    setBoundariesFromIDs(m_solver, {6, 6, 6, 6}, L, W);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    RadialFirstPassage *diff = new RadialFirstPassage(*m_solver, 0.01, 3, 0.1);
+    m_diffusionEvent = diff;
+
+    initializeSurface(*m_solver, "flat");
+
+    SetUp_yo();
+    primeSolver();
+    diff->clearDiffusingParticles();
+
+    testDiffYo(diff);
+}
+
+
+TEST_F(SOSkMCTest, boundaries_periodic)
+{
+    rng.initialize(time(nullptr));
+
+    const uint L = 10;
+    const uint W = 10;
+    const double alpha = 1.0;
+    const double gamma = 0;
+    const double height = 10.3;
+
+    m_solver = new SOSSolver(L, W, alpha, gamma, true);
+    setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, L, W);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    RadialFirstPassage *diff = new RadialFirstPassage(*m_solver, 0.01, 3, 0.1);
+    m_diffusionEvent = diff;
+
+    initializeSurface(*m_solver, "flat");
+
+    SetUp_yo();
+    primeSolver();
+    diff->clearDiffusingParticles();
+
+    testDiffYo(diff);
+}
+
+
 //--gtest_filter=SOSkMCTest.boundaries_concentration
 TEST_F(SOSkMCTest, boundaries_concentration)
 {
-    cout << "conc boundary test deprecated" << endl;
-    return;
+    const uint L = 10;
+    const uint W = 10;
+    const double alpha = 1.0;
+    const double gamma = 0;
+    const double height = 10.3;
+    const int iheight = (int)height;
 
-//    const uint L = 10;
-//    const uint W = 3;
-//    const double alpha = 1.0;
-//    const double mu = 0;
-//    const double height = 10.23123;
-//    const int iheight = (int)height;
+    m_solver = new SOSSolver(L, W, alpha, gamma, true);
+    setBoundariesFromIDs(m_solver, {0, 0, 2, 2}, L, W);
+    m_pressureWallEvent = new FixedSurface(*m_solver, height);
+    RadialFirstPassage *diff = new RadialFirstPassage(*m_solver, 0.01, 3, 0.1);
+    m_diffusionEvent = diff;
 
-//    m_solver = new SOSSolver(L, W, alpha, mu);
-//    setBoundariesFromIDs(m_solver, {0, 0, 1, 2}, L, W);
-//    m_pressureWallEvent = new FixedSurface(*m_solver, height);
-//    LatticeDiffusion *diffusionEvent = new LatticeDiffusion(*m_solver);
-//    m_diffusionEvent = diffusionEvent;
-//    SetUp_yo();
+    initializeSurface(*m_solver, "flat");
 
-//    primeSolver();
+    SetUp_yo();
+    primeSolver();
 
-//    for (uint x = 0; x < L; ++x)
-//    {
-//        for (uint y = 0; y < W; ++y)
-//        {
-//            m_solver->setHeight(x, y, 0);
-//            diffusionEvent->clearDiffusionReactions();
-//        }
-//    }
+    ConcentrationBoundaryReaction r(0, 0, *m_solver, 0);
 
-//    ConcentrationBoundaryReaction r(0, 0, *m_solver, 0);
+    EXPECT_EQ(W*(iheight-1), r.nBoundarySites());
 
-//    double origArea = W*(height-1);
-//    EXPECT_EQ(origArea, r.freeBoundaryArea());
+    uint xi;
+    int h;
+    for (uint n = 0; n < r.nBoundarySites(); ++n)
+    {
+        r.getBoundaryPosition(xi, h, n, iheight);
 
-//    uint yloc = 1;
-//    int zloc = 5;
-//    SOSDiffusionReaction *dr = diffusionEvent->addDiffusionReactant(0, yloc, zloc);
+        EXPECT_EQ(n/(iheight - 1), xi);
+    }
 
-//    EXPECT_EQ(origArea-1, r.freeBoundaryArea());
+    ConcentrationBoundaryReaction r2(0, 1, *m_solver, 0);
 
-//    uint n = 0;
-//    int shift = 0;
-//    uint yFree;
-//    int zFree;
-//    for (uint y = 0; y < W; ++y)
-//    {
-//        for (int z = m_solver->height(0, y) + 1; z < iheight; ++z)
-//        {
-//            if (y == yloc && z == zloc)
-//            {
-//                shift = 1;
-//            }
+    EXPECT_EQ(W*(iheight-1), r2.nBoundarySites());
 
-//            r.getFreeBoundarSite(n, yFree, zFree);
+    for (uint n = 0; n < r2.nBoundarySites(); ++n)
+    {
+        r2.getBoundaryPosition(xi, h, n, iheight);
 
-//            if (shift == 0)
-//            {
-//                EXPECT_EQ(y, yFree);
-//                EXPECT_EQ(z, zFree);
-//            }
+        EXPECT_EQ(n/(iheight - 1), xi);
+    }
 
-//            else
-//            {
+    ConcentrationBoundaryReaction r3(1, 0, *m_solver, 0);
 
-//                if (z == iheight - 1)
-//                {
-//                    EXPECT_EQ(y+1, yFree);
-//                    EXPECT_EQ(m_solver->height(0, y+1) + 1, zFree);
-//                }
+    EXPECT_EQ(L*(iheight-1), r3.nBoundarySites());
 
-//                else
-//                {
-//                    EXPECT_EQ(y, yFree);
-//                    EXPECT_EQ(z+1, zFree);
-//                }
-//            }
+    for (uint n = 0; n < r3.nBoundarySites(); ++n)
+    {
+        r3.getBoundaryPosition(xi, h, n, iheight);
 
+        EXPECT_EQ(n/(iheight - 1), xi);
+    }
 
-//            n++;
+    ConcentrationBoundaryReaction r4(1, 1, *m_solver, 0);
 
-//            if (n == r.freeBoundarySites())
-//            {
-//                break;
-//            }
+    EXPECT_EQ(L*(iheight-1), r4.nBoundarySites());
 
-//            if (HasFailure())
-//            {
-//                return;
-//            }
-//        }
-//    }
+    for (uint n = 0; n < r4.nBoundarySites(); ++n)
+    {
+        r4.getBoundaryPosition(xi, h, n, iheight);
 
+        EXPECT_EQ(n/(iheight - 1), xi);
+    }
 
-//    for (uint x = 0; x < L; ++x)
-//    {
-//        for (uint y = 0; y < W; ++y)
-//        {
-//            for (int z = m_solver->height(x, y)+1; z < iheight - 1; ++z)
-//            {
-//                if (x == 0)
-//                {
-//                    EXPECT_TRUE(r.pointIsOnBoundary(x, y));
-//                }
-
-//                else
-//                {
-//                    EXPECT_FALSE(r.pointIsOnBoundary(x, y));
-//                }
-//            }
-//        }
-//    }
-
-//    r.calculateRate();
-//    double rate = r.rate();
-//    for (uint y = 0; y < W; ++y)
-//    {
-//        for (int z = m_solver->height(0, y)+2; z < iheight-1; ++z)
-//        {
-//            diffusionEvent->executeDiffusionReaction(dr, 0, y, z);
-//        }
-
-//        EXPECT_NEAR(rate, r.rateExpression(), 1E-3);
-//    }
-
-//    diffusionEvent->clearDiffusionReactions();
-
-//    n = 0;
-//    uint max = W*(iheight-1);
-//    for (uint y = 0; y < W; ++y)
-//    {
-//        for (int z = m_solver->height(0, y)+2; z < iheight; ++z)
-//        {
-//            diffusionEvent->addDiffusionReactant(0, y, z);
-//            n++;
-//        }
-
-//        EXPECT_EQ(max-n, r.freeBoundarySites());
-//    }
 
 }
 

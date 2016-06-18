@@ -17,7 +17,7 @@ int main(int argv, char **argc)
     Config cfg;
     cfg.readFile(cfgName.c_str());
 
-    const Setting & cfgRoot = cfg.getRoot();
+    const Setting &cfgRoot = cfg.getRoot();
 
     const string path = getSetting<string>(cfgRoot, "path") + "/";
 
@@ -60,7 +60,7 @@ int main(int argv, char **argc)
 
     RadialFirstPassage diff(solver, maxdt, halfSize, getMFPTConstant(h0, alpha, 0));
 
-    ConstantConfinement confinement(solver, h0);
+    FixedSurface confinement(solver, h0);
 
     solver.addConcentrationBoundary(1, Boundary::orientations::FIRST, omega);
     solver.addConcentrationBoundary(1, Boundary::orientations::LAST, omegaEq);

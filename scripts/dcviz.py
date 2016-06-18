@@ -4539,24 +4539,48 @@ class FelixParticleHDyn(DCVizPlotter):
     hugifyFonts = True
     ziggyMagicNumber = 100
 
-    ymin = None
-    ymax = None
+    ymins = [None, None]
+    ymaxs = [None, None]
+
+    figMap = {
+        "f1": "xfig",
+        "f2": "yfig",
+        "f3": "xyfig",
+    }
+
+    def setlims(self, fig, data, idx):
+        ymin = min(data)
+        ymax = max(data)
+
+        if not self.ymaxs[idx]:
+            self.ymaxs[idx] = ymax
+            self.ymins[idx] = ymin
+        else:
+            if ymin < self.ymins[idx]:
+                self.ymins[idx] = ymin
+            if ymax > self.ymaxs[idx]:
+                self.ymaxs[idx] = ymax
+
+        fig.set_ylim(self.ymins[idx], self.ymaxs[idx])
 
     def plot(self, data):
-        self.subfigure.plot(data[:-1], "k-s")
-        self.subfigure.set_title("step %d" % self.nextInLine)
-        self.subfigure.set_xlabel(r"$x$")
-        self.subfigure.set_ylabel(r"$P(x)$")
 
-        _min = min(data[:-1])
-        _max = max(data[:-1])
-        if not self.ymax:
-            self.ymax = _max
-            self.ymin = _min
+        xdata = data.mean(axis=0)
+        ydata = data.mean(axis=1)
 
-        if _min < self.ymin:
-            self.ymin = _min
-        if _max > self.ymax:
-            self.ymax = _max
+        self.xfig.plot(xdata, "k-s")
+        self.xfig.set_title("step %d" % self.getNumberForSort(self.filename))
+        self.xfig.set_xlabel(r"$x$")
+        self.xfig.set_ylabel(r"$P(x)$")
 
-        self.subfigure.set_ylim(self.ymin, self.ymax)
+        self.yfig.plot(ydata, "k-s")
+        self.yfig.set_title("step %d" % self.getNumberForSort(self.filename))
+        self.yfig.set_xlabel(r"$y$")
+        self.yfig.set_ylabel(r"$P(y)$")
+
+        self.xyfig.pcolor(data)
+        self.xyfig.set_xlabel(r"$x$")
+        self.xyfig.set_ylabel(r"$y$")
+
+        self.setlims(self.xfig, xdata, 0)
+        self.setlims(self.yfig, ydata, 1)

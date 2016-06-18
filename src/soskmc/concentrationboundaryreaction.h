@@ -24,13 +24,11 @@ public:
     uint nBoundarySites() const;
     uint nBoundarySites(const int hlInt) const;
 
-//    double freeBoundaryArea() const;
-//    double topSpacing() const;
-//    double topSpacing(const double hl, const int hlInt) const;
-
     int heightAtBoundary(const uint n) const; //!height at boundary site n
 
     bool pointIsOnBoundary(const int x, const int y) const;
+
+    void getBoundaryPosition(uint &xi, int &h, const uint whichSite, const int hlInt) const;
 
     const uint &dim() const
     {

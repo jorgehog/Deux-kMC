@@ -49,9 +49,9 @@ public:
         return m_maxdt;
     }
 
-    const double &particlePositions(const uint i, const uint j) const
+    const double &particlePositions(const uint dim, const uint n) const
     {
-        return m_particlePositions(i, j);
+        return m_particlePositions(dim, n);
     }
 
     const mat &particlePositions() const
@@ -62,11 +62,6 @@ public:
     const uint &nOfflatticeParticles() const
     {
         return m_nParticles;
-    }
-
-    void setParticlePosition(const uint i, const uint j, const double value)
-    {
-        m_particlePositions(i, j) = value;
     }
 
     const double &localRates(const uint x, const uint y, const uint n) const

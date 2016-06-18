@@ -26,14 +26,6 @@ ConcentrationBoundaryReaction::~ConcentrationBoundaryReaction()
 
 }
 
-//double ConcentrationBoundaryReaction::freeBoundaryArea() const
-//{
-//    const double &hl = solver().confiningSurfaceEvent().height();
-//    const int hlInt = int(floor(hl));
-
-//    return topSpacing(hl, hlInt) + nBoundarySites(hlInt);
-//}
-
 uint ConcentrationBoundaryReaction::nBoundarySites() const
 {
     const double &hl = solver().confiningSurfaceEvent().height();
@@ -82,6 +74,27 @@ bool ConcentrationBoundaryReaction::pointIsOnBoundary(const int x, const int y) 
     else
     {
         return y == (int)location();
+    }
+}
+
+void ConcentrationBoundaryReaction::getBoundaryPosition(uint &xi,
+                                                        int &h,
+                                                        const uint whichSite,
+                                                        const int hlInt) const
+{
+    uint scan = 0;
+    for (uint _xi = 0; _xi < span(); ++_xi)
+    {
+        for (h = heightAtBoundary(_xi) + 1; h < hlInt; ++h)
+        {
+            if (scan == whichSite)
+            {
+                xi = _xi;
+                return;
+            }
+
+            scan += 1;
+        }
     }
 }
 
@@ -138,62 +151,11 @@ void ConcentrationBoundaryReaction::executeAndUpdate()
 
     const uint whichSite = rng.uniform()*nSites;
 
-    uint scan = 0;
-    for (uint xi = 0; xi < span(); ++xi)
-    {
-        for (int h = heightAtBoundary(xi) + 1; h < hlInt; ++h)
-        {
-            if (scan == whichSite)
-            {
-                insertParticle(xi, h);
-                return;
-            }
+    uint xi;
+    int h;
+    getBoundaryPosition(xi, h, whichSite, hlInt);
 
-            scan += 1;
-        }
-    }
-
-//    const double dhl = topSpacing(hl, hlInt);
-
-//    double dhSum = 0;
-//    const double &hl = solver().confiningSurfaceEvent().height();
-//    for (uint xi = 0; xi < span(); ++xi)
-//    {
-//        const int h = heightAtBoundary(xi);
-
-//        double dh = hl - h - 2;
-
-//        if (dh < 0)
-//        {
-//            dh = 0;
-//        }
-
-//        m_boundaryHeights(xi) = dh;
-
-//        dhSum += dh;
-//        m_accuBoundaryHeights(xi) = dhSum;
-//    }
-
-//    BADAss(dhSum, >=, 0);
-
-//    const double R = rng.uniform()*dhSum;
-
-//    const uint x0 = binarySearchAndScan(m_accuBoundaryHeights.memptr(),
-//                                        span(),
-//                                        R);
-
-//    const int h0 = heightAtBoundary(x0);
-
-//    const double z0 = h0 + 1 + m_accuBoundaryHeights(x0) - R;
-
-//    if (dim() == 0)
-//    {
-//        solver().diffusionEvent().executeConcentrationBoundaryReaction(location(), x0, z0);
-//    }
-//    else
-//    {
-//        solver().diffusionEvent().executeConcentrationBoundaryReaction(x0, location(), z0);
-//    }
+    insertParticle(xi, h);
 }
 
 double ConcentrationBoundaryReaction::rateExpression()
@@ -237,8 +199,5 @@ void ConcentrationBoundaryReaction::notifyObserver(const Subjects &subject)
         {
             calculateRate();
         }
-//        const double heightChange = solver().confiningSurfaceEvent().height() -
-//                solver().confiningSurfaceEvent().currentConfinementChange().prevHeight;
-//        changeRate(rate() + _rateExpression(heightChange*span()));
     }
 }
