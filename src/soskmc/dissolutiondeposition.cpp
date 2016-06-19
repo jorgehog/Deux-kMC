@@ -40,13 +40,7 @@ double SurfaceReaction::calculateEscapeRate() const
         }
     }
 
-    //we always have the neighbor interaction
-    double E = nNeighbors();
-
-    for (const LocalPotential *localPotential : solver().localPotentials())
-    {
-        E += localPotential->potential(x(), y());
-    }
+    double E = solver().totalSurfaceEnergy(x(), y());
 
     double gammaTerm;
     double shift;

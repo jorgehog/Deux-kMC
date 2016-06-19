@@ -4533,12 +4533,13 @@ class FelixParticleH(DCVizPlotter):
 
 class FelixParticleHDyn(DCVizPlotter):
 
-    nametag = "fcav_evo_(\d+)\.arma"
+    nametag = "fcav_evo_(\d+)\.npy"
+    # transpose = True
+
     isFamilyMember = True
-    loadLatest= True
+    loadSequential = True
     hugifyFonts = True
     ziggyMagicNumber = 1
-    transpose = True
 
     ymins = [None, None]
     ymaxs = [None, None]

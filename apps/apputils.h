@@ -329,7 +329,7 @@ Boundary *getBoundaryFromID(SOSSolver *solver,
     case 5:
         return new AverageHeightBoundary(*solver, averageHeightDepth, dim, span, yspan, orientation, location);
     case 6:
-        return new ReflConstantHybrid(*solver, boundaryHeight, orientation, dim);
+        return new ReflectingSurfaceOpenSolution(location, orientation);
     default:
         cerr << "invalid boundary: " << ID << endl;
         return nullptr;

@@ -4,7 +4,7 @@
 #include "Events/confiningsurface/confiningsurface.h"
 #include "Events/diffusion/constantconcentration.h"
 #include "../kmcsolver/boundary/boundary.h"
-
+#include "localpotential.h"
 
 SOSSolver::SOSSolver(const uint length,
                      const uint width,
@@ -1179,6 +1179,19 @@ void SOSSolver::setZeroConcentration()
 void SOSSolver::freezeSurfaceParticle(const uint x, const uint y)
 {
     m_surfaceReactions(x, y)->freeze();
+}
+
+double SOSSolver::totalSurfaceEnergy(const uint x, const uint y) const
+{
+    //we always have the neighbor interaction
+    double E = nNeighbors(x, y);
+
+    for (const LocalPotential *localPotential : m_localPotentials)
+    {
+        E += localPotential->potential(x, y);
+    }
+
+    return E;
 }
 
 void SOSSolver::execute()

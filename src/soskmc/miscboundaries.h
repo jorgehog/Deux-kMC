@@ -1,13 +1,64 @@
 #pragma once
 
-#include "sosboundary.h"
-#include "averageheightboundary.h"
+#include "../kmcsolver/boundary/reflecting.h"
+#include "observers.h"
+#include "subjects.h"
+#include "localpotential.h"
+
+#include <BADAss/badass.h>
+
+#include <armadillo>
+using arma::vec;
 
 
-class AverageHeightLineBoundary : public SOSBoundary, public Observer<Subjects>
+namespace kMC
+{
+
+class BoundaryTrackingDevice : public Observer<Subjects>
 {
 public:
-    AverageHeightLineBoundary(SOSSolver &solver, const Boundary::orientations orientation, const uint dim, const uint depth);
+    BoundaryTrackingDevice(SOSSolver &solver,
+                           const uint location,
+                           const uint dim,
+                           const uint depth,
+                           const bool affectOnChange);
+
+    virtual double averageHeight(const uint boundarySite) const = 0;
+
+    double averageHeight(const uint x, const uint y) const
+    {
+        if (dim() == 0)
+        {
+            return averageHeight(y);
+        }
+
+        else
+        {
+            return averageHeight(x);
+        }
+    }
+
+    bool pointIsInsideArea(const int x, const int y) const;
+
+    bool pointIsAtBoundary(const uint x, const uint y) const
+    {
+        if (dim() == 0)
+        {
+            return x == location();
+        }
+
+        else
+        {
+            return y == location();
+        }
+    }
+
+    void onAverageChange();
+
+    const uint &area() const
+    {
+        return m_area;
+    }
 
     const uint &dim() const
     {
@@ -19,216 +70,191 @@ public:
         return m_location;
     }
 
-private:
+    const SOSSolver &solver() const
+    {
+        return m_solver;
+    }
 
+    const uint &x0() const
+    {
+        return m_x0;
+    }
+
+    const uint &x1() const
+    {
+        return m_x1;
+    }
+
+    const uint &depth() const
+    {
+        return m_depth;
+    }
+
+protected:
+    SOSSolver &solver()
+    {
+        return m_solver;
+    }
+
+private:
+    SOSSolver &m_solver;
+    const uint m_location;
     const uint m_dim;
     const uint m_depth;
-
-    uint m_location;
-
+    const uint m_area;
     uint m_x0;
     uint m_x1;
 
-    // Boundary interface
+    const bool m_affectOnChange;
+};
+
+class TrackLineAverage : public BoundaryTrackingDevice
+{
 public:
-    int transformLatticeCoordinate(const int xi, const int xj, const int xk) const;
-    bool isBlockedLattice(const int xi, const int xj, const int xk) const;
-    void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const;
+    TrackLineAverage(SOSSolver &solver,
+                     const uint location,
+                     const uint dim,
+                     const uint depth,
+                     const bool affectOnChange = false);
+
+    double bruteForceAverage(const uint boundarySite) const;
+
+private:
+    vec m_averages;
 
     // Observer interface
 public:
     void initializeObserver(const Subjects &subject);
+
     void notifyObserver(const Subjects &subject);
-};
 
-class AverageHeightLineBoundaryOpen : public AverageHeightLineBoundary
-{
+    // TrackingDevice interface
 public:
-    using AverageHeightLineBoundary::AverageHeightLineBoundary;
-
-    // Boundary interface
-    double transformContinousCoordinate(const double xi, const double xj, const double xk) const
+    double averageHeight(const uint boundarySite) const
     {
-        (void) xj;
-        (void) xk;
-        return xi;
-    }
-
-
-    bool isBlockedContinous(const double xi, const double xj, const double xk) const
-    {
-        (void) xi;
-        (void) xj;
-        (void) xk;
-
-        return false;
+        BADAssClose(m_averages(boundarySite), bruteForceAverage(boundarySite), 1E-10);
+        return m_averages(boundarySite);
     }
 };
 
-class AverageHeightLineBoundaryRefl : public AverageHeightLineBoundary
+class TrackAreaAverage : public BoundaryTrackingDevice
 {
 public:
-    using AverageHeightLineBoundary::AverageHeightLineBoundary;
-
-    // Boundary interface
-    double transformContinousCoordinate(const double xi, const double xj, const double xk) const
+    TrackAreaAverage(SOSSolver &solver,
+                     const uint location,
+                     const uint dim,
+                     const uint depth,
+                     const bool affectOnChange = false) :
+        BoundaryTrackingDevice(solver, location, dim, depth, affectOnChange)
     {
-        (void) xj;
-        (void) xk;
 
-        if (location() == 0)
+    }
+
+    double getBruteForceAverage() const;
+
+private:
+    double m_average;
+
+    // Observer interface
+public:
+    void initializeObserver(const Subjects &subject)
+    {
+        (void) subject;
+
+        m_average = getBruteForceAverage();
+
+        onAverageChange();
+
+    }
+    void notifyObserver(const Subjects &subject);
+
+    // TrackingDevice interface
+public:
+    double averageHeight(const uint boundarySite) const
+    {
+        (void) boundarySite;
+
+        BADAssClose(m_average, getBruteForceAverage(), 1E-10);
+        return m_average;
+    }
+};
+
+
+//!This class removes a neighbor bond across a blocked boundary.
+class NoBoundaryNeighbors : public LocalPotential
+{
+public:
+    NoBoundaryNeighbors(SOSSolver &solver,
+                        const int surfaceLevel,
+                        const uint location,
+                        const uint dim) :
+        LocalPotential(solver),
+        m_surfaceLevel(surfaceLevel),
+        m_location(location),
+        m_dim(dim)
+    {
+
+    }
+
+    bool pointIsOnBoundary(const uint x, const uint y) const
+    {
+        if (m_dim == 0)
         {
-            if (xi < -0.5)
-            {
-                return -(xi + 1);
-            }
+            return x == m_location;
         }
 
         else
         {
-            if (xi > location() - 0.5)
-            {
-                return 2*location() - (xi + 1);
-            }
+            return y == m_location;
         }
-
-        return xi;
-    }
-
-    bool isBlockedContinous(const double xi, const double xj, const double xk) const
-    {
-        (void) xi;
-        (void) xj;
-        (void) xk;
-
-        return false;
-    }
-};
-
-
-class ReflConstantHybrid : public SOSBoundary
-{
-public:
-
-    ReflConstantHybrid(SOSSolver &solver, const int h, const Boundary::orientations orientation, const uint dim);
-
-    const uint &location() const
-    {
-        return m_location;
     }
 
 private:
-    const int m_h;
-    uint m_location;
 
-    // Boundary interface
+    const int m_surfaceLevel;
+    const uint m_location;
+    const uint m_dim;
+
+    // LocalPotential interface
 public:
-    double transformContinousCoordinate(const double xi, const double xj, const double xk) const
-    {
-        (void) xj;
-        (void) xk;
-
-        if (location() == 0)
-        {
-            if (xi < -0.5)
-            {
-                return -(xi + 1);
-            }
-        }
-
-        else
-        {
-            if (xi > location() - 0.5)
-            {
-                return 2*location() - (xi + 1);
-            }
-        }
-
-        return xi;
-    }
-
-    int transformLatticeCoordinate(const int xi, const int xj, const int xk) const
-    {
-        (void) xj;
-        (void) xk;
-
-        return xi;
-    }
-
-    bool isBlockedContinous(const double xi, const double xj, const double xk) const
-    {
-        (void) xi;
-        (void) xj;
-        (void) xk;
-
-        return false;
-    }
-
-    bool isBlockedLattice(const int xi, const int xj, const int xk) const
-    {
-        (void) xj;
-
-
-        return (xi >= (int)location()) && (xk <= m_h);
-    }
-
-    void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const
-    {
-        noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
-    }
+    double potential(const uint x, const uint y) const;
 };
 
 
-class ReflAvgHybrid : public AverageHeightBoundary
+//!See comments in potential function for explanation.
+class PartialBoundaryNeighbors : public LocalPotential
 {
 public:
-
-    ReflAvgHybrid(SOSSolver &solver, const uint averageHeightDepth) :
-        AverageHeightBoundary(solver, averageHeightDepth, 0,
-                              solver.length(), solver.width(),
-                              Boundary::orientations::LAST, solver.length() - 1)
+    PartialBoundaryNeighbors(SOSSolver &solver, const BoundaryTrackingDevice &tracker) :
+        LocalPotential(solver),
+        m_tracker(tracker)
     {
 
     }
+
+private:
+    const BoundaryTrackingDevice &m_tracker;
+
+    // LocalPotential interface
+public:
+    double potential(const uint x, const uint y) const;
+};
+
+class ReflectingSurfaceOpenSolution : public Reflecting
+{
+    using Reflecting::Reflecting;
 
     // Boundary interface
 public:
-    double transformContinousCoordinate(const double xi, const double xj, const double xk) const
+    double transformContinousCoordinate(const double xi) const
     {
-        (void) xj;
-        (void) xk;
-
-        if (xi >= solver().length() - 0.5)
-        {
-
-            return 2*solver().length() - xi - 1;
-        }
-
-        else
-        {
-            return xi;
-        }
+        return xi;
     }
-
-    bool isBlockedContinous(const double xi, const double xj, const double xk) const
+    bool isBlockedContinous(const double xi) const
     {
         (void) xi;
-        (void) xj;
-        (void) xk;
-
         return false;
     }
-
-    bool isBlockedLattice(const int xi, const int xj, const int xk) const
-    {
-        (void) xj;
-        (void) xk;
-
-        return xi >= (int)solver().length();
-    }
-
-    void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const
-    {
-        noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
-    }
 };
+
+}

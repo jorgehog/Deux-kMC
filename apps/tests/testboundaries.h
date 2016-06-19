@@ -14,7 +14,7 @@
 //--gtest_filter=SOSkMCTest.boundaries
 TEST_F(SOSkMCTest, boundaries_blocked)
 {
-//    rng.initialize(1230303);
+    //    rng.initialize(1230303);
 
     const uint L = 3;
     const uint W = 3;
@@ -106,6 +106,10 @@ TEST_F(SOSkMCTest, boundaries_blocked)
 
 void testDiffYo(RadialFirstPassage *diff)
 {
+#ifndef NDEBUG
+    return;
+#endif
+
     const uint np = 1000;
     for (uint p = 0; p < np; ++p)
     {
@@ -118,14 +122,14 @@ void testDiffYo(RadialFirstPassage *diff)
 
     const uint N = 1000000;
 
-//    double x, y, z;
+    //    double x, y, z;
     for (uint n = 0; n < N; ++n)
     {
         diff->diffuse(0.01);
 
         for (uint p = 0; p < np; ++p)
         {
-//            diff->findRandomPosition(x, y, z);
+            //            diff->findRandomPosition(x, y, z);
             const double &x = diff->particlePositions(0, p);
             const double &y = diff->particlePositions(1, p);
 

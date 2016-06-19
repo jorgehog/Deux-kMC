@@ -95,7 +95,8 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
                 {
                     r2 = dz2 + (xscan + dx)*(xscan + dx) + (yscan + dy)*(yscan+dy);
 
-                    BADAssClose(r2, solver().closestSquareDistance(xTrans, yTrans, h+1, xp, yp, zp), 1E-3);
+                    //for boundaries such as reflective we cannot use shortest image.
+                    //BADAssClose(r2, solver().closestSquareDistance(xTrans, yTrans, h+1, xp, yp, zp), 1E-3);
                     m_localRates(xTrans, yTrans, n) = c()/(r2*r2);
                 }
             }

@@ -75,6 +75,24 @@ public:
         return m_width;
     }
 
+    const uint &extent(const uint dim) const
+    {
+        if (dim == 0)
+        {
+            return length();
+        }
+
+        else
+        {
+            return width();
+        }
+    }
+
+    const uint &orthExtent(const uint dim) const
+    {
+        return extent((dim + 1) % 2);
+    }
+
     uint minimumDimension() const
     {
         return length() < width() ? length() : width();
@@ -345,6 +363,8 @@ public:
     {
         return m_concentrationBoundaryDeposition;
     }
+
+    double totalSurfaceEnergy(const uint x, const uint y) const;
 
 private:
 

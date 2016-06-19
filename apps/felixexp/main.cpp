@@ -7,10 +7,11 @@
 #include <HDF5Wrapper/include/hdf5wrapper.h>
 #include <libconfig_utils/libconfig_utils.h>
 
+
 int main(int argv, char **argc)
 {
-    rng.initialize(time(nullptr));
-    //    rng.initialize(139444);
+//    rng.initialize(time(nullptr));
+    rng.initialize(139444);
 
     string cfgName = getCfgName(argv, argc, "felixexp");
 
@@ -42,21 +43,27 @@ int main(int argv, char **argc)
 
     SOSSolver solver(L, W, alpha, 0, true);
 
-    //    ReflConstantHybrid topBoundary(solver, 0, Boundary::orientations::LAST, 1);
-    ConstantHeight topBoundary(0, W-1, Boundary::orientations::LAST);
-    ReflConstantHybrid rightBoundary(solver, 0, Boundary::orientations::LAST, 0);
+    ReflectingSurfaceOpenSolution topBoundary(W-1, Boundary::orientations::LAST);
+    Reflecting rightBoundary(L-1, Boundary::orientations::LAST);
 
-    AverageHeightLineBoundaryRefl leftBoundary(solver, Boundary::orientations::FIRST, 0, boundaryDepth);
-    AverageHeightLineBoundaryOpen bottomBoundary(solver, Boundary::orientations::FIRST, 1, boundaryDepth);
+    Reflecting leftBoundary(0, Boundary::orientations::FIRST);
+    ReflectingSurfaceOpenSolution bottomBoundary(0, Boundary::orientations::FIRST);
 
     solver.setBoundaries({{&leftBoundary, &rightBoundary}, {&bottomBoundary, &topBoundary}});
 
+    TrackLineAverage rightLineTracker(solver, 0, 0, boundaryDepth, true);
+    TrackLineAverage bottomLineTracker(solver, 0, 1, boundaryDepth, true);
 
-    //    ConcentrationProfile concProfile(solver, [&W, &cBath] (const uint x, const uint y)
-    //    {
-    //        (void) x;
-    //        return cBath - (cBath - 1)*y/(W-1);
-    //    });
+    solver.registerObserver(&rightLineTracker);
+    solver.registerObserver(&bottomLineTracker);
+
+    PartialBoundaryNeighbors rightPartialNeighbors(solver, rightLineTracker);
+    PartialBoundaryNeighbors bottomPartialNeighbors(solver, bottomLineTracker);
+    NoBoundaryNeighbors leftNoNeighbors(solver, 0, L-1, 0);
+
+    solver.addLocalPotential(&rightPartialNeighbors);
+    solver.addLocalPotential(&bottomPartialNeighbors);
+    solver.addLocalPotential(&leftNoNeighbors);
 
     RadialFirstPassage diff(solver, maxdt, halfSize, getMFPTConstant(h0, alpha, 0));
 

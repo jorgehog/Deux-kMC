@@ -11,13 +11,6 @@ public:
     Reflecting(const int location, const Boundary::orientations orientation);
     ~Reflecting();
 
-    template<typename T>
-    const T transformFunction(const T &xi) const;
-
-    template<typename T>
-    bool blockedFunction(const T& xi) const;
-
-
 private:
     const int m_location;
 
@@ -29,36 +22,5 @@ public:
     bool isBlockedLattice(const int xi) const;
     void closestImage(const double xi, const double xti, double &dxi) const;
 };
-
-template<typename T>
-const T Reflecting::transformFunction(const T &xi) const
-{
-    bool isBelow = (xi < T(m_location)) && (orientation() == orientations::FIRST);
-    bool isAbove = (xi > T(m_location)) && (orientation() == orientations::LAST);
-
-    if (isBelow)
-    {
-        return 2*m_location - xi - 1;
-    }
-
-    else if (isAbove)
-    {
-        return 2*m_location - xi + 1;
-    }
-
-    else
-    {
-        return xi;
-    }
-}
-
-template<typename T>
-bool Reflecting::blockedFunction(const T &xi) const
-{
-    (void) xi;
-
-    return false;
-}
-
 }
 

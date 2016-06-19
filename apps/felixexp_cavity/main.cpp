@@ -6,64 +6,6 @@
 
 using ignis::Lattice;
 
-class NoAdatomBonds : public LocalPotential, public Observer<Subjects>
-{
-public:
-    NoAdatomBonds(SOSSolver &solver,
-                  AverageHeightBoundary &ahb) :
-        LocalPotential(solver),
-        Observer(),
-        m_ahb(ahb)
-    {
-
-    }
-
-private:
-    AverageHeightBoundary &m_ahb;
-    int m_hCurrent;
-
-
-
-
-    // Observer interface
-public:
-    void initializeObserver(const Subjects &subject)
-    {
-        (void) subject;
-
-        m_hCurrent = round(m_ahb.average());
-    }
-
-    void notifyObserver(const Subjects &subject)
-    {
-        (void) subject;
-
-        const int hNew = round(m_ahb.average());
-
-        if (hNew != m_hCurrent)
-        {
-            m_hCurrent = hNew;
-            m_ahb.affectSurfaceSites();
-        }
-    }
-
-    // LocalPotential interface
-public:
-    double potential(const uint x, const uint y) const
-    {
-        const bool atBoundary = x == solver().length() - 1;
-
-        if (atBoundary && (solver().height(x, y) > m_hCurrent))
-        {
-            return -1;
-        }
-
-        else
-        {
-            return 0;
-        }
-    }
-};
 
 class PartialNeighbors : public LocalPotential, public Observer<Subjects>
 {
@@ -91,8 +33,6 @@ public:
 
     double potential(const uint x, const uint y) const
     {
-        (void) y;
-
         bool atBoundary;
 
         if (m_ahb.dim() == 0)

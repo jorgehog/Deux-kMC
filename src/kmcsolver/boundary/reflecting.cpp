@@ -16,22 +16,56 @@ Reflecting::~Reflecting()
 
 double Reflecting::transformContinousCoordinate(const double xi) const
 {
-    return transformFunction(xi);
+    if (m_location == 0)
+    {
+        if (xi < -0.5)
+        {
+            return -(xi + 1);
+        }
+    }
+
+    else
+    {
+        if (xi > m_location + 0.5)
+        {
+            return 2*m_location - (xi - 1);
+        }
+    }
+
+    return xi;
 }
 
 int Reflecting::transformLatticeCoordinate(const int xi) const
 {
-    return transformFunction(xi);
+    if (m_location == 0)
+    {
+        if (xi < 0)
+        {
+            return -(xi + 1);
+        }
+    }
+
+    else
+    {
+        if (xi > m_location)
+        {
+            return 2*m_location - (xi - 1);
+        }
+    }
+
+    return xi;
 }
 
 bool Reflecting::isBlockedContinous(const double xi) const
 {
-    return blockedFunction(xi);
+    (void) xi;
+    return false;
 }
 
 bool Reflecting::isBlockedLattice(const int xi) const
 {
-    return blockedFunction(xi);
+    (void) xi;
+    return false;
 }
 
 
