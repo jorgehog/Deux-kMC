@@ -2,116 +2,7 @@
 
 #include "../apputils.h"
 
-#include "../extraneighbor/extraneighbor.h"
-
 using ignis::Lattice;
-
-
-class PartialNeighbors : public LocalPotential, public Observer<Subjects>
-{
-public:
-    PartialNeighbors(SOSSolver &solver,
-                     AverageHeightBoundary &ahb) :
-        LocalPotential(solver),
-        m_ahb(ahb)
-    {
-
-    }
-
-    virtual ~PartialNeighbors() {}
-
-private:
-
-    AverageHeightBoundary &m_ahb;
-
-    double m_prevAverage;
-
-    // LocalPotential interface
-public:
-
-    static constexpr double Eb = 1.0;
-
-    double potential(const uint x, const uint y) const
-    {
-        bool atBoundary;
-
-        if (m_ahb.dim() == 0)
-        {
-            atBoundary = x == m_ahb.location();
-        }
-
-        else
-        {
-            atBoundary = y == m_ahb.location();
-        }
-
-        if (atBoundary)
-        {
-            const int hBoundary = round(m_ahb.average());
-            const double &hAvg = m_ahb.average();
-
-            if (hAvg < hBoundary)
-            {
-                return 0;
-            }
-
-            else
-            {
-                const double probFilled = (hAvg - hBoundary);
-                const double corr = probFilled*Eb;
-
-                //This means that there is a contribution Eb already
-                if (probFilled >= 0.5)
-                {
-                    return corr - Eb;
-                }
-
-                else
-                {
-                    return corr;
-                }
-            }
-        }
-
-        return 0;
-    }
-
-    // Observer interface
-public:
-    void initializeObserver(const Subjects &subject)
-    {
-        (void) subject;
-
-        m_prevAverage = m_ahb.average();
-    }
-    void notifyObserver(const Subjects &subject)
-    {
-        (void) subject;
-
-        if (m_ahb.average() != m_prevAverage)
-        {
-            m_ahb.affectSurfaceSites();
-            m_prevAverage = m_ahb.average();
-        }
-    }
-};
-
-class VS : public SOSEvent
-{
-public:
-    VS(const SOSSolver &solver) :
-        SOSEvent(solver, "VS", "", true)
-    {
-
-    }
-
-    // Event interface
-public:
-    void execute()
-    {
-        setValue(solver().volume() - solver().diffusionEvent().numberOfParticles());
-    }
-};
 
 int main(int argv, char** argc)
 {
@@ -129,7 +20,6 @@ int main(int argv, char** argc)
 
     const double &alpha = getSetting<double>(cfgRoot, "alpha");
     const double &omega = getSetting<double>(cfgRoot, "omega");
-    const double &omegaEq = getSetting<double>(cfgRoot, "omegaEq");
     const double &height = getSetting<double>(cfgRoot, "height");
 
     const uint &boundaryDepth = getSetting<uint>(cfgRoot, "boundaryDepth");
@@ -140,21 +30,28 @@ int main(int argv, char** argc)
 
     rng.initialize(time(nullptr));
     const string initType = "flat";
-//    const string initType = "random";
-
-    //        rng.initialize(100101010);
 
     const double gamma = log(1 + omega);
 
     SOSSolver solver(L, W, alpha, gamma, true);
 
-    AverageHeightBoundary x0(solver, boundaryDepth, 0, L, W, Boundary::orientations::FIRST, 0);
-    AverageHeightBoundary x1(solver, boundaryDepth, 0, L, W, Boundary::orientations::LAST, L-1);
+    ReflectingSurfaceOpenSolution x0(0, Boundary::orientations::FIRST);
+    Reflecting x1(L-1, Boundary::orientations::LAST);
 
     Periodic y0(W, Boundary::orientations::FIRST);
     Periodic y1(W, Boundary::orientations::LAST);
 
     solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
+
+    TrackAreaAverage inletAreaTracker(solver, 0, 0, boundaryDepth, true);
+
+    solver.registerObserver(&inletAreaTracker);
+
+    PartialBoundaryNeighbors inletPartialNeighbors(solver, inletAreaTracker);
+    NoBoundaryNeighbors cavityNoNeighbors(solver, 0, L-1, 0);
+
+    solver.addLocalPotential(&inletPartialNeighbors);
+    solver.addLocalPotential(&cavityNoNeighbors);
 
     const uint depositionBoxHalfSize = 3;
     const double maxDt = 0.01;
@@ -163,21 +60,8 @@ int main(int argv, char** argc)
     FixedSurface confSurface(solver, height);
 
     solver.addConcentrationBoundary(0, Boundary::orientations::FIRST, omega);
-    solver.addConcentrationBoundary(0, Boundary::orientations::LAST, omegaEq);
-
-    PartialNeighbors pnLeft(solver, x0);
-    solver.addLocalPotential(&pnLeft);
-    solver.registerObserver(&pnLeft);
-
-    PartialNeighbors pnRight(solver, x1);
-    solver.addLocalPotential(&pnRight);
-    solver.registerObserver(&pnRight);
-
-    ExtraNeighbor en(solver);
-    solver.addLocalPotential(&en);
 
     Time time(solver);
-    VS vs(solver);
 
     DumpSystem dumper(solver, interval, path, getTail(argv, argc));
 
@@ -201,7 +85,6 @@ int main(int argv, char** argc)
     lattice.addEvent(confSurface);
     lattice.addEvent(diff);
     lattice.addEvent(time);
-    lattice.addEvent(vs);
 
     if (output)
     {

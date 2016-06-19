@@ -179,7 +179,7 @@ TEST_F(CDiffTest, diffusion)
         {
             for (uint n = 0; n < m_cdiffusionEvent->nOfflatticeParticles(); ++n)
             {
-                EXPECT_NEAR(m_cdiffusionEvent->localRateOverD(x, y, n),
+                EXPECT_NEAR(m_cdiffusionEvent->_localRateOverD(x, y, n),
                             m_cdiffusionEvent->localRates(x, y, n), 1E-3);
 
                 if (HasFailure())

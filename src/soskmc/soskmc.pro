@@ -27,7 +27,6 @@ SOURCES += \
     Events/diffusion/multiscale.cpp \
     Events/diffusion/firstpassagecontinuum.cpp \
     Events/diffusion/concentrationprofile.cpp \
-    averageheightboundary.cpp \
     Events/sosevent.cpp \
     Events/diffusion/confinedconstantconcentration.cpp \
     Events/confiningsurface/constantconfinement.cpp \
@@ -71,7 +70,6 @@ HEADERS += \
     Events/diffusion/firstpassagecontinuum.h \
     Events/diffusion/concentrationprofile.h \
     sosboundary.h \
-    averageheightboundary.h \
     Events/diffusion/confinedconstantconcentration.h \
     Events/confiningsurface/constantconfinement.h \
     observers.h \

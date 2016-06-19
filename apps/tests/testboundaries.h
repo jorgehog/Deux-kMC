@@ -49,19 +49,19 @@ TEST_F(SOSkMCTest, boundaries_blocked)
 
     for (uint x0ID = 0; x0ID < isBlocked.size(); ++x0ID)
     {
-        x0 = getBoundaryFromID(m_solver, x0ID, 0, L, W, Boundary::orientations::FIRST);
+        x0 = getBoundaryFromID(x0ID, L, Boundary::orientations::FIRST);
 
         for (uint x1ID = 0; x1ID < isBlocked.size(); ++x1ID)
         {
-            x1 = getBoundaryFromID(m_solver, x1ID, 0, L, W, Boundary::orientations::LAST);
+            x1 = getBoundaryFromID(x1ID, L, Boundary::orientations::LAST);
 
             for (uint y0ID = 0; y0ID < isBlocked.size(); ++y0ID)
             {
-                y0 = getBoundaryFromID(m_solver, y0ID, 1, W, L, Boundary::orientations::FIRST);
+                y0 = getBoundaryFromID(y0ID, W, Boundary::orientations::FIRST);
 
                 for (uint y1ID = 0; y1ID < isBlocked.size(); ++y1ID)
                 {
-                    y1 = getBoundaryFromID(m_solver, y1ID, 1, W, L, Boundary::orientations::LAST);
+                    y1 = getBoundaryFromID(y1ID, W, Boundary::orientations::LAST);
 
                     EXPECT_EQ(x0->isBlockedLattice(-1, 0, 0), isBlocked.at(x0ID));
                     EXPECT_EQ(x1->isBlockedLattice(L, 0, 0), isBlocked.at(x1ID));
@@ -174,7 +174,7 @@ TEST_F(SOSkMCTest, boundaries_refl)
     const double height = 10.3;
 
     m_solver = new SOSSolver(L, W, alpha, gamma, true);
-    setBoundariesFromIDs(m_solver, {6, 6, 6, 6}, L, W);
+    setBoundariesFromIDs(m_solver, {3, 3, 3, 3}, L, W);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     RadialFirstPassage *diff = new RadialFirstPassage(*m_solver, 0.01, 3, 0.1);
     m_diffusionEvent = diff;

@@ -14,7 +14,7 @@ RadialFirstPassage::RadialFirstPassage(SOSSolver &solver,
 
 }
 
-double RadialFirstPassage::localRateOverD(const uint x, const uint y, const uint n) const
+double RadialFirstPassage::_localRateOverD(const uint x, const uint y, const uint n) const
 {
     const int z = solver().height(x, y) + 1;
 
@@ -46,13 +46,7 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
-        for (uint x = 0; x < solver().length(); ++x)
-        {
-            for (uint y = 0; y < solver().width(); ++y)
-            {
-                m_localRates(x, y, n) = 0;
-            }
-        }
+        resetLocalRates(n);
 
         const double &zp = particlePositions(2, n);
 
@@ -97,7 +91,7 @@ void RadialFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 
                     //for boundaries such as reflective we cannot use shortest image.
                     //BADAssClose(r2, solver().closestSquareDistance(xTrans, yTrans, h+1, xp, yp, zp), 1E-3);
-                    m_localRates(xTrans, yTrans, n) = c()/(r2*r2);
+                    m_localRates(xTrans, yTrans, n) += localRateOverD(r2);
                 }
             }
         }

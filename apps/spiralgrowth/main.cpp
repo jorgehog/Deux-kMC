@@ -127,7 +127,7 @@ int main(int argv, char** argc)
                                                                    leftBoundaryID,
                                                                    bottomBoundaryID,
                                                                    topBoundaryID},
-                                                         L, W, boundaryHeight, averageHeightDepth);
+                                                         L, W, boundaryHeight);
 
     RDLPotential rdlPotential(solver, sigma0, lD);
 

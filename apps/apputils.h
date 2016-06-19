@@ -300,14 +300,10 @@ private:
 
 };
 
-Boundary *getBoundaryFromID(SOSSolver *solver,
-                            const uint ID,
-                            const uint dim,
+Boundary *getBoundaryFromID(const uint ID,
                             const uint span,
-                            const uint yspan,
                             Boundary::orientations orientation,
-                            const int boundaryHeight = 0,
-                            const uint averageHeightDepth = 0)
+                            const int boundaryHeight = 0)
 {
     uint location = orientation == Boundary::orientations::FIRST ? 0 : (span - 1);
 
@@ -327,8 +323,6 @@ Boundary *getBoundaryFromID(SOSSolver *solver,
     case 4:
         return new ConstantHeight(boundaryHeight, location, orientation);
     case 5:
-        return new AverageHeightBoundary(*solver, averageHeightDepth, dim, span, yspan, orientation, location);
-    case 6:
         return new ReflectingSurfaceOpenSolution(location, orientation);
     default:
         cerr << "invalid boundary: " << ID << endl;
@@ -341,14 +335,14 @@ Boundary *getBoundaryFromID(SOSSolver *solver,
 vector<vector<Boundary *> >
 setBoundariesFromIDs(SOSSolver *solver,
                      const vector<uint> IDs,
-                     const uint L, const uint W,
-                     const int boundaryHeight = 0,
-                     const uint averageHeightDepth = 0)
+                     const uint L,
+                     const uint W,
+                     const int boundaryHeight = 0)
 {
-    Boundary* leftBoundary = getBoundaryFromID(solver, IDs.at(0), 0, L, W, Boundary::orientations::FIRST, boundaryHeight, averageHeightDepth);
-    Boundary* rightBoundary = getBoundaryFromID(solver, IDs.at(1), 0, L, W, Boundary::orientations::LAST, boundaryHeight, averageHeightDepth);
-    Boundary* bottomBoundary = getBoundaryFromID(solver, IDs.at(2), 1, W, L, Boundary::orientations::FIRST, boundaryHeight, averageHeightDepth);
-    Boundary* topBoundary = getBoundaryFromID(solver, IDs.at(3), 1, W, L, Boundary::orientations::LAST, boundaryHeight, averageHeightDepth);
+    Boundary* leftBoundary = getBoundaryFromID(IDs.at(0), L, Boundary::orientations::FIRST, boundaryHeight);
+    Boundary* rightBoundary = getBoundaryFromID(IDs.at(1), L, Boundary::orientations::LAST, boundaryHeight);
+    Boundary* bottomBoundary = getBoundaryFromID(IDs.at(2), W, Boundary::orientations::FIRST, boundaryHeight);
+    Boundary* topBoundary = getBoundaryFromID(IDs.at(3), W, Boundary::orientations::LAST, boundaryHeight);
 
     vector<vector<Boundary *> > boundaries = {{leftBoundary, rightBoundary},
                                               {bottomBoundary, topBoundary}};

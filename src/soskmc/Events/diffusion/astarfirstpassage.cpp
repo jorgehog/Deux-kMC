@@ -69,13 +69,7 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 
     for (uint n = 0; n < nOfflatticeParticles(); ++n)
     {
-        for (uint x = 0; x < solver().length(); ++x)
-        {
-            for (uint y = 0; y < solver().width(); ++y)
-            {
-                m_localRates(x, y, n) = 0;
-            }
-        }
+        resetLocalRates(n);
 
         m_nPathFinds = 0;
         m_world->ResetBlocks();
@@ -239,7 +233,7 @@ void AStarFirstPassage::calculateLocalRatesAndUpdateDepositionRates()
 #ifdef dumpastar
             writer << 3+i << crumb->x << crumb->y << crumb->z;
 #endif
-            m_localRates(xTrans, yTrans, n) = localRateOverD(r*r);
+            m_localRates(xTrans, yTrans, n) += localRateOverD(r*r);
         }
 
 #ifdef dumpastar

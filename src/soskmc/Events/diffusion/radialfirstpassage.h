@@ -10,8 +10,8 @@ public:
                        const int depositionBoxHalfSize,
                        const double c);
 
-    //not used
-    double localRateOverD(const uint x, const uint y, const uint n) const;
+    //used for testing
+    double _localRateOverD(const uint x, const uint y, const uint n) const;
 
     // Event interface
 public:
