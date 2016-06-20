@@ -44,14 +44,16 @@ int main(int argv, char** argc)
     solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
 
     TrackAreaAverage inletAreaTracker(solver, 0, 0, boundaryDepth, true);
+    TrackAreaAverage cavityAreaTracker(solver, L-1, 0, boundaryDepth, true);
 
     solver.registerObserver(&inletAreaTracker);
+    solver.registerObserver(&cavityAreaTracker);
 
     PartialBoundaryNeighbors inletPartialNeighbors(solver, inletAreaTracker);
-    NoBoundaryNeighbors cavityNoNeighbors(solver, 0, L-1, 0);
+    PartialBoundaryNeighbors cavityPartialNeighbors(solver, cavityAreaTracker);
 
     solver.addLocalPotential(&inletPartialNeighbors);
-    solver.addLocalPotential(&cavityNoNeighbors);
+    solver.addLocalPotential(&cavityPartialNeighbors);
 
     const uint depositionBoxHalfSize = 3;
     const double maxDt = 0.01;
