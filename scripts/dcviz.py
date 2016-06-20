@@ -4533,7 +4533,7 @@ class FelixParticleH(DCVizPlotter):
 
 class FelixParticleHDyn(DCVizPlotter):
 
-    nametag = "fcav_evo_(\d+)\.npy"
+    nametag = "fcav_evo_(\d+)\.*"
     # transpose = True
 
     isFamilyMember = True

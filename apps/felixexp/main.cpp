@@ -60,10 +60,13 @@ int main(int argv, char **argc)
     PartialBoundaryNeighbors rightPartialNeighbors(solver, rightLineTracker);
     PartialBoundaryNeighbors bottomPartialNeighbors(solver, bottomLineTracker);
     NoBoundaryNeighbors leftNoNeighbors(solver, 0, L-1, 0);
+    NoBoundaryNeighbors topNoNeighbors(solver, 0, W-1, 1);
+
 
     solver.addLocalPotential(&rightPartialNeighbors);
     solver.addLocalPotential(&bottomPartialNeighbors);
     solver.addLocalPotential(&leftNoNeighbors);
+    solver.addLocalPotential(&topNoNeighbors);
 
     RadialFirstPassage diff(solver, maxdt, halfSize, getMFPTConstant(h0, alpha, 0));
 
