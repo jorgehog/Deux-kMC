@@ -92,6 +92,11 @@ public:
     //!All rates have been multiplied by this number
     virtual double timeUnit() const;
 
+    const double &totalRate() const
+    {
+        return m_totalRate;
+    }
+
 private:
     vector<Reaction*> m_reactions;
 

@@ -1,32 +1,32 @@
-#include "concentrationboundaryreaction.h"
+#include "fluxboundaryreaction.h"
 #include "sossolver.h"
 #include "Events/diffusion/diffusion.h"
 #include "Events/confiningsurface/confiningsurface.h"
 
 
-ConcentrationBoundaryReaction::ConcentrationBoundaryReaction(const uint dim,
-                                                             const uint orientation,
-                                                             SOSSolver &solver,
-                                                             const double omega) :
+FluxBoundaryReaction::FluxBoundaryReaction(const uint dim,
+                                           const uint orientation,
+                                           SOSSolver &solver,
+                                           const double scaledFlux) :
     Reaction(),
     m_dim(dim),
     m_orientation(orientation),
     m_location(orientation == 0 ? 0 : (dim == 0 ? solver.length() - 1 : solver.width() - 1)),
     m_span(dim == 0 ? solver.width() : solver.length()),
     m_solver(solver),
-    m_c((omega + 1)*solver.c0()),
+    m_fluxOverD(scaledFlux*solver.c0()),
     m_boundaryHeights(m_span),
     m_accuBoundaryHeights(m_span)
 {
     //location = 0 if orientation = 0 for both dims. If location = 1 we are at the end of the respective dim.
 }
 
-ConcentrationBoundaryReaction::~ConcentrationBoundaryReaction()
+FluxBoundaryReaction::~FluxBoundaryReaction()
 {
 
 }
 
-uint ConcentrationBoundaryReaction::nBoundarySites() const
+uint FluxBoundaryReaction::nBoundarySites() const
 {
     const double &hl = solver().confiningSurfaceEvent().height();
     const int hlInt = int(floor(hl));
@@ -34,7 +34,7 @@ uint ConcentrationBoundaryReaction::nBoundarySites() const
     return nBoundarySites(hlInt);
 }
 
-uint ConcentrationBoundaryReaction::nBoundarySites(const int hlInt) const
+uint FluxBoundaryReaction::nBoundarySites(const int hlInt) const
 {
     uint nSites = 0;
     for (uint xi = 0; xi < span(); ++xi)
@@ -51,7 +51,7 @@ uint ConcentrationBoundaryReaction::nBoundarySites(const int hlInt) const
     return nSites;
 }
 
-int ConcentrationBoundaryReaction::heightAtBoundary(const uint n) const
+int FluxBoundaryReaction::heightAtBoundary(const uint n) const
 {
     if (dim() == 0)
     {
@@ -64,7 +64,7 @@ int ConcentrationBoundaryReaction::heightAtBoundary(const uint n) const
     }
 }
 
-bool ConcentrationBoundaryReaction::pointIsOnBoundary(const int x, const int y) const
+bool FluxBoundaryReaction::pointIsOnBoundary(const int x, const int y) const
 {
     if (dim() == 0)
     {
@@ -77,10 +77,10 @@ bool ConcentrationBoundaryReaction::pointIsOnBoundary(const int x, const int y) 
     }
 }
 
-void ConcentrationBoundaryReaction::getBoundaryPosition(uint &xi,
-                                                        int &h,
-                                                        const uint whichSite,
-                                                        const int hlInt) const
+void FluxBoundaryReaction::getBoundaryPosition(uint &xi,
+                                               int &h,
+                                               const uint whichSite,
+                                               const int hlInt) const
 {
     uint scan = 0;
     for (uint _xi = 0; _xi < span(); ++_xi)
@@ -96,53 +96,55 @@ void ConcentrationBoundaryReaction::getBoundaryPosition(uint &xi,
             scan += 1;
         }
     }
+
+    BADAssBreak("unable to find site.");
 }
 
-double ConcentrationBoundaryReaction::_rateExpression(const uint nBoundaryParticles) const
+double FluxBoundaryReaction::_rateExpression(const uint boundaryArea) const
 {
     BADAssBool(!solver().concentrationIsZero());
 
-    return m_c*nBoundaryParticles*solver().diffusionEvent().DScaled();
+    return m_fluxOverD*boundaryArea*solver().diffusionEvent().DScaled();
 }
 
-void ConcentrationBoundaryReaction::insertParticle(const uint xi, const int h)
+void FluxBoundaryReaction::insertParticle(const uint xi, const int h)
 {
     if (dim() == 0)
     {
         if (solver().isSurfaceSite(location(), xi, h))
         {
-            solver().registerConcentrationBoundaryDeposition(true);
+            solver().registerFluxBoundaryDeposition(true);
             solver().registerHeightChange(location(), xi, +1);
-            solver().registerConcentrationBoundaryDeposition(false);
+            solver().registerFluxBoundaryDeposition(false);
         }
 
         else
         {
-            solver().diffusionEvent().executeConcentrationBoundaryReaction(location(), xi, h);
+            solver().diffusionEvent().executeFluxBoundaryReaction(location(), xi, h);
         }
     }
     else
     {
         if (solver().isSurfaceSite(xi, location(), h))
         {
-            solver().registerConcentrationBoundaryDeposition(true);
+            solver().registerFluxBoundaryDeposition(true);
             solver().registerHeightChange(xi, location(), +1);
-            solver().registerConcentrationBoundaryDeposition(false);
+            solver().registerFluxBoundaryDeposition(false);
         }
 
         else
         {
-            solver().diffusionEvent().executeConcentrationBoundaryReaction(xi, location(), h);
+            solver().diffusionEvent().executeFluxBoundaryReaction(xi, location(), h);
         }
     }
 }
 
-bool ConcentrationBoundaryReaction::isAllowed() const
+bool FluxBoundaryReaction::isAllowed() const
 {
     return nBoundarySites() != 0;
 }
 
-void ConcentrationBoundaryReaction::executeAndUpdate()
+void FluxBoundaryReaction::executeAndUpdate()
 {
     const double &hl = solver().confiningSurfaceEvent().height();
     const int hlInt = int(floor(hl));
@@ -158,18 +160,18 @@ void ConcentrationBoundaryReaction::executeAndUpdate()
     insertParticle(xi, h);
 }
 
-double ConcentrationBoundaryReaction::rateExpression()
+double FluxBoundaryReaction::rateExpression()
 {
     return _rateExpression(nBoundarySites());
 }
 
 
-void ConcentrationBoundaryReaction::initializeObserver(const Subjects &subject)
+void FluxBoundaryReaction::initializeObserver(const Subjects &subject)
 {
     (void) subject;
 }
 
-void ConcentrationBoundaryReaction::notifyObserver(const Subjects &subject)
+void FluxBoundaryReaction::notifyObserver(const Subjects &subject)
 {
     if (subject == Subjects::SOLVER)
     {

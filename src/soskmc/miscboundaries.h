@@ -9,7 +9,7 @@
 
 #include <armadillo>
 using arma::vec;
-
+using arma::ivec;
 
 namespace kMC
 {
@@ -20,8 +20,7 @@ public:
     BoundaryTrackingDevice(SOSSolver &solver,
                            const uint location,
                            const uint dim,
-                           const uint depth,
-                           const bool affectOnChange);
+                           const uint depth);
 
     virtual double averageHeight(const uint boundarySite) const = 0;
 
@@ -53,7 +52,7 @@ public:
         }
     }
 
-    void onAverageChange();
+    void onAverageChange(const bool affect);
 
     const uint &area() const
     {
@@ -68,6 +67,19 @@ public:
     const uint &location() const
     {
         return m_location;
+    }
+
+    uint orientation() const
+    {
+        if (m_location == 0)
+        {
+            return 0;
+        }
+
+        else
+        {
+            return 1;
+        }
     }
 
     const SOSSolver &solver() const
@@ -104,8 +116,6 @@ private:
     const uint m_area;
     uint m_x0;
     uint m_x1;
-
-    const bool m_affectOnChange;
 };
 
 class TrackLineAverage : public BoundaryTrackingDevice
@@ -114,8 +124,7 @@ public:
     TrackLineAverage(SOSSolver &solver,
                      const uint location,
                      const uint dim,
-                     const uint depth,
-                     const bool affectOnChange = false);
+                     const uint depth);
 
     double bruteForceAverage(const uint boundarySite) const;
 
@@ -143,9 +152,8 @@ public:
     TrackAreaAverage(SOSSolver &solver,
                      const uint location,
                      const uint dim,
-                     const uint depth,
-                     const bool affectOnChange = false) :
-        BoundaryTrackingDevice(solver, location, dim, depth, affectOnChange)
+                     const uint depth) :
+        BoundaryTrackingDevice(solver, location, dim, depth)
     {
 
     }
@@ -163,7 +171,7 @@ public:
 
         m_average = getBruteForceAverage();
 
-        onAverageChange();
+        onAverageChange(false);
 
     }
     void notifyObserver(const Subjects &subject);
@@ -225,20 +233,19 @@ public:
 class PartialBoundaryNeighbors : public LocalPotential
 {
 public:
-    PartialBoundaryNeighbors(SOSSolver &solver, const BoundaryTrackingDevice &tracker) :
-        LocalPotential(solver),
-        m_tracker(tracker)
-    {
+    PartialBoundaryNeighbors(SOSSolver &solver, const BoundaryTrackingDevice &tracker);
 
-    }
+    uint selectBoundarySite(const uint x, const uint y) const;
 
 private:
     const BoundaryTrackingDevice &m_tracker;
+    ivec m_boundaryNeighbors;
 
     // LocalPotential interface
 public:
     double potential(const uint x, const uint y) const;
 };
+
 
 class ReflectingSurfaceOpenSolution : public Reflecting
 {
@@ -254,6 +261,59 @@ public:
     {
         (void) xi;
         return false;
+    }
+};
+
+
+class BlockByTracker : public Boundary
+{
+public:
+    BlockByTracker(const BoundaryTrackingDevice &tracker,
+                   const double treshold = 0.5) :
+        Boundary(tracker.location() == 0 ? First : Last),
+        m_tracker(tracker),
+        m_treshold(treshold)
+    {
+
+    }
+
+private:
+    const BoundaryTrackingDevice &m_tracker;
+    const double m_treshold;
+
+
+    // Boundary interface
+public:
+    double transformContinousCoordinate(const double xi, const double xj, const double xk) const
+    {
+        (void) xj;
+        (void) xk;
+
+        return xi;
+    }
+
+    int transformLatticeCoordinate(const int xi, const int xj, const int xk) const
+    {
+        (void) xj;
+        (void) xk;
+
+        return xi;
+    }
+
+    bool isBlockedContinous(const double xi, const double xj, const double xk) const
+    {
+        (void) xi;
+        (void) xj;
+        (void) xk;
+
+        return false;
+    }
+
+    bool isBlockedLattice(const int xi, const int xj, const int xk) const;
+
+    void closestImage(const double xi, const double xj, const double xk, const double xti, const double xtj, const double xtk, double &dxi, double &dxj, double &dxk) const
+    {
+        return noImage(xi, xj, xk, xti, xtj, xtk, dxi, dxj, dxk);
     }
 };
 

@@ -17,28 +17,7 @@ FirstPassageContinuum::FirstPassageContinuum(SOSSolver &solver,
     m_depositionBoxHalfSize(depositionBoxHalfSize),
     m_allSimBoxes(solver.length(), solver.width())
 {
-    int xTrans;
-    int yTrans;
 
-    const int &l = depositionBoxHalfSize;
-
-    for (uint x = 0; x < solver.length(); ++x)
-    {
-        for (uint y = 0; y < solver.width(); ++y)
-        {
-            m_allSimBoxes(x, y).set_size(2*l + 1, 2*l + 1);
-
-            for (int xscan = -l; xscan <= l; ++xscan)
-            {
-                for (int yscan = -l; yscan <= l; ++yscan)
-                {
-                    solver.boundaryLatticeTransform(xTrans, yTrans, (int)x + xscan, (int)y + yscan, 0);
-
-                    m_allSimBoxes(x, y)(xscan + l, yscan + l) = make_pair(xTrans, yTrans);
-                }
-            }
-        }
-    }
 }
 
 FirstPassageContinuum::~FirstPassageContinuum()
@@ -88,4 +67,32 @@ void FirstPassageContinuum::checkTrans(int xTrans,
         cout << "error " << xTrans << " " << xTrans1 << " " << yTrans << " " << yTrans1 << endl;
         exit(1);
     }
+}
+
+void FirstPassageContinuum::initializeObserver(const Subjects &subject)
+{
+    int xTrans;
+    int yTrans;
+
+    const int &l = depositionBoxHalfSize();
+
+    for (uint x = 0; x < solver().length(); ++x)
+    {
+        for (uint y = 0; y < solver().width(); ++y)
+        {
+            m_allSimBoxes(x, y).set_size(2*l + 1, 2*l + 1);
+
+            for (int xscan = -l; xscan <= l; ++xscan)
+            {
+                for (int yscan = -l; yscan <= l; ++yscan)
+                {
+                    solver().boundaryLatticeTransform(xTrans, yTrans, (int)x + xscan, (int)y + yscan, 0);
+
+                    m_allSimBoxes(x, y)(xscan + l, yscan + l) = make_pair(xTrans, yTrans);
+                }
+            }
+        }
+    }
+
+    OfflatticeMonteCarlo::initializeObserver(subject);
 }

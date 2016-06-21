@@ -11,6 +11,11 @@ public:
     Reflecting(const int location, const Boundary::orientations orientation);
     ~Reflecting();
 
+    const int &location() const
+    {
+        return m_location;
+    }
+
 private:
     const int m_location;
 

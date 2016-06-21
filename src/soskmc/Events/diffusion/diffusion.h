@@ -8,7 +8,7 @@ using kMC::Observer;
 using kMC::Subjects;
 
 class SOSDiffusionReaction;
-class ConcentrationBoundaryReaction;
+class FluxBoundaryReaction;
 
 class Diffusion : public ignis::LatticeEvent, public Observer<Subjects>
 {
@@ -29,7 +29,7 @@ public:
 
     virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z) = 0;
 
-    virtual void executeConcentrationBoundaryReaction(const uint x, const uint y, const double z) = 0;
+    virtual void executeFluxBoundaryReaction(const uint x, const uint y, const double z) = 0;
 
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const = 0;
 

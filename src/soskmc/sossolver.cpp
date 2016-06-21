@@ -1,6 +1,6 @@
 #include "sossolver.h"
 #include "dissolutiondeposition.h"
-#include "concentrationboundaryreaction.h"
+#include "fluxboundaryreaction.h"
 #include "Events/confiningsurface/confiningsurface.h"
 #include "Events/diffusion/constantconcentration.h"
 #include "../kmcsolver/boundary/boundary.h"
@@ -28,7 +28,8 @@ SOSSolver::SOSSolver(const uint length,
     m_concentrationIsZero(false),
     m_heights(length, width, fill::zeros),
     m_nNeighbors(length, width),
-    m_surfaceReactions(length, width)
+    m_surfaceReactions(length, width),
+    m_preNeighborObservers(new ObserversPriorToNeighborCalculation())
 {
     for (uint x = 0; x < length; ++x)
     {
@@ -50,13 +51,15 @@ SOSSolver::~SOSSolver()
         }
     }
 
-    for (ConcentrationBoundaryReaction *r : m_concentrationBoundaryReactions)
+    for (FluxBoundaryReaction *r : m_fluxBoundaryReactions)
     {
         delete r;
     }
 
     m_surfaceReactions.clear();
-    m_concentrationBoundaryReactions.clear();
+    m_fluxBoundaryReactions.clear();
+
+    delete m_preNeighborObservers;
 }
 
 void SOSSolver::registerHeightChange(const uint x, const uint y, const int value)
@@ -64,19 +67,22 @@ void SOSSolver::registerHeightChange(const uint x, const uint y, const int value
     BADAssBool(!isOutsideBox(x, y));
     BADAssEqual(abs(value), 1);
 
-    m_heights(x, y) += value;
-
-    registerChangedSite(x, y);
-
-    m_averageHeight += value/double(area());
-    BADAssClose(averageHeight(), accu(heights())/double(area()), 1E-3);
-
-    registerChangedAround(x, y);
-
     m_currentSurfaceChange.x = x;
     m_currentSurfaceChange.y = y;
     m_currentSurfaceChange.value = value;
     m_currentSurfaceChange.type = ChangeTypes::Single;
+
+    m_heights(x, y) += value;
+
+    m_averageHeight += value/double(area());
+    BADAssClose(averageHeight(), accu(heights())/double(area()), 1E-3);
+
+    m_preNeighborObservers->notifyObservers(Subjects::SOLVER);
+
+    registerChangedSite(x, y);
+    registerChangedAround(x, y);
+
+    updateChangedSites();
 
     notifyObservers(Subjects::SOLVER);
 }
@@ -86,15 +92,20 @@ void SOSSolver::registerSurfaceTransition(const uint x0, const uint y0, const in
     BADAssBool(!isOutsideBox(x0, y0), "invalid site.");
     BADAssBool(isSurfaceSite(x1, y1, height(x0, y0)), "ERRAH.");
 
-    m_heights(x0, y0) -= 1;
-    registerChangedSite(x0, y0);
-    registerChangedAround(x0, y0);
+    bool destOutsideBox = isOutsideBox(x1, y1);
 
-    if (!isOutsideBox(x1, y1))
+    m_currentSurfaceChange.x = x0;
+    m_currentSurfaceChange.y = y0;
+    m_currentSurfaceChange.x1 = x1;
+    m_currentSurfaceChange.y1 = y1;
+    m_currentSurfaceChange.type = ChangeTypes::Double;
+    m_currentSurfaceChange.destOutsideBox = destOutsideBox;
+
+    m_heights(x0, y0) -= 1;
+
+    if (!destOutsideBox)
     {
         m_heights(x1, y1) += 1;
-        registerChangedSite(x1, y1);
-        registerChangedAround(x1, y1);
     }
 
     else
@@ -102,11 +113,20 @@ void SOSSolver::registerSurfaceTransition(const uint x0, const uint y0, const in
         m_averageHeight -= 1./area();
     }
 
-    m_currentSurfaceChange.x = x0;
-    m_currentSurfaceChange.y = y0;
-    m_currentSurfaceChange.x1 = x1;
-    m_currentSurfaceChange.y1 = y1;
-    m_currentSurfaceChange.type = ChangeTypes::Double;
+    BADAssClose(averageHeight(), accu(heights())/double(area()), 1E-3);
+
+    m_preNeighborObservers->notifyObservers(Subjects::SOLVER);
+
+    registerChangedSite(x0, y0);
+    registerChangedAround(x0, y0);
+
+    if (!destOutsideBox)
+    {
+        registerChangedSite(x1, y1);
+        registerChangedAround(x1, y1);
+    }
+
+    updateChangedSites();
 
     notifyObservers(Subjects::SOLVER);
 }
@@ -114,8 +134,6 @@ void SOSSolver::registerSurfaceTransition(const uint x0, const uint y0, const in
 void SOSSolver::registerChangedSite(const uint x, const uint y)
 {
     m_changedSurfaceSites.insert(make_pair(x, y));
-    setNNeighbors(x, y);
-    registerAffectedReaction(&surfaceReaction(x, y));
 }
 
 void SOSSolver::registerChangedAround(const uint x, const uint y)
@@ -127,26 +145,36 @@ void SOSSolver::registerChangedAround(const uint x, const uint y)
 
     if (!isOutsideBoxSingle(left, 0))
     {
-        setNNeighbors(left, y);
-        registerAffectedReaction(&surfaceReaction(left, y));
+        registerChangedSite(left, y);
     }
 
     if (!isOutsideBoxSingle(right, 0))
     {
-        setNNeighbors(right, y);
-        registerAffectedReaction(&surfaceReaction(right, y));
+        registerChangedSite(right, y);
     }
 
     if (!isOutsideBoxSingle(top, 1))
     {
-        setNNeighbors(x, top);
-        registerAffectedReaction(&surfaceReaction(x, top));
+        registerChangedSite(x, top);
     }
 
     if (!isOutsideBoxSingle(bottom, 1))
     {
-        setNNeighbors(x, bottom);
-        registerAffectedReaction(&surfaceReaction(x, bottom));
+        registerChangedSite(x, bottom);
+    }
+}
+
+void SOSSolver::updateChangedSites()
+{
+    uint x;
+    uint y;
+
+    for (const pair<uint, uint> &xy : m_changedSurfaceSites)
+    {
+        x = xy.first;
+        y = xy.second;
+        setNNeighbors(x, y);
+        registerAffectedReaction(&surfaceReaction(x, y));
     }
 }
 
@@ -278,6 +306,8 @@ double SOSSolver::freeVolume() const
 void SOSSolver::calculateHeightDependentValues()
 {
     m_averageHeight = arma::accu(m_heights)/double(area());
+
+    m_preNeighborObservers->initializeObservers(Subjects::SOLVER);
 
     for (uint x = 0; x < m_length; ++x)
     {
@@ -652,29 +682,6 @@ uint SOSSolver::span() const
     }
 }
 
-const Boundary *SOSSolver::getBoundaryFromLoc(const int x, const int y) const
-{
-    if (x < 0)
-    {
-        return boundary(0, 0);
-    }
-
-    else if (y < 0)
-    {
-        return boundary(1, 0);
-    }
-
-    else if (uint(x) >= length())
-    {
-        return boundary(0, 1);
-    }
-
-    else
-    {
-        return boundary(1, 1);
-    }
-}
-
 void SOSSolver::boundaryLatticeTransform(int &xTrans, int &yTrans, const int x, const int y, const int z) const
 {
     uint xOrientation;
@@ -809,112 +816,9 @@ double SOSSolver::boundaryContinousTransformSingle(const double x, const double 
     }
 }
 
-//uint SOSSolver::boundaryOrientation(const double x, const uint dim) const
-//{
-//    const uint lx = dim == 0 ? length() : width();
-
-//    return x >= lx/2 ? 1 : 0;
-//}
-
-//void SOSSolver::boundaryTransformXY(double &xTrans, double &yTrans, const double x, const double y, const double z) const
-//{
-//    uint xOrientation;
-//    uint yOrientation;
-
-//    if (x < length()/2)
-//    {
-//        xOrientation = 0;
-//    }
-
-//    else
-//    {
-//        xOrientation = 1;
-//    }
-
-//    if (y < width()/2)
-//    {
-//        yOrientation = 0;
-//    }
-
-//    else
-//    {
-//        yOrientation = 1;
-//    }
-
-//    xTrans = boundary(0, xOrientation)->transformCoordinate(x, y, z);
-//    yTrans = boundary(1, yOrientation)->transformCoordinate(x, y, z);
-
-//}
-
-//double SOSSolver::boundaryTransform(const double x, const double y, const double z, const uint dim) const
-//{
-//    uint orientation;
-
-//    if (dim == 0)
-//    {
-//        if (x < length()/2)
-//        {
-//            orientation = 0;
-//        }
-
-//        else
-//        {
-//            orientation = 1;
-//        }
-
-//        return boundary(0, orientation)->transformCoordinate(x, y, z);
-//    }
-
-//    else if (dim == 1)
-//    {
-//        if (y < length()/2)
-//        {
-//            orientation = 0;
-//        }
-
-//        else
-//        {
-//            orientation = 1;
-//        }
-
-//        return boundary(1, orientation)->transformCoordinate(y, x, z);
-//    }
-
-//    else
-//    {
-//        return z;
-//    }
-
-//}
-
-//double SOSSolver::boundaryTransform(const double x, const double y, const double z, const double dxi, const uint dim) const
-//{
-
-//    if (dim == 0)
-//    {
-//        return closestBoundary(x, dim)->transformCoordinate(x + dxi, y, z);
-//    }
-
-//    else if (dim == 1)
-//    {
-//        return closestBoundary(x, dim)->transformCoordinate(y + dxi, x, z);
-//    }
-
-//    else
-//    {
-//        return z + dxi;
-//    }
-
-//}
-
-//const Boundary *SOSSolver::closestBoundary(const double x, const uint dim) const
-//{
-//    return boundary(dim, boundaryOrientation(x, dim));
-//}
-
-void SOSSolver::addConcentrationBoundary(const uint dim,
-                                         const Boundary::orientations orientation,
-                                         const double omega)
+void SOSSolver::addFluxBoundary(const uint dim,
+                                const Boundary::orientations orientation,
+                                const double scaledFlux)
 {
     uint orientationInt;
     if (orientation == Boundary::orientations::FIRST)
@@ -927,14 +831,14 @@ void SOSSolver::addConcentrationBoundary(const uint dim,
         orientationInt = 1;
     }
 
-    ConcentrationBoundaryReaction *concReaction = new ConcentrationBoundaryReaction(dim, orientationInt, *this, omega);
+    FluxBoundaryReaction *fluxReaction = new FluxBoundaryReaction(dim, orientationInt, *this, scaledFlux);
 
-    m_concentrationBoundaryReactions.push_back(concReaction);
+    m_fluxBoundaryReactions.push_back(fluxReaction);
 
-    addReaction(concReaction);
+    addReaction(fluxReaction);
 
-    registerObserver(concReaction);
-    confiningSurfaceEvent().registerObserver(concReaction);
+    registerObserver(fluxReaction);
+    confiningSurfaceEvent().registerObserver(fluxReaction);
 }
 
 bool SOSSolver::isBlockedPosition(const double x, const double y, const double z) const
@@ -1024,11 +928,47 @@ bool SOSSolver::isOutsideBox(const int x, const int y) const
 
 bool SOSSolver::isSurfaceSite(const int x, const int y, const int z) const
 {
+    //we check if the conditions of the boundary is so that
+    //it allows for surface transition outside the boundary,
+    //i.e. that z is avail but z-1 is blocked
     if (isOutsideBox(x, y))
     {
-        const Boundary *b = getBoundaryFromLoc(x, y);
+        const Boundary *b;
+        uint dim;
 
-        return b->isBlockedLattice(x, y, z-1) && (!b->isBlockedLattice(x, y, z));
+        if (x < 0)
+        {
+            b = boundary(0, 0);
+            dim = 0;
+        }
+
+        else if (y < 0)
+        {
+            b = boundary(1, 0);
+            dim = 1;
+        }
+
+        else if (uint(x) >= length()/2)
+        {
+            b = boundary(0, 1);
+            dim = 0;
+        }
+
+        else
+        {
+            b = boundary(1, 1);
+            dim = 1;
+        }
+
+        if (dim == 0)
+        {
+            return b->isBlockedLattice(x, y, z-1) && (!b->isBlockedLattice(x, y, z));
+        }
+
+        else
+        {
+            return b->isBlockedLattice(y, x, z-1) && (!b->isBlockedLattice(y, x, z));
+        }
     }
 
     return height(x, y) == z - 1;
@@ -1204,7 +1144,7 @@ void SOSSolver::execute()
 
 void SOSSolver::initialize()
 {
-    m_concentrationBoundaryDeposition = false;
+    m_fluxBoundaryDeposition = false;
 
     if (!m_heightsSet)
     {

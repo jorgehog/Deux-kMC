@@ -21,7 +21,6 @@ SOURCES += \
     sosdiffusionreaction.cpp \
     dissolutiondeposition.cpp \
     Events/diffusion/latticediffusion.cpp \
-    concentrationboundaryreaction.cpp \
     Events/dumpsystem.cpp \
     Events/diffusion/fixedpointtimestepping.cpp \
     Events/diffusion/multiscale.cpp \
@@ -42,7 +41,8 @@ SOURCES += \
     localcachedpotential.cpp \
     longeststripboundary.cpp \
     reflavghybrid.cpp \
-    miscboundaries.cpp
+    miscboundaries.cpp \
+    fluxboundaryreaction.cpp
 
 
 HEADERS += \
@@ -62,7 +62,6 @@ HEADERS += \
     sosdiffusionreaction.h \
     dissolutiondeposition.h \
     Events/diffusion/latticediffusion.h \
-    concentrationboundaryreaction.h \
     Events/dumpsystem.h \
     Events/sosevent.h \
     Events/diffusion/fixedpointtimestepping.h \
@@ -87,7 +86,8 @@ HEADERS += \
     localcachedpotential.h \
     longeststripboundary.h \
     reflavghybrid.h \
-    miscboundaries.h
+    miscboundaries.h \
+    fluxboundaryreaction.h
 
 LIBS += -lkMC
 

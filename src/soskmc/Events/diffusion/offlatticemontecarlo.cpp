@@ -1,7 +1,7 @@
 #include "offlatticemontecarlo.h"
 
 #include "../confiningsurface/confiningsurface.h"
-#include "concentrationboundaryreaction.h"
+#include "fluxboundaryreaction.h"
 
 OfflatticeMonteCarlo::OfflatticeMonteCarlo(SOSSolver &solver,
                                            const double maxdt,
@@ -55,7 +55,7 @@ void OfflatticeMonteCarlo::notifyObserver(const Subjects &subject)
             //Remove particle based on the probability of it being the deposited
             if (value == 1)
             {
-                if (!solver().concentrationBoundaryDeposition())
+                if (!solver().fluxBoundaryDeposition())
                 {
                     double Rtot = 0;
                     for (uint n = 0; n < nOfflatticeParticles(); ++n)
@@ -213,7 +213,7 @@ void OfflatticeMonteCarlo::executeDiffusionReaction(SOSDiffusionReaction *reacti
     throw std::logic_error("invalid diffusion model.");
 }
 
-void OfflatticeMonteCarlo::executeConcentrationBoundaryReaction(const uint x, const uint y, const double z)
+void OfflatticeMonteCarlo::executeFluxBoundaryReaction(const uint x, const uint y, const double z)
 {
     insertParticle(x, y, z);
     m_lockedParticles.push_back(m_nParticles - 1);

@@ -2,25 +2,26 @@
 
 #include "../apputils.h"
 
-using ignis::Lattice;
-
 int main(int argv, char** argc)
 {
+    rng.initialize(time(nullptr));
+
     string cfgName = getCfgName(argv, argc, "felixexp_cavity");
 
     Config cfg;
     cfg.readFile(cfgName.c_str());
 
-    const Setting & cfgRoot = cfg.getRoot();
+    const Setting &cfgRoot = cfg.getRoot();
 
     const string &path = getSetting<string>(cfgRoot, "path") + "/";
 
     const uint &L = getSetting<uint>(cfgRoot, "L");
     const uint &W = getSetting<uint>(cfgRoot, "W");
 
-    const double &alpha = getSetting<double>(cfgRoot, "alpha");
-    const double &omega = getSetting<double>(cfgRoot, "omega");
     const double &height = getSetting<double>(cfgRoot, "height");
+    const double &alpha = getSetting<double>(cfgRoot, "alpha");
+
+    const double &flux = getSetting<double>(cfgRoot, "flux");
 
     const uint &boundaryDepth = getSetting<uint>(cfgRoot, "boundaryDepth");
 
@@ -28,40 +29,13 @@ int main(int argv, char** argc)
     const uint &interval = getSetting<uint>(cfgRoot, "interval");
     const uint &output = getSetting<uint>(cfgRoot, "output");
 
-    rng.initialize(time(nullptr));
-    const string initType = "flat";
-
-    const double gamma = log(1 + omega);
-
-    SOSSolver solver(L, W, alpha, gamma, true);
-
-    ReflectingSurfaceOpenSolution x0(0, Boundary::orientations::FIRST);
-    Reflecting x1(L-1, Boundary::orientations::LAST);
-
-    Periodic y0(W, Boundary::orientations::FIRST);
-    Periodic y1(W, Boundary::orientations::LAST);
-
-    solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
-
-    TrackAreaAverage inletAreaTracker(solver, 0, 0, boundaryDepth, true);
-    TrackAreaAverage cavityAreaTracker(solver, L-1, 0, boundaryDepth, true);
-
-    solver.registerObserver(&inletAreaTracker);
-    solver.registerObserver(&cavityAreaTracker);
-
-    PartialBoundaryNeighbors inletPartialNeighbors(solver, inletAreaTracker);
-    PartialBoundaryNeighbors cavityPartialNeighbors(solver, cavityAreaTracker);
-
-    solver.addLocalPotential(&inletPartialNeighbors);
-    solver.addLocalPotential(&cavityPartialNeighbors);
+    SOSSolver solver(L, W, alpha, 0, true);
 
     const uint depositionBoxHalfSize = 3;
     const double maxDt = 0.01;
 
     RadialFirstPassage diff(solver, maxDt, depositionBoxHalfSize, getMFPTConstant(height, alpha, 0));
     FixedSurface confSurface(solver, height);
-
-    solver.addConcentrationBoundary(0, Boundary::orientations::FIRST, omega);
 
     Time time(solver);
 
@@ -88,22 +62,60 @@ int main(int argv, char** argc)
     lattice.addEvent(diff);
     lattice.addEvent(time);
 
+    AverageHeight h(solver);
+    GrowthSpeed v(solver);
+
     if (output)
     {
+        lattice.addEvent(h);
+        lattice.addEvent(v);
         lattice.addEvent(dumper);
     }
+
     else
     {
         lattice.addEvent(storeHeights);
         lattice.addEvent(storeParticles);
     }
 
-    initializeSurface(solver, initType, 3, 10000);
+    initializeSurface(solver, "flat");
+
+    const uint stepSize = 2*boundaryDepth;
+
+    for (uint x = 0; x < L; ++x)
+    {
+        for (uint y = 0; y < stepSize; ++y)
+        {
+            solver.setHeight(x, y, 1, false);
+        }
+    }
+
+    //app specifics
+    const uint stepDim = 1;
+    TrackAreaAverage y0AreaTracker(solver, 0, stepDim, boundaryDepth);
+
+    Periodic x0(L, Boundary::orientations::FIRST);
+    Periodic x1(L, Boundary::orientations::LAST);
+
+    BlockByTracker y0(y0AreaTracker);
+    Reflecting y1(W-1, Boundary::orientations::LAST);
+
+    solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
+
+    solver.registerPreNeighborObserver(&y0AreaTracker);
+
+    PartialBoundaryNeighbors y0PartialNeighbors(solver, y0AreaTracker);
+    NoBoundaryNeighbors y1NoNeighbors(solver, 0, y1.location(), stepDim);
+
+    solver.addLocalPotential(&y0PartialNeighbors);
+    solver.addLocalPotential(&y1NoNeighbors);
+
+    solver.addFluxBoundary(stepDim, Boundary::orientations::FIRST, flux);
 
     lattice.eventLoop(nCycles);
 
     simRoot["alpha"] = alpha;
-    simRoot["omega"] = omega;
+    simRoot["flux"] = flux;
     simRoot["height"] = height;
     simRoot["time"] = colvec(lattice.storedEventValues().col(0));
 

@@ -316,12 +316,16 @@ def main():
                 return
         N += 1
 
-    if single:
-        print "alpha=%g and F0=%g not found in set." % (s_alpha, s_F0)
-        return
-
     alphas = sorted(alphas)
     F0s = sorted(F0s)
+
+    if single:
+        print "alpha=%g and F0=%g not found in set." % (s_alpha, s_F0)
+        for alpha in alpha:
+            print alpha
+        for F0 in F0s:
+            print F0
+        return
 
     print "Found %d entries" % N
 

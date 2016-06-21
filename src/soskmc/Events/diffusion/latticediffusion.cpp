@@ -7,7 +7,7 @@
 
 #include "sosdiffusionreaction.h"
 
-#include "concentrationboundaryreaction.h"
+#include "fluxboundaryreaction.h"
 
 #include <utility>
 
@@ -42,9 +42,6 @@ void LatticeDiffusion::removeDiffusionReactant(SOSDiffusionReaction *reaction, b
     m_diffusionReactionsMap.erase(indices(reaction));
 
     solver().removeReaction(reaction);
-
-    //have to observe lattice diffusion as well.
-    //    solver().updateConcentrationBoundaryIfOnBoundary(reaction->x(), reaction->y());
 
     registerAffectedAround(reaction->x(), reaction->y(), reaction->z());
 
@@ -474,9 +471,6 @@ SOSDiffusionReaction *LatticeDiffusion::addDiffusionReactant(const uint x, const
 
     solver().addReaction(reaction);
 
-    //have to observe lattice diffusion
-    //    solver().updateConcentrationBoundaryIfOnBoundary(x, y);
-
     reaction->setNumberOfFreePaths();
 
     if (setRate)
@@ -610,17 +604,9 @@ void LatticeDiffusion::executeDiffusionReaction(SOSDiffusionReaction *reaction,
     {
         solver().registerAffectedReaction(reaction);
     }
-
-
-    //have to observe lattice diffusion
-    //    if (!(xOld == ux && yOld == uy))
-    //    {
-    //        solver().updateConcentrationBoundaryIfOnBoundary(xOld, yOld);
-    //        solver().updateConcentrationBoundaryIfOnBoundary(ux, uy);
-    //    }
 }
 
-void LatticeDiffusion::executeConcentrationBoundaryReaction(const uint x, const uint y, const double z)
+void LatticeDiffusion::executeFluxBoundaryReaction(const uint x, const uint y, const double z)
 {
     const int zLattice = floor(z);
 

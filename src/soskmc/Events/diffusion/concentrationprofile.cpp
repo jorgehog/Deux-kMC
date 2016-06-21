@@ -53,7 +53,7 @@ void ConcentrationProfile::executeDiffusionReaction(SOSDiffusionReaction *reacti
     (void) z;
 }
 
-void ConcentrationProfile::executeConcentrationBoundaryReaction(const uint x, const uint y, const double z)
+void ConcentrationProfile::executeFluxBoundaryReaction(const uint x, const uint y, const double z)
 {
     (void) x;
     (void) y;

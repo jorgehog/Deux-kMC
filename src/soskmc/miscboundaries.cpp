@@ -6,15 +6,13 @@
 BoundaryTrackingDevice::BoundaryTrackingDevice(SOSSolver &solver,
                                                const uint location,
                                                const uint dim,
-                                               const uint depth,
-                                               const bool affectOnChange) :
+                                               const uint depth) :
     Observer(),
     m_solver(solver),
     m_location(location),
     m_dim(dim),
     m_depth(depth),
-    m_area(solver.orthExtent(dim)*depth),
-    m_affectOnChange(affectOnChange)
+    m_area(solver.orthExtent(dim)*depth)
 {
     if (location == 0)
     {
@@ -50,27 +48,24 @@ bool BoundaryTrackingDevice::pointIsInsideArea(const int x, const int y) const
     return (ux >= x0() && ux < x1());
 }
 
-void BoundaryTrackingDevice::onAverageChange()
+void BoundaryTrackingDevice::onAverageChange(const bool affect)
 {
-    if (!m_affectOnChange)
+    if (!affect)
     {
         return;
     }
 
-    SurfaceReaction *r;
     for (uint boundarySite = 0; boundarySite < solver().orthExtent(dim()); ++boundarySite)
     {
         if (dim() == 0)
         {
-            r = &solver().surfaceReaction(m_location, boundarySite);
+            solver().registerChangedSite(m_location, boundarySite);
         }
 
         else
         {
-            r = &solver().surfaceReaction(boundarySite, m_location);
+            solver().registerChangedSite(boundarySite, m_location);
         }
-
-        solver().registerAffectedReaction(r);
     }
 }
 
@@ -78,9 +73,8 @@ void BoundaryTrackingDevice::onAverageChange()
 TrackLineAverage::TrackLineAverage(SOSSolver &solver,
                                    const uint location,
                                    const uint dim,
-                                   const uint depth,
-                                   const bool affectOnChange) :
-    BoundaryTrackingDevice(solver, location, dim, depth, affectOnChange),
+                                   const uint depth) :
+    BoundaryTrackingDevice(solver, location, dim, depth),
     m_averages(solver.orthExtent(dim))
 {
 
@@ -126,7 +120,7 @@ void TrackLineAverage::initializeObserver(const Subjects &subject)
         }
     }
 
-    onAverageChange();
+    onAverageChange(false);
 }
 
 void TrackLineAverage::notifyObserver(const Subjects &subject)
@@ -140,7 +134,6 @@ void TrackLineAverage::notifyObserver(const Subjects &subject)
 
     //if it is inside the area it is on some line.
     const bool initialInside = pointIsInsideArea(x0, y0);
-
 
     if (csc.type == ChangeTypes::Single)
     {
@@ -156,7 +149,7 @@ void TrackLineAverage::notifyObserver(const Subjects &subject)
                 m_averages(x0) += csc.value/(double)depth();
             }
 
-            onAverageChange();
+            onAverageChange(true);
         }
     }
 
@@ -195,7 +188,7 @@ void TrackLineAverage::notifyObserver(const Subjects &subject)
 
         if (initialInside || finalInside)
         {
-            onAverageChange();
+            onAverageChange(true);
         }
     }
 }
@@ -239,7 +232,7 @@ void TrackAreaAverage::notifyObserver(const Subjects &subject)
         {
             m_average += csc.value/(double)area();
 
-            onAverageChange();
+            onAverageChange(true);
         }
     }
 
@@ -254,19 +247,72 @@ void TrackAreaAverage::notifyObserver(const Subjects &subject)
         {
             m_average -= 1./area();
 
-            onAverageChange();
+            onAverageChange(true);
         }
 
         else if (!initialInside && finalInside)
         {
             m_average += 1./area();
 
-            onAverageChange();
+            onAverageChange(true);
         }
 
     }
 }
 
+
+PartialBoundaryNeighbors::PartialBoundaryNeighbors(SOSSolver &solver, const BoundaryTrackingDevice &tracker) :
+    LocalPotential(solver),
+    m_tracker(tracker),
+    m_boundaryNeighbors(solver.orthExtent(tracker.dim()))
+{
+    const uint bL = solver.orthExtent(tracker.dim());
+
+    int site;
+    for (uint boundarySite = 0; boundarySite < bL; ++boundarySite)
+    {
+        if (tracker.dim() == 0)
+        {
+            if (tracker.location() == 0)
+            {
+                site = solver.leftSite(tracker.location(), boundarySite, 0);
+            }
+
+            else
+            {
+                site = solver.rightSite(tracker.location(), boundarySite, 0);
+            }
+        }
+
+        else
+        {
+            if (tracker.location() == 0)
+            {
+                site = solver.bottomSite(boundarySite, tracker.location(), 0);
+            }
+
+            else
+            {
+                site = solver.topSite(boundarySite, tracker.location(), 0);
+            }
+        }
+
+        m_boundaryNeighbors(boundarySite) = site;
+    }
+}
+
+uint PartialBoundaryNeighbors::selectBoundarySite(const uint x, const uint y) const
+{
+    if (m_tracker.dim() == 0)
+    {
+        return y;
+    }
+
+    else
+    {
+        return x;
+    }
+}
 
 double PartialBoundaryNeighbors::potential(const uint x, const uint y) const
 {
@@ -295,10 +341,26 @@ double PartialBoundaryNeighbors::potential(const uint x, const uint y) const
             overlap = averageHeight - base;
         }
 
-        //We assume the boundary is blocked already, so we subtract one
+        const uint xo = selectBoundarySite(x, y);
+        bool hasNeighbor = solver().findSingleConnection(m_boundaryNeighbors(xo),
+                                                         m_tracker.dim(),
+                                                         m_tracker.orientation(),
+                                                         xo,
+                                                         h,
+                                                         true);
+
+        //The boundary is blocked already, so we subtract one
         //to get rid of the neighbor interaction, and replace it by
-        //the overlap, which is sort of a partial neighbor interaction.
-        return overlap - 1.0;
+        //the overlap, which becomes the partial neighbor interaction.
+        if (hasNeighbor)
+        {
+            return overlap - 1.0;
+        }
+
+        else
+        {
+            return overlap;
+        }
     }
 
     return 0.0;
@@ -318,4 +380,48 @@ double NoBoundaryNeighbors::potential(const uint x, const uint y) const
     }
 
     return 0.;
+}
+
+
+bool BlockByTracker::isBlockedLattice(const int xi, const int xj, const int xk) const
+{
+    if (m_tracker.location() == 0)
+    {
+        if (xi >= 0)
+        {
+            return false;
+        }
+    }
+
+    else
+    {
+        const uint uxi = uint(xi);
+        if (uxi <= m_tracker.location())
+        {
+            return false;
+        }
+    }
+
+    const double &averageHeight = m_tracker.averageHeight(xj);
+    const int base = round(averageHeight);
+    double overlap;
+
+    //There is no overlap between estimated height and current height
+    if (xk > ceil(averageHeight))
+    {
+        overlap = 0.0;
+    }
+
+    //There is 100% overlap between estimated and current height
+    else if (xk <= base)
+    {
+        overlap = 1.0;
+    }
+
+    else
+    {
+        overlap = averageHeight - base;
+    }
+
+    return (overlap >= m_treshold);
 }

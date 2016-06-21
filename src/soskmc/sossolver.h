@@ -16,7 +16,7 @@ using std::pair;
 using std::unordered_set;
 
 class SurfaceReaction;
-class ConcentrationBoundaryReaction;
+class FluxBoundaryReaction;
 class ConfiningSurface;
 class Diffusion;
 class LocalPotential;
@@ -35,6 +35,12 @@ struct CurrentSurfaceChange
     int y1;
     ChangeTypes type;
     int value;
+    bool destOutsideBox;
+};
+
+class ObserversPriorToNeighborCalculation : public Subject<Subjects>
+{
+
 };
 
 class SOSSolver : public KMCSolver, public Subject<Subjects>, public Observer<Subjects>
@@ -58,6 +64,8 @@ public:
     void registerChangedSite(const uint x, const uint y);
 
     void registerChangedAround(const uint x, const uint y);
+
+    void updateChangedSites();
 
     void setNNeighbors(const uint x, const uint y);
 
@@ -256,17 +264,15 @@ public:
 
     uint span() const;
 
-    const Boundary *getBoundaryFromLoc(const int x, const int y) const;
-
     void boundaryLatticeTransform(int &xTrans, int &yTrans, const int x, const int y, const int z) const;
     void boundaryContinousTransform(double &xTrans, double &yTrans, const double x, const double y, const double z) const;
 
     int boundaryLatticeTransformSingle(const int x, const int y, const int z, uint dim, const int shift = 0) const;
     double boundaryContinousTransformSingle(const double x, const double y, const double z, uint dim, const double shift = 0) const;
 
-    void addConcentrationBoundary(const uint dim,
-                                  const Boundary::orientations orientation,
-                                  const double omega);
+    void addFluxBoundary(const uint dim,
+                         const Boundary::orientations orientation,
+                         const double scaledFlux);
 
     bool isBlockedPosition(const double x, const double y, const double z) const;
 
@@ -309,9 +315,9 @@ public:
         return m_changedSurfaceSites;
     }
 
-    const vector<ConcentrationBoundaryReaction*> &concentrationBoundaryReactions() const
+    const vector<FluxBoundaryReaction*> &fluxBoundaryReactions() const
     {
-        return m_concentrationBoundaryReactions;
+        return m_fluxBoundaryReactions;
     }
 
     double closestSquareDistance(const uint x, const uint y, const int z,
@@ -354,17 +360,22 @@ public:
 
     void freezeSurfaceParticle(const uint x, const uint y);
 
-    void registerConcentrationBoundaryDeposition(const bool value = true)
+    void registerFluxBoundaryDeposition(const bool value = true)
     {
-        m_concentrationBoundaryDeposition = value;
+        m_fluxBoundaryDeposition = value;
     }
 
-    bool concentrationBoundaryDeposition() const
+    bool fluxBoundaryDeposition() const
     {
-        return m_concentrationBoundaryDeposition;
+        return m_fluxBoundaryDeposition;
     }
 
     double totalSurfaceEnergy(const uint x, const uint y) const;
+
+    void registerPreNeighborObserver(ObserverType *observer)
+    {
+        m_preNeighborObservers->registerObserver(observer);
+    }
 
 private:
 
@@ -393,16 +404,18 @@ private:
 
     double m_averageHeight;
 
-    bool m_concentrationBoundaryDeposition;
+    bool m_fluxBoundaryDeposition;
 
 
     field<SurfaceReaction*> m_surfaceReactions;
 
-    vector<ConcentrationBoundaryReaction*> m_concentrationBoundaryReactions;
+    vector<FluxBoundaryReaction*> m_fluxBoundaryReactions;
 
     set_type m_changedSurfaceSites;
 
     vector<const LocalPotential*> m_localPotentials;
+
+    ObserversPriorToNeighborCalculation *m_preNeighborObservers;
 
     // Event interface
 public:

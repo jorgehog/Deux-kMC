@@ -15,12 +15,12 @@ FiniteSize::~FiniteSize()
 
 double FiniteSize::transformContinousCoordinate(const double xi) const
 {
-    return transformFunction<double>(xi);
+    return xi;
 }
 
 int FiniteSize::transformLatticeCoordinate(const int xi) const
 {
-    return transformFunction<int>(xi);
+    return xi;
 }
 
 

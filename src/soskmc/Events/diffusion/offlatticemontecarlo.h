@@ -126,7 +126,7 @@ public:
     bool countPaths() const;
     virtual double depositionRate(const uint x, const uint y) const;
     virtual void executeDiffusionReaction(SOSDiffusionReaction *reaction, const int x, const int y, const int z);
-    virtual void executeConcentrationBoundaryReaction(const uint x, const uint y, const double z);
+    virtual void executeFluxBoundaryReaction(const uint x, const uint y, const double z);
     virtual bool isBlockedPosition(const uint x, const uint y, const int z) const;
     double concentration() const;
     bool hasDiscreteParticles() const;

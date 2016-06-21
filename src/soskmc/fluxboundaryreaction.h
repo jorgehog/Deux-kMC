@@ -10,15 +10,15 @@ using kMC::Reaction;
 using kMC::Observer;
 using kMC::Subjects;
 
-class ConcentrationBoundaryReaction : public Reaction, public Observer<Subjects>
+class FluxBoundaryReaction : public Reaction, public Observer<Subjects>
 {
 public:
-    ConcentrationBoundaryReaction(const uint dim,
-                                  const uint orientation,
-                                  SOSSolver &solver,
-                                  const double omega);
+    FluxBoundaryReaction(const uint dim,
+                         const uint orientation,
+                         SOSSolver &solver,
+                         const double scaledFlux);
 
-    ~ConcentrationBoundaryReaction();
+    ~FluxBoundaryReaction();
 
 
     uint nBoundarySites() const;
@@ -66,7 +66,7 @@ private:
 
     SOSSolver &m_solver;
 
-    const double m_c;
+    const double m_fluxOverD;
 
     vec m_boundaryHeights;
     vec m_accuBoundaryHeights;

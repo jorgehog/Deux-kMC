@@ -1,17 +1,11 @@
 #include <SOSkMC.h>
 
-#include "miscevents.h"
-
 #include "../apputils.h"
-
-#include <HDF5Wrapper/include/hdf5wrapper.h>
-#include <libconfig_utils/libconfig_utils.h>
-
 
 int main(int argv, char **argc)
 {
 //    rng.initialize(time(nullptr));
-    rng.initialize(139444);
+    rng.initialize(123);
 
     string cfgName = getCfgName(argv, argc, "felixexp");
 
@@ -20,67 +14,31 @@ int main(int argv, char **argc)
 
     const Setting &cfgRoot = cfg.getRoot();
 
-    const string path = getSetting<string>(cfgRoot, "path") + "/";
+    const string &path = getSetting<string>(cfgRoot, "path") + "/";
 
-    const int halfSize = getSetting<int>(cfgRoot, "halfSize");
-    const double maxdt = getSetting<double>(cfgRoot, "maxdt");
+    const uint &L = getSetting<uint>(cfgRoot, "L");
+    const uint &W = getSetting<uint>(cfgRoot, "W");
 
-    const uint L = getSetting<uint>(cfgRoot, "L");
-    const uint W = getSetting<uint>(cfgRoot, "W");
+    const double &height = getSetting<double>(cfgRoot, "height");
+    const double &alpha = getSetting<double>(cfgRoot, "alpha");
 
-    const double h0 = getSetting<double>(cfgRoot, "h0");
-    const double alpha = getSetting<double>(cfgRoot, "alpha");
+    const double &flux = getSetting<double>(cfgRoot, "flux");
 
-    const double omegaEq = getSetting<double>(cfgRoot, "omegaEq");
-    const double omega = getSetting<double>(cfgRoot, "omega");
+    const uint &boundaryDepth = getSetting<uint>(cfgRoot, "boundaryDepth");
 
-    const uint size = getSetting<uint>(cfgRoot, "size");
-    const uint boundaryDepth = getSetting<uint>(cfgRoot, "boundaryDepth");
-
-    const uint nCycles = getSetting<uint>(cfgRoot, "nCycles");
-    const uint interval = getSetting<uint>(cfgRoot, "interval");
-    const uint output = getSetting<uint>(cfgRoot, "output");
+    const uint &nCycles = getSetting<uint>(cfgRoot, "nCycles");
+    const uint &interval = getSetting<uint>(cfgRoot, "interval");
+    const uint &output = getSetting<uint>(cfgRoot, "output");
 
     SOSSolver solver(L, W, alpha, 0, true);
 
-    ReflectingSurfaceOpenSolution topBoundary(W-1, Boundary::orientations::LAST);
-    Reflecting rightBoundary(L-1, Boundary::orientations::LAST);
+    const uint depositionBoxHalfSize = 3;
+    const double maxDt = 0.01;
 
-    Reflecting leftBoundary(0, Boundary::orientations::FIRST);
-    ReflectingSurfaceOpenSolution bottomBoundary(0, Boundary::orientations::FIRST);
+    RadialFirstPassage diff(solver, maxDt, depositionBoxHalfSize, getMFPTConstant(height, alpha, 0));
+    FixedSurface confSurface(solver, height);
 
-    solver.setBoundaries({{&leftBoundary, &rightBoundary}, {&bottomBoundary, &topBoundary}});
-
-    TrackLineAverage rightLineTracker(solver, 0, 0, boundaryDepth, true);
-    TrackLineAverage bottomLineTracker(solver, 0, 1, boundaryDepth, true);
-
-    solver.registerObserver(&rightLineTracker);
-    solver.registerObserver(&bottomLineTracker);
-
-    PartialBoundaryNeighbors rightPartialNeighbors(solver, rightLineTracker);
-    PartialBoundaryNeighbors bottomPartialNeighbors(solver, bottomLineTracker);
-    NoBoundaryNeighbors leftNoNeighbors(solver, 0, L-1, 0);
-    NoBoundaryNeighbors topNoNeighbors(solver, 0, W-1, 1);
-
-
-    solver.addLocalPotential(&rightPartialNeighbors);
-    solver.addLocalPotential(&bottomPartialNeighbors);
-    solver.addLocalPotential(&leftNoNeighbors);
-    solver.addLocalPotential(&topNoNeighbors);
-
-    RadialFirstPassage diff(solver, maxdt, halfSize, getMFPTConstant(h0, alpha, 0));
-
-    FixedSurface confinement(solver, h0);
-
-    solver.addConcentrationBoundary(1, Boundary::orientations::FIRST, omega);
-    solver.addConcentrationBoundary(1, Boundary::orientations::LAST, omegaEq);
-
-    Lattice lattice;
-    lattice.enableProgressReport();
-
-    lattice.addEvent(solver);
-    lattice.addEvent(confinement);
-    lattice.addEvent(diff);
+    Time time(solver);
 
     DumpSystem dumper(solver, interval, path);
 
@@ -89,6 +47,21 @@ int main(int argv, char **argc)
 
     StoreHeights storeHeights(solver, interval, simRoot);
     StoreParticles storeParticles(solver, diff, interval, simRoot);
+
+    Lattice lattice;
+
+    lattice.enableOutput(true, interval);
+    lattice.enableProgressReport();
+    lattice.enableEventValueStorage(true,
+                                    output,
+                                    "ignisSOS.ign",
+                                    "/tmp",
+                                    interval);
+
+    lattice.addEvent(solver);
+    lattice.addEvent(confSurface);
+    lattice.addEvent(diff);
+    lattice.addEvent(time);
 
     if (output == 1)
     {
@@ -101,15 +74,11 @@ int main(int argv, char **argc)
         lattice.addEvent(storeParticles);
     }
 
-    Time time(solver);
-    lattice.addEvent(time);
+    initializeSurface(solver, "flat");
 
-    lattice.enableEventValueStorage(true,
-                                    false,
-                                    "",
-                                    "",
-                                    interval);
+    //app specifics
 
+    const uint &size = getSetting<uint>(cfgRoot, "size");
     for (uint y = 0; y < size; ++y)
     {
         const uint xm = L/W*sqrt(size*size - y*y);
@@ -120,16 +89,39 @@ int main(int argv, char **argc)
         }
     }
 
-    //
+    Reflecting x0(0, Boundary::orientations::FIRST);
+    Reflecting x1(L-1, Boundary::orientations::LAST);
+
+    const uint stepDim = 1;
+    TrackLineAverage x0LineTracker(solver, 0, 0, boundaryDepth);
+    TrackLineAverage y0LineTracker(solver, 0, 1, boundaryDepth);
+
+    BlockByTracker y0(y0LineTracker);
+    Reflecting y1(W-1, Boundary::orientations::LAST);
+
+    solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
+
+    solver.registerPreNeighborObserver(&x0LineTracker);
+    solver.registerPreNeighborObserver(&y0LineTracker);
+
+    PartialBoundaryNeighbors x0PartialNeighbors(solver, x0LineTracker);
+    NoBoundaryNeighbors x1NoNeighbors(solver, 0, x1.location(), 0);
+
+    PartialBoundaryNeighbors y0PartialNeighbors(solver, y0LineTracker);
+    NoBoundaryNeighbors y1NoNeighbors(solver, 0, y1.location(), 1);
+
+    solver.addLocalPotential(&x0PartialNeighbors);
+    solver.addLocalPotential(&y0PartialNeighbors);
+    solver.addLocalPotential(&x1NoNeighbors);
+    solver.addLocalPotential(&y1NoNeighbors);
+
+    solver.addFluxBoundary(stepDim, Boundary::orientations::FIRST, flux);
+
     lattice.eventLoop(nCycles);
-    //
 
     simRoot["alpha"] = alpha;
-    simRoot["height"] = h0;
-
-    simRoot["omega"] = omega;
-    simRoot["omegaEq"] = omegaEq;
-
+    simRoot["flux"] = flux;
+    simRoot["height"] = height;
     simRoot["time"] = colvec(lattice.storedEventValues().col(0));
 
     return 0;

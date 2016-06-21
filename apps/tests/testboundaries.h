@@ -9,7 +9,7 @@
 
 #include "../../src/soskmc/sosdiffusionreaction.h"
 
-#include "../../src/soskmc/concentrationboundaryreaction.h"
+#include "../../src/soskmc/fluxboundaryreaction.h"
 
 //--gtest_filter=SOSkMCTest.boundaries
 TEST_F(SOSkMCTest, boundaries_blocked)
@@ -215,30 +215,34 @@ TEST_F(SOSkMCTest, boundaries_periodic)
 }
 
 
-//--gtest_filter=SOSkMCTest.boundaries_concentration
-TEST_F(SOSkMCTest, boundaries_concentration)
+//--gtest_filter=SOSkMCTest.boundaries_flux
+TEST_F(SOSkMCTest, boundaries_flux)
 {
     const uint L = 10;
-    const uint W = 10;
+    const uint W = 12;
     const double alpha = 1.0;
     const double gamma = 0;
     const double height = 10.3;
     const int iheight = (int)height;
 
     m_solver = new SOSSolver(L, W, alpha, gamma, true);
-    setBoundariesFromIDs(m_solver, {0, 0, 2, 2}, L, W);
+    setBoundariesFromIDs(m_solver, {0, 0, 0, 0}, L, W);
     m_pressureWallEvent = new FixedSurface(*m_solver, height);
     RadialFirstPassage *diff = new RadialFirstPassage(*m_solver, 0.01, 3, 0.1);
     m_diffusionEvent = diff;
+
+    EXPECT_EQ(solver().concentration(), solver().c0());
 
     initializeSurface(*m_solver, "flat");
 
     SetUp_yo();
     primeSolver();
 
-    ConcentrationBoundaryReaction r(0, 0, *m_solver, 0);
+    const double flux = 1.0;
+    m_solver->addFluxBoundary(0, Boundary::orientations::FIRST, flux);
+    const FluxBoundaryReaction &r = *m_solver->fluxBoundaryReactions().front();
 
-    EXPECT_EQ(W*(iheight-1), r.nBoundarySites());
+    EXPECT_EQ(W*(iheight - 1), r.nBoundarySites());
 
     uint xi;
     int h;
@@ -247,42 +251,100 @@ TEST_F(SOSkMCTest, boundaries_concentration)
         r.getBoundaryPosition(xi, h, n, iheight);
 
         EXPECT_EQ(n/(iheight - 1), xi);
+        EXPECT_EQ(1 + n%(iheight - 1), h);
     }
 
-    ConcentrationBoundaryReaction r2(0, 1, *m_solver, 0);
+    FluxBoundaryReaction r2(0, 1, *m_solver, 0);
 
-    EXPECT_EQ(W*(iheight-1), r2.nBoundarySites());
+    EXPECT_EQ(W*(iheight - 1), r2.nBoundarySites());
 
     for (uint n = 0; n < r2.nBoundarySites(); ++n)
     {
         r2.getBoundaryPosition(xi, h, n, iheight);
 
         EXPECT_EQ(n/(iheight - 1), xi);
+        EXPECT_EQ(1 + n%(iheight - 1), h);
     }
 
-    ConcentrationBoundaryReaction r3(1, 0, *m_solver, 0);
+    FluxBoundaryReaction r3(1, 0, *m_solver, 0);
 
-    EXPECT_EQ(L*(iheight-1), r3.nBoundarySites());
+    EXPECT_EQ(L*(iheight - 1), r3.nBoundarySites());
 
     for (uint n = 0; n < r3.nBoundarySites(); ++n)
     {
         r3.getBoundaryPosition(xi, h, n, iheight);
 
         EXPECT_EQ(n/(iheight - 1), xi);
+        EXPECT_EQ(1 + n%(iheight - 1), h);
     }
 
-    ConcentrationBoundaryReaction r4(1, 1, *m_solver, 0);
+    FluxBoundaryReaction r4(1, 1, *m_solver, 0);
 
-    EXPECT_EQ(L*(iheight-1), r4.nBoundarySites());
+    EXPECT_EQ(L*(iheight - 1), r4.nBoundarySites());
 
     for (uint n = 0; n < r4.nBoundarySites(); ++n)
     {
         r4.getBoundaryPosition(xi, h, n, iheight);
 
         EXPECT_EQ(n/(iheight - 1), xi);
+        EXPECT_EQ(1 + n%(iheight - 1), h);
     }
 
+#ifndef NDEBUG
+    return;
+#endif
 
+    uint nReactionsSelected;
+    const uint repeats = 1000000;
+    for (int hi = 0; hi < iheight; ++hi)
+    {
+        for (uint y = 0; y < W; ++y)
+        {
+            solver().setHeight(0, y, hi, false);
+        }
+
+        solver().initialize();
+
+        nReactionsSelected = 0;
+
+        for (uint n = 0; n < repeats; ++n)
+        {
+            solver().execute();
+
+            if (solver().selectedReaction() == &r)
+            {
+                nReactionsSelected++;
+            }
+
+            if (n % 100 == 0)
+            {
+                cout.flush();
+                cout << "\r" << n << "/" << repeats;
+            }
+        }
+
+        const double ratio = nReactionsSelected/(double)repeats;
+
+        const uint Nb = W*(iheight - hi - 1);
+
+        EXPECT_EQ(Nb, r.nBoundarySites());
+
+        const double calculatedRate = ratio*solver().totalRate();
+        const double expectedRate = flux*Nb*solver().c0()*diff->DScaled();
+
+        if (expectedRate == 0)
+        {
+            EXPECT_EQ(0, calculatedRate);
+        }
+
+        else
+        {
+            const double relError = fabs(calculatedRate - expectedRate)/expectedRate;
+            EXPECT_NEAR(0, relError, 1E-2) << hi << " " << iheight
+                                           << " " << expectedRate
+                                           << " != " << calculatedRate;
+        }
+    }
 }
 
 

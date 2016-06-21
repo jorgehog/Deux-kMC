@@ -133,7 +133,7 @@ int main(int argv, char** argc)
 
     if (concentrationBoundary == 1)
     {
-        solver.addConcentrationBoundary(0, Boundary::orientations::FIRST, supersaturation);
+        solver.addFluxBoundary(0, Boundary::orientations::FIRST, supersaturation);
     }
 
     // Selecting confinement model

@@ -1,7 +1,7 @@
 #include "rdlsurface.h"
 
 #include "../../dissolutiondeposition.h"
-#include "../../concentrationboundaryreaction.h"
+#include "../../fluxboundaryreaction.h"
 #include "rdlpotential.h"
 
 RDLSurface::RDLSurface(SOSSolver &solver,

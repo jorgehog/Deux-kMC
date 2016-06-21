@@ -60,7 +60,7 @@ void Multiscale::initializeObserver(const Subjects &subject)
 
 }
 
-void Multiscale::executeConcentrationBoundaryReaction(const uint x, const uint y, const double z)
+void Multiscale::executeFluxBoundaryReaction(const uint x, const uint y, const double z)
 {
     (void) x;
     (void) y;

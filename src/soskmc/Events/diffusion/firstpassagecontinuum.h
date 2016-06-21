@@ -63,5 +63,9 @@ private:
     field<field<pair<int, int>>> m_allSimBoxes;
 
 
+    // Observer interface
+public:
+    void initializeObserver(const Subjects &subject);
+
 };
 
