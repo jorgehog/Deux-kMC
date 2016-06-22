@@ -4586,3 +4586,63 @@ class FelixParticleHDyn(DCVizPlotter):
 
         self.setlims(self.xfig, xdata, 0)
         self.setlims(self.yfig, ydata, 1)
+
+
+
+class FelixParticleHDynCav(DCVizPlotter):
+
+    nametag = "Fcav_evo_(\d+)\.*"
+    # transpose = True
+
+    isFamilyMember = True
+    loadSequential = True
+    hugifyFonts = True
+    ziggyMagicNumber = 250
+
+    ymins = [None, None]
+    ymaxs = [None, None]
+
+    figMap = {
+        "f1": ["xfig", "hfig"]
+    }
+
+    def setlims(self, fig, data, idx, maxpad=0, minpad=0):
+        ymin = min(data)
+        ymax = max(data)
+
+        if not self.ymaxs[idx]:
+            self.ymaxs[idx] = ymax
+            self.ymins[idx] = ymin
+        else:
+            if ymin < self.ymins[idx]:
+                self.ymins[idx] = ymin
+            if ymax > self.ymaxs[idx]:
+                self.ymaxs[idx] = ymax
+
+        fig.set_ylim(self.ymins[idx] - minpad, self.ymaxs[idx] + maxpad)
+
+    def plot(self, data):
+
+        cdata, hdata = data
+
+        self.xfig.plot(cdata, "k-s")
+        self.xfig.set_title("step %d" % self.getNumberForSort(self.filename))
+        self.xfig.set_ylabel(r"$P(x)$")
+        self.xfig.set_xticklabels([])
+
+        self.hfig.plot(hdata, "k-s")
+        self.hfig.set_xlabel(r"$x$")
+        self.hfig.set_ylabel(r"$h(x)$")
+
+
+        self.setlims(self.xfig, cdata, 0)
+        self.setlims(self.hfig, hdata, 1, 1)
+
+        # def f(i, v):
+        #     if i == len(cdata) - 1:
+        #         return r"$W$"
+        #     else:
+        #         return ""
+        #
+        # self.hfig.xaxis.set_major_formatter(FuncFormatter(f))
+
