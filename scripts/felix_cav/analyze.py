@@ -30,35 +30,29 @@ def main():
 
     nbins = 20
 
-    omegas = []
+    fluxes = []
     for data, L, W, run_id in parser:
 
-        omega = data.attrs["omega"]
+        flux = data.attrs["flux"]
 
-        if omega not in omegas:
-            omegas.append(omega)
+        if flux not in fluxes:
+            fluxes.append(flux)
 
-    omegas = sorted(omegas)
+    fluxes = sorted(fluxes)
 
-    hmat = np.zeros(shape=(len(omegas), nbins, nbins))
+    hmat = np.zeros(shape=(len(fluxes), nbins, nbins))
     dx = L/nbins
     dy = W/nbins
 
     for data, L, W, run_id in parser:
 
-        omega = data.attrs["omega"]
-        alpha = data.attrs["alpha"]
+        flux = data.attrs["flux"]
 
-        if alpha != 3:
-            continue
+        io = fluxes.index(flux)
 
-        io = omegas.index(omega)
-        try:
-            conf_height = data.attrs["height"]
-        except:
-            conf_height = data.attrs["h0"]
+        conf_height = data.attrs["height"]
 
-        pathname = "felix_o%.2f_h%d" % (omega, conf_height)
+        pathname = "felix_o%.2f_h%d" % (flux, conf_height)
 
         dir = join(masterdir, pathname)
         hdir = join(dir, "x")

@@ -4,8 +4,7 @@
 
 int main(int argv, char **argc)
 {
-//    rng.initialize(time(nullptr));
-    rng.initialize(123);
+    rng.initialize(time(nullptr));
 
     string cfgName = getCfgName(argv, argc, "felixexp");
 
