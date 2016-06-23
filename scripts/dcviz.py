@@ -4597,7 +4597,7 @@ class FelixParticleHDynCav(DCVizPlotter):
     isFamilyMember = True
     loadSequential = True
     hugifyFonts = True
-    ziggyMagicNumber = 250
+    ziggyMagicNumber = 100
 
     ymins = [None, None]
     ymaxs = [None, None]

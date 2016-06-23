@@ -98,19 +98,20 @@ int main(int argv, char** argc)
     Periodic x1(L, Boundary::orientations::LAST);
 
     BlockByTracker y0(y0AreaTracker);
-    Reflecting y1(W-1, Boundary::orientations::LAST);
+    ConstantHeight y1(0, W-1, Boundary::orientations::LAST);
 
     solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
 
     solver.registerPreNeighborObserver(&y0AreaTracker);
 
     PartialBoundaryNeighbors y0PartialNeighbors(solver, y0AreaTracker);
-    NoBoundaryNeighbors y1NoNeighbors(solver, 0, y1.location(), stepDim);
 
     solver.addLocalPotential(&y0PartialNeighbors);
-    solver.addLocalPotential(&y1NoNeighbors);
 
-    solver.addFluxBoundary(stepDim, Boundary::orientations::FIRST, flux);
+    const double eqFlux = 1.0;
+    solver.addFluxBoundary(stepDim, Boundary::orientations::FIRST, flux);    
+    solver.addFluxBoundary(stepDim, Boundary::orientations::LAST, eqFlux);
+
 
     lattice.eventLoop(nCycles);
 

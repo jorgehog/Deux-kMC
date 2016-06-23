@@ -96,7 +96,7 @@ int main(int argv, char **argc)
     TrackLineAverage y0LineTracker(solver, 0, 1, boundaryDepth);
 
     BlockByTracker y0(y0LineTracker);
-    Reflecting y1(W-1, Boundary::orientations::LAST);
+    ConstantHeight y1(0, W-1, Boundary::orientations::LAST);
 
     solver.setBoundaries({{&x0, &x1}, {&y0, &y1}});
 
@@ -107,14 +107,14 @@ int main(int argv, char **argc)
     NoBoundaryNeighbors x1NoNeighbors(solver, 0, x1.location(), 0);
 
     PartialBoundaryNeighbors y0PartialNeighbors(solver, y0LineTracker);
-    NoBoundaryNeighbors y1NoNeighbors(solver, 0, y1.location(), 1);
 
     solver.addLocalPotential(&x0PartialNeighbors);
     solver.addLocalPotential(&y0PartialNeighbors);
     solver.addLocalPotential(&x1NoNeighbors);
-    solver.addLocalPotential(&y1NoNeighbors);
 
+    const double eqFlux = 1.0;
     solver.addFluxBoundary(stepDim, Boundary::orientations::FIRST, flux);
+    solver.addFluxBoundary(stepDim, Boundary::orientations::LAST, eqFlux);
 
     lattice.eventLoop(nCycles);
 

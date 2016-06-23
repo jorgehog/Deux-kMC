@@ -41,8 +41,8 @@ def main():
     fluxes = sorted(fluxes)
 
     hmat = np.zeros(shape=(len(fluxes), nbins, nbins))
-    dx = L/nbins
-    dy = W/nbins
+    dx = L/float(nbins)
+    dy = W/float(nbins)
 
     for data, L, W, run_id in parser:
 
