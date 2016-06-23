@@ -112,7 +112,7 @@ int main(int argv, char **argc)
     solver.addLocalPotential(&y0PartialNeighbors);
     solver.addLocalPotential(&x1NoNeighbors);
 
-    const double eqFlux = 1.0;
+    const double eqFlux = 0.5;
     solver.addFluxBoundary(stepDim, Boundary::orientations::FIRST, flux);
     solver.addFluxBoundary(stepDim, Boundary::orientations::LAST, eqFlux);
 
