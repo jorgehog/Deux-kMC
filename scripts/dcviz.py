@@ -4646,3 +4646,15 @@ class FelixParticleHDynCav(DCVizPlotter):
         #
         # self.hfig.xaxis.set_major_formatter(FuncFormatter(f))
 
+
+class FelixSeqC(DCVizPlotter):
+    nametag = "FelixSeqC\_(.*)\.npy"
+    isFamilyMember = True
+
+    def plot(self, data):
+        t = self.get_family_member_data(data, "t")
+        c = self.get_family_member_data(data, "c")
+        h = self.get_family_member_data(data, "h")
+
+        for ci in h[::100]:
+            self.subfigure.plot(ci)
