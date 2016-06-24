@@ -12,10 +12,10 @@ def main():
 
     controller, path, app, cfg, n_procs = parse_input(sys.argv)
 
-    omegas = ParameterSet(cfg, "omega\s*=\s*(.*)\;", check=False)
-    omegas.initialize_set(np.linspace(0, 1, 6))
+    fluxes = ParameterSet(cfg, "flux\s*=\s*(.*)\;")
+    fluxes.initialize_set(np.linspace(1.0, 3.0, 9))
 
-    controller.register_parameter_set(omegas)
+    controller.register_parameter_set(fluxes)
 
     controller.run(run_kmc, path, app, cfg, ask=not controller.use_mpi, n_procs=n_procs, shuffle=True)
 

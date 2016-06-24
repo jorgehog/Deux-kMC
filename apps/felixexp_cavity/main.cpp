@@ -108,7 +108,7 @@ int main(int argv, char** argc)
 
     solver.addLocalPotential(&y0PartialNeighbors);
 
-    const double eqFlux = 0.5;
+    const double eqFlux = 0.75;
     solver.addFluxBoundary(stepDim, Boundary::orientations::FIRST, flux);    
     solver.addFluxBoundary(stepDim, Boundary::orientations::LAST, eqFlux);
 
