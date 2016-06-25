@@ -2,47 +2,17 @@ import sys
 import os
 import numpy as np
 from os.path import join
+from matplotlib.pylab import *
 
 
 sys.path.append(join(os.getcwd(), ".."))
 
 from parse_h5_output import ParseKMCHDF5
 
+from intercombinatorzor import ICZ
 
-def make_xyz(dirname, heights, idx, conf_height):
-    n_xyz = 100
-    l = len(heights)
-    every = l/n_xyz
-
-    for i, key in enumerate(idx):
-
-        if i % every != 0:
-            continue
-
-        hi = heights[key][()].transpose()
-
-        L, W = hi.shape
-        bottom = hi.min()
-        xyz = ""
-        n = 0
-
-        for x in range(L):
-            for y in range(W):
-                h = hi[x, y]
-
-                for z in range(bottom, h+1):
-                    xyz += "0 %d %d %d\n" % (x, y, z)
-                    n += 1
-
-                xyz += "1 %d %d %g\n" % (x, y, conf_height)
-
-                n += 1
-
-        xyz_file = "%d\n---\n%s" % (n, xyz)
-
-        with open("%s/surfaces%d.xyz" % (dirname, i/every), 'w') as f:
-            f.write(xyz_file)
-
+def find_front_pos(heights):
+    return heights.mean()/float(heights.shape[1])
 
 def main():
 
@@ -51,9 +21,9 @@ def main():
     parser = ParseKMCHDF5(input_file)
 
     def skip(data):
-        return data.attrs["flux"] != 2.00
+        return data.attrs["flux"] != 2.40
 
-    nbins = 30
+    nbins = 10
     every = 1
 
     l = None
@@ -68,10 +38,10 @@ def main():
         n_entries += 1
 
     cmat = np.zeros(shape=(l/every, nbins))
-    hmat = np.zeros(shape=(l/every, nbins))
     dy = W/float(nbins)
 
-    t_tot = 0
+    combinator = ICZ("Time", "ys")
+
     entry_count = 0
     for data, L, W, run_id in parser:
 
@@ -87,17 +57,11 @@ def main():
 
         time = data["time"][()]
 
+        ys_vec = np.zeros(len(time)/every)
+
         #Shift with 1 to translate from starting time till ending times
-        t_tot += time[::every] + time[1]
         t_prev = 0
-
-        if entry_count == 0:
-            xyz_dir = "/tmp/first_cav_front"
-            if not os.path.exists(xyz_dir):
-                os.mkdir(xyz_dir)
-            make_xyz(xyz_dir, stored_heights, stored_heights_indices, conf_height)
-
-        for hi, heights_id in enumerate(stored_heights):
+        for hi, heights_id in enumerate(stored_heights_indices):
 
             if hi % every != 0:
                 continue
@@ -113,37 +77,42 @@ def main():
 
             heights = stored_heights[heights_id][()].transpose()
 
-            for x, y, _ in particles:
-                xl = round(x)
-                yl = round(y)
-                dh = conf_height - heights[xl, yl] - 1
+            ys = find_front_pos(heights)
+            ys_vec[hi/every] = ys
 
-                cmat[hi/every, int((y+0.5)/dy)] += dt/dh
-
-            for x in range(L):
-                for y in range(W):
-                    height = heights[x, y]
-                    hmat[hi/every, y/dy] += dt*height
+            #
+            # for x, y, _ in particles:
+            #     xl = round(x)
+            #     yl = round(y)
+            #     dh = conf_height - heights[xl, yl] - 1
+            #
+            #     cmat[hi/every, int((y+0.5)/dy)] += dt/dh
+            #
+            # for x in range(L):
+            #     for y in range(W):
+            #         height = heights[x, y]
+            #         cmat[hi/every, y/dy] += dt*height
 
             if hi % 100 == 0:
                 sys.stdout.flush()
                 print "\r%d/%d" % (hi, len(stored_heights)),
 
         entry_count += 1
+        combinator.feed(time[::every], ys_vec)
 
         sys.stdout.flush()
+        print
         print "\rfin %d / %d" % (entry_count, n_entries)
+        plot(time[::every], ys_vec)
+
+        break
     print
+    show()
 
-    for i, ti in enumerate(t_tot):
-        cmat[i] /= ti
-        hmat[i] /= ti
+    ti, ys_veci = combinator.intercombine("Time", "ys")
 
-    t_avg = t_tot/entry_count
-
-    np.save("/tmp/FelixSeqC_t.npy", t_avg)
-    np.save("/tmp/FelixSeqC_c.npy", cmat)
-    np.save("/tmp/FelixSeqC_h.npy", hmat)
+    np.save("/tmp/FelixSeqC_t.npy", ti)
+    np.save("/tmp/FelixSeqC_ys.npy", ys_veci)
 
 if __name__ == "__main__":
     main()

@@ -4653,8 +4653,108 @@ class FelixSeqC(DCVizPlotter):
 
     def plot(self, data):
         t = self.get_family_member_data(data, "t")
-        c = self.get_family_member_data(data, "c")
-        h = self.get_family_member_data(data, "h")
+        ys = self.get_family_member_data(data, "ys")
+
+        self.subfigure.plot(t, ys)
 
 
-        self.subfigure.plot(c.mean(axis=0))
+class ss_front(DCVizPlotter):
+    nametag = "ss_edges\.npy"
+    hugifyFonts = True
+    labelSize = 35
+    ticklabelSize = 25
+
+    def plot(self, data):
+
+        try:
+            #103.5 0 16.5
+            x = float(self.argv[0])
+            y = float(self.argv[1])
+            r = float(self.argv[2])
+
+            theta = np.linspace(0, 2*np.pi, 1000)
+            xs = x + r*np.cos(theta)
+            ys = y + r*np.sin(theta)
+            self.subfigure.plot(xs, ys, "r-")
+        except:
+            pass
+
+        L, W = data.shape
+
+        ys = []
+        xs = []
+        end = 0
+        endc = 0
+        for y in range(W):
+            m = 0
+            c = 0
+            for x in range(L):
+                if data[x, y] != 0:
+                    m += data[x, y]*x
+                    c += data[x, y]
+            if c == 0:
+                break
+
+            ys.append(m/c)
+            xs.append(y)
+
+            if data[0, y] != 0:
+                end += data[0, y]*y
+                endc += data[0, y]
+        #
+        # ys.append(0)
+        # xs.append(end/endc)
+        # print xs[-2:], ys[-2:]
+
+        self.subfigure.pcolor(data, cmap='gist_earth_r')
+
+        # self.subfigure.plot(xs, ys, "k--", linewidth=3)
+
+        self.subfigure.set_xlabel(r"$(x_s - \Delta T_s v_s)/L_x$")
+        self.subfigure.set_ylabel(r"$y_s/L_y$")
+        self.subfigure.xaxis.set_major_formatter(FuncFormatter(lambda v, _: r'$%g$' % (v/float(W))))
+        self.subfigure.yaxis.set_major_formatter(FuncFormatter(lambda v, _: r'$%g$' % (v/float(L))))
+
+        self.subfigure.set_xlim(0, 125)
+        self.subfigure.set_ylim(0, 35)
+
+
+class ss_felix(DCVizPlotter):
+    nametag = "ss_felix_(.*)\.npy"
+    isFamilyMember = True
+    hugifyFonts = True
+
+    figMap = {"fig": ["subfigure_x", "subfigure_v"]}
+
+    fig_size = [6, 10]
+    labelSize = 35
+    ticklabelSize = 25
+
+    def plot(self, data):
+
+        L = 200
+
+        t = self.get_family_member_data(data, "t")
+        x = self.get_family_member_data(data, "x")
+        tslice = self.get_family_member_data(data, "tslice")
+        xslice = self.get_family_member_data(data, "fit")
+        v = self.get_family_member_data(data, "v")
+        vslice = self.get_family_member_data(data, "vfit")
+
+        self.subfigure_x.plot(t, x/float(L), '--ks')
+        self.subfigure_x.plot(tslice, xslice/L, "r-", linewidth=2)
+        self.subfigure_x.set_ylabel(r'$x_s/L_x$')
+        self.subfigure_x.set_xticklabels([])
+
+        self.subfigure_v.plot(t, v/L, '--ks')
+        self.subfigure_v.plot(tslice, vslice/L, 'r-', linewidth=2)
+        self.subfigure_v.set_xlabel(r'$t/t_\mathrm{end}$')
+        self.subfigure_v.set_ylabel(r'$v_xt_\mathrm{end}/L_x$')
+        self.subfigure_v.text(tslice[-1]+0.05, vslice.mean()/L,
+                              r"$v_s$",
+                              verticalalignment='center',
+                              horizontalalignment='left',
+                              fontsize=30)
+
+        self.subfigure_x.set_ylim(0, 1)
+
