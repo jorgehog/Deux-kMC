@@ -4656,5 +4656,5 @@ class FelixSeqC(DCVizPlotter):
         c = self.get_family_member_data(data, "c")
         h = self.get_family_member_data(data, "h")
 
-        for ci in h:
-            self.subfigure.plot(ci)
+
+        self.subfigure.plot(c.mean(axis=0))

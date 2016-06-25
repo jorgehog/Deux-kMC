@@ -9,6 +9,41 @@ sys.path.append(join(os.getcwd(), ".."))
 from parse_h5_output import ParseKMCHDF5
 
 
+def make_xyz(dirname, heights, idx, conf_height):
+    n_xyz = 100
+    l = len(heights)
+    every = l/n_xyz
+
+    for i, key in enumerate(idx):
+
+        if i % every != 0:
+            continue
+
+        hi = heights[key][()].transpose()
+
+        L, W = hi.shape
+        bottom = hi.min()
+        xyz = ""
+        n = 0
+
+        for x in range(L):
+            for y in range(W):
+                h = hi[x, y]
+
+                for z in range(bottom, h+1):
+                    xyz += "0 %d %d %d\n" % (x, y, z)
+                    n += 1
+
+                xyz += "1 %d %d %g\n" % (x, y, conf_height)
+
+                n += 1
+
+        xyz_file = "%d\n---\n%s" % (n, xyz)
+
+        with open("%s/surfaces%d.xyz" % (dirname, i/every), 'w') as f:
+            f.write(xyz_file)
+
+
 def main():
 
     input_file = sys.argv[1]
@@ -16,10 +51,10 @@ def main():
     parser = ParseKMCHDF5(input_file)
 
     def skip(data):
-        return data.attrs["flux"] != 1.25
+        return data.attrs["flux"] != 2.00
 
-    nbins = 40
-    every = 1000
+    nbins = 30
+    every = 1
 
     l = None
     n_entries = 0
@@ -45,9 +80,10 @@ def main():
 
         conf_height = data.attrs["height"]
 
-
         stored_heights = data["stored_heights"]
         stored_particles = data["stored_particles"]
+
+        stored_heights_indices = sorted(stored_heights, key=lambda x: int(x))
 
         time = data["time"][()]
 
@@ -55,7 +91,13 @@ def main():
         t_tot += time[::every] + time[1]
         t_prev = 0
 
-        for hi, heights_id in enumerate(sorted(stored_heights, key=lambda x: int(x))):
+        if entry_count == 0:
+            xyz_dir = "/tmp/first_cav_front"
+            if not os.path.exists(xyz_dir):
+                os.mkdir(xyz_dir)
+            make_xyz(xyz_dir, stored_heights, stored_heights_indices, conf_height)
+
+        for hi, heights_id in enumerate(stored_heights):
 
             if hi % every != 0:
                 continue
@@ -87,30 +129,7 @@ def main():
                 sys.stdout.flush()
                 print "\r%d/%d" % (hi, len(stored_heights)),
 
-        xyz = ""
-        n = 0
-
-        bottom = heights.min()
-
-        for x in range(L):
-            for y in range(W):
-                h = heights[x, y]
-
-                for z in range(bottom, h+1):
-                    xyz += "0 %d %d %d\n" % (x, y, z)
-                    n += 1
-
-                xyz += "1 %d %d %g\n" % (x, y, conf_height)
-
-                n += 1
-
-        xyz_file = "%d\n---\n%s" % (n, xyz)
-
-        with open("/tmp/surfaces%d.xyz" % entry_count, 'w') as f:
-            f.write(xyz_file)
-
         entry_count += 1
-
 
         sys.stdout.flush()
         print "\rfin %d / %d" % (entry_count, n_entries)
