@@ -4646,6 +4646,7 @@ class FelixParticleHDynCav(DCVizPlotter):
         #
         # self.hfig.xaxis.set_major_formatter(FuncFormatter(f))
 
+import finitediff
 
 class FelixSeqC(DCVizPlotter):
     nametag = "FelixSeqC\_(.*)\.npy"
@@ -4656,20 +4657,29 @@ class FelixSeqC(DCVizPlotter):
 
     figMap = {"fig": ["subfigure",
                       "subfigurev"],
+              "logfig": ["lsubfigure",
+                      "lsubfigurev"],
               "xvfig": "subfigurexv",
               "cfig": "subfigureC"}
 
-    specific_fig_size = {"fig": [6, 10]}
+    specific_fig_size = {"fig": [6, 10],
+                         "logfig": [6, 10]}
 
     @staticmethod
     def get_vs(t, ys):
+        dt = t[1] - t[0]
+        print dt
+
         vs = np.zeros_like(ys)
 
-        vs[0] = (ys[1] - ys[0])/(t[1] - t[0])
-        vs[-1] = (ys[-1] - ys[-2])/(t[-1] - t[-2])
+        vs[0] = (ys[1] - ys[0])/dt
+        vs[-1] = (ys[-1] - ys[-2])/dt
 
-        for i in range(1, len(ys) - 1):
-            vs[i] = (ys[i+1] - ys[i-1])/(t[i+1] - t[i-1])
+        vs[1] = (ys[2] - ys[0])/(2*dt)
+        vs[-2] = (ys[-1] - ys[-3])/(2*dt)
+
+        for i in range(2, len(ys) - 2):
+            vs[i] = (ys[i-2]-ys[i+2]+8*(ys[i+1] - ys[i-1]))/(12*dt)
 
         return vs
 
@@ -4694,18 +4704,32 @@ class FelixSeqC(DCVizPlotter):
         t /= t[-1]
         vs = self.get_vs(t, ys)
 
+        W = np.where(t < 0.3)
+        sy, i, _, _, _ = linregress(t[W], np.log(abs(1-ys[W]/ys_eq)))
+        sv, i, _, _, _ = linregress(t[W], np.log(abs(vs[W])))
+        print sv/sy, sv, sy
+
         self.subfigure.plot(t, ys, "r-", **my_props['fmt'])
-        # self.subfigure.set_xlabel(r'$t/t_\mathrm{end}$')
         self.subfigure.set_xticklabels([])
         self.subfigure.set_ylabel(r'$y_s/L_y$')
         self.subfigure.set_ybound(0)
         self.subfigure.text(0.65, ys_eq - 0.075, r"$\langle y_s\rangle/L_y$", fontsize=30)
 
-
         self.subfigurev.plot(t, vs, "r-", **my_props['fmt'])
         self.subfigurev.set_xlabel(r'$t/t_\mathrm{end}$')
         self.subfigurev.set_ylabel(r'$v_yt_\mathrm{end}/L_y$')
         self.subfigurev.set_ybound(-0.5)
+
+        self.lsubfigure.semilogy(t, abs(1-ys/ys_eq), "r-", **my_props['fmt'])
+        self.lsubfigure.set_xticklabels([])
+        self.lsubfigure.set_ylabel(r'$|1-y_s/\langle y_s\rangle|$')
+        self.lsubfigure.set_xbound(t.min())
+        self.lsubfigure.set_ybound(1E-4)
+
+        self.lsubfigurev.semilogy(t, abs(vs), "r-", **my_props['fmt'])
+        self.lsubfigurev.set_xlabel(r'$t/t_\mathrm{end}$')
+        self.lsubfigurev.set_ylabel(r'$|v_yt_\mathrm{end}/L_y|$')
+        self.lsubfigurev.set_xbound(t.min())
 
         self.subfigurexv.plot(ys/ys_eq, vs, "r--", **my_props['fmt'])
         self.subfigurexv.plot(ys/ys_eq, vs, "ks", **my_props['fmt'])
@@ -4714,11 +4738,11 @@ class FelixSeqC(DCVizPlotter):
         self.subfigurexv.set_xlim(self.subfigurexv.get_xlim()[0], 1)
         self.subfigurexv.set_ybound(0)
 
-        self.subfigureC.plot(np.arange(len(C))/float(len(C)-1)/ys_eq, C*100, "r--", **my_props['fmt'])
-        self.subfigureC.plot(np.arange(len(C))/float(len(C)-1)/ys_eq, C*100, "ks", **my_props['fmt'])
-        self.subfigureC.set_xlabel(r'$y/\langle y_s \rangle$')
-        self.subfigureC.set_ylabel(r'$10^2\langle C(y/\langle y_s \rangle)\rangle$')
-        self.subfigureC.set_xlim(0, 1/ys_eq)
+        self.subfigureC.plot(np.arange(len(C))/float(len(C)-1), C*100, "r--", **my_props['fmt'])
+        self.subfigureC.plot(np.arange(len(C))/float(len(C)-1), C*100, "ks", **my_props['fmt'])
+        self.subfigureC.set_xlabel(r'$y/L_y$')
+        self.subfigureC.set_ylabel(r'$10^2\langle C(y/L_y)\rangle$')
+        self.subfigureC.set_xlim(0, 1)
 
 class ss_front(DCVizPlotter):
     nametag = "ss_edges\.npy"
