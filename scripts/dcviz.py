@@ -3543,20 +3543,30 @@ class ExtraNeighbor(DCVizPlotter):
 
     figMap = {"f2" : "subfigure11",
               "f3" : "subfigure21",
-              "f4" : "subfigure31"}
+              "f4" : "subfigure31",
+              "p2" : "psubfigure11",
+              "p3" : "psubfigure21",
+              "p4" : "psubfigure31"}
 
     hugifyFonts = True
 
-    specific_fig_size = {"f2": [4.5, 5],
-                         "f3": [3.6, 5],
-                         "f4": [5, 5]}
+    sizes = [[4.5, 5],
+             [3.6, 5],
+             [5, 5]]
+
+    specific_fig_size = {"f2": sizes[0],
+                         "f3": sizes[1],
+                         "f4": sizes[2],
+                         "p2": sizes[0],
+                         "p3": sizes[1],
+                         "p4": sizes[2]}
 
     def adjust(self):
         for figname in self.figure_names:
-            if figname in ["f2", "f5"]:
+            if figname in ["f2", "f5", "p2", "p5"]:
                 self.adjust_maps[figname]["right"] = 0.97
                 self.adjust_maps[figname]["left"] = 0.23
-            elif figname in ["f3", "f6"]:
+            elif figname in ["f3", "f6", "p3", "p6"]:
                 self.adjust_maps[figname]["right"] = 0.97
                 self.adjust_maps[figname]["left"] = 0.03
             else:
@@ -3573,6 +3583,7 @@ class ExtraNeighbor(DCVizPlotter):
         alphas = self.get_family_member_data(data, "alphas")
         F0s = self.get_family_member_data(data, "F0s")
         cmat = self.get_family_member_data(data, "cmat")
+        pmat = self.get_family_member_data(data, "pmat")
 
         xes = []
         for x in range(1, len(alphas), 2):
@@ -3584,46 +3595,51 @@ class ExtraNeighbor(DCVizPlotter):
 
         for is0, s0 in enumerate(s0s):
 
-            C = cmat[is0, :, :]
+            mats = [cmat, pmat]
+            vmaxes = [1, 3]
+            for i, id in enumerate(["", "p"]):
+                M = mats[i][is0, :, :]
 
-            sfig = eval("self.subfigure%d1" % (is0+1))
-            sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
-                
-            im = sfig.pcolor(C.transpose(), vmin=0, vmax=1, cmap="gist_earth_r")
-            
-            fail = np.where(C == -1)
+                sfig = eval("self.%ssubfigure%d1" % (id, is0+1))
 
-            for y, x in zip(*fail):
-                sfig.scatter(x + 0.5, y + 0.5, c='k', marker='x')
+                sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
 
-            ax = sfig.axes
-            ax.set_xticks(xes)
-            ax.set_xticklabels([r"$%.1f$" % alphas[np.floor(ai)] for ai in ax.get_xticks()], minor=False)
-            ax.set_yticks(fes)
+                im = sfig.pcolor(M.transpose(), vmin=0, vmax=vmaxes[i], cmap="gist_earth_r")
 
-            if is0 == 0:
-                label = r"$F_0/E_bA$"
-                sfig.set_ylabel(label)
+                fail = np.where(M == -1)
 
-                ax.set_yticklabels([r"$%.2f$" % F0s[np.floor(fi)] for fi in ax.get_yticks()], minor=False)
+                for y, x in zip(*fail):
+                    sfig.scatter(x + 0.5, y + 0.5, c='k', marker='x')
 
-            else:
-                sfig.yaxis.set_ticklabels([])
+                ax = sfig.axes
+                ax.set_xticks(xes)
+                ax.set_xticklabels([r"$%.1f$" % alphas[np.floor(ai)] for ai in ax.get_xticks()], minor=False)
+                ax.set_yticks(fes)
 
-            label = r"$E_b/kT$"
-            sfig.set_xlabel(label)
+                if is0 == 0:
+                    label = r"$F_0/E_bA$"
+                    sfig.set_ylabel(label)
 
-            sfig.set_xlim(0, len(alphas))
-            sfig.set_ylim(0, len(F0s))
-       
+                    ax.set_yticklabels([r"$%.2f$" % F0s[np.floor(fi)] for fi in ax.get_yticks()], minor=False)
+
+                else:
+                    sfig.yaxis.set_ticklabels([])
+
+                label = r"$E_b/kT$"
+                sfig.set_xlabel(label)
+
+                sfig.set_xlim(0, len(alphas))
+                sfig.set_ylim(0, len(F0s))
+
         pos = [0.78, 0.18, 0.05, 0.7]
-        cbar_ax = self.f4.add_axes(pos)
-       
         clabel = r'$\rho_\mathrm{WV}$'
-        cbar_ax.set_title(clabel, position=(0, -0.09), horizontalalignment="left", verticalalignment="center", transform=cbar_ax.transAxes)
-       
-        self.f4.colorbar(im, cax=cbar_ax)
-       
+        for f in [self.f4, self.p4]:
+
+            cbar_ax = f.add_axes(pos)
+            cbar_ax.set_title(clabel, position=(0, -0.09), horizontalalignment="left", verticalalignment="center", transform=cbar_ax.transAxes)
+
+            f.colorbar(im, cax=cbar_ax)
+
 
 class GPlots(DCVizPlotter):
 
