@@ -3585,6 +3585,23 @@ class ExtraNeighbor(DCVizPlotter):
         cmat = self.get_family_member_data(data, "cmat")
         pmat = self.get_family_member_data(data, "pmat")
 
+        K, L, M = pmat.shape
+
+        for k in range(K):
+            for l in range(L):
+                for m in range(M):
+                    pmat[k, l, m] = round(pmat[k, l, m])
+
+        desc = [r"$\mathrm{\underline{P}its}$",
+                r"$\mathrm{\underline{B}ands}$",
+                r"$\mathrm{\underline{I}slands}$"]
+
+        x_loc = len(alphas)-6
+        y_locs = [6, 4, 2]
+
+        for i, y_loc in enumerate(y_locs):
+            pmat[-1, x_loc, y_loc] = 3 - i
+
         xes = []
         for x in range(1, len(alphas), 2):
             xes.append(x + 0.5)
@@ -3593,10 +3610,11 @@ class ExtraNeighbor(DCVizPlotter):
         for y in range(0, len(F0s), 3):
             fes.append(y+0.5)
 
-        for is0, s0 in enumerate(s0s):
+        mats = [cmat, pmat]
+        vmaxes = [1, 3/cmat.max()]
 
-            mats = [cmat, pmat]
-            vmaxes = [1, 3]
+        ims = [None, None]
+        for is0, s0 in enumerate(s0s):
             for i, id in enumerate(["", "p"]):
                 M = mats[i][is0, :, :]
 
@@ -3604,12 +3622,14 @@ class ExtraNeighbor(DCVizPlotter):
 
                 sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
 
-                im = sfig.pcolor(M.transpose(), vmin=0, vmax=vmaxes[i], cmap="gist_earth_r")
+                ims[i] = sfig.pcolor(M.transpose(), vmin=0, vmax=vmaxes[i], cmap="gist_earth_r")
 
-                fail = np.where(M == -1)
 
-                for y, x in zip(*fail):
-                    sfig.scatter(x + 0.5, y + 0.5, c='k', marker='x')
+                #
+                # fail = np.where(M == -1)
+                #
+                # for y, x in zip(*fail):
+                #     sfig.scatter(x + 0.5, y + 0.5, c='k', marker='x')
 
                 ax = sfig.axes
                 ax.set_xticks(xes)
@@ -3631,14 +3651,22 @@ class ExtraNeighbor(DCVizPlotter):
                 sfig.set_xlim(0, len(alphas))
                 sfig.set_ylim(0, len(F0s))
 
+        for i, y_loc in enumerate(y_locs):
+            sfig = self.psubfigure31
+            sfig.text(x_loc + 1.5, y_loc, desc[i])#, horizontalalignment="left", verticalalignment="center")
+
         pos = [0.78, 0.18, 0.05, 0.7]
         clabel = r'$\rho_\mathrm{WV}$'
-        for f in [self.f4, self.p4]:
 
-            cbar_ax = f.add_axes(pos)
-            cbar_ax.set_title(clabel, position=(0, -0.09), horizontalalignment="left", verticalalignment="center", transform=cbar_ax.transAxes)
+        cbar_ax = self.f4.add_axes(pos)
+        cbar_ax.set_title(clabel, position=(0, -0.09), horizontalalignment="left", verticalalignment="center", transform=cbar_ax.transAxes)
 
-            f.colorbar(im, cax=cbar_ax)
+        ax = self.f4.colorbar(ims[0], cax=cbar_ax)
+
+        pbar_ax = self.p4.add_axes(pos)
+        ax = self.p4.colorbar(ims[1], cax=pbar_ax)
+        ax.set_ticks([0, 1, 2, 3])
+        ax.set_ticklabels([r"", r"$\mathrm{I}$", r"$\mathrm{B}$", r"$\mathrm{P}$"])
 
 
 class GPlots(DCVizPlotter):

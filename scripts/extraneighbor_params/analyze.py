@@ -106,7 +106,13 @@ def legal(coverage, x, y):
 
 def get_p_value(heights, id):
 
-    print id
+    # print id
+
+    #if id != '151465468247664':
+    #    return 0
+
+   # plab.figure(0)
+   # plab.pcolor(heights.transpose())
 
     L, W = heights.shape
     coverage = (heights == heights.max())
@@ -128,7 +134,9 @@ def get_p_value(heights, id):
         if prop.label != winning_label:
             for x, y in prop.coords:
                 coverage[x, y] = 0
-
+       # else:
+        #    for x, y in prop.coords:
+          #      plab.scatter(x + 0.5, y + 0.5, color='w', marker='x')
     area = max_area
     start_x = None
     start_y = None
@@ -161,16 +169,10 @@ def get_p_value(heights, id):
                         coverage[x, y] = 0
                         sheds += 1
                         area -= 1
+                       # plab.scatter(x + 0.5, y + 0.5, color='w', marker='s')
 
-    if area < 4:
-        return 0
-
-    for prop in props:
-        if prop.label == winning_label:
-            for x, y in prop.coords:
-                if legal(coverage, x, y):
-                    start_x, start_y = x, y
-                    break
+    if area < 9:
+        return 0.
 
     pool = np.zeros_like(coverage) - 1
     pool[np.where(coverage == 0)] = 1
@@ -179,17 +181,30 @@ def get_p_value(heights, id):
     lz_props = measure.regionprops(lz_per)
 
     max_area = 0
-    winning_label = None
+    winning_label_2 = None
     for prop in lz_props:
         if prop.area > max_area:
             max_area = prop.area
-            winning_label = prop.label
+            winning_label_2 = prop.label
 
     for prop in lz_props:
-        if prop.label != winning_label:
+        if prop.label != winning_label_2:
             for x, y in prop.coords:
                 coverage[x, y] = 1
+              #  plab.scatter(x + 0.5, y + 0.5, color='w', marker='o')
 
+    for prop in props:
+        if prop.label == winning_label:
+            for x, y in prop.coords:
+                if legal(coverage, x, y):
+                    start_x, start_y = x, y
+                   #plab.scatter(x + 0.5, y + 0.5, color='w', marker='d', s=20)
+                    break
+
+    if start_x is None:
+        print "ERROR: No start point.."
+        #plab.show()
+        exit(1)
     ori_to_idx = {
          0: {
              1: 1,
@@ -273,8 +288,9 @@ def get_p_value(heights, id):
     r = 0
     l = 0
 
-    plab.figure(1)
-    plab.pcolor(coverage.transpose())
+    #plab.figure(1)
+    #plab.pcolor(coverage.transpose())
+    #plab.scatter(start_x + 0.5, start_y + 0.5, c='w', marker='o')
     while not (start_x == x and start_y == y):
 
         #print "currently at", ori_int, x_prev, y_prev
@@ -287,7 +303,7 @@ def get_p_value(heights, id):
             #print "trying ", new_ori, x, y, coverage[x, y]
 
             if legal(coverage, x, y):
-                plab.scatter(x+0.5, y+0.5, c="w", marker='x')
+                #plab.scatter(x+0.5, y+0.5, c="w", marker='x')
                 break
 
 
@@ -301,7 +317,7 @@ def get_p_value(heights, id):
         elif new_ori == 3:
             print "went back"
             print "ERRRORR"
-            plab.show()
+            #plab.show()
             exit(1)
         # else:
         #     print "went forwards"
@@ -313,14 +329,17 @@ def get_p_value(heights, id):
         ori_int = ori_to_idx[dx][dy]
 
     if r == l:
-        print r, l
-        plab.show()
+        #print r, l
+        #plab.show()
+        return 2.
     else:
-        plab.clf()
+        #plab.clf()
+        if coverage.mean() > 0.5:
+            return 3.0
+        else:
+            return 1.0
 
-    print "fin"
-
-    return 0
+    #print "fin"
 
 
 def find_peaks(coverage):
@@ -345,6 +364,8 @@ def main():
     s0s = []
     lmax = 0
 
+    count = 0
+    total = 0
     for data, L, W, run_id in parser:
 
         alpha = data.attrs["alpha"]
@@ -365,6 +386,8 @@ def main():
         l = data["eq_storedEventValues"].shape[1]
         if l > lmax:
             lmax = l
+
+        total += 1
 
     F0s = sorted(F0s)
     s0s = sorted(s0s)
@@ -424,6 +447,12 @@ def main():
         pmat[is0, ia, iF0] += p_value
         cmat[is0, ia, iF0] += cval/float(L*W)
         ccounts[is0, ia, iF0] += 1.
+
+        count += 1
+
+        sys.stdout.flush()
+        print "\r%d/%d" % (count, total),
+    print
 
     print ccounts.max(), ccounts.min()
 
