@@ -104,25 +104,47 @@ def legal(coverage, x, y):
     return False
 
 
-def get_p_value(heights, id):
+def get_neighbors(coverage, x, y):
+    L, W = coverage.shape
+
+    xp = (x + 1) % L
+    xm = (x - 1 + L) % L
+    yp = (y + 1) % W
+    ym = (y - 1 + W) % W
+
+    n = 0
+    if coverage[xp, y] == 1:
+        n += 1
+    if coverage[xm, y] == 1:
+        n += 1
+    if coverage[x, yp] == 1:
+        n += 1
+    if coverage[x, ym] == 1:
+        n += 1
+
+    return n
+
+def get_p_value(heights, id, saveimg=False):
 
     # print id
-
-    #if id != '151465468247664':
+    #
+    # if id != '151465474754443':
     #    return 0
 
-   # plab.figure(0)
-   # plab.pcolor(heights.transpose())
-
     L, W = heights.shape
+
+    #The coverage matrix is assumed to be where the heights are equal to the max value
     coverage = (heights == heights.max())
 
+    #we find the clusters of the coverage matrix to separate all contacts if several
     l = measure.label(coverage, connectivity=1)
     l[np.where(coverage == 0)] = -1
 
+    #we connect clusters which are connected due to periodicity
     l_per = periodify(l) + 1
     props = measure.regionprops(l_per)
 
+    #we find the label of the largest cluster
     max_area = 0
     winning_label = None
     for prop in props:
@@ -130,17 +152,16 @@ def get_p_value(heights, id):
             max_area = prop.area
             winning_label = prop.label
 
+    #we set the coverage matrix to zero for the loosing clusters, such that only the largest cluster remain
     for prop in props:
         if prop.label != winning_label:
             for x, y in prop.coords:
                 coverage[x, y] = 0
-       # else:
-        #    for x, y in prop.coords:
-          #      plab.scatter(x + 0.5, y + 0.5, color='w', marker='x')
-    area = max_area
-    start_x = None
-    start_y = None
 
+    area = max_area
+
+    #we remove all points in the cluster which has 1 neighbor, since these represent "double turns"
+    #which our method cannot treat in a simple manner. This does not change the shape, hence it is safe.
     for prop in props:
         if prop.label == winning_label:
             sheds = None
@@ -150,36 +171,25 @@ def get_p_value(heights, id):
                     if coverage[x, y] == 0:
                         continue
 
-                    xp = (x + 1) % L
-                    xm = (x - 1 + L) % L
-                    yp = (y + 1) % W
-                    ym = (y - 1 + W) % W
-
-                    n = 0
-                    if coverage[xp, y] == 1:
-                        n += 1
-                    if coverage[xm, y] == 1:
-                        n += 1
-                    if coverage[x, yp] == 1:
-                        n += 1
-                    if coverage[x, ym] == 1:
-                        n += 1
+                    n = get_neighbors(coverage, x, y)
 
                     if n == 1:
                         coverage[x, y] = 0
                         sheds += 1
                         area -= 1
-                       # plab.scatter(x + 0.5, y + 0.5, color='w', marker='s')
 
     if area < 9:
         return 0.
 
+    #we find all the clusters where the coverage is zero
     pool = np.zeros_like(coverage) - 1
     pool[np.where(coverage == 0)] = 1
     lz = measure.label(pool, connectivity=1)
     lz_per = periodify(lz) + 1
     lz_props = measure.regionprops(lz_per)
 
+    #we keep only the largest cluster here as well,
+    #i.e. we set the coverage = 1 for all clusters except the largest
     max_area = 0
     winning_label_2 = None
     for prop in lz_props:
@@ -191,20 +201,45 @@ def get_p_value(heights, id):
         if prop.label != winning_label_2:
             for x, y in prop.coords:
                 coverage[x, y] = 1
-              #  plab.scatter(x + 0.5, y + 0.5, color='w', marker='o')
 
+    start_x = None
+    start_y = None
+
+    #ideally we would want to start at a point on the edge (legal) with 4 latteral neighbors.
     for prop in props:
         if prop.label == winning_label:
             for x, y in prop.coords:
-                if legal(coverage, x, y):
+                if get_neighbors(coverage, x, y) == 4 and legal(coverage, x, y):
                     start_x, start_y = x, y
-                   #plab.scatter(x + 0.5, y + 0.5, color='w', marker='d', s=20)
                     break
 
+    #if this is not possible, we have either a perfectly flat object, or a very slim island
+    #in these cases we choose a point with 3 neighbors. This is always possible since if the area < 9
+    #we have already returned. This might cause the method to get stuck, but it will identify the
+    #correct shape nonetheless.
     if start_x is None:
-        print "ERROR: No start point.."
-        #plab.show()
+        for prop in props:
+            if prop.label == winning_label:
+                for x, y in prop.coords:
+                    if get_neighbors(coverage, x, y) == 3 and legal(coverage, x, y):
+                        start_x, start_y = x, y
+                        break
+
+    if start_x is None:
+        print "ERROR", id
+        plab.pcolor(coverage.transpose())
+        plab.show()
         exit(1)
+        return 0
+
+    #0: right = [1, 0]
+    #1: up = [0, 1]
+    #2: left = [-1, 0]
+    #3: down = [0, -1]
+
+    #left->right up->down etc.
+    reverse_ori = [2, 3, 0, 1]
+
     ori_to_idx = {
          0: {
              1: 1,
@@ -218,18 +253,7 @@ def get_p_value(heights, id):
          }
     }
 
-    idx_to_ori = {
-        0: [ 1,  0],
-        1: [ 0,  1],
-        2: [-1,  0],
-        3: [ 0, -1]
-    }
-
-
-    #0: right
-    #1: up
-    #2: left
-    #3: down
+    #element i selects the right turn for orientation i
     right_trans = [
         [ 0, -1],
         [ 1,  0],
@@ -258,11 +282,14 @@ def get_p_value(heights, id):
         [ 0,  1]
     ]
 
+    #in prioritized order, we try right > forward > left > back. back should never occur.
     paths = [right_trans,
              forward_trans,
              left_trans,
              down_trans]
 
+    #we start with an arbitrary orientation and perform a single step.
+    #this new step and its orientation will serve as our starting point.
     ori_int = 1
     for new_ori, path in enumerate(paths):
         dx, dy = path[ori_int]
@@ -276,44 +303,89 @@ def get_p_value(heights, id):
     start_y = y
     ori_int = ori_to_idx[dx][dy]
 
-    #print "found initial ori:", ori_int
-
 
     x = None
     y = None
     x_prev = start_x
     y_prev = start_y
-    prev_turn = None
 
-    r = 0
-    l = 0
+    r_first = 0
+    l_first = 0
+    n_first = 0
 
-    #plab.figure(1)
-    #plab.pcolor(coverage.transpose())
-    #plab.scatter(start_x + 0.5, start_y + 0.5, c='w', marker='o')
+    if saveimg:
+        plab.figure(1)
+        plab.pcolor(coverage.transpose())
+        plab.scatter(start_x+0.5, start_y+0.5, c="k", marker='s', s=30)
+
+    first_ori = None
     while not (start_x == x and start_y == y):
-
-        #print "currently at", ori_int, x_prev, y_prev
-
         for new_ori, path in enumerate(paths):
             dx, dy = path[ori_int]
             x = (x_prev + dx + L) % L
             y = (y_prev + dy + W) % W
 
-            #print "trying ", new_ori, x, y, coverage[x, y]
-
             if legal(coverage, x, y):
-                #plab.scatter(x+0.5, y+0.5, c="w", marker='x')
+                if saveimg:
+                    plab.scatter(x+0.5, y+0.5, c="w", marker='x')
                 break
 
+        if new_ori == 0:
+            r_first += 1
+            # print "went right"
+        elif new_ori == 2:
+            # print "went left"
+            l_first += 1
+        elif new_ori == 3:
+            print "went back"
+            print "ERRRORR"
+            #plab.show()
+            exit(1)
+        # else:
+        #     print "went forwards"
 
+        x_prev = x
+        y_prev = y
+
+        n_first += 1
+
+        ori_int = ori_to_idx[dx][dy]
+
+        #we store the first orientation since we need to reverse this for the backward stepping
+        if first_ori is None:
+            first_ori = ori_int
+
+    # print r_first, l_first, n_first
+
+    #we perform a backward stepping because certain slim regions may cause certain important parts of the
+    #cluster to be discarded. Hence pits can appear as bands if they are held together by slim arms.
+    ori_int = reverse_ori[first_ori]
+
+    x = None
+    y = None
+    x_prev = start_x
+    y_prev = start_y
+
+    r_reversed = 0
+    l_reversed = 0
+    n_reversed = 0
+    while not (start_x == x and start_y == y):
+        for new_ori, path in enumerate(paths):
+            dx, dy = path[ori_int]
+            x = (x_prev + dx + L) % L
+            y = (y_prev + dy + W) % W
+
+            if legal(coverage, x, y):
+                if saveimg:
+                    plab.scatter(x+0.5, y+0.5, c="w", marker='o', facecolor='none')
+                break
 
         if new_ori == 0:
-            r += 1
-           # print "went right"
+            r_reversed += 1
+            # print "went right"
         elif new_ori == 2:
-          #  print "went left"
-            l += 1
+            # print "went left"
+            l_reversed += 1
         elif new_ori == 3:
             print "went back"
             print "ERRRORR"
@@ -326,20 +398,44 @@ def get_p_value(heights, id):
         x_prev = x
         y_prev = y
 
+        n_reversed+=1
+
         ori_int = ori_to_idx[dx][dy]
 
+    #we select the longest path of the forward and reversed pathing
+    if n_first > n_reversed:
+        r = r_first
+        l = l_first
+    else:
+        r = r_reversed
+        l = l_reversed
+
+    # print r_reversed, l_reversed, n_reversed
+    # print r, l, coverage.mean()
+    # plab.show()
+    # exit(1)
+
+    #if there has been an equal number of right and left turns, we have a band,
+    #else we have either an island or a pit, depending on the total degree of coverage.
     if r == l:
+        if saveimg:
+            plab.savefig("/tmp/imgz/band_%s.png" % id)
+            plab.clf()
         #print r, l
         #plab.show()
-        return 2.
+        return 2
     else:
         #plab.clf()
         if coverage.mean() > 0.5:
-            return 3.0
+            if saveimg:
+                plab.savefig("/tmp/imgz/pit_%s.png" % id)
+                plab.clf()
+            return 3
         else:
-            return 1.0
-
-    #print "fin"
+            if saveimg:
+                plab.savefig("/tmp/imgz/island_%s.png" % id)
+                plab.clf()
+            return 1
 
 
 def find_peaks(coverage):
@@ -398,7 +494,7 @@ def main():
     np.save("/tmp/extraneighbor_F0s.npy", F0s)
 
     cmat = np.zeros(shape=(len(s0s), len(alphas), len(F0s)))
-    pmat = np.zeros(shape=(len(s0s), len(alphas), len(F0s)))  #0: no phase | 1: island | 2: band | 3: hole
+    pmat = np.zeros(shape=(len(s0s), len(alphas), len(F0s), 4))  #0: no phase | 1: island | 2: band | 3: hole
     ccounts = np.zeros(shape=(len(s0s), len(alphas), len(F0s)))
 
     facSmall = 9/10.
@@ -444,7 +540,7 @@ def main():
 
             cval = eq_coverage[start:].mean()
 
-        pmat[is0, ia, iF0] += p_value
+        pmat[is0, ia, iF0, p_value] += 1
         cmat[is0, ia, iF0] += cval/float(L*W)
         ccounts[is0, ia, iF0] += 1.
 
@@ -461,9 +557,6 @@ def main():
 
     cmat[I] /= ccounts[I]
     cmat[J] = -1
-
-    pmat[I] /= ccounts[I]
-    pmat[J] = -1
 
     np.save("/tmp/extraneighbor_cmat.npy", cmat)
     np.save("/tmp/extraneighbor_pmat.npy", pmat)

@@ -3546,7 +3546,10 @@ class ExtraNeighbor(DCVizPlotter):
               "f4" : "subfigure31",
               "p2" : "psubfigure11",
               "p3" : "psubfigure21",
-              "p4" : "psubfigure31"}
+              "p4" : "psubfigure31",
+              "t2" : "tsubfigure11",
+              "t3" : "tsubfigure21",
+              "t4" : "tsubfigure31"}
 
     hugifyFonts = True
 
@@ -3559,14 +3562,17 @@ class ExtraNeighbor(DCVizPlotter):
                          "f4": sizes[2],
                          "p2": sizes[0],
                          "p3": sizes[1],
-                         "p4": sizes[2]}
+                         "p4": sizes[2],
+                         "t2": sizes[0],
+                         "t3": sizes[1],
+                         "t4": sizes[2]}
 
     def adjust(self):
         for figname in self.figure_names:
-            if figname in ["f2", "f5", "p2", "p5"]:
+            if "2" in figname:
                 self.adjust_maps[figname]["right"] = 0.97
                 self.adjust_maps[figname]["left"] = 0.23
-            elif figname in ["f3", "f6", "p3", "p6"]:
+            elif "3" in figname:
                 self.adjust_maps[figname]["right"] = 0.97
                 self.adjust_maps[figname]["left"] = 0.03
             else:
@@ -3584,13 +3590,45 @@ class ExtraNeighbor(DCVizPlotter):
         F0s = self.get_family_member_data(data, "F0s")
         cmat = self.get_family_member_data(data, "cmat")
         pmat = self.get_family_member_data(data, "pmat")
+        tmat = np.zeros_like(cmat)
+        avg_pmat = np.zeros_like(tmat)
 
-        K, L, M = pmat.shape
+        K, L, M, _ = pmat.shape
 
         for k in range(K):
             for l in range(L):
                 for m in range(M):
-                    pmat[k, l, m] = round(pmat[k, l, m])
+                    t = np.argmax(pmat[k, l, m, :])
+                    tmat[k, l, m] = t
+
+                    p = 0.0
+                    c = 0.0
+                    for i in range(4):
+                        p += pmat[k, l, m, i]*i
+                        c += pmat[k, l, m, i]
+                    avg_pmat[k, l, m] = p/c
+
+        t_locs = [[], [], []]
+
+        for is0 in range(len(s0s)):
+            for ia in range(len(alphas)):
+                last_island = None
+                first_pit = None
+
+                for iF0 in range(len(F0s)):
+                    t = tmat[is0, ia, iF0]
+
+                    if t == 3 and first_pit is None:
+                        first_pit = iF0
+                    elif t == 1 or t == 0:
+                        last_island = iF0
+
+                if last_island is not None and first_pit is not None:
+                    t_locs[is0].append(0.5*(last_island + first_pit + 1))
+                else:
+                    t_locs[is0].append(None)
+
+        print t_locs
 
         desc = [r"$\mathrm{\underline{P}its}$",
                 r"$\mathrm{\underline{B}ands}$",
@@ -3600,7 +3638,7 @@ class ExtraNeighbor(DCVizPlotter):
         y_locs = [6, 4, 2]
 
         for i, y_loc in enumerate(y_locs):
-            pmat[-1, x_loc, y_loc] = 3 - i
+            avg_pmat[-1, x_loc, y_loc] = 3 - i
 
         xes = []
         for x in range(1, len(alphas), 2):
@@ -3610,19 +3648,18 @@ class ExtraNeighbor(DCVizPlotter):
         for y in range(0, len(F0s), 3):
             fes.append(y+0.5)
 
-        mats = [cmat, pmat]
-        vmaxes = [1, 3/cmat.max()]
+        mats = [cmat, avg_pmat, tmat]
 
-        ims = [None, None]
+        ims = [None, None, None]
         for is0, s0 in enumerate(s0s):
-            for i, id in enumerate(["", "p"]):
+            for i, id in enumerate(["", "p", "t"]):
                 M = mats[i][is0, :, :]
 
                 sfig = eval("self.%ssubfigure%d1" % (id, is0+1))
 
                 sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
 
-                ims[i] = sfig.pcolor(M.transpose(), vmin=0, vmax=vmaxes[i], cmap="gist_earth_r")
+                ims[i] = sfig.pcolor(M.transpose(), vmin=0, vmax=mats[i].max()/cmat.max(), cmap="gist_earth_r")
 
 
                 #
@@ -3651,6 +3688,15 @@ class ExtraNeighbor(DCVizPlotter):
                 sfig.set_xlim(0, len(alphas))
                 sfig.set_ylim(0, len(F0s))
 
+
+        for is0, t_loc in enumerate(t_locs):
+            if t_loc is None:
+                continue
+
+            sfig = eval("self.psubfigure%d1" % (is0+1))
+            sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'w', linewidth=3)
+            sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'k--', linewidth=3)
+
         for i, y_loc in enumerate(y_locs):
             sfig = self.psubfigure31
             sfig.text(x_loc + 1.5, y_loc, desc[i])#, horizontalalignment="left", verticalalignment="center")
@@ -3665,8 +3711,8 @@ class ExtraNeighbor(DCVizPlotter):
 
         pbar_ax = self.p4.add_axes(pos)
         ax = self.p4.colorbar(ims[1], cax=pbar_ax)
-        ax.set_ticks([0, 1, 2, 3])
-        ax.set_ticklabels([r"", r"$\mathrm{I}$", r"$\mathrm{B}$", r"$\mathrm{P}$"])
+        ax.set_ticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+        ax.set_ticklabels([r"", "", r"$\mathrm{I}$", "", r"$\mathrm{B}$", "", r"$\mathrm{P}$"])
 
 
 class GPlots(DCVizPlotter):
