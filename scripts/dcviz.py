@@ -3541,15 +3541,10 @@ class ExtraNeighbor(DCVizPlotter):
 
     isFamilyMember = True
 
-    figMap = {"f2" : "subfigure11",
-              "f3" : "subfigure21",
-              "f4" : "subfigure31",
-              "p2" : "psubfigure11",
-              "p3" : "psubfigure21",
-              "p4" : "psubfigure31",
-              "t2" : "tsubfigure11",
-              "t3" : "tsubfigure21",
-              "t4" : "tsubfigure31"}
+    minorfigs = ["f", "p", "t"]#, "b", "i", "P"]
+
+    figMap = dict([["%s%d" % (n, i), "%ssubfigure%d1" % (n, i)]
+                   for n in minorfigs for i in [1, 2, 3]])
 
     hugifyFonts = True
 
@@ -3557,15 +3552,8 @@ class ExtraNeighbor(DCVizPlotter):
              [3.6, 5],
              [5, 5]]
 
-    specific_fig_size = {"f2": sizes[0],
-                         "f3": sizes[1],
-                         "f4": sizes[2],
-                         "p2": sizes[0],
-                         "p3": sizes[1],
-                         "p4": sizes[2],
-                         "t2": sizes[0],
-                         "t3": sizes[1],
-                         "t4": sizes[2]}
+    specific_fig_size = dict([["%s%d" % (n, i), sizes[i]]
+                              for n in minorfigs for i in [0, 1, 2]])
 
     def adjust(self):
         for figname in self.figure_names:
@@ -3592,6 +3580,9 @@ class ExtraNeighbor(DCVizPlotter):
         pmat = self.get_family_member_data(data, "pmat")
         tmat = np.zeros_like(cmat)
         avg_pmat = np.zeros_like(tmat)
+        bmat = np.zeros_like(tmat)
+        imat = np.zeros_like(tmat)
+        Pmat = np.zeros_like(tmat)
 
         K, L, M, _ = pmat.shape
 
@@ -3607,6 +3598,14 @@ class ExtraNeighbor(DCVizPlotter):
                         p += pmat[k, l, m, i]*i
                         c += pmat[k, l, m, i]
                     avg_pmat[k, l, m] = p/c
+                    imat[k, l, m] = pmat[k, l, m, 1]/c
+                    bmat[k, l, m] = pmat[k, l, m, 2]/c
+                    Pmat[k, l, m] = pmat[k, l, m, 3]/c
+
+                    asd = min(pmat[k, l, m, 1:])
+                    if asd > 2:
+                        avg_pmat[k, l, m] = 0
+                        print asd
 
         t_locs = [[], [], []]
 
@@ -3634,7 +3633,7 @@ class ExtraNeighbor(DCVizPlotter):
                 r"$\mathrm{\underline{B}ands}$",
                 r"$\mathrm{\underline{I}slands}$"]
 
-        x_loc = len(alphas)-6
+        x_loc = len(alphas)-8
         y_locs = [6, 4, 2]
 
         for i, y_loc in enumerate(y_locs):
@@ -3648,11 +3647,11 @@ class ExtraNeighbor(DCVizPlotter):
         for y in range(0, len(F0s), 3):
             fes.append(y+0.5)
 
-        mats = [cmat, avg_pmat, tmat]
+        mats = [cmat, avg_pmat, tmat, bmat, imat, Pmat]
 
-        ims = [None, None, None]
+        ims = [None for _ in mats]
         for is0, s0 in enumerate(s0s):
-            for i, id in enumerate(["", "p", "t"]):
+            for i, id in enumerate(self.minorfigs):
                 M = mats[i][is0, :, :]
 
                 sfig = eval("self.%ssubfigure%d1" % (id, is0+1))
@@ -3689,13 +3688,13 @@ class ExtraNeighbor(DCVizPlotter):
                 sfig.set_ylim(0, len(F0s))
 
 
-        for is0, t_loc in enumerate(t_locs):
-            if t_loc is None:
-                continue
-
-            sfig = eval("self.psubfigure%d1" % (is0+1))
-            sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'w', linewidth=3)
-            sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'k--', linewidth=3)
+        # for is0, t_loc in enumerate(t_locs):
+        #     if t_loc is None:
+        #         continue
+        #
+        #     sfig = eval("self.psubfigure%d1" % (is0+1))
+        #     sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'w', linewidth=3)
+        #     sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'k--', linewidth=3)
 
         for i, y_loc in enumerate(y_locs):
             sfig = self.psubfigure31
@@ -3715,107 +3714,255 @@ class ExtraNeighbor(DCVizPlotter):
         ax.set_ticklabels([r"", "", r"$\mathrm{I}$", "", r"$\mathrm{B}$", "", r"$\mathrm{P}$"])
 
 
-class GPlots(DCVizPlotter):
+class GFPlots(DCVizPlotter):
 
     nametag = "GPlots.txt"
 
+    figMap = {"g_figure": "G_fig",
+              "f_figure": "F_fig",
+              "gc_figure": "GC_fig",
+              "allf_figure": ["all_F_fig_low", "all_F_fig_high"]}
+
     hugifyFonts = True
 
-    fig_size = [7, 5]
+    fig_size_0 = [5, 5]
+    fig_size_1 = [9, 5.25]
 
-    @staticmethod
-    def g_repulsion_serial(di, Z0, ld):
-        return Z0*np.exp(-(di-1)/ld)*(di > 1)
+    specific_fig_size =  {"g_figure": fig_size_0,
+                          "f_figure": fig_size_0,
+                          "gc_figure": fig_size_0,
+                          "allf_figure": fig_size_1}
 
-    g = None
-    def g_repulsion(self, di, Z0, ld):
-
-        if not self.g:
-            self.g = np.vectorize(self.g_repulsion_serial)
-
-        return self.g(di, Z0, ld)
-
-    def attraction_orig(self, di):
-        st = 0
-
-        return -(1 + st)/di**6
-
-    @staticmethod
-    def attraction_corr_serial(di):
-
-        if di >= 2:
-            return 0
-
-        st = 0
-
-        return -(3*di + 64./di**6 - 7)*(1+st)/60.
-
-    f = None
-    def attraction_corr(self, di):
-
-        if not self.f:
-            self.f = np.vectorize(self.attraction_corr_serial)
-
-        return self.f(di)
+    stack = "H"
 
     def adjust(self):
-        figname = "figure"
+        for figname in self.figure_names:
+            if "all" in figname:
+                self.adjust_maps[figname]["right"] = 0.9
+                self.adjust_maps[figname]["left"] = 0.1
+                self.adjust_maps[figname]["top"] = 0.91
+                self.adjust_maps[figname]["bottom"] = 0.14
 
-        self.adjust_maps[figname]["right"] = 0.87
-        self.adjust_maps[figname]["left"] = 0.13
-        self.adjust_maps[figname]["top"] = 0.96
-        self.adjust_maps[figname]["bottom"] = 0.15
+            else:
+                self.adjust_maps[figname]["right"] = 0.84
+                self.adjust_maps[figname]["left"] = 0.16
+                self.adjust_maps[figname]["top"] = 0.96
+                self.adjust_maps[figname]["bottom"] = 0.15
+
+    def f_attraction_corr(self, di):
+
+        f = 0
+        if di >= 2:
+            f += 0
+        else:
+            f += -(128./di**7 - 1.)/20
+
+        return f
+
+    def attraction_orig(self, di):
+
+        g = 0
+        g += -1./di**6
+
+        return g
+
+    def attraction_corr(self, di):
+
+        g = 0
+        if di >= 2:
+            g += 0
+        else:
+            g += -(3*di + 64./di**6 - 7)/60.
+
+        return g
+
+    def get_repulz(self, s0, hlvec, ld, f0_over_EbA):
+
+        xi = 1-np.exp(-1./ld)
+        Z0_over_A = s0/xi
+
+        g_rep = Z0_over_A*np.exp(-(hlvec - 1)/ld)
+        g_rep[0] = 0
+
+        H = 1 + ld*np.log(Z0_over_A/f0_over_EbA/ld)
+
+        return H, g_rep
 
     def plot(self, data):
 
-        di = np.linspace(1, 5, 1000)
-        Z0 = 1.
-        ld = 1.0
-        f0 = 1./5
+        s0 = 1.0
+        ld = 5.0
 
-        g_rep = self.g_repulsion(di, Z0, ld)
-        g_attr = self.attraction_corr(di)
-        g_attr_6 = self.attraction_orig(di)
-        g_f0 = (di-1)*f0
+        hlvec = np.linspace(1, 9, 1000)
+        f0_over_EbA = 0.5
 
-        styles = ['g-.', 'k--', 'r-', "0.0"]
+        g_f0 = (hlvec-1)*f0_over_EbA
+        H, g_rep = self.get_repulz(s0, hlvec, ld, f0_over_EbA)
+        f_rep = g_rep/ld
 
-        self.subfigure.plot(di, g_f0, styles[3], label=r"$F_0d_i$", linewidth=1)
-        self.subfigure.plot(di, g_rep, styles[0], label=r"$G_\lambda$", linewidth=2)
-        self.subfigure.plot(di, g_attr_6, styles[1], label=r"$-1/d_i^6$", linewidth=2)
-        self.subfigure.plot(di, g_attr, styles[2], label=r"$\tilde G_\mathrm{wv}$", linewidth=2)
-        self.subfigure.plot(di, g_rep + g_attr + g_f0, styles[3],
-                            label=r"$G_\mathrm{tot}$", linewidth=3, linestyle=":")
+        g_attr = []
+        g_attr_6 = []
+        f_attr = []
+        for hl in hlvec:
+            g_attr.append(self.attraction_corr(hl))
+            g_attr_6.append(self.attraction_orig(hl))
+            f_attr.append(self.f_attraction_corr(hl))
+
+        g_attr = np.array(g_attr)
+        g_attr_6 = np.array(g_attr_6)
+
+        """
+        Attractive vs. 1/r^6
+        """
+
+        self.GC_fig.plot(hlvec, g_attr_6, "k--", label=r"$-1/d^6$")
+        self.GC_fig.plot(hlvec, g_attr, "r-", label=r"$\tilde G_\mathrm{VW}$")
+        self.GC_fig.set_xlabel(r"$d$")
+        self.GC_fig.set_ylabel(r"$G(d)/E_bA$", labelpad=-10)
+        self.GC_fig.set_yticks([-1, 0])
+        self.GC_fig.plot([2, 2], [-1.05, 0.2], 'k:')
+        self.GC_fig.set_xlim(0.9, 3)
+        self.GC_fig.set_ylim(-1.05, 0.1)
 
 
-
-        lg = self.subfigure.legend(loc="center",
-                                   numpoints=1,
-                                   ncol=2,
-                                   handlelength=0.9,
-                                   borderpad=0.2,
-                                   labelspacing=0.2,
-                                   columnspacing=0.3,
-                                   handletextpad=0.25,
-                                   borderaxespad=0.0,
-                                   frameon=False,
-                                   bbox_to_anchor=(0.7, 0.2))
+        lg = self.GC_fig.legend(loc="center",
+                               numpoints=1,
+                               ncol=1,
+                               handlelength=0.9,
+                               borderpad=0.2,
+                               labelspacing=0.2,
+                               columnspacing=0.3,
+                               handletextpad=0.25,
+                               borderaxespad=0.0,
+                               frameon=False,
+                               bbox_to_anchor=(0.775, 0.7))
 
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
-        self.subfigure.set_xlabel(r"$d_i$")
-        self.subfigure.set_ylabel(r"$G(d_i)/E_b$")
+        """
+        Free energies
+        """
 
-        self.subfigure.set_xbound(1-0.1)
-        self.subfigure.set_ylim(-1.1, max(g_rep)+0.1)
+        self.G_fig.plot(hlvec, g_f0, 'k--', label=r"$d\cdot F_0$", linewidth=1)
+        self.G_fig.plot(hlvec, g_rep, 'g-.', label=r"$G_\lambda$", linewidth=2)
+        self.G_fig.plot(hlvec, g_attr, 'r:', label=r"$\tilde G_\mathrm{wv}$", linewidth=2)
+        self.G_fig.plot(hlvec, g_rep + g_attr + g_f0, 'k-',
+                        label=r"$G_\mathrm{tot}$", linewidth=1)
+        # self.G_fig.plot([H, H], [0, max(g_rep)], "k-")
 
+        self.G_fig.set_xlabel(r"$d$")
+        self.G_fig.set_ylabel(r"$G(d)/E_bA$", labelpad=-10)
+
+        # for Z0 in [0.5, 1, 1.5]:
+        #     for f0 in [0.25, 0.5]:
+        #         self.all_fig.plot(di, self.g_repulsion(di, Z0, ld) + self.attraction_corr(di) + (di-1)*f0)
+        #
+        # self.all_fig.set_xbound(1-0.1)
+        # self.all_fig.set_ybound(-1.1)
+
+        lg = self.G_fig.legend(loc="center",
+                               numpoints=1,
+                               ncol=2,
+                               handlelength=0.9,
+                               borderpad=0.2,
+                               labelspacing=0.2,
+                               columnspacing=0.3,
+                               handletextpad=0.25,
+                               borderaxespad=0.0,
+                               frameon=False,
+                               bbox_to_anchor=(0.6, 0.87))
+
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        self.G_fig.set_xbound(1-0.5)
+        self.G_fig.set_ylim(-1.5, 1.25*max(g_rep))
+
+        """
+        Forces
+        """
+
+        r0 = 1.29714
+        r1 = 2.38629
+
+
+        styles = ['g-.', 'k--', 'r-', "0.0"]
+
+        tot = (f_rep + f_attr - f0_over_EbA)/f0_over_EbA
+        ymin = -1.1
+        ymax = 1.0
+
+        self.F_fig.plot(hlvec, tot, styles[2],
+                            label=r"$F_0 + F_l + F_\lambda$", linewidth=3, linestyle="-", zorder=1)
+        self.F_fig.plot([H, H], [ymin, ymax], "k--", zorder=2)
+        #self.F_fig.plot([di[0], di[-1]], [f0, f0], styles[1],
+        #                    label=r"$F_0$", linewidth=2)
+        self.F_fig.plot([1, hlvec[-1]], [0, 0], "k-", zorder=0)
+        #self.F_fig.plot([r0], [0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
+        #self.F_fig.plot([r1], [0], 'go', markersize=10)
+        #self.F_fig.plot([1], [0], 'go', markersize=10)
+        self.F_fig.scatter(1, 0, s=30, c="r", edgecolors='none', zorder=2)
+
+        self.F_fig.set_xlabel(r"$d$")
+        self.F_fig.set_ylabel(r"$F_\mathrm{tot}(d)/F_0$", labelpad=-10)
+        self.F_fig.set_yticks([-1, 0, 1])
+
+        self.F_fig.set_ylim(ymin, ymax)
+        #self.F_fig.set_xlim(0.9, di[-1])
+
+        #self.F_fig.xaxis.set_ticklabels([r"$h_c$", r"$h_\lambda$"])
+        #self.F_fig.axes.tick_params(axis='x', which='major', pad=10)
+
+        self.F_fig.set_xlim(1-0.25, hlvec[-1])
+      #
         def f(v, i):
             if int(v) == v:
-                return r"$%d$" % v
-            return ""
+                return "$%d$" % v
+            return r"$%.1f$" % v
 
-        self.subfigure.yaxis.set_ticks([-1, 0, 1])
-        self.subfigure.xaxis.set_major_formatter(FuncFormatter(f))
+        self.F_fig.yaxis.set_major_formatter(FuncFormatter(f))
+
+        x0, x1 = self.F_fig.get_xlim()
+        y0, y1 = self.F_fig.get_ylim()
+        self.F_fig.text((3*x1+x0)/4, 3*y0/4.,  r"$\mathrm{Repulsion}$", verticalalignment="center", horizontalalignment="center", fontsize=20)
+        self.F_fig.text((3*x1+x0)/4, 3*y1/4., r"$\mathrm{Attraction}$", verticalalignment="center", horizontalalignment="center", fontsize=20)
+        self.F_fig.text(H + 0.25, 0.01, r"$h_\lambda \sim %.2f$" % H, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
+
+        F0s = [0.5, 1.0]
+        s0s = [0.5, 1.0, 1.5]
+        styles = ["r-", "k--", "g-."]
+        widths = [1, 1, 2]
+
+        for i, f0_over_EbA in enumerate(F0s):
+            all_F_fig = [self.all_F_fig_low, self.all_F_fig_high][i]
+            for j, s0 in enumerate(s0s):
+                H, g_rep = self.get_repulz(s0, hlvec, ld, f0_over_EbA)
+                f_rep = g_rep/ld
+
+                tot = (f_rep + f_attr - f0_over_EbA)/f0_over_EbA
+                all_F_fig.plot(hlvec, tot, styles[j], label=r"$\sigma_0=%.1f$" % s0, linewidth=widths[j])
+                all_F_fig.set_title(r"$F_0/Eb_A = %.1f$" % f0_over_EbA)
+
+            all_F_fig.set_ylim(ymin, 2.0)
+            all_F_fig.plot([1, hlvec[-1]], [0, 0], "k-", zorder=0)
+            all_F_fig.set_xlabel(r"$d$")
+            all_F_fig.set_yticks([-1, 0, 1, 2])
+        self.all_F_fig_low.set_ylabel(r"$F_\mathrm{tot}(d)/F_0$", labelpad=-10)
+        self.all_F_fig_low.yaxis.set_major_formatter(FuncFormatter(f))
+        self.all_F_fig_high.set_yticklabels([])
+
+        lg = self.all_F_fig_high.legend(loc="center",
+                                        numpoints=1,
+                                        ncol=1,
+                                        handlelength=0.9,
+                                        borderpad=0.2,
+                                        labelspacing=0.2,
+                                        columnspacing=0.3,
+                                        handletextpad=0.25,
+                                        borderaxespad=0.0,
+                                        frameon=False,
+                                        bbox_to_anchor=(0.725, 0.8))
+
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
 
 class FPlots(DCVizPlotter):

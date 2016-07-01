@@ -485,6 +485,11 @@ def main():
 
         total += 1
 
+    print "found %d runs, %d alphas, %d F0s, repeats %d" % (total,
+                                                            len(alphas),
+                                                            len(F0s),
+                                                            total/float(len(F0s)*len(alphas)*len(s0s)))
+
     F0s = sorted(F0s)
     s0s = sorted(s0s)
     alphas = sorted(alphas)
