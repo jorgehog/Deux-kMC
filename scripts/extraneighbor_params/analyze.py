@@ -502,6 +502,8 @@ def main():
     pmat = np.zeros(shape=(len(s0s), len(alphas), len(F0s), 4))  #0: no phase | 1: island | 2: band | 3: hole
     ccounts = np.zeros(shape=(len(s0s), len(alphas), len(F0s)))
 
+    type_covs = []
+
     facSmall = 9/10.
     facBig = 9/10.
     plotevery = 100
@@ -545,9 +547,13 @@ def main():
 
             cval = eq_coverage[start:].mean()
 
+        cval /= float(L*W)
+
         pmat[is0, ia, iF0, p_value] += 1
-        cmat[is0, ia, iF0] += cval/float(L*W)
+        cmat[is0, ia, iF0] += cval
         ccounts[is0, ia, iF0] += 1.
+
+        type_covs.append([p_value, ia, cval])
 
         count += 1
 
@@ -557,14 +563,11 @@ def main():
 
     print ccounts.max(), ccounts.min()
 
-    I = np.where(ccounts != 0)
-    J = np.where(ccounts == 0)
-
-    cmat[I] /= ccounts[I]
-    cmat[J] = -1
+    cmat /= ccounts
 
     np.save("/tmp/extraneighbor_cmat.npy", cmat)
     np.save("/tmp/extraneighbor_pmat.npy", pmat)
+    np.save("/tmp/extraneighbor_typecov.npy", type_covs)
 
     if plot:
         plab.plot([lmax*facSmall/plotevery, lmax*facSmall/plotevery], [0, 1])

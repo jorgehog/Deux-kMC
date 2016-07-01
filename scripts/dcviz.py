@@ -3544,7 +3544,7 @@ class ExtraNeighbor(DCVizPlotter):
     minorfigs = ["f", "p", "t"]#, "b", "i", "P"]
 
     figMap = dict([["%s%d" % (n, i), "%ssubfigure%d1" % (n, i)]
-                   for n in minorfigs for i in [1, 2, 3]])
+                   for n in minorfigs for i in [0, 1, 2]] + [["fmjau", ["mjau0", "mjau1", "mjau2"]]])
 
     hugifyFonts = True
 
@@ -3553,22 +3553,32 @@ class ExtraNeighbor(DCVizPlotter):
              [5, 5]]
 
     specific_fig_size = dict([["%s%d" % (n, i), sizes[i]]
-                              for n in minorfigs for i in [0, 1, 2]])
+                              for n in minorfigs for i in [0, 1, 2]] + [["fmjau", [5, 8]]])
+
+    specific_fig_size["t2"] = sizes[1]
 
     def adjust(self):
         for figname in self.figure_names:
-            if "2" in figname:
-                self.adjust_maps[figname]["right"] = 0.97
-                self.adjust_maps[figname]["left"] = 0.23
-            elif "3" in figname:
-                self.adjust_maps[figname]["right"] = 0.97
-                self.adjust_maps[figname]["left"] = 0.03
-            else:
-                self.adjust_maps[figname]["right"] = 0.68
-                self.adjust_maps[figname]["left"] = 0.03
+            if "mjau" in figname:
+                self.adjust_maps[figname]["top"] = 0.99
+                self.adjust_maps[figname]["bottom"] = 0.10
+                self.adjust_maps[figname]["left"] = 0.17
+                self.adjust_maps[figname]["right"] = 0.9
+                self.adjust_maps[figname]["hspace"] = 0.17
 
-            self.adjust_maps[figname]["top"] = 0.91
-            self.adjust_maps[figname]["bottom"] = 0.15
+            else:
+                if "0" in figname:
+                    self.adjust_maps[figname]["right"] = 0.97
+                    self.adjust_maps[figname]["left"] = 0.23
+                elif "1" in figname or figname == "t2":
+                    self.adjust_maps[figname]["right"] = 0.96
+                    self.adjust_maps[figname]["left"] = 0.04
+                else:
+                    self.adjust_maps[figname]["right"] = 0.68
+                    self.adjust_maps[figname]["left"] = 0.03
+
+                self.adjust_maps[figname]["top"] = 0.91
+                self.adjust_maps[figname]["bottom"] = 0.15
 
     #plotOnly = "f3"
 
@@ -3578,16 +3588,23 @@ class ExtraNeighbor(DCVizPlotter):
         F0s = self.get_family_member_data(data, "F0s")
         cmat = self.get_family_member_data(data, "cmat")
         pmat = self.get_family_member_data(data, "pmat")
+        tcov = self.get_family_member_data(data, "typecov")
         tmat = np.zeros_like(cmat)
         avg_pmat = np.zeros_like(tmat)
         bmat = np.zeros_like(tmat)
         imat = np.zeros_like(tmat)
         Pmat = np.zeros_like(tmat)
 
+        nbins = 10
+        hist = np.zeros(shape=(nbins, 3, 4))
+        # counts = np.zeros(shape=(3, 4))
+        dx = 1./nbins
+
+
         K, L, M, _ = pmat.shape
 
         for k in range(K):
-            for l in range(L):
+            for l, alpha in enumerate(alphas):
                 for m in range(M):
                     t = np.argmax(pmat[k, l, m, :])
                     tmat[k, l, m] = t
@@ -3601,33 +3618,148 @@ class ExtraNeighbor(DCVizPlotter):
                     imat[k, l, m] = pmat[k, l, m, 1]/c
                     bmat[k, l, m] = pmat[k, l, m, 2]/c
                     Pmat[k, l, m] = pmat[k, l, m, 3]/c
+                    #
+                    # asd = min(pmat[k, l, m, 1:])
+                    # if asd > 2:
+                    #     avg_pmat[k, l, m] = 0
+                    #     print asd
 
-                    asd = min(pmat[k, l, m, 1:])
-                    if asd > 2:
-                        avg_pmat[k, l, m] = 0
-                        print asd
 
-        t_locs = [[], [], []]
+        at = np.where(alphas >= 1.)[0][0]
+        for t, ia, cov in tcov:
+            if t == 0:
+                continue
 
-        for is0 in range(len(s0s)):
-            for ia in range(len(alphas)):
-                last_island = None
-                first_pit = None
+            idx = int(cov/dx)
+            idx2 = 0 if ia <= at else 1
 
-                for iF0 in range(len(F0s)):
-                    t = tmat[is0, ia, iF0]
+            hist[idx, idx2, 0] += 1
+            hist[idx, idx2, t] += 1
 
-                    if t == 3 and first_pit is None:
-                        first_pit = iF0
-                    elif t == 1 or t == 0:
-                        last_island = iF0
+            hist[idx, 2, 0] += 1
+            hist[idx, 2, t] += 1
 
-                if last_island is not None and first_pit is not None:
-                    t_locs[is0].append(0.5*(last_island + first_pit + 1))
-                else:
-                    t_locs[is0].append(None)
+            # counts[idx2, 0] += 1
+            # counts[idx2, t] += 1
+            #
+            # counts[2, 0] += 1
+            # counts[2, t] += 1
 
-        print t_locs
+
+        labels = [r"$\mathrm{I}$", r"$\mathrm{B}$", r"$\mathrm{P}$"]
+        twinlabels = [r"$\alpha\in [%g, %g]$" % (alphas[0], alphas[at]),
+                      r"$\alpha\in [%g, %g]$" % (alphas[at+1], alphas[-1]),
+                      r"$\alpha\in [%g, %g]$" % (alphas[0], alphas[-1])]
+
+        def f(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            else:
+                return r"$%.1f$" % v
+        def g(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            else:
+                return r"$%.2f$" % v
+
+        markers = ["s", "o", "d"]
+        colors = ["r", "k", "0.5"]
+        sfigs = [self.mjau0, self.mjau1, self.mjau2]
+        for i in range(3):
+            # hist[:, i, 0] /= counts[i, 0]
+
+            sfigs[i].set_ylabel(r"$\mathcal{P}$")
+            # sfigs[i].set_yticklabels([])
+            sfigs[i].set_ylim(0, 1.05)
+            sfigs[i].yaxis.set_major_formatter(FuncFormatter(f))
+            P_tot = 0
+            for j in range(1,4):
+                # hist[:, i, j] /= counts[i, j]
+                P = hist[:, i, j]/hist[:, i, 0]
+                P_tot += P
+                sfigs[i].plot([dx*(k+0.5) for k in range(nbins)],
+                              P,
+                              "-" + markers[j-1],
+                              label=labels[j-1],
+                              color=colors[j-1],
+                              **my_props["fmt"])
+            ax = sfigs[i].axes.twinx()
+            ax.set_ylabel(twinlabels[i])
+            ax.yaxis.set_ticks([])
+            ax.yaxis.set_ticklabels([])
+
+        self.mjau0.set_xticklabels([])
+        self.mjau1.set_xticklabels([])
+        self.mjau2.xaxis.set_major_formatter(FuncFormatter(g))
+
+        tix = [0, 0.25, 0.5, 0.75]
+        self.mjau0.set_xticks(tix)
+        self.mjau1.set_xticks(tix)
+        self.mjau2.set_xticks(tix)
+        self.mjau2.set_xlabel(r"$\rho_\mathrm{WV}$")
+        lg = self.mjau0.legend(loc="center",
+                               numpoints=1,
+                               ncol=1,
+                               handlelength=0.9,
+                               borderpad=0.2,
+                               labelspacing=0.2,
+                               columnspacing=0.3,
+                               handletextpad=0.25,
+                               borderaxespad=0.0,
+                               frameon=False,
+                               bbox_to_anchor=(0.18, 0.5))
+
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        #self.mjau.plot([dx*i for i in range(nbins)], hist[:, 0], "r-s", label=r"$\alpha \le %g$" % alphas[at])
+        #self.mjau.plot([dx*i for i in range(nbins)], hist[:, 1], "k-s", label=r"$\alpha > %g$" % alphas[at])
+        #self.mjau.plot([dx*i for i in range(nbins)], hist[:, 2], "r--")
+        #self.mjau.plot([dx*i for i in range(nbins)], hist[:, 2], "ks", label=r"all" % alphas[at])
+        #self.mjau.legend(loc="upper right")
+        #
+        # high_t_islands_cov = cmat[:, :at, :][np.where(tmat[:, :at, :] == 1)]
+        # high_t_bands_cov = cmat[:, :at, :][np.where(tmat[:, :at, :] == 2)]
+        # high_t_pits_cov = cmat[:, :at, :][np.where(tmat[:, :at, :] == 3)]
+        #
+        # low_t_islands_cov = cmat[:, at:, :][np.where(tmat[:, at:, :] == 1)]
+        # low_t_bands_cov = cmat[:, at:, :][np.where(tmat[:, at:, :] == 2)]
+        # low_t_pits_cov = cmat[:, at:, :][np.where(tmat[:, at:, :] == 3)]
+        #
+        # high_lower_limit = 0.5*(high_t_islands_cov.max() + high_t_bands_cov.min())
+        # high_upper_limit = 0.5*(high_t_pits_cov.min() + high_t_bands_cov.max())
+        #
+        # low_lower_limit = 0.5*(low_t_islands_cov.max() + low_t_bands_cov.min())
+        # low_upper_limit = 0.5*(low_t_pits_cov.min() + low_t_bands_cov.max())
+        #
+        # print "high: [%g,%g] low: [%g, %g]" % (high_lower_limit,
+        #                                        high_upper_limit,
+        #                                        low_lower_limit,
+        #                                        low_upper_limit)
+        #
+        # sliz3 = cmat[:, :at, :][np.where(tmat[:, at:, :] == 3)]
+        # print sliz3.min()
+        #
+        # t_locs = [[], [], []]
+        #
+        # for is0 in range(len(s0s)):
+        #     for ia in range(len(alphas)):
+        #         last_island = None
+        #         first_pit = None
+        #
+        #         for iF0 in range(len(F0s)):
+        #             t = tmat[is0, ia, iF0]
+        #
+        #             if t == 3 and first_pit is None:
+        #                 first_pit = iF0
+        #             elif t == 1 or t == 0:
+        #                 last_island = iF0
+        #
+        #         if last_island is not None and first_pit is not None:
+        #             t_locs[is0].append(0.5*(last_island + first_pit + 1))
+        #         else:
+        #             t_locs[is0].append(None)
+        #
+        # print t_locs
 
         desc = [r"$\mathrm{\underline{P}its}$",
                 r"$\mathrm{\underline{B}ands}$",
@@ -3638,9 +3770,10 @@ class ExtraNeighbor(DCVizPlotter):
 
         for i, y_loc in enumerate(y_locs):
             avg_pmat[-1, x_loc, y_loc] = 3 - i
+            tmat[-1, x_loc, y_loc] = 3 - i
 
         xes = []
-        for x in range(1, len(alphas), 2):
+        for x in range(0, len(alphas), 3):
             xes.append(x + 0.5)
 
         fes = []
@@ -3654,7 +3787,7 @@ class ExtraNeighbor(DCVizPlotter):
             for i, id in enumerate(self.minorfigs):
                 M = mats[i][is0, :, :]
 
-                sfig = eval("self.%ssubfigure%d1" % (id, is0+1))
+                sfig = eval("self.%ssubfigure%d1" % (id, is0))
 
                 sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
 
@@ -3697,19 +3830,22 @@ class ExtraNeighbor(DCVizPlotter):
         #     sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'k--', linewidth=3)
 
         for i, y_loc in enumerate(y_locs):
-            sfig = self.psubfigure31
+            sfig = self.psubfigure21
             sfig.text(x_loc + 1.5, y_loc, desc[i])#, horizontalalignment="left", verticalalignment="center")
+            sfig = self.tsubfigure21
+            sfig.text(x_loc + 1.5, y_loc, desc[i])#, horizontalalignment="left", verticalalignment="center")
+
 
         pos = [0.78, 0.18, 0.05, 0.7]
         clabel = r'$\rho_\mathrm{WV}$'
 
-        cbar_ax = self.f4.add_axes(pos)
+        cbar_ax = self.f2.add_axes(pos)
         cbar_ax.set_title(clabel, position=(0, -0.09), horizontalalignment="left", verticalalignment="center", transform=cbar_ax.transAxes)
 
-        ax = self.f4.colorbar(ims[0], cax=cbar_ax)
+        ax = self.f2.colorbar(ims[0], cax=cbar_ax)
 
-        pbar_ax = self.p4.add_axes(pos)
-        ax = self.p4.colorbar(ims[1], cax=pbar_ax)
+        pbar_ax = self.p2.add_axes(pos)
+        ax = self.p2.colorbar(ims[1], cax=pbar_ax)
         ax.set_ticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
         ax.set_ticklabels([r"", "", r"$\mathrm{I}$", "", r"$\mathrm{B}$", "", r"$\mathrm{P}$"])
 
