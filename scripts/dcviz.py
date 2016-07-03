@@ -3854,36 +3854,35 @@ class GFPlots(DCVizPlotter):
 
     nametag = "GPlots.txt"
 
-    figMap = {"g_figure": "G_fig",
-              "f_figure": "F_fig",
+    figMap = {"gf_figure": ["G_fig","F_fig"],
               "gc_figure": "GC_fig",
               "allf_figure": ["all_F_fig_low", "all_F_fig_high"]}
 
     hugifyFonts = True
 
-    fig_size_0 = [5, 5]
-    fig_size_1 = [9, 5.25]
+    specific_fig_size =  {"gf_figure": [5,7],
+                          "gc_figure": [5,3],
+                          "allf_figure": [5,7]}
 
-    specific_fig_size =  {"g_figure": fig_size_0,
-                          "f_figure": fig_size_0,
-                          "gc_figure": fig_size_0,
-                          "allf_figure": fig_size_1}
-
-    stack = "H"
+    stack = "V"
 
     def adjust(self):
-        for figname in self.figure_names:
-            if "all" in figname:
-                self.adjust_maps[figname]["right"] = 0.9
-                self.adjust_maps[figname]["left"] = 0.1
-                self.adjust_maps[figname]["top"] = 0.91
-                self.adjust_maps[figname]["bottom"] = 0.14
+        self.adjust_maps["gf_figure"]["right"] = 0.86
+        self.adjust_maps["gf_figure"]["left"] = 0.14
+        self.adjust_maps["gf_figure"]["top"] = 0.89
+        self.adjust_maps["gf_figure"]["bottom"] = 0.11
+        self.adjust_maps["gf_figure"]["hspace"] = 0.13
 
-            else:
-                self.adjust_maps[figname]["right"] = 0.84
-                self.adjust_maps[figname]["left"] = 0.16
-                self.adjust_maps[figname]["top"] = 0.96
-                self.adjust_maps[figname]["bottom"] = 0.15
+        self.adjust_maps["gc_figure"]["right"] = 0.84
+        self.adjust_maps["gc_figure"]["left"] = 0.16
+        self.adjust_maps["gc_figure"]["top"] = 0.96
+        self.adjust_maps["gc_figure"]["bottom"] = 0.26
+
+        self.adjust_maps["allf_figure"]["right"] = 0.86
+        self.adjust_maps["allf_figure"]["left"] = 0.14
+        self.adjust_maps["allf_figure"]["top"] = 0.96
+        self.adjust_maps["allf_figure"]["bottom"] = 0.11
+        self.adjust_maps["allf_figure"]["hspace"] = 0.13
 
     def f_attraction_corr(self, di):
 
@@ -3952,7 +3951,7 @@ class GFPlots(DCVizPlotter):
         """
 
         self.GC_fig.plot(hlvec, g_attr_6, "k--", label=r"$-1/d^6$")
-        self.GC_fig.plot(hlvec, g_attr, "r-", label=r"$\tilde G_\mathrm{VW}$")
+        self.GC_fig.plot(hlvec, g_attr, "r-", label=r"$\tilde G_\mathrm{WV}$")
         self.GC_fig.set_xlabel(r"$d$")
         self.GC_fig.set_ylabel(r"$G(d)/E_bA$", labelpad=-10)
         self.GC_fig.set_yticks([-1, 0])
@@ -3971,7 +3970,7 @@ class GFPlots(DCVizPlotter):
                                handletextpad=0.25,
                                borderaxespad=0.0,
                                frameon=False,
-                               bbox_to_anchor=(0.775, 0.7))
+                               bbox_to_anchor=(0.775, 0.65))
 
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
@@ -3979,14 +3978,18 @@ class GFPlots(DCVizPlotter):
         Free energies
         """
 
+        ymin_g = -1.5
+        ymax_g = 5.5
+
         self.G_fig.plot(hlvec, g_f0, 'k--', label=r"$d\cdot F_0$", linewidth=1)
         self.G_fig.plot(hlvec, g_rep, 'g-.', label=r"$G_\lambda$", linewidth=2)
-        self.G_fig.plot(hlvec, g_attr, 'r:', label=r"$\tilde G_\mathrm{wv}$", linewidth=2)
+        self.G_fig.plot(hlvec, g_attr, 'r:', label=r"$\tilde G_\mathrm{WV}$", linewidth=2)
         self.G_fig.plot(hlvec, g_rep + g_attr + g_f0, 'k-',
                         label=r"$G_\mathrm{tot}$", linewidth=1)
-        # self.G_fig.plot([H, H], [0, max(g_rep)], "k-")
+        self.G_fig.plot([H, H], [ymin_g, ymax_g], "k--")
 
-        self.G_fig.set_xlabel(r"$d$")
+      #  self.G_fig.set_xlabel(r"$d$")
+        self.G_fig.set_xticklabels([])
         self.G_fig.set_ylabel(r"$G(d)/E_bA$", labelpad=-10)
 
         # for Z0 in [0.5, 1, 1.5]:
@@ -3998,41 +4001,37 @@ class GFPlots(DCVizPlotter):
 
         lg = self.G_fig.legend(loc="center",
                                numpoints=1,
-                               ncol=2,
+                               ncol=4,
                                handlelength=0.9,
-                               borderpad=0.2,
+                               borderpad=0.3,
                                labelspacing=0.2,
                                columnspacing=0.3,
                                handletextpad=0.25,
                                borderaxespad=0.0,
-                               frameon=False,
-                               bbox_to_anchor=(0.6, 0.87))
+                               frameon=True,
+                               bbox_to_anchor=(0.5, 1.15))
 
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
-        self.G_fig.set_xbound(1-0.5)
-        self.G_fig.set_ylim(-1.5, 1.25*max(g_rep))
+        self.G_fig.set_xbound(1-0.25)
+        self.G_fig.set_ylim(ymin_g, ymax_g)
+
 
         """
         Forces
         """
 
-        r0 = 1.29714
-        r1 = 2.38629
-
-
-        styles = ['g-.', 'k--', 'r-', "0.0"]
 
         tot = (f_rep + f_attr - f0_over_EbA)/f0_over_EbA
         ymin = -1.1
         ymax = 1.0
 
-        self.F_fig.plot(hlvec, tot, styles[2],
+        self.F_fig.plot(hlvec, tot, "r-",
                             label=r"$F_0 + F_l + F_\lambda$", linewidth=3, linestyle="-", zorder=1)
         self.F_fig.plot([H, H], [ymin, ymax], "k--", zorder=2)
         #self.F_fig.plot([di[0], di[-1]], [f0, f0], styles[1],
         #                    label=r"$F_0$", linewidth=2)
-        self.F_fig.plot([1, hlvec[-1]], [0, 0], "k-", zorder=0)
+        self.F_fig.plot([0.75, hlvec[-1]], [0, 0], "k-", zorder=0)
         #self.F_fig.plot([r0], [0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
         #self.F_fig.plot([r1], [0], 'go', markersize=10)
         #self.F_fig.plot([1], [0], 'go', markersize=10)
@@ -4059,8 +4058,8 @@ class GFPlots(DCVizPlotter):
 
         x0, x1 = self.F_fig.get_xlim()
         y0, y1 = self.F_fig.get_ylim()
-        self.F_fig.text((3*x1+x0)/4, 3*y0/4.,  r"$\mathrm{Repulsion}$", verticalalignment="center", horizontalalignment="center", fontsize=20)
-        self.F_fig.text((3*x1+x0)/4, 3*y1/4., r"$\mathrm{Attraction}$", verticalalignment="center", horizontalalignment="center", fontsize=20)
+        self.F_fig.text((3*x1+x0)/4, 3*y0/4.,  r"$\mathrm{Attraction}$", verticalalignment="center", horizontalalignment="center", fontsize=20)
+        self.F_fig.text((3*x1+x0)/4, 3*y1/4., r"$\mathrm{Repulsion}$", verticalalignment="center", horizontalalignment="center", fontsize=20)
         self.F_fig.text(H + 0.25, 0.01, r"$h_\lambda \sim %.2f$" % H, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
 
         F0s = [0.5, 1.0]
@@ -4076,15 +4075,23 @@ class GFPlots(DCVizPlotter):
 
                 tot = (f_rep + f_attr - f0_over_EbA)/f0_over_EbA
                 all_F_fig.plot(hlvec, tot, styles[j], label=r"$\sigma_0=%.1f$" % s0, linewidth=widths[j])
-                all_F_fig.set_title(r"$F_0/Eb_A = %.1f$" % f0_over_EbA)
 
             all_F_fig.set_ylim(ymin, 2.0)
             all_F_fig.plot([1, hlvec[-1]], [0, 0], "k-", zorder=0)
-            all_F_fig.set_xlabel(r"$d$")
             all_F_fig.set_yticks([-1, 0, 1, 2])
-        self.all_F_fig_low.set_ylabel(r"$F_\mathrm{tot}(d)/F_0$", labelpad=-10)
+            all_F_fig.set_ylabel(r"$F_\mathrm{tot}(d)/F_0$", labelpad=-10)
+
+            ax = all_F_fig.axes.twinx()
+            ax.set_ylabel(r"$F_0/E_bA=%.1f$" % f0_over_EbA, labelpad=10)
+            ax.yaxis.set_ticks([])
+            ax.yaxis.set_ticklabels([])
+
+        self.all_F_fig_high.set_xlabel(r"$d$")
+
         self.all_F_fig_low.yaxis.set_major_formatter(FuncFormatter(f))
-        self.all_F_fig_high.set_yticklabels([])
+        self.all_F_fig_high.yaxis.set_major_formatter(FuncFormatter(f))
+        self.all_F_fig_low.set_xticklabels([])
+
 
         lg = self.all_F_fig_high.legend(loc="center",
                                         numpoints=1,
@@ -4096,7 +4103,7 @@ class GFPlots(DCVizPlotter):
                                         handletextpad=0.25,
                                         borderaxespad=0.0,
                                         frameon=False,
-                                        bbox_to_anchor=(0.725, 0.8))
+                                        bbox_to_anchor=(0.725, 0.7))
 
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
@@ -4550,9 +4557,9 @@ class ResonancePlots(DCVizPlotter):
 
     def plot(self, data):
 
-        F0 = 0.1
-        F1 = 0.6
-        s0 = 0.5
+        F0 = 0.7
+        F1 = 1.3
+        s0 = 1.5
         ld = 5.
 
         F0EbA = np.linspace(F0, F1, 1000)
