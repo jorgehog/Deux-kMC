@@ -13,7 +13,7 @@ def main():
     controller, path, app, cfg, n_procs = parse_input(sys.argv)
 
     fluxes = ParameterSet(cfg, "flux\s*=\s*(.*)\;")
-    fluxes.initialize_set(np.linspace(1.0, 3.0, 9))
+    fluxes.initialize_set([2.25, 2.3, 2.35, 2.4])
 
     controller.register_parameter_set(fluxes)
 
