@@ -4,7 +4,7 @@
 
 int main(int argv, char** argc)
 {
-    rng.initialize(time(nullptr));
+    rng.initialize(time(nullptr) + getProc(argv, argc));
 
     string cfgName = getCfgName(argv, argc, "felixexp_cavity");
 

@@ -3541,30 +3541,44 @@ class ExtraNeighbor(DCVizPlotter):
 
     isFamilyMember = True
 
-    figMap = {"f2" : "subfigure11",
-              "f3" : "subfigure21",
-              "f4" : "subfigure31"}
+    minorfigs = ["f", "p", "t"]#, "b", "i", "P"]
+
+    figMap = dict([["%s%d" % (n, i), "%ssubfigure%d1" % (n, i)]
+                   for n in minorfigs for i in [0, 1, 2]] + [["fmjau", ["mjau0", "mjau1", "mjau2"]]])
 
     hugifyFonts = True
 
-    specific_fig_size = {"f2": [4.5, 5],
-                         "f3": [3.6, 5],
-                         "f4": [5, 5]}
+    sizes = [[4.5, 5],
+             [3.6, 5],
+             [5, 5]]
+
+    specific_fig_size = dict([["%s%d" % (n, i), sizes[i]]
+                              for n in minorfigs for i in [0, 1, 2]] + [["fmjau", [5, 8]]])
+
+    specific_fig_size["t2"] = sizes[1]
 
     def adjust(self):
         for figname in self.figure_names:
-            if figname in ["f2", "f5"]:
-                self.adjust_maps[figname]["right"] = 0.97
-                self.adjust_maps[figname]["left"] = 0.23
-            elif figname in ["f3", "f6"]:
-                self.adjust_maps[figname]["right"] = 0.97
-                self.adjust_maps[figname]["left"] = 0.03
-            else:
-                self.adjust_maps[figname]["right"] = 0.68
-                self.adjust_maps[figname]["left"] = 0.03
+            if "mjau" in figname:
+                self.adjust_maps[figname]["top"] = 0.99
+                self.adjust_maps[figname]["bottom"] = 0.10
+                self.adjust_maps[figname]["left"] = 0.17
+                self.adjust_maps[figname]["right"] = 0.9
+                self.adjust_maps[figname]["hspace"] = 0.17
 
-            self.adjust_maps[figname]["top"] = 0.91
-            self.adjust_maps[figname]["bottom"] = 0.15
+            else:
+                if "0" in figname:
+                    self.adjust_maps[figname]["right"] = 0.97
+                    self.adjust_maps[figname]["left"] = 0.23
+                elif "1" in figname or figname == "t2":
+                    self.adjust_maps[figname]["right"] = 0.96
+                    self.adjust_maps[figname]["left"] = 0.04
+                else:
+                    self.adjust_maps[figname]["right"] = 0.68
+                    self.adjust_maps[figname]["left"] = 0.03
+
+                self.adjust_maps[figname]["top"] = 0.91
+                self.adjust_maps[figname]["bottom"] = 0.15
 
     #plotOnly = "f3"
 
@@ -3573,159 +3587,525 @@ class ExtraNeighbor(DCVizPlotter):
         alphas = self.get_family_member_data(data, "alphas")
         F0s = self.get_family_member_data(data, "F0s")
         cmat = self.get_family_member_data(data, "cmat")
+        pmat = self.get_family_member_data(data, "pmat")
+        tcov = self.get_family_member_data(data, "typecov")
+        tmat = np.zeros_like(cmat)
+        avg_pmat = np.zeros_like(tmat)
+        bmat = np.zeros_like(tmat)
+        imat = np.zeros_like(tmat)
+        Pmat = np.zeros_like(tmat)
+
+        nbins = 10
+        hist = np.zeros(shape=(nbins, 3, 4))
+        # counts = np.zeros(shape=(3, 4))
+        dx = 1./nbins
+
+
+        K, L, M, _ = pmat.shape
+
+        for k in range(K):
+            for l, alpha in enumerate(alphas):
+                for m in range(M):
+                    t = np.argmax(pmat[k, l, m, :])
+                    tmat[k, l, m] = t
+
+                    p = 0.0
+                    c = 0.0
+                    for i in range(4):
+                        p += pmat[k, l, m, i]*i
+                        c += pmat[k, l, m, i]
+                    avg_pmat[k, l, m] = p/c
+                    imat[k, l, m] = pmat[k, l, m, 1]/c
+                    bmat[k, l, m] = pmat[k, l, m, 2]/c
+                    Pmat[k, l, m] = pmat[k, l, m, 3]/c
+                    #
+                    # asd = min(pmat[k, l, m, 1:])
+                    # if asd > 2:
+                    #     avg_pmat[k, l, m] = 0
+                    #     print asd
+
+
+        at = np.where(alphas >= 1.)[0][0]
+        for t, ia, cov in tcov:
+            if t == 0:
+                continue
+
+            idx = int(cov/dx)
+            idx2 = 0 if ia <= at else 1
+
+            hist[idx, idx2, 0] += 1
+            hist[idx, idx2, t] += 1
+
+            hist[idx, 2, 0] += 1
+            hist[idx, 2, t] += 1
+
+            # counts[idx2, 0] += 1
+            # counts[idx2, t] += 1
+            #
+            # counts[2, 0] += 1
+            # counts[2, t] += 1
+
+
+        labels = [r"$\mathrm{I}$", r"$\mathrm{B}$", r"$\mathrm{P}$"]
+        twinlabels = [r"$\alpha\in [%g, %g]$" % (alphas[0], alphas[at]),
+                      r"$\alpha\in [%g, %g]$" % (alphas[at+1], alphas[-1]),
+                      r"$\alpha\in [%g, %g]$" % (alphas[0], alphas[-1])]
+
+        def f(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            else:
+                return r"$%.1f$" % v
+        def g(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            else:
+                return r"$%.2f$" % v
+
+        markers = ["s", "o", "d"]
+        colors = ["r", "k", "0.5"]
+        sfigs = [self.mjau0, self.mjau1, self.mjau2]
+        for i in range(3):
+            # hist[:, i, 0] /= counts[i, 0]
+
+            sfigs[i].set_ylabel(r"$\mathcal{P}$")
+            # sfigs[i].set_yticklabels([])
+            sfigs[i].set_ylim(0, 1.05)
+            sfigs[i].yaxis.set_major_formatter(FuncFormatter(f))
+            P_tot = 0
+            for j in range(1,4):
+                # hist[:, i, j] /= counts[i, j]
+                P = hist[:, i, j]/hist[:, i, 0]
+                P_tot += P
+                sfigs[i].plot([dx*(k+0.5) for k in range(nbins)],
+                              P,
+                              "-" + markers[j-1],
+                              label=labels[j-1],
+                              color=colors[j-1],
+                              **my_props["fmt"])
+            ax = sfigs[i].axes.twinx()
+            ax.set_ylabel(twinlabels[i])
+            ax.yaxis.set_ticks([])
+            ax.yaxis.set_ticklabels([])
+
+        self.mjau0.set_xticklabels([])
+        self.mjau1.set_xticklabels([])
+        self.mjau2.xaxis.set_major_formatter(FuncFormatter(g))
+
+        tix = [0, 0.25, 0.5, 0.75]
+        self.mjau0.set_xticks(tix)
+        self.mjau1.set_xticks(tix)
+        self.mjau2.set_xticks(tix)
+        self.mjau2.set_xlabel(r"$\rho_\mathrm{WV}$")
+        lg = self.mjau0.legend(loc="center",
+                               numpoints=1,
+                               ncol=1,
+                               handlelength=0.9,
+                               borderpad=0.2,
+                               labelspacing=0.2,
+                               columnspacing=0.3,
+                               handletextpad=0.25,
+                               borderaxespad=0.0,
+                               frameon=False,
+                               bbox_to_anchor=(0.18, 0.5))
+
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        #self.mjau.plot([dx*i for i in range(nbins)], hist[:, 0], "r-s", label=r"$\alpha \le %g$" % alphas[at])
+        #self.mjau.plot([dx*i for i in range(nbins)], hist[:, 1], "k-s", label=r"$\alpha > %g$" % alphas[at])
+        #self.mjau.plot([dx*i for i in range(nbins)], hist[:, 2], "r--")
+        #self.mjau.plot([dx*i for i in range(nbins)], hist[:, 2], "ks", label=r"all" % alphas[at])
+        #self.mjau.legend(loc="upper right")
+        #
+        # high_t_islands_cov = cmat[:, :at, :][np.where(tmat[:, :at, :] == 1)]
+        # high_t_bands_cov = cmat[:, :at, :][np.where(tmat[:, :at, :] == 2)]
+        # high_t_pits_cov = cmat[:, :at, :][np.where(tmat[:, :at, :] == 3)]
+        #
+        # low_t_islands_cov = cmat[:, at:, :][np.where(tmat[:, at:, :] == 1)]
+        # low_t_bands_cov = cmat[:, at:, :][np.where(tmat[:, at:, :] == 2)]
+        # low_t_pits_cov = cmat[:, at:, :][np.where(tmat[:, at:, :] == 3)]
+        #
+        # high_lower_limit = 0.5*(high_t_islands_cov.max() + high_t_bands_cov.min())
+        # high_upper_limit = 0.5*(high_t_pits_cov.min() + high_t_bands_cov.max())
+        #
+        # low_lower_limit = 0.5*(low_t_islands_cov.max() + low_t_bands_cov.min())
+        # low_upper_limit = 0.5*(low_t_pits_cov.min() + low_t_bands_cov.max())
+        #
+        # print "high: [%g,%g] low: [%g, %g]" % (high_lower_limit,
+        #                                        high_upper_limit,
+        #                                        low_lower_limit,
+        #                                        low_upper_limit)
+        #
+        # sliz3 = cmat[:, :at, :][np.where(tmat[:, at:, :] == 3)]
+        # print sliz3.min()
+        #
+        # t_locs = [[], [], []]
+        #
+        # for is0 in range(len(s0s)):
+        #     for ia in range(len(alphas)):
+        #         last_island = None
+        #         first_pit = None
+        #
+        #         for iF0 in range(len(F0s)):
+        #             t = tmat[is0, ia, iF0]
+        #
+        #             if t == 3 and first_pit is None:
+        #                 first_pit = iF0
+        #             elif t == 1 or t == 0:
+        #                 last_island = iF0
+        #
+        #         if last_island is not None and first_pit is not None:
+        #             t_locs[is0].append(0.5*(last_island + first_pit + 1))
+        #         else:
+        #             t_locs[is0].append(None)
+        #
+        # print t_locs
+
+        desc = [r"$\mathrm{\underline{P}its}$",
+                r"$\mathrm{\underline{B}ands}$",
+                r"$\mathrm{\underline{I}slands}$"]
+
+        x_loc = len(alphas)-8
+        y_locs = [6, 4, 2]
+
+        for i, y_loc in enumerate(y_locs):
+            avg_pmat[-1, x_loc, y_loc] = 3 - i
+            tmat[-1, x_loc, y_loc] = 3 - i
 
         xes = []
-        for x in range(1, len(alphas), 2):
+        for x in range(0, len(alphas), 3):
             xes.append(x + 0.5)
 
         fes = []
         for y in range(0, len(F0s), 3):
             fes.append(y+0.5)
 
+        mats = [cmat, avg_pmat, tmat, bmat, imat, Pmat]
+
+        ims = [None for _ in mats]
         for is0, s0 in enumerate(s0s):
+            for i, id in enumerate(self.minorfigs):
+                M = mats[i][is0, :, :]
 
-            C = cmat[is0, :, :]
+                sfig = eval("self.%ssubfigure%d1" % (id, is0))
 
-            sfig = eval("self.subfigure%d1" % (is0+1))
-            sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
-                
-            im = sfig.pcolor(C.transpose(), vmin=0, vmax=1, cmap="gist_earth_r")
-            
-            fail = np.where(C == -1)
+                sfig.set_title(r"$\sigma_0 = %.1f$" % s0)
 
-            for y, x in zip(*fail):
-                sfig.scatter(x + 0.5, y + 0.5, c='k', marker='x')
+                ims[i] = sfig.pcolor(M.transpose(), vmin=0, vmax=mats[i].max()/cmat.max(), cmap="gist_earth_r")
 
-            ax = sfig.axes
-            ax.set_xticks(xes)
-            ax.set_xticklabels([r"$%.1f$" % alphas[np.floor(ai)] for ai in ax.get_xticks()], minor=False)
-            ax.set_yticks(fes)
 
-            if is0 == 0:
-                label = r"$F_0/E_bA$"
-                sfig.set_ylabel(label)
+                #
+                # fail = np.where(M == -1)
+                #
+                # for y, x in zip(*fail):
+                #     sfig.scatter(x + 0.5, y + 0.5, c='k', marker='x')
 
-                ax.set_yticklabels([r"$%.2f$" % F0s[np.floor(fi)] for fi in ax.get_yticks()], minor=False)
+                ax = sfig.axes
+                ax.set_xticks(xes)
+                ax.set_xticklabels([r"$%.1f$" % alphas[np.floor(ai)] for ai in ax.get_xticks()], minor=False)
+                ax.set_yticks(fes)
 
-            else:
-                sfig.yaxis.set_ticklabels([])
+                if is0 == 0:
+                    label = r"$F_0/E_bA$"
+                    sfig.set_ylabel(label)
 
-            label = r"$E_b/kT$"
-            sfig.set_xlabel(label)
+                    ax.set_yticklabels([r"$%.2f$" % F0s[np.floor(fi)] for fi in ax.get_yticks()], minor=False)
 
-            sfig.set_xlim(0, len(alphas))
-            sfig.set_ylim(0, len(F0s))
-       
+                else:
+                    sfig.yaxis.set_ticklabels([])
+
+                label = r"$E_b/kT$"
+                sfig.set_xlabel(label)
+
+                sfig.set_xlim(0, len(alphas))
+                sfig.set_ylim(0, len(F0s))
+
+
+        # for is0, t_loc in enumerate(t_locs):
+        #     if t_loc is None:
+        #         continue
+        #
+        #     sfig = eval("self.psubfigure%d1" % (is0+1))
+        #     sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'w', linewidth=3)
+        #     sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'k--', linewidth=3)
+
+        for i, y_loc in enumerate(y_locs):
+            sfig = self.psubfigure21
+            sfig.text(x_loc + 1.5, y_loc, desc[i])#, horizontalalignment="left", verticalalignment="center")
+            sfig = self.tsubfigure21
+            sfig.text(x_loc + 1.5, y_loc, desc[i])#, horizontalalignment="left", verticalalignment="center")
+
+
         pos = [0.78, 0.18, 0.05, 0.7]
-        cbar_ax = self.f4.add_axes(pos)
-       
         clabel = r'$\rho_\mathrm{WV}$'
-        cbar_ax.set_title(clabel, position=(0, -0.09), horizontalalignment="left", verticalalignment="center", transform=cbar_ax.transAxes)
-       
-        self.f4.colorbar(im, cax=cbar_ax)
-       
 
-class GPlots(DCVizPlotter):
+        cbar_ax = self.f2.add_axes(pos)
+        cbar_ax.set_title(clabel, position=(0, -0.09), horizontalalignment="left", verticalalignment="center", transform=cbar_ax.transAxes)
+
+        ax = self.f2.colorbar(ims[0], cax=cbar_ax)
+
+        pbar_ax = self.p2.add_axes(pos)
+        ax = self.p2.colorbar(ims[1], cax=pbar_ax)
+        ax.set_ticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+        ax.set_ticklabels([r"", "", r"$\mathrm{I}$", "", r"$\mathrm{B}$", "", r"$\mathrm{P}$"])
+
+
+class GFPlots(DCVizPlotter):
 
     nametag = "GPlots.txt"
 
+    figMap = {"gf_figure": ["G_fig","F_fig"],
+              "gc_figure": "GC_fig",
+              "allf_figure": ["all_F_fig_low", "all_F_fig_high"]}
+
     hugifyFonts = True
 
-    fig_size = [7, 5]
+    specific_fig_size =  {"gf_figure": [5,7],
+                          "gc_figure": [5,3],
+                          "allf_figure": [5,7]}
 
-    @staticmethod
-    def g_repulsion_serial(di, Z0, ld):
-        return Z0*np.exp(-(di-1)/ld)*(di > 1)
-
-    g = None
-    def g_repulsion(self, di, Z0, ld):
-
-        if not self.g:
-            self.g = np.vectorize(self.g_repulsion_serial)
-
-        return self.g(di, Z0, ld)
-
-    def attraction_orig(self, di):
-        st = 0
-
-        return -(1 + st)/di**6
-
-    @staticmethod
-    def attraction_corr_serial(di):
-
-        if di >= 2:
-            return 0
-
-        st = 0
-
-        return -(3*di + 64./di**6 - 7)*(1+st)/60.
-
-    f = None
-    def attraction_corr(self, di):
-
-        if not self.f:
-            self.f = np.vectorize(self.attraction_corr_serial)
-
-        return self.f(di)
+    stack = "V"
 
     def adjust(self):
-        figname = "figure"
+        self.adjust_maps["gf_figure"]["right"] = 0.86
+        self.adjust_maps["gf_figure"]["left"] = 0.14
+        self.adjust_maps["gf_figure"]["top"] = 0.89
+        self.adjust_maps["gf_figure"]["bottom"] = 0.11
+        self.adjust_maps["gf_figure"]["hspace"] = 0.13
 
-        self.adjust_maps[figname]["right"] = 0.87
-        self.adjust_maps[figname]["left"] = 0.13
-        self.adjust_maps[figname]["top"] = 0.96
-        self.adjust_maps[figname]["bottom"] = 0.15
+        self.adjust_maps["gc_figure"]["right"] = 0.84
+        self.adjust_maps["gc_figure"]["left"] = 0.16
+        self.adjust_maps["gc_figure"]["top"] = 0.96
+        self.adjust_maps["gc_figure"]["bottom"] = 0.26
+
+        self.adjust_maps["allf_figure"]["right"] = 0.86
+        self.adjust_maps["allf_figure"]["left"] = 0.14
+        self.adjust_maps["allf_figure"]["top"] = 0.96
+        self.adjust_maps["allf_figure"]["bottom"] = 0.11
+        self.adjust_maps["allf_figure"]["hspace"] = 0.13
+
+    def f_attraction_corr(self, di):
+
+        f = 0
+        if di >= 2:
+            f += 0
+        else:
+            f += -(128./di**7 - 1.)/20
+
+        return f
+
+    def attraction_orig(self, di):
+
+        g = 0
+        g += -1./di**6
+
+        return g
+
+    def attraction_corr(self, di):
+
+        g = 0
+        if di >= 2:
+            g += 0
+        else:
+            g += -(3*di + 64./di**6 - 7)/60.
+
+        return g
+
+    def get_repulz(self, s0, hlvec, ld, f0_over_EbA):
+
+        xi = 1-np.exp(-1./ld)
+        Z0_over_A = s0/xi
+
+        g_rep = Z0_over_A*np.exp(-(hlvec - 1)/ld)
+        g_rep[0] = 0
+
+        H = 1 + ld*np.log(Z0_over_A/f0_over_EbA/ld)
+
+        return H, g_rep
 
     def plot(self, data):
 
-        di = np.linspace(1, 5, 1000)
-        Z0 = 1.
-        ld = 1.0
-        f0 = 1./5
+        s0 = 1.0
+        ld = 5.0
 
-        g_rep = self.g_repulsion(di, Z0, ld)
-        g_attr = self.attraction_corr(di)
-        g_attr_6 = self.attraction_orig(di)
-        g_f0 = (di-1)*f0
+        hlvec = np.linspace(1, 9, 1000)
+        f0_over_EbA = 0.5
 
-        styles = ['g-.', 'k--', 'r-', "0.0"]
+        g_f0 = (hlvec-1)*f0_over_EbA
+        H, g_rep = self.get_repulz(s0, hlvec, ld, f0_over_EbA)
+        f_rep = g_rep/ld
 
-        self.subfigure.plot(di, g_f0, styles[3], label=r"$F_0d_i$", linewidth=1)
-        self.subfigure.plot(di, g_rep, styles[0], label=r"$G_\lambda$", linewidth=2)
-        self.subfigure.plot(di, g_attr_6, styles[1], label=r"$-1/d_i^6$", linewidth=2)
-        self.subfigure.plot(di, g_attr, styles[2], label=r"$\tilde G_\mathrm{wv}$", linewidth=2)
-        self.subfigure.plot(di, g_rep + g_attr + g_f0, styles[3],
-                            label=r"$G_\mathrm{tot}$", linewidth=3, linestyle=":")
+        g_attr = []
+        g_attr_6 = []
+        f_attr = []
+        for hl in hlvec:
+            g_attr.append(self.attraction_corr(hl))
+            g_attr_6.append(self.attraction_orig(hl))
+            f_attr.append(self.f_attraction_corr(hl))
+
+        g_attr = np.array(g_attr)
+        g_attr_6 = np.array(g_attr_6)
+
+        """
+        Attractive vs. 1/r^6
+        """
+
+        self.GC_fig.plot(hlvec, g_attr_6, "k--", label=r"$-1/d^6$")
+        self.GC_fig.plot(hlvec, g_attr, "r-", label=r"$\tilde G_\mathrm{WV}$")
+        self.GC_fig.set_xlabel(r"$d$")
+        self.GC_fig.set_ylabel(r"$G(d)/E_bA$", labelpad=-10)
+        self.GC_fig.set_yticks([-1, 0])
+        self.GC_fig.plot([2, 2], [-1.05, 0.2], 'k:')
+        self.GC_fig.set_xlim(0.9, 3)
+        self.GC_fig.set_ylim(-1.05, 0.1)
 
 
-
-        lg = self.subfigure.legend(loc="center",
-                                   numpoints=1,
-                                   ncol=2,
-                                   handlelength=0.9,
-                                   borderpad=0.2,
-                                   labelspacing=0.2,
-                                   columnspacing=0.3,
-                                   handletextpad=0.25,
-                                   borderaxespad=0.0,
-                                   frameon=False,
-                                   bbox_to_anchor=(0.7, 0.2))
+        lg = self.GC_fig.legend(loc="center",
+                               numpoints=1,
+                               ncol=1,
+                               handlelength=0.9,
+                               borderpad=0.2,
+                               labelspacing=0.2,
+                               columnspacing=0.3,
+                               handletextpad=0.25,
+                               borderaxespad=0.0,
+                               frameon=False,
+                               bbox_to_anchor=(0.775, 0.65))
 
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
-        self.subfigure.set_xlabel(r"$d_i$")
-        self.subfigure.set_ylabel(r"$G(d_i)/E_b$")
+        """
+        Free energies
+        """
 
-        self.subfigure.set_xbound(1-0.1)
-        self.subfigure.set_ylim(-1.1, max(g_rep)+0.1)
+        ymin_g = -1.5
+        ymax_g = 5.5
 
+        self.G_fig.plot(hlvec, g_f0, 'k--', label=r"$d\cdot F_0$", linewidth=1)
+        self.G_fig.plot(hlvec, g_rep, 'g-.', label=r"$G_\lambda$", linewidth=2)
+        self.G_fig.plot(hlvec, g_attr, 'r:', label=r"$\tilde G_\mathrm{WV}$", linewidth=2)
+        self.G_fig.plot(hlvec, g_rep + g_attr + g_f0, 'k-',
+                        label=r"$G_\mathrm{tot}$", linewidth=1)
+        self.G_fig.plot([H, H], [ymin_g, ymax_g], "k--")
+
+      #  self.G_fig.set_xlabel(r"$d$")
+        self.G_fig.set_xticklabels([])
+        self.G_fig.set_ylabel(r"$G(d)/E_bA$", labelpad=-10)
+
+        # for Z0 in [0.5, 1, 1.5]:
+        #     for f0 in [0.25, 0.5]:
+        #         self.all_fig.plot(di, self.g_repulsion(di, Z0, ld) + self.attraction_corr(di) + (di-1)*f0)
+        #
+        # self.all_fig.set_xbound(1-0.1)
+        # self.all_fig.set_ybound(-1.1)
+
+        lg = self.G_fig.legend(loc="center",
+                               numpoints=1,
+                               ncol=4,
+                               handlelength=0.9,
+                               borderpad=0.3,
+                               labelspacing=0.2,
+                               columnspacing=0.3,
+                               handletextpad=0.25,
+                               borderaxespad=0.0,
+                               frameon=True,
+                               bbox_to_anchor=(0.5, 1.15))
+
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        self.G_fig.set_xbound(1-0.25)
+        self.G_fig.set_ylim(ymin_g, ymax_g)
+
+
+        """
+        Forces
+        """
+
+
+        tot = (f_rep + f_attr - f0_over_EbA)/f0_over_EbA
+        ymin = -1.1
+        ymax = 1.0
+
+        self.F_fig.plot(hlvec, tot, "r-",
+                            label=r"$F_0 + F_l + F_\lambda$", linewidth=3, linestyle="-", zorder=1)
+        self.F_fig.plot([H, H], [ymin, ymax], "k--", zorder=2)
+        #self.F_fig.plot([di[0], di[-1]], [f0, f0], styles[1],
+        #                    label=r"$F_0$", linewidth=2)
+        self.F_fig.plot([0.75, hlvec[-1]], [0, 0], "k-", zorder=0)
+        #self.F_fig.plot([r0], [0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
+        #self.F_fig.plot([r1], [0], 'go', markersize=10)
+        #self.F_fig.plot([1], [0], 'go', markersize=10)
+        self.F_fig.scatter(1, 0, s=30, c="r", edgecolors='none', zorder=2)
+
+        self.F_fig.set_xlabel(r"$d$")
+        self.F_fig.set_ylabel(r"$F_\mathrm{tot}(d)/F_0$", labelpad=-10)
+        self.F_fig.set_yticks([-1, 0, 1])
+
+        self.F_fig.set_ylim(ymin, ymax)
+        #self.F_fig.set_xlim(0.9, di[-1])
+
+        #self.F_fig.xaxis.set_ticklabels([r"$h_c$", r"$h_\lambda$"])
+        #self.F_fig.axes.tick_params(axis='x', which='major', pad=10)
+
+        self.F_fig.set_xlim(1-0.25, hlvec[-1])
+      #
         def f(v, i):
             if int(v) == v:
-                return r"$%d$" % v
-            return ""
+                return "$%d$" % v
+            return r"$%.1f$" % v
 
-        self.subfigure.yaxis.set_ticks([-1, 0, 1])
-        self.subfigure.xaxis.set_major_formatter(FuncFormatter(f))
+        self.F_fig.yaxis.set_major_formatter(FuncFormatter(f))
+
+        x0, x1 = self.F_fig.get_xlim()
+        y0, y1 = self.F_fig.get_ylim()
+        self.F_fig.text((3*x1+x0)/4, 3*y0/4.,  r"$\mathrm{Attraction}$", verticalalignment="center", horizontalalignment="center", fontsize=20)
+        self.F_fig.text((3*x1+x0)/4, 3*y1/4., r"$\mathrm{Repulsion}$", verticalalignment="center", horizontalalignment="center", fontsize=20)
+        self.F_fig.text(H + 0.25, 0.01, r"$h_\lambda \sim %.2f$" % H, verticalalignment="bottom", horizontalalignment="left", fontsize=20)
+
+        F0s = [0.5, 1.0]
+        s0s = [0.5, 1.0, 1.5]
+        styles = ["r-", "k--", "g-."]
+        widths = [1, 1, 2]
+
+        for i, f0_over_EbA in enumerate(F0s):
+            all_F_fig = [self.all_F_fig_low, self.all_F_fig_high][i]
+            for j, s0 in enumerate(s0s):
+                H, g_rep = self.get_repulz(s0, hlvec, ld, f0_over_EbA)
+                f_rep = g_rep/ld
+
+                tot = (f_rep + f_attr - f0_over_EbA)/f0_over_EbA
+                all_F_fig.plot(hlvec, tot, styles[j], label=r"$\sigma_0=%.1f$" % s0, linewidth=widths[j])
+
+            all_F_fig.set_ylim(ymin, 2.0)
+            all_F_fig.plot([1, hlvec[-1]], [0, 0], "k-", zorder=0)
+            all_F_fig.set_yticks([-1, 0, 1, 2])
+            all_F_fig.set_ylabel(r"$F_\mathrm{tot}(d)/F_0$", labelpad=-10)
+
+            ax = all_F_fig.axes.twinx()
+            ax.set_ylabel(r"$F_0/E_bA=%.1f$" % f0_over_EbA, labelpad=10)
+            ax.yaxis.set_ticks([])
+            ax.yaxis.set_ticklabels([])
+
+        self.all_F_fig_high.set_xlabel(r"$d$")
+
+        self.all_F_fig_low.yaxis.set_major_formatter(FuncFormatter(f))
+        self.all_F_fig_high.yaxis.set_major_formatter(FuncFormatter(f))
+        self.all_F_fig_low.set_xticklabels([])
+
+
+        lg = self.all_F_fig_high.legend(loc="center",
+                                        numpoints=1,
+                                        ncol=1,
+                                        handlelength=0.9,
+                                        borderpad=0.2,
+                                        labelspacing=0.2,
+                                        columnspacing=0.3,
+                                        handletextpad=0.25,
+                                        borderaxespad=0.0,
+                                        frameon=False,
+                                        bbox_to_anchor=(0.725, 0.7))
+
+        lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
 
 class FPlots(DCVizPlotter):
@@ -3919,10 +4299,6 @@ class Extraneighbor_cluster(DCVizPlotter):
 
     def plot(self, data):
 
-        L = 30
-        W = 30
-        A = L*W
-
         time = self.get_family_member_data(data, "time")
         covs = self.get_family_member_data(data, "covs")
 
@@ -3933,6 +4309,11 @@ class Extraneighbor_cluster(DCVizPlotter):
 
         F0 = self.argv.pop(0)
         self.subfigure0.set_title(r"$F_0 = %s$" % F0)
+
+        if self.argv:
+            A_corr = float(self.argv[0])
+        else:
+            A_corr = 1
 
         if "force_zero" in self.argv:
             self.argv.remove("force_zero")
@@ -3994,11 +4375,11 @@ class Extraneighbor_cluster(DCVizPlotter):
             pass
 
         self.subfigure0.plot(time, covs)
-        self.subfigure4.plot(time[:-1], cumngained/A, "g", linewidth=2, label=r"$n_\mathrm{Formed}$")
-        self.subfigure4.plot(time[:-1], cumnbroken/A, "r--", linewidth=2, label=r"$n_\mathrm{Broken}$")
+        self.subfigure4.plot(time[:-1], cumngained/A_corr, "g", linewidth=2, label=r"$n_\mathrm{Formed}$")
+        self.subfigure4.plot(time[:-1], cumnbroken/A_corr, "r--", linewidth=2, label=r"$n_\mathrm{Broken}$")
 
         y0 = [0, np.ceil(10*max(covs[np.where(time<tmax)]))/10.]
-        y4 = y(cumnbroken/A, cumngained/A)
+        y4 = y(cumnbroken/A_corr, cumngained/A_corr)
 
         for x in help_lines:
             self.subfigure0.plot(x, y0, "k--")
@@ -4177,9 +4558,9 @@ class ResonancePlots(DCVizPlotter):
 
     def plot(self, data):
 
-        F0 = 0.1
-        F1 = 0.6
-        s0 = 0.5
+        F0 = 0.7
+        F1 = 1.3
+        s0 = 1.5
         ld = 5.
 
         F0EbA = np.linspace(F0, F1, 1000)
@@ -4397,13 +4778,18 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         sorted_alphas = sorted(alphas)
 
-        ymax = float(self.argv.pop(0))
+        if self.argv:
+            ymax = float(self.argv.pop(0))
+            y1max = float(self.argv.pop(0))
+        else:
+            ymax = stds[:, :, 0].max()*101
+            y1max = None
+
 
         markers = ['s', '^', 'o']
         colors = ['k', 'r', '0.3']
         stdlabel = r"$\sigma(\rho_\mathrm{WV})[\%]$"
         stdnlabel = r"$\sigma(n_\pm/A)[\%]$"
-
 
         if self.argv:
             res = resonance_points(1., 5., F0s.min(), F0s.max(), 10000)
@@ -4455,8 +4841,13 @@ class ExtraN_cluster_yo(DCVizPlotter):
                 stdfig.yaxis.set_ticklabels([])
                 rhofig.yaxis.set_ticklabels([])
 
-        y1 = self.sfig1.get_ylim()[1]
-        y2 = self.sfig2.get_ylim()[1]
+        if not y1max or y1max == 0:
+            y1 = self.sfig1.get_ylim()[1]
+            y2 = self.sfig2.get_ylim()[1]
+        else:
+            y1 = y1max
+            y2 = 0
+            self.sfig1.set_ylim(0, y1)
 
         self.sfig1.set_ybound(0)
         self.sfig2.set_ybound(0)
@@ -4472,6 +4863,9 @@ class ExtraN_cluster_yo(DCVizPlotter):
             xp = [r, r]
             self.sfig1.plot(xp, [0, ym], "k--")
             self.sfig2.plot(xp, [0, ym], "k--")
+
+            self.sfig1.set_ylim(0, ym)
+            self.sfig2.set_ylim(0, ym)
 
         self.sfig1.legend(loc="center",
                           numpoints=1,
@@ -4492,7 +4886,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         self.sfig2.set_xlabel(r"$F_0/E_bA$")
         self.sfig2.set_xlim(0.23, 1.02)
-        self.sfig2.set_yticklabels([])
+        #self.sfig2.set_yticklabels([])
 
         self.sfig1.set_title(r"$\#\mathrm{Gained}\,\,(n_+)$")
         self.sfig2.set_title(r"$\#\mathrm{Broken}\,\,(n_-)$")
@@ -4646,15 +5040,201 @@ class FelixParticleHDynCav(DCVizPlotter):
         #
         # self.hfig.xaxis.set_major_formatter(FuncFormatter(f))
 
+import finitediff
 
 class FelixSeqC(DCVizPlotter):
     nametag = "FelixSeqC\_(.*)\.npy"
     isFamilyMember = True
+    hugifyFonts = True
+    labelSize = 35
+    ticklabelSize = 25
+
+    figMap = {"fig": ["subfigure",
+                      "subfigurev"],
+              "logfig": ["lsubfigure",
+                      "lsubfigurev"],
+              "xvfig": "subfigurexv",
+              "cfig": "subfigureC"}
+
+    specific_fig_size = {"fig": [6, 10],
+                         "logfig": [6, 10]}
+
+    @staticmethod
+    def get_vs(t, ys):
+        dt = t[1] - t[0]
+        print dt
+
+        vs = np.zeros_like(ys)
+
+        vs[0] = (ys[1] - ys[0])/dt
+        vs[-1] = (ys[-1] - ys[-2])/dt
+
+        vs[1] = (ys[2] - ys[0])/(2*dt)
+        vs[-2] = (ys[-1] - ys[-3])/(2*dt)
+
+        for i in range(2, len(ys) - 2):
+            vs[i] = (ys[i-2]-ys[i+2]+8*(ys[i+1] - ys[i-1]))/(12*dt)
+
+        return vs
 
     def plot(self, data):
+
+        if self.argv:
+            cutfac = float(self.argv[0])
+        else:
+            cutfac = 1
+
         t = self.get_family_member_data(data, "t")
-        c = self.get_family_member_data(data, "c")
-        h = self.get_family_member_data(data, "h")
+        ys = self.get_family_member_data(data, "ys")
+        C = self.get_family_member_data(data, "C")
+
+        imax = int(len(t)*cutfac)
+        t = t[:imax]
+        ys = ys[:imax]
+
+        iterm = int(len(t)*0.25)
+        ys_eq = ys[iterm:].mean()
+
+        t /= t[-1]
+        vs = self.get_vs(t, ys)
+
+        W = np.where(t < 0.3)
+        sy, i, _, _, _ = linregress(t[W], np.log(abs(1-ys[W]/ys_eq)))
+        sv, i, _, _, _ = linregress(t[W], np.log(abs(vs[W])))
+        print sv/sy, sv, sy
+
+        self.subfigure.plot(t, ys, "r-", **my_props['fmt'])
+        self.subfigure.set_xticklabels([])
+        self.subfigure.set_ylabel(r'$y_s/L_y$')
+        self.subfigure.set_ybound(0)
+        self.subfigure.text(0.65, ys_eq - 0.075, r"$\langle y_s\rangle/L_y$", fontsize=30)
+
+        self.subfigurev.plot(t, vs, "r-", **my_props['fmt'])
+        self.subfigurev.set_xlabel(r'$t/t_\mathrm{end}$')
+        self.subfigurev.set_ylabel(r'$v_yt_\mathrm{end}/L_y$')
+        self.subfigurev.set_ybound(-0.5)
+
+        self.lsubfigure.semilogy(t, abs(1-ys/ys_eq), "r-", **my_props['fmt'])
+        self.lsubfigure.set_xticklabels([])
+        self.lsubfigure.set_ylabel(r'$|1-y_s/\langle y_s\rangle|$')
+        self.lsubfigure.set_xbound(t.min())
+        self.lsubfigure.set_ybound(1E-4)
+
+        self.lsubfigurev.semilogy(t, abs(vs), "r-", **my_props['fmt'])
+        self.lsubfigurev.set_xlabel(r'$t/t_\mathrm{end}$')
+        self.lsubfigurev.set_ylabel(r'$|v_yt_\mathrm{end}/L_y|$')
+        self.lsubfigurev.set_xbound(t.min())
+
+        self.subfigurexv.plot(ys/ys_eq, vs, "r--", **my_props['fmt'])
+        self.subfigurexv.plot(ys/ys_eq, vs, "ks", **my_props['fmt'])
+        self.subfigurexv.set_xlabel(r'$y_s/\langle y_s\rangle$')
+        self.subfigurexv.set_ylabel(r'$v_yt_\mathrm{end}/L_y$')
+        self.subfigurexv.set_xlim(self.subfigurexv.get_xlim()[0], 1)
+        self.subfigurexv.set_ybound(0)
+
+        self.subfigureC.plot(np.arange(len(C))/float(len(C)-1), C*100, "r--", **my_props['fmt'])
+        self.subfigureC.plot(np.arange(len(C))/float(len(C)-1), C*100, "ks", **my_props['fmt'])
+        self.subfigureC.set_xlabel(r'$y/L_y$')
+        self.subfigureC.set_ylabel(r'$10^2\langle C(y/L_y)\rangle$')
+        self.subfigureC.set_xlim(0, 1)
+
+class ss_front(DCVizPlotter):
+    nametag = "ss_edges\.npy"
+    hugifyFonts = True
+    labelSize = 35
+    ticklabelSize = 25
+
+    def plot(self, data):
+
+        try:
+            #103.5 0 16.5
+            x = float(self.argv[0])
+            y = float(self.argv[1])
+            r = float(self.argv[2])
+
+            theta = np.linspace(0, 2*np.pi, 1000)
+            xs = x + r*np.cos(theta)
+            ys = y + r*np.sin(theta)
+            self.subfigure.plot(xs, ys, "r-")
+        except:
+            pass
+
+        L, W = data.shape
+
+        ys = []
+        xs = []
+        end = 0
+        endc = 0
+        for y in range(W):
+            m = 0
+            c = 0
+            for x in range(L):
+                if data[x, y] != 0:
+                    m += data[x, y]*x
+                    c += data[x, y]
+            if c == 0:
+                break
+
+            ys.append(m/c)
+            xs.append(y)
+
+            if data[0, y] != 0:
+                end += data[0, y]*y
+                endc += data[0, y]
+        #
+        # ys.append(0)
+        # xs.append(end/endc)
+        # print xs[-2:], ys[-2:]
+
+        self.subfigure.pcolor(data, cmap='gist_earth_r')
+
+        # self.subfigure.plot(xs, ys, "k--", linewidth=3)
+
+        self.subfigure.set_xlabel(r"$(x_s - \Delta T_s v_s)/L_x$")
+        self.subfigure.set_ylabel(r"$y_s/L_y$")
+        self.subfigure.xaxis.set_major_formatter(FuncFormatter(lambda v, _: r'$%g$' % (v/float(W))))
+        self.subfigure.yaxis.set_major_formatter(FuncFormatter(lambda v, _: r'$%g$' % (v/float(L))))
+
+        self.subfigure.set_xlim(0, 125)
+        self.subfigure.set_ylim(0, 35)
 
 
-        self.subfigure.plot(c.mean(axis=0))
+class ss_felix(DCVizPlotter):
+    nametag = "ss_felix_(.*)\.npy"
+    isFamilyMember = True
+    hugifyFonts = True
+
+    figMap = {"fig": ["subfigure_x", "subfigure_v"]}
+
+    fig_size = [6, 10]
+    labelSize = 35
+    ticklabelSize = 25
+
+    def plot(self, data):
+
+        L = 200
+
+        t = self.get_family_member_data(data, "t")
+        x = self.get_family_member_data(data, "x")
+        tslice = self.get_family_member_data(data, "tslice")
+        xslice = self.get_family_member_data(data, "fit")
+        v = self.get_family_member_data(data, "v")
+        vslice = self.get_family_member_data(data, "vfit")
+
+        self.subfigure_x.plot(t, x/float(L), '--ks')
+        self.subfigure_x.plot(tslice, xslice/L, "r-", linewidth=2)
+        self.subfigure_x.set_ylabel(r'$x_s/L_x$')
+        self.subfigure_x.set_xticklabels([])
+
+        self.subfigure_v.plot(t, v/L, '--ks')
+        self.subfigure_v.plot(tslice, vslice/L, 'r-', linewidth=2)
+        self.subfigure_v.set_xlabel(r'$t/t_\mathrm{end}$')
+        self.subfigure_v.set_ylabel(r'$v_xt_\mathrm{end}/L_x$')
+        self.subfigure_v.text(tslice[-1]+0.05, vslice.mean()/L,
+                              r"$v_s$",
+                              verticalalignment='center',
+                              horizontalalignment='left',
+                              fontsize=30)
+
+        self.subfigure_x.set_ylim(0, 1)
+

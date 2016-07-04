@@ -93,7 +93,7 @@ double RDLExtraNeighborSurface::totalForce(const double hl) const
         }
     }
 
-    extraNeighborContribution /= solver().area();
+    extraNeighborContribution /= solver().area(); //we devide by area since we have devided the entire force balance equation by the area since we use sigma0 and not z0
     rdlContribution /= solver().area();
 
     return m_Pl + rdlContribution + extraNeighborContribution*m_nFactor;
