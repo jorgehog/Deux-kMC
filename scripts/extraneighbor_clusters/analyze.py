@@ -110,8 +110,8 @@ def analyze(data,
 
     delta = _s_next - _s
 
-    n_broken[i] = len(where(delta == -1)[0])
-    n_gained[i] = len(where(delta == 1)[0])
+    n_broken[i] = len(where(delta == -1)[0])/float(delta.size)
+    n_gained[i] = len(where(delta == 1)[0])/float(delta.size)
 
     if not do_cluster_analysis:
         return
@@ -224,7 +224,7 @@ def makeXYZ_single(data, xyz_dir, n):
 
 def makeXYZ(heights, dir):
 
-    tot = 100
+    tot = 10
     N = len(heights)
     every = N/tot
 
@@ -247,20 +247,23 @@ def makeXYZ(heights, dir):
 
 def filter_background(n):
 
+    return n
+
     x = np.arange(len(n))
     a, b, _, _, _ = linregress(x, n)
 
     return n - (a*x + b)
 
-def get_cov_std(covs, nbroken, ngained):
+def get_cov_std(covs, nbroken, ngained, time):
 
-        neq = (3*len(covs))/4
+    neq = (3*len(covs))/4
 
-        stdcov = covs[neq:].std()
-        stdbroken = filter_background(nbroken[neq:]).std()
-        stdgained = filter_background(ngained[neq:]).std()
+    cov = covs[neq:].mean()
+    stdcov = np.array(covs).std()
+    stdbroken = np.array(nbroken).std()
+    stdgained = np.array(ngained).std()
 
-        return stdcov, stdbroken, stdgained, covs[neq:].mean()
+    return stdcov, stdbroken, stdgained, cov
 
 def main():
 
@@ -274,6 +277,9 @@ def main():
         path = sys.argv[2]
         every = int(sys.argv[3])
         every2 = int(sys.argv[4])
+
+    do_cluster_analysis = len(sys.argv) <= 5
+    print "cluster analysis:", do_cluster_analysis
 
     parser = ParseKMCHDF5(input_file)
 
@@ -306,7 +312,7 @@ def main():
                 coverage_matrix = data["eq_coverage_matrix"]
 
                 for i in range(len(time)):
-                    analyze(coverage_matrix, False, i, covs, nbroken, ngained)
+                    analyze(coverage_matrix, do_cluster_analysis, i, covs, nbroken, ngained)
 
                 save("/tmp/extran_cluster_time.npy", time)
                 save("/tmp/extran_cluster_covs.npy", covs)
@@ -315,6 +321,8 @@ def main():
 
                 return
         N += 1
+
+    print "lmax:", lmax
 
     alphas = sorted(alphas)
     F0s = sorted(F0s)
@@ -377,7 +385,6 @@ def main():
         else:
             if not os.path.exists(dir):
                 os.mkdir(dir)
-
             for i, n in enumerate(range(0, len(coverage_matrix_h5), every)):
                 coverage_matrix[i] = coverage_matrix_h5[n]
                 time[i] = event_values_h5[1][n]
@@ -401,16 +408,20 @@ def main():
                         centeroids]
 
             for i in range(n):
-                analyze(coverage_matrix, True, i, *measures)
+                analyze(coverage_matrix, do_cluster_analysis, i, *measures)
 
             stdcov, stdbroken, stdgained, cov = get_cov_std(covs,
-                                                            n_broken/float(L*W),
-                                                            n_gained/float(L*W))
+                                                            n_broken,
+                                                            n_gained,
+                                                            time)
 
             stds[ai, F0i, :] = [stdcov, stdbroken, stdgained]
             all_covs[ai, F0i] = cov
 
-            trace = calculate_cluster_trace(centeroids[::(every2/every)], L, W)
+            if do_cluster_analysis:
+                trace = calculate_cluster_trace(centeroids[::(every2/every)], L, W)
+            else:
+                trace = []
 
             last_xyz = makeXYZ(data["stored_heights"], dir)
 
@@ -418,7 +429,8 @@ def main():
             save("%s/extran_cluster_covs.npy" % dir, covs)
             save("%s/extran_cluster_nbroken.npy" % dir, n_broken)
             save("%s/extran_cluster_ngained.npy" % dir, n_gained)
-            save("%s/extran_cluster_trace.npy" % dir, trace)
+            if do_cluster_analysis:
+                save("%s/extran_cluster_trace.npy" % dir, trace)
             save("%s/extran_cluster_size.npy" % dir, avg_cluster_sizes)
             save("%s/extran_cluster_n.npy" % dir, n_clusters_list)
             save("%s/extran_cluster_circs.npy" % dir, avg_circs)

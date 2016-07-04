@@ -4299,10 +4299,6 @@ class Extraneighbor_cluster(DCVizPlotter):
 
     def plot(self, data):
 
-        L = 30
-        W = 30
-        A = L*W
-
         time = self.get_family_member_data(data, "time")
         covs = self.get_family_member_data(data, "covs")
 
@@ -4313,6 +4309,11 @@ class Extraneighbor_cluster(DCVizPlotter):
 
         F0 = self.argv.pop(0)
         self.subfigure0.set_title(r"$F_0 = %s$" % F0)
+
+        if self.argv:
+            A_corr = float(self.argv[0])
+        else:
+            A_corr = 1
 
         if "force_zero" in self.argv:
             self.argv.remove("force_zero")
@@ -4374,11 +4375,11 @@ class Extraneighbor_cluster(DCVizPlotter):
             pass
 
         self.subfigure0.plot(time, covs)
-        self.subfigure4.plot(time[:-1], cumngained/A, "g", linewidth=2, label=r"$n_\mathrm{Formed}$")
-        self.subfigure4.plot(time[:-1], cumnbroken/A, "r--", linewidth=2, label=r"$n_\mathrm{Broken}$")
+        self.subfigure4.plot(time[:-1], cumngained/A_corr, "g", linewidth=2, label=r"$n_\mathrm{Formed}$")
+        self.subfigure4.plot(time[:-1], cumnbroken/A_corr, "r--", linewidth=2, label=r"$n_\mathrm{Broken}$")
 
         y0 = [0, np.ceil(10*max(covs[np.where(time<tmax)]))/10.]
-        y4 = y(cumnbroken/A, cumngained/A)
+        y4 = y(cumnbroken/A_corr, cumngained/A_corr)
 
         for x in help_lines:
             self.subfigure0.plot(x, y0, "k--")
@@ -4777,13 +4778,18 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         sorted_alphas = sorted(alphas)
 
-        ymax = float(self.argv.pop(0))
+        if self.argv:
+            ymax = float(self.argv.pop(0))
+            y1max = float(self.argv.pop(0))
+        else:
+            ymax = stds[:, :, 0].max()*101
+            y1max = None
+
 
         markers = ['s', '^', 'o']
         colors = ['k', 'r', '0.3']
         stdlabel = r"$\sigma(\rho_\mathrm{WV})[\%]$"
         stdnlabel = r"$\sigma(n_\pm/A)[\%]$"
-
 
         if self.argv:
             res = resonance_points(1., 5., F0s.min(), F0s.max(), 10000)
@@ -4835,8 +4841,13 @@ class ExtraN_cluster_yo(DCVizPlotter):
                 stdfig.yaxis.set_ticklabels([])
                 rhofig.yaxis.set_ticklabels([])
 
-        y1 = self.sfig1.get_ylim()[1]
-        y2 = self.sfig2.get_ylim()[1]
+        if not y1max or y1max == 0:
+            y1 = self.sfig1.get_ylim()[1]
+            y2 = self.sfig2.get_ylim()[1]
+        else:
+            y1 = y1max
+            y2 = 0
+            self.sfig1.set_ylim(0, y1)
 
         self.sfig1.set_ybound(0)
         self.sfig2.set_ybound(0)
@@ -4852,6 +4863,9 @@ class ExtraN_cluster_yo(DCVizPlotter):
             xp = [r, r]
             self.sfig1.plot(xp, [0, ym], "k--")
             self.sfig2.plot(xp, [0, ym], "k--")
+
+            self.sfig1.set_ylim(0, ym)
+            self.sfig2.set_ylim(0, ym)
 
         self.sfig1.legend(loc="center",
                           numpoints=1,
@@ -4872,7 +4886,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         self.sfig2.set_xlabel(r"$F_0/E_bA$")
         self.sfig2.set_xlim(0.23, 1.02)
-        self.sfig2.set_yticklabels([])
+        #self.sfig2.set_yticklabels([])
 
         self.sfig1.set_title(r"$\#\mathrm{Gained}\,\,(n_+)$")
         self.sfig2.set_title(r"$\#\mathrm{Broken}\,\,(n_-)$")
