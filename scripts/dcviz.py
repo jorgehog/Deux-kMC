@@ -3761,9 +3761,9 @@ class ExtraNeighbor(DCVizPlotter):
         #
         # print t_locs
 
-        desc = [r"$\mathrm{\underline{P}its}$",
-                r"$\mathrm{\underline{B}ands}$",
-                r"$\mathrm{\underline{I}slands}$"]
+        desc = [r"$\mathrm{Pits}$",
+                r"$\mathrm{Bands}$",
+                r"$\mathrm{Islands}$"]
 
         x_loc = len(alphas)-8
         y_locs = [6, 4, 2]
@@ -3950,14 +3950,23 @@ class GFPlots(DCVizPlotter):
         Attractive vs. 1/r^6
         """
 
-        self.GC_fig.plot(hlvec, g_attr_6, "k--", label=r"$-1/d^6$")
+        self.GC_fig.plot(hlvec, g_attr_6, "k--", label=r"$-1/d_i^6$")
         self.GC_fig.plot(hlvec, g_attr, "r-", label=r"$\tilde G_\mathrm{WV}$")
-        self.GC_fig.set_xlabel(r"$d$")
-        self.GC_fig.set_ylabel(r"$G(d)/E_bA$", labelpad=-10)
-        self.GC_fig.set_yticks([-1, 0])
+        self.GC_fig.set_xlabel(r"$d_i$")
+        self.GC_fig.set_ylabel(r"$G(d_i)/E_b$", labelpad=-10)
+        self.GC_fig.set_yticks([-1, -0.5, 0])
         self.GC_fig.plot([2, 2], [-1.05, 0.2], 'k:')
         self.GC_fig.set_xlim(0.9, 3)
         self.GC_fig.set_ylim(-1.05, 0.1)
+
+        def gc_f(v, i):
+            if int(v) == v:
+                return r"$%d$" % v
+            else:
+                return ""
+
+        self.GC_fig.xaxis.set_major_formatter(FuncFormatter(gc_f))
+        self.GC_fig.yaxis.set_major_formatter(FuncFormatter(gc_f))
 
 
         lg = self.GC_fig.legend(loc="center",
@@ -3986,7 +3995,7 @@ class GFPlots(DCVizPlotter):
         self.G_fig.plot(hlvec, g_attr, 'r:', label=r"$\tilde G_\mathrm{WV}$", linewidth=2)
         self.G_fig.plot(hlvec, g_rep + g_attr + g_f0, 'k-',
                         label=r"$G_\mathrm{tot}$", linewidth=1)
-        self.G_fig.plot([H, H], [ymin_g, ymax_g], "k--")
+        self.G_fig.plot([H, H], [ymin_g, ymax_g], "k:")
 
       #  self.G_fig.set_xlabel(r"$d$")
         self.G_fig.set_xticklabels([])
@@ -4028,14 +4037,14 @@ class GFPlots(DCVizPlotter):
 
         self.F_fig.plot(hlvec, tot, "r-",
                             label=r"$F_0 + F_l + F_\lambda$", linewidth=3, linestyle="-", zorder=1)
-        self.F_fig.plot([H, H], [ymin, ymax], "k--", zorder=2)
+        self.F_fig.plot([H, H], [ymin, ymax], "k:", zorder=2)
         #self.F_fig.plot([di[0], di[-1]], [f0, f0], styles[1],
         #                    label=r"$F_0$", linewidth=2)
         self.F_fig.plot([0.75, hlvec[-1]], [0, 0], "k-", zorder=0)
         #self.F_fig.plot([r0], [0], 'go', markersize=10, label=r"$r_{(\mathrm{near/far})}$")
         #self.F_fig.plot([r1], [0], 'go', markersize=10)
         #self.F_fig.plot([1], [0], 'go', markersize=10)
-        self.F_fig.scatter(1, 0, s=30, c="r", edgecolors='none', zorder=2)
+        #self.F_fig.scatter(1, 0, s=30, c="r", edgecolors='none', zorder=2)
 
         self.F_fig.set_xlabel(r"$d$")
         self.F_fig.set_ylabel(r"$F_\mathrm{tot}(d)/F_0$", labelpad=-10)
@@ -4226,15 +4235,20 @@ class Extraneighbor_cluster(DCVizPlotter):
     isFamilyMember = True
 
     hugifyFonts = True
+    labelSize = 35
+    ticklabelSize = 25
 
     figMap = {"figure3D" : [],
               "figure0": ["subfigure0", "subfigure4"],
               "figure1": "subfigure1",
               "figure2": "subfigure5"}
 
-    #plotOnly = ["figure0"]
+    plotOnly = ["figure3D", "figure0"]
 
     tight=False
+
+    specific_fig_size = {"figure3D": [7, 5],
+                         "figure0": [7, 8]}
 
     def make3Dplot(self, ax, L, W, tmax, time, trace):
         max_size = 20
@@ -4284,17 +4298,25 @@ class Extraneighbor_cluster(DCVizPlotter):
         ax.yaxis._axinfo['label']['space_factor'] = pad
         ax.zaxis._axinfo['label']['space_factor'] = pad
 
-        fs = 30
+        fs = self.labelSize
         ax.set_xlabel(r"$\nu t$", size=fs)
         ax.set_ylabel(r"$x$", size=fs)
         ax.set_zlabel(r"$y$", size=fs)
 
     def adjust(self):
-        self.adjust_maps["figure0"]["left"] = 0.1
-        self.adjust_maps["figure0"]["right"] = 0.9
+
+        self.do_legend = True
+        if "no_legend" in self.argv:
+            self.argv.remove("no_legend")
+            self.do_legend=False
+
+        delta = 0.06
+        print self.do_legend
+        self.adjust_maps["figure0"]["left"] = 0.15 - delta*(not self.do_legend)
+        self.adjust_maps["figure0"]["right"] = 0.85 + delta*self.do_legend
         self.adjust_maps["figure0"]["top"] = 0.93
         self.adjust_maps["figure0"]["bottom"] = 0.12
-        self.adjust_maps["figure0"]["hspace"] = 0.05
+        self.adjust_maps["figure0"]["hspace"] = 0.15
 
 
     def plot(self, data):
@@ -4307,28 +4329,26 @@ class Extraneighbor_cluster(DCVizPlotter):
         cumnbroken = np.cumsum(nbroken)
         cumngained = np.cumsum(ngained)
 
-        F0 = self.argv.pop(0)
-        self.subfigure0.set_title(r"$F_0 = %s$" % F0)
-
-        if self.argv:
-            A_corr = float(self.argv[0])
-        else:
-            A_corr = 1
-
         if "force_zero" in self.argv:
             self.argv.remove("force_zero")
             idx = np.argmin(covs)
             covs[idx] = 0
 
+        F0 = self.argv[0]
+        self.subfigure0.set_title(r"$F_0/E_bA = %s$" % F0)
+
+        L, W = [int(x) for x in self.argv[1:3]]
+        A_corr = L*W
+
         help_lines = []
-        if self.argv:
-            tmax = int(self.argv[0])
+        if len(self.argv) > 3:
+            tmax = int(self.argv[3])
 
             if tmax > time[-1]:
                 tmax = time[-1]
 
-            if len(self.argv) > 1:
-                for x in self.argv[1:]:
+            if len(self.argv) > 4:
+                for x in self.argv[4:]:
                     help_lines.append([float(x), float(x)])
         else:
             tmax = time[-1]
@@ -4390,9 +4410,10 @@ class Extraneighbor_cluster(DCVizPlotter):
         self.subfigure4.set_xlabel(r"$\nu t$")
         self.subfigure5.set_xlabel(r"$\nu t$")
 
-        self.subfigure0.set_ylabel(r"$\rho_\mathrm{WV}$")
+        if self.do_legend:
+            self.subfigure0.set_ylabel(r"$\rho_\mathrm{WV}$")
+            self.subfigure4.set_ylabel(r"$n/A$")
         self.subfigure1.set_ylabel("n clusters")
-        self.subfigure4.set_ylabel(r"$n/A$")
         self.subfigure5.set_ylabel("sphericity")
 
         self.subfigure0.set_ylim(y0)
@@ -4405,17 +4426,19 @@ class Extraneighbor_cluster(DCVizPlotter):
 
 
         self.subfigure0.set_xticks([])
-        self.subfigure4.legend(loc="center",
-                               handlelength=1.5,
-                               markerscale=20.0,
-                               borderpad=0.2,
-                               labelspacing=0.2,
-                               columnspacing=1.0,
-                               handletextpad=0.5,
-                               borderaxespad=0.0,
-                               frameon=False,
-                               fontsize=20,
-                               bbox_to_anchor=(0.8, 0.3))
+
+        if self.do_legend:
+            self.subfigure4.legend(loc="center",
+                                   handlelength=1.5,
+                                   markerscale=20.0,
+                                   borderpad=0.2,
+                                   labelspacing=0.2,
+                                   columnspacing=1.0,
+                                   handletextpad=0.2,
+                                   borderaxespad=0.0,
+                                   frameon=False,
+                                   fontsize=self.labelSize,
+                                   bbox_to_anchor=(0.75, 0.25))
 
         def format0(v, _):
             if abs(v - round(v, 1)) < 1e-3:
@@ -4424,6 +4447,14 @@ class Extraneighbor_cluster(DCVizPlotter):
                 return r""
 
         self.subfigure0.yaxis.set_major_formatter(FuncFormatter(format0))
+
+        def f_x(v, _):
+            if int(v) == v:
+                return r"$%d$" % v
+            else:
+                return ""
+
+        self.subfigure4.yaxis.set_major_formatter(FuncFormatter(f_x))
 
 class ExtraneighborTest(DCVizPlotter):
 
@@ -5039,8 +5070,6 @@ class FelixParticleHDynCav(DCVizPlotter):
         #         return ""
         #
         # self.hfig.xaxis.set_major_formatter(FuncFormatter(f))
-
-import finitediff
 
 class FelixSeqC(DCVizPlotter):
     nametag = "FelixSeqC\_(.*)\.npy"
