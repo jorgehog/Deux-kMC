@@ -3553,24 +3553,24 @@ class ExtraNeighbor(DCVizPlotter):
              [5, 5]]
 
     specific_fig_size = dict([["%s%d" % (n, i), sizes[i]]
-                              for n in minorfigs for i in [0, 1, 2]] + [["fmjau", [5, 8]]])
+                              for n in minorfigs for i in [0, 1, 2]] + [["fmjau", [5, 9]]])
 
-    specific_fig_size["t2"] = sizes[1]
+    #specific_fig_size["t2"] = sizes[1]
 
     def adjust(self):
         for figname in self.figure_names:
             if "mjau" in figname:
                 self.adjust_maps[figname]["top"] = 0.99
-                self.adjust_maps[figname]["bottom"] = 0.10
+                self.adjust_maps[figname]["bottom"] = 0.08
                 self.adjust_maps[figname]["left"] = 0.17
-                self.adjust_maps[figname]["right"] = 0.9
+                self.adjust_maps[figname]["right"] = 0.83
                 self.adjust_maps[figname]["hspace"] = 0.17
 
             else:
                 if "0" in figname:
                     self.adjust_maps[figname]["right"] = 0.97
                     self.adjust_maps[figname]["left"] = 0.23
-                elif "1" in figname or figname == "t2":
+                elif "1" in figname: #or figname == "t2":
                     self.adjust_maps[figname]["right"] = 0.96
                     self.adjust_maps[figname]["left"] = 0.04
                 else:
@@ -3647,9 +3647,9 @@ class ExtraNeighbor(DCVizPlotter):
 
 
         labels = [r"$\mathrm{I}$", r"$\mathrm{B}$", r"$\mathrm{P}$"]
-        twinlabels = [r"$\alpha\in [%g, %g]$" % (alphas[0], alphas[at]),
-                      r"$\alpha\in [%g, %g]$" % (alphas[at+1], alphas[-1]),
-                      r"$\alpha\in [%g, %g]$" % (alphas[0], alphas[-1])]
+        twinlabels = [r"$E_b/kT\in [%g, %g]$" % (alphas[0], alphas[at]),
+                      r"$E_b/kT\in [%g, %g]$" % (alphas[at+1], alphas[-1]),
+                      r"$E_b/kT\in [%g, %g]$" % (alphas[0], alphas[-1])]
 
         def f(v, i):
             if int(v) == v:
@@ -3664,16 +3664,18 @@ class ExtraNeighbor(DCVizPlotter):
 
         markers = ["s", "o", "d"]
         colors = ["r", "k", "0.5"]
+        ymaxmjau = 1.05
         sfigs = [self.mjau0, self.mjau1, self.mjau2]
         for i in range(3):
             # hist[:, i, 0] /= counts[i, 0]
 
-            sfigs[i].set_ylabel(r"$\mathcal{P}$")
+            sfigs[i].set_ylabel(r"$n_\mathrm{Phase}/n_\mathrm{Tot}$")
             # sfigs[i].set_yticklabels([])
-            sfigs[i].set_ylim(0, 1.05)
+            sfigs[i].set_ylim(0, ymaxmjau)
             sfigs[i].yaxis.set_major_formatter(FuncFormatter(f))
             P_tot = 0
             for j in range(1,4):
+                j = 4 - j
                 # hist[:, i, j] /= counts[i, j]
                 P = hist[:, i, j]/hist[:, i, 0]
                 P_tot += P
@@ -3683,8 +3685,12 @@ class ExtraNeighbor(DCVizPlotter):
                               label=labels[j-1],
                               color=colors[j-1],
                               **my_props["fmt"])
+
+            sfigs[i].plot([0.25, 0.25], [0, ymaxmjau], "k:")
+            sfigs[i].plot([0.75, 0.75], [0, ymaxmjau], "k:")
+
             ax = sfigs[i].axes.twinx()
-            ax.set_ylabel(twinlabels[i])
+            ax.set_ylabel(twinlabels[i], labelpad=15)
             ax.yaxis.set_ticks([])
             ax.yaxis.set_ticklabels([])
 
@@ -3707,7 +3713,7 @@ class ExtraNeighbor(DCVizPlotter):
                                handletextpad=0.25,
                                borderaxespad=0.0,
                                frameon=False,
-                               bbox_to_anchor=(0.18, 0.5))
+                               bbox_to_anchor=(0.14, 0.45))
 
         lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
@@ -3763,10 +3769,11 @@ class ExtraNeighbor(DCVizPlotter):
 
         desc = [r"$\mathrm{Pits}$",
                 r"$\mathrm{Bands}$",
-                r"$\mathrm{Islands}$"]
+                r"$\mathrm{Islands}$",
+                r"$\mathrm{No\,\,shape}$"]
 
-        x_loc = len(alphas)-8
-        y_locs = [6, 4, 2]
+        x_loc = len(alphas)-9
+        y_locs = [8, 6, 4, 2]
 
         for i, y_loc in enumerate(y_locs):
             avg_pmat[-1, x_loc, y_loc] = 3 - i
@@ -3829,11 +3836,26 @@ class ExtraNeighbor(DCVizPlotter):
         #     sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'w', linewidth=3)
         #     sfig.plot(np.arange(len(alphas)) + 0.5, t_loc, 'k--', linewidth=3)
 
-        for i, y_loc in enumerate(y_locs):
-            sfig = self.psubfigure21
-            sfig.text(x_loc + 1.5, y_loc, desc[i])#, horizontalalignment="left", verticalalignment="center")
-            sfig = self.tsubfigure21
-            sfig.text(x_loc + 1.5, y_loc, desc[i])#, horizontalalignment="left", verticalalignment="center")
+        def stuffify(sfig):
+            x0 = x_loc
+            x1 = x_loc + 1
+            args = ['k-']
+
+            for i, y_loc in enumerate(y_locs):
+                sfig.text(x_loc + 1.5, y_loc, desc[i])#, horizontalalignment="left", verticalalignment="center")
+
+                y0 = y_loc
+                y1 = y_loc + 1
+
+                sfig.plot([x0, x0], [y0, y1], *args)
+                sfig.plot([x1, x1], [y0, y1], *args)
+
+                sfig.plot([x0, x1], [y0, y0], *args)
+                sfig.plot([x0, x1], [y1, y1], *args)
+
+
+        stuffify(self.psubfigure21)
+        stuffify(self.tsubfigure21)
 
 
         pos = [0.78, 0.18, 0.05, 0.7]
