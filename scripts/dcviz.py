@@ -3553,15 +3553,15 @@ class ExtraNeighbor(DCVizPlotter):
              [5, 5]]
 
     specific_fig_size = dict([["%s%d" % (n, i), sizes[i]]
-                              for n in minorfigs for i in [0, 1, 2]] + [["fmjau", [5, 9]]])
+                              for n in minorfigs for i in [0, 1, 2]] + [["fmjau", [5, 7]]])
 
     #specific_fig_size["t2"] = sizes[1]
 
     def adjust(self):
         for figname in self.figure_names:
             if "mjau" in figname:
-                self.adjust_maps[figname]["top"] = 0.99
-                self.adjust_maps[figname]["bottom"] = 0.08
+                self.adjust_maps[figname]["top"] = 0.98
+                self.adjust_maps[figname]["bottom"] = 0.11
                 self.adjust_maps[figname]["left"] = 0.17
                 self.adjust_maps[figname]["right"] = 0.83
                 self.adjust_maps[figname]["hspace"] = 0.17
@@ -3647,9 +3647,9 @@ class ExtraNeighbor(DCVizPlotter):
 
 
         labels = [r"$\mathrm{I}$", r"$\mathrm{B}$", r"$\mathrm{P}$"]
-        twinlabels = [r"$E_b/kT\in [%g, %g]$" % (alphas[0], alphas[at]),
-                      r"$E_b/kT\in [%g, %g]$" % (alphas[at+1], alphas[-1]),
-                      r"$E_b/kT\in [%g, %g]$" % (alphas[0], alphas[-1])]
+        twinlabels = [r"$E_b/kT\in (%g, %g]$" % (0, alphas[at]),
+                      r"$E_b/kT\in (%g, %g]$" % (alphas[at], alphas[-1]),
+                      r"$E_b/kT\in (%g, %g]$" % (0, alphas[-1])]
 
         def f(v, i):
             if int(v) == v:
@@ -3669,7 +3669,7 @@ class ExtraNeighbor(DCVizPlotter):
         for i in range(3):
             # hist[:, i, 0] /= counts[i, 0]
 
-            sfigs[i].set_ylabel(r"$n_\mathrm{Phase}/n_\mathrm{Tot}$")
+            sfigs[i].set_ylabel(r"$n/n_\mathrm{tot}$")
             # sfigs[i].set_yticklabels([])
             sfigs[i].set_ylim(0, ymaxmjau)
             sfigs[i].yaxis.set_major_formatter(FuncFormatter(f))
@@ -3690,7 +3690,7 @@ class ExtraNeighbor(DCVizPlotter):
             sfigs[i].plot([0.75, 0.75], [0, ymaxmjau], "k:")
 
             ax = sfigs[i].axes.twinx()
-            ax.set_ylabel(twinlabels[i], labelpad=15)
+            ax.set_ylabel(twinlabels[i], labelpad=15, fontsize=20)
             ax.yaxis.set_ticks([])
             ax.yaxis.set_ticklabels([])
 
@@ -4334,6 +4334,7 @@ class Extraneighbor_cluster(DCVizPlotter):
 
         delta = 0.06
         print self.do_legend
+
         self.adjust_maps["figure0"]["left"] = 0.15 - delta*(not self.do_legend)
         self.adjust_maps["figure0"]["right"] = 0.85 + delta*self.do_legend
         self.adjust_maps["figure0"]["top"] = 0.93
@@ -4681,8 +4682,7 @@ class NonEqNeigz(DCVizPlotter):
    # fig_size = [15, 3]
     specific_fig_size = {
         "figure_high": [15, 3.25],
-        "figure_low": [15, 3],
-        "zoomfig": [10, 4.5]
+        "figure_low": [15, 3]
     }
 
     def plot(self, data):
@@ -4708,7 +4708,9 @@ class NonEqNeigz(DCVizPlotter):
 
         zylims = [0.35, 0.1]
 
-        xzl = r"$t\,\,[10^%d/\nu]$" % logscale
+        xzl = r"$10^%d\,\nu t$" % logscale
+        args = ['k-']
+        kwargs = {"linewidth": 2, "zorder": 10}
 
         for i in range(2):
             F0 = F0s[i]
@@ -4743,6 +4745,17 @@ class NonEqNeigz(DCVizPlotter):
                         self.zoom_diss.yaxis.set_label_position("right")
                         self.zoom_diss.set_ylabel(r"$F_0/E_bA = %g$" % F0, labelpad=10)
 
+                        x0 = neqtime[k]
+                        x1 = neqtime[-1]
+                        args = ['k-']
+
+                        self.dissfig_high.plot([x0, x1], [0, 0], *args, **kwargs)
+                        self.dissfig_high.plot([x0, x1], [zylims[i], zylims[i]], *args, **kwargs)
+
+                        self.dissfig_high.plot([x0, x0], [0, zylims[i]], *args, **kwargs)
+                        self.dissfig_high.plot([x1*0.98, x1*0.98], [0, zylims[i]], *args, **kwargs)
+
+
                     #low pressure growth
                     elif i == 0 and j == 1:
                         k = np.where(neqtime < growth_end)[0][-1]
@@ -4753,6 +4766,14 @@ class NonEqNeigz(DCVizPlotter):
                         self.zoom_growth.set_ylabel(r"$F_0/E_bA = %g$" % F0, labelpad=10)
                         self.zoom_growth.set_yticklabels([])
                         self.zoom_growth.set_title(r"$\mathrm{Zoom}$")
+
+
+                        x0 = neqtime[0]
+                        x1 = neqtime[k-1]
+
+                        self.growthfig_low.plot([x0, x1], [0.001, 0.001], *args, **kwargs)
+                        self.growthfig_low.plot([x0, x1], [zylims[i]*0.99, zylims[i]*0.99], *args, **kwargs)
+                        self.growthfig_low.plot([x1, x1], [0, zylims[i]], *args, **kwargs)
 
                 fig.plot(eqtime, eqcov, "k-")
                 fig.plot(neqtime, neqcov, "r-")
@@ -4777,46 +4798,54 @@ class ExtraN_cluster_yo(DCVizPlotter):
     isFamilyMember = True
 
     hugifyFonts = True
+    labelSize = 35
+    ticklabelSize = 25
+
 
     figMap = {
         "fLeft":  ["std0", "rho0"],
         "fMid":   ["std1", "rho1"],
         "fRight": ["std2", "rho2"],
+        "gLeft":  "g0",
+        "gMid":   "g1",
+        "gRight": "g2",
         "lonelyfig1": "sfig1",
         "lonelyfig2": "sfig2"
 
     }
 
     specific_fig_size = {
-        "fLeft":  [6.95, 6],
-        "fMid":   [6, 6],
-        "fRight": [6, 6]
+        "fLeft":  [6.95, 6.5],
+        "fMid":   [6, 6.5],
+        "fRight": [6, 6.5],
+        "lonelyfig1": [9, 6.75],
+        "lonelyfig2": [9, 6.75],
     }
 
     def adjust(self):
 
         for figure in self.figure_names:
             if "lonelyfig" in figure:
-                self.adjust_maps[figure]["top"] = 0.92
-                self.adjust_maps[figure]["bottom"] = 0.13
+                self.adjust_maps[figure]["top"] = 0.90
+                self.adjust_maps[figure]["bottom"] = 0.16
 
                 if figure == "lonelyfig1":
-                    self.adjust_maps[figure]["left"] = 0.11
+                    self.adjust_maps[figure]["left"] = 0.13
                     self.adjust_maps[figure]["right"] = 0.98
                 else:
                     self.adjust_maps[figure]["left"] = 0.02
-                    self.adjust_maps[figure]["right"] = 0.89
+                    self.adjust_maps[figure]["right"] = 0.87
 
             else:
                 self.adjust_maps[figure]["hspace"] = 0.15
-                self.adjust_maps[figure]["bottom"] = 0.13
-                self.adjust_maps[figure]["top"] = 0.94
+                self.adjust_maps[figure]["bottom"] = 0.15
+                self.adjust_maps[figure]["top"] = 0.93
                 self.adjust_maps[figure]["right"] = 0.965
 
                 if figure == "fLeft":
-                    lval = 0.13
+                    lval = 0.16
                 else:
-                    lval = 0.01
+                    lval = 0.04
 
                 self.adjust_maps[figure]["left"] = lval
 
@@ -4842,7 +4871,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
         markers = ['s', '^', 'o']
         colors = ['k', 'r', '0.3']
         stdlabel = r"$\sigma(\rho_\mathrm{WV})[\%]$"
-        stdnlabel = r"$\sigma(n_\pm/A)[\%]$"
+        stdnlabel = r"$\sigma(\Delta n/A)[\%]$"
 
         if self.argv:
             res = resonance_points(1., 5., F0s.min(), F0s.max(), 10000)
@@ -4857,11 +4886,13 @@ class ExtraN_cluster_yo(DCVizPlotter):
             ias = sorted_alphas.index(a)
             stdfig = eval("self.std%d" % ias)
             rhofig = eval("self.rho%d" % ias)
+            gfig = eval("self.g%d" % ias)
 
             I = np.where(covs[ias, :] != 0)
 
             stdfig.plot(F0s, stds[ia, :, 0]*100, 'kd', **my_props["fmt"])
             rhofig.plot(F0s, covs[ia, :], 'kd', **my_props["fmt"])
+            gfig.plot(covs[ia, :], stds[ia, :, 0], 'ks')
 
             for r in res:
                 xp = [r, r]
@@ -4873,7 +4904,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
                 std_yo = stds[ias, :, 3-i]*100
                 sfig.plot(F0s[I], std_yo[I], markers[ias],
                           color=colors[ias],
-                          label=r"$\alpha=%g$" % alphas[ias],
+                          label=r"$E_b/kT=%g$" % alphas[ias],
                           **my_props["fmt"])
 
             rhofig.set_xlabel(r"$F_0/E_b A$")
@@ -4888,7 +4919,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
             rhofig.set_xlim(0.23, 1.02)
 
             if ias == 0:
-                stdfig.set_ylabel(stdlabel)
+                stdfig.set_ylabel(stdlabel, labelpad=22)
                 rhofig.set_ylabel(r"$\rho_\mathrm{WV}$")
             else:
                 stdfig.yaxis.set_ticklabels([])
@@ -4924,14 +4955,14 @@ class ExtraN_cluster_yo(DCVizPlotter):
                           numpoints=1,
                           handlelength=1.5,
                           markerscale=1.0,
-                          borderpad=0.2,
+                          borderpad=0.3,
                           labelspacing=0.2,
                           columnspacing=1.0,
-                          handletextpad=0.5,
-                          borderaxespad=0.0,
+                          handletextpad=0.1,
+                          borderaxespad=0.1,
                           frameon=True,
-                          fontsize=20,
-                          bbox_to_anchor=(0.15, 0.8))
+                          fontsize=self.ticklabelSize,
+                          bbox_to_anchor=(0.2, 0.825))
 
         self.sfig1.set_xlabel(r"$F_0/E_bA$")
         self.sfig1.set_xlim(0.23, 1.02)
@@ -4939,10 +4970,10 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         self.sfig2.set_xlabel(r"$F_0/E_bA$")
         self.sfig2.set_xlim(0.23, 1.02)
-        #self.sfig2.set_yticklabels([])
+        self.sfig2.set_yticklabels([])
 
-        self.sfig1.set_title(r"$\#\mathrm{Gained}\,\,(n_+)$")
-        self.sfig2.set_title(r"$\#\mathrm{Broken}\,\,(n_-)$")
+        self.sfig1.set_title(r"$\mathrm{Gained\,\,Bonds}\,\,(\Delta n_+)$")
+        self.sfig2.set_title(r"$\mathrm{Broken\,\,Bonds}\,\,(\Delta n_-)$")
 
 class FelixParticleH(DCVizPlotter):
 
