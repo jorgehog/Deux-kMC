@@ -7,6 +7,8 @@ from scipy.stats import linregress
 from numpy import where, empty, save, zeros
 from skimage import measure
 
+from matplotlib import pylab
+
 sys.path.append(join(os.getcwd(), ".."))
 
 from parse_h5_output import ParseKMCHDF5
@@ -222,7 +224,7 @@ def makeXYZ_single(data, xyz_dir, n):
     return name
 
 
-def makeXYZ(heights, dir):
+def makeXYZ(heights, idx, dir):
 
     tot = 10
     N = len(heights)
@@ -234,7 +236,7 @@ def makeXYZ(heights, dir):
         os.mkdir(xyz_dir)
 
     n = 0
-    for step in sorted(heights.keys(), key=lambda x: int(x))[::every]:
+    for step in idx[::every]:
         data = heights[step][()]
         name = makeXYZ_single(data, xyz_dir, n)
         n += 1
@@ -253,6 +255,23 @@ def filter_background(n):
     a, b, _, _, _ = linregress(x, n)
 
     return n - (a*x + b)
+
+def calcHeight(all_coverage, all_heights, idx, every):
+
+    neq = (3*len(all_coverage))/4
+
+    mean = 0
+    for i in range(neq, len(all_coverage), every):
+        coverage = all_coverage[i]
+        heights = all_heights[idx[i]][()]
+
+        if coverage.sum() == 0:
+            mean += 0
+        else:
+           # print heights[np.where(coverage == 0)].mean(), heights[np.where(coverage == 1)].mean()
+            mean += heights[np.where(coverage == 1)].mean() - heights[np.where(coverage == 0)].mean()
+
+    return mean / ((len(all_coverage)-neq)/every)
 
 def get_cov_std(covs, nbroken, ngained, time):
 
@@ -339,6 +358,7 @@ def main():
 
     stds = np.zeros(shape=(len(alphas), len(F0s), 3))
     all_covs = np.zeros(shape=(len(alphas), len(F0s)))
+    heigts = np.zeros_like(all_covs)
 
     if not os.path.exists(path):
         os.mkdir(path)
@@ -353,6 +373,7 @@ def main():
 
     all_counts = {}
     last_xyz_txt = ""
+    stored_heights_keys = None
     for count, (data, L, W, run_id) in enumerate(parser):
 
         alpha = round(data.attrs["alpha"], 5)
@@ -375,7 +396,10 @@ def main():
         print "%d/%d" % (count+1, N), L, W, run_id, alpha, F0
 
         coverage_matrix_h5 = data["eq_coverage_matrix"]
+
         event_values_h5 = data["eq_storedEventValues"]
+        stored_heights = data["stored_heights"]
+
         coverage_matrix = np.zeros(shape=(len(coverage_matrix_h5)/every, L, W))
         time = np.zeros(shape=len(coverage_matrix_h5)/every)
 
@@ -383,6 +407,11 @@ def main():
             last_xyz = makeXYZ_single(coverage_matrix_h5[-1], "/tmp", 0)
             cov = 0
         else:
+            if not stored_heights_keys:
+                stored_heights_keys = sorted(stored_heights.keys(), key=lambda x: int(x))
+            heigts[ai, F0i] = calcHeight(coverage_matrix_h5, stored_heights, stored_heights_keys, every)
+            #continue
+
             if not os.path.exists(dir):
                 os.mkdir(dir)
             for i, n in enumerate(range(0, len(coverage_matrix_h5), every)):
@@ -407,6 +436,7 @@ def main():
                         avg_circs,
                         centeroids]
 
+
             for i in range(n):
                 analyze(coverage_matrix, do_cluster_analysis, i, *measures)
 
@@ -423,7 +453,7 @@ def main():
             else:
                 trace = []
 
-            last_xyz = makeXYZ(data["stored_heights"], dir)
+            last_xyz = makeXYZ(stored_heights, stored_heights_keys, dir)
 
             save("%s/extran_cluster_time.npy" % dir, time)
             save("%s/extran_cluster_covs.npy" % dir, covs)
@@ -438,10 +468,18 @@ def main():
         shutil.copy(last_xyz, xyz_name)
         last_xyz_txt += "%d %.3f %.3f %g\n" % (count, alpha, F0, cov)
 
+    # for ia, alpha in enumerate(alphas):
+    #     K = np.where(heigts[ia, :] != 0)
+    #     pylab.plot(np.array(F0s)[K], heigts[ia, :][K], "s", label="%g" % alpha)
+    # pylab.ylim(0, 10)
+    # pylab.legend()
+    # pylab.show()
+
     np.save("%s/cov_clusters_alphas.npy" % std_path, alphas)
     np.save("%s/cov_clusters_F0.npy" % std_path, F0s)
     np.save("%s/cov_clusters_stds.npy" % std_path, stds)
     np.save("%s/cov_clusters_covs.npy" % std_path, all_covs)
+    np.save("%s/cov_clusters_heights.npy" % std_path, heigts)
 
     with open(os.path.join(all_xyz_path, "desc.txt"), 'w') as f:
         f.write(last_xyz_txt)

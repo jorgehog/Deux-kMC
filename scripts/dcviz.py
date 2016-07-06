@@ -4806,11 +4806,9 @@ class ExtraN_cluster_yo(DCVizPlotter):
         "fLeft":  ["std0", "rho0"],
         "fMid":   ["std1", "rho1"],
         "fRight": ["std2", "rho2"],
-        "gLeft":  "g0",
-        "gMid":   "g1",
-        "gRight": "g2",
         "lonelyfig1": "sfig1",
-        "lonelyfig2": "sfig2"
+        "lonelyfig2": "sfig2",
+        "hfig": "shfig"
 
     }
 
@@ -4818,27 +4816,33 @@ class ExtraN_cluster_yo(DCVizPlotter):
         "fLeft":  [6.95, 6.5],
         "fMid":   [6, 6.5],
         "fRight": [6, 6.5],
-        "lonelyfig1": [9, 6.75],
-        "lonelyfig2": [9, 6.75],
+        "lonelyfig1": [7, 6.75],
+        "lonelyfig2": [6, 6.75],
+        "hfig": [7, 6.75],
     }
 
     def adjust(self):
 
         for figure in self.figure_names:
+            self.adjust_maps[figure]["bottom"] = 0.15
+
             if "lonelyfig" in figure:
                 self.adjust_maps[figure]["top"] = 0.90
-                self.adjust_maps[figure]["bottom"] = 0.16
 
                 if figure == "lonelyfig1":
-                    self.adjust_maps[figure]["left"] = 0.13
+                    self.adjust_maps[figure]["left"] = 0.16
                     self.adjust_maps[figure]["right"] = 0.98
                 else:
                     self.adjust_maps[figure]["left"] = 0.02
-                    self.adjust_maps[figure]["right"] = 0.87
+                    self.adjust_maps[figure]["right"] = 0.98
+
+            elif figure == "hfig":
+                self.adjust_maps[figure]["top"] = 0.9
+                self.adjust_maps[figure]["left"] = 0.13
+                self.adjust_maps[figure]["right"] = 0.98
 
             else:
                 self.adjust_maps[figure]["hspace"] = 0.15
-                self.adjust_maps[figure]["bottom"] = 0.15
                 self.adjust_maps[figure]["top"] = 0.93
                 self.adjust_maps[figure]["right"] = 0.965
 
@@ -4849,7 +4853,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
                 self.adjust_maps[figure]["left"] = lval
 
-#    plotOnly = "lonelyfig"
+    #plotOnly = "hfig"
 
     def plot(self, data):
 
@@ -4857,6 +4861,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
         F0s = self.get_family_member_data(data, "F0")
         stds = self.get_family_member_data(data, "stds")
         covs = self.get_family_member_data(data, "covs")
+        heights = self.get_family_member_data(data, "heights")
 
         sorted_alphas = sorted(alphas)
 
@@ -4867,6 +4872,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
             ymax = stds[:, :, 0].max()*101
             y1max = None
 
+        yhmax = heights.max()+1
 
         markers = ['s', '^', 'o']
         colors = ['k', 'r', '0.3']
@@ -4880,24 +4886,27 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         ypr = [0, 1]
         yps = [0, ymax]
+        yph = [0, yhmax]
         print res
 
         for ia, a in enumerate(alphas):
             ias = sorted_alphas.index(a)
             stdfig = eval("self.std%d" % ias)
             rhofig = eval("self.rho%d" % ias)
-            gfig = eval("self.g%d" % ias)
 
             I = np.where(covs[ias, :] != 0)
 
             stdfig.plot(F0s, stds[ia, :, 0]*100, 'kd', **my_props["fmt"])
             rhofig.plot(F0s, covs[ia, :], 'kd', **my_props["fmt"])
-            gfig.plot(covs[ia, :], stds[ia, :, 0], 'ks')
+            self.shfig.plot(F0s[I], heights[ia, :][I], markers[ias],
+                            color=colors[ias], **my_props["fmt"])
 
             for r in res:
                 xp = [r, r]
-                stdfig.plot(xp, yps, "k--")
-                rhofig.plot(xp, ypr, "k--")
+                stdfig.plot(xp, yps, "k:")
+                rhofig.plot(xp, ypr, "k:")
+                self.shfig.plot(xp, yph, "k:")
+
 
             for i in [1, 2]:
                 sfig = eval("self.sfig%d" % i)
@@ -4914,6 +4923,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
             stdfig.set_ylim(0, ymax)
             rhofig.set_ylim(0, 1)
+            self.shfig.set_ylim(0, yhmax)
 
             stdfig.set_xlim(0.23, 1.02)
             rhofig.set_xlim(0.23, 1.02)
@@ -4945,24 +4955,24 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         for r in res:
             xp = [r, r]
-            self.sfig1.plot(xp, [0, ym], "k--")
-            self.sfig2.plot(xp, [0, ym], "k--")
+            self.sfig1.plot(xp, [0, ym], "k:")
+            self.sfig2.plot(xp, [0, ym], "k:")
 
             self.sfig1.set_ylim(0, ym)
             self.sfig2.set_ylim(0, ym)
 
         self.sfig1.legend(loc="center",
                           numpoints=1,
-                          handlelength=1.5,
+                          handlelength=1.0,
                           markerscale=1.0,
                           borderpad=0.3,
                           labelspacing=0.2,
                           columnspacing=1.0,
-                          handletextpad=0.1,
+                          handletextpad=0.0,
                           borderaxespad=0.1,
                           frameon=True,
                           fontsize=self.ticklabelSize,
-                          bbox_to_anchor=(0.2, 0.825))
+                          bbox_to_anchor=(0.225, 0.835))
 
         self.sfig1.set_xlabel(r"$F_0/E_bA$")
         self.sfig1.set_xlim(0.23, 1.02)
@@ -4974,6 +4984,12 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
         self.sfig1.set_title(r"$\mathrm{Gained\,\,Bonds}\,\,(\Delta n_+)$")
         self.sfig2.set_title(r"$\mathrm{Broken\,\,Bonds}\,\,(\Delta n_-)$")
+        self.shfig.set_title(r"$\mathrm{Contact\,\,Height}$")
+
+        self.shfig.set_xlabel(r"$F_0/E_bA$")
+        self.shfig.set_ylabel(r"$\langle \Delta h_c \rangle$")
+        self.shfig.set_xlim(0.23, 1.02)
+
 
 class FelixParticleH(DCVizPlotter):
 
