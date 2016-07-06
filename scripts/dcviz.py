@@ -30,6 +30,13 @@ my_props = {
 
 }
 
+def int_format_func(v, _):
+    if int(v) == v:
+        return r"$%d$" % v
+    else:
+        return ""
+
+INTFORMATTER = FuncFormatter(int_format_func)
 
 class SteadyState(DCVizPlotter):
 
@@ -4803,48 +4810,44 @@ class ExtraN_cluster_yo(DCVizPlotter):
 
 
     figMap = {
-        "fLeft":  ["std0", "rho0"],
-        "fMid":   ["std1", "rho1"],
-        "fRight": ["std2", "rho2"],
+        "fLeft":  ["std0", "rho0", "h0"],
+        "fMid":   ["std1", "rho1", "h1"],
+        "fRight": ["std2", "rho2", "h2"],
         "lonelyfig1": "sfig1",
         "lonelyfig2": "sfig2",
-        "hfig": "shfig"
-
+        "hfig": "shfig",
+        "testfig": "test"
     }
 
     specific_fig_size = {
-        "fLeft":  [6.95, 6.5],
-        "fMid":   [6, 6.5],
-        "fRight": [6, 6.5],
+        "fLeft":  [6.95, 8],
+        "fMid":   [6, 8],
+        "fRight": [6, 8],
         "lonelyfig1": [7, 6.75],
-        "lonelyfig2": [6, 6.75],
-        "hfig": [7, 6.75],
+        "lonelyfig2": [7, 6.75]
+       # "lonelyfig2": [6, 6.75]
     }
 
     def adjust(self):
 
         for figure in self.figure_names:
-            self.adjust_maps[figure]["bottom"] = 0.15
 
             if "lonelyfig" in figure:
                 self.adjust_maps[figure]["top"] = 0.90
+                self.adjust_maps[figure]["bottom"] = 0.15
 
                 if figure == "lonelyfig1":
                     self.adjust_maps[figure]["left"] = 0.16
                     self.adjust_maps[figure]["right"] = 0.98
                 else:
                     self.adjust_maps[figure]["left"] = 0.02
-                    self.adjust_maps[figure]["right"] = 0.98
-
-            elif figure == "hfig":
-                self.adjust_maps[figure]["top"] = 0.9
-                self.adjust_maps[figure]["left"] = 0.13
-                self.adjust_maps[figure]["right"] = 0.98
+                    self.adjust_maps[figure]["right"] = 0.84
 
             else:
                 self.adjust_maps[figure]["hspace"] = 0.15
                 self.adjust_maps[figure]["top"] = 0.93
                 self.adjust_maps[figure]["right"] = 0.965
+                self.adjust_maps[figure]["bottom"] = 0.12
 
                 if figure == "fLeft":
                     lval = 0.16
@@ -4872,7 +4875,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
             ymax = stds[:, :, 0].max()*101
             y1max = None
 
-        yhmax = heights.max()+1
+        yhmax = (heights.max()+1)#*covs.max()
 
         markers = ['s', '^', 'o']
         colors = ['k', 'r', '0.3']
@@ -4893,47 +4896,75 @@ class ExtraN_cluster_yo(DCVizPlotter):
             ias = sorted_alphas.index(a)
             stdfig = eval("self.std%d" % ias)
             rhofig = eval("self.rho%d" % ias)
+            hfig = eval("self.h%d" % ias)
 
-            I = np.where(covs[ias, :] != 0)
+            tresh = 0.05
+            I = np.where(covs[ias, :] > tresh)
+            J = np.where(covs[ias, :] <= tresh)
 
-            stdfig.plot(F0s, stds[ia, :, 0]*100, 'kd', **my_props["fmt"])
-            rhofig.plot(F0s, covs[ia, :], 'kd', **my_props["fmt"])
-            self.shfig.plot(F0s[I], heights[ia, :][I], markers[ias],
-                            color=colors[ias], **my_props["fmt"])
+            stdfig.plot(F0s[I], stds[ia, :, 0][I]*100, 'kd', label=r"$\mathrm{Stable}$", **my_props["fmt"])
+            stdfig.plot(F0s[J], stds[ia, :, 0][J]*100, 'rx', label=r"$\mathrm{Unstable}$", **my_props["fmt"])
+            rhofig.plot(F0s[I], covs[ia, :][I], 'kd', **my_props["fmt"])
+            rhofig.plot(F0s[J], covs[ia, :][J], 'rx', **my_props["fmt"])
+            hfig.plot(F0s[I], heights[ia, :][I], 'kd', **my_props["fmt"])
+            hfig.plot(F0s[J], heights[ia, :][J], 'rx', **my_props["fmt"])
+
+            self.test.plot(stds[ia, :, 0][I], heights[ia, :][I], markers[ias], color=colors[ias], **my_props['fmt'])
 
             for r in res:
                 xp = [r, r]
                 stdfig.plot(xp, yps, "k:")
                 rhofig.plot(xp, ypr, "k:")
-                self.shfig.plot(xp, yph, "k:")
+                hfig.plot(xp, yph, "k:")
 
-
+            K = np.where(covs[ias, :] != 0)
             for i in [1, 2]:
                 sfig = eval("self.sfig%d" % i)
                 std_yo = stds[ias, :, 3-i]*100
-                sfig.plot(F0s[I], std_yo[I], markers[ias],
+
+                sfig.plot(F0s[K], std_yo[K], markers[ias],
                           color=colors[ias],
                           label=r"$E_b/kT=%g$" % alphas[ias],
                           **my_props["fmt"])
 
-            rhofig.set_xlabel(r"$F_0/E_b A$")
+            hfig.set_xlabel(r"$F_0/E_b A$")
 
             stdfig.xaxis.set_ticklabels([])
-            stdfig.set_title(r"$\alpha = %g$" % a)
+            rhofig.xaxis.set_ticklabels([])
+            stdfig.set_title(r"$E_b/kT = %g$" % a)
 
             stdfig.set_ylim(0, ymax)
             rhofig.set_ylim(0, 1)
-            self.shfig.set_ylim(0, yhmax)
+            hfig.set_ylim(0, yhmax)
 
             stdfig.set_xlim(0.23, 1.02)
             rhofig.set_xlim(0.23, 1.02)
+            hfig.set_xlim(0.23, 1.02)
 
             if ias == 0:
                 stdfig.set_ylabel(stdlabel, labelpad=22)
                 rhofig.set_ylabel(r"$\rho_\mathrm{WV}$")
+                hfig.set_ylabel(r"$\langle \Delta h_c \rangle$", labelpad=16)
             else:
                 stdfig.yaxis.set_ticklabels([])
                 rhofig.yaxis.set_ticklabels([])
+                hfig.yaxis.set_ticklabels([])
+
+                if ias == 2:
+                     stdfig.legend(loc="upper left",
+                                  numpoints=1,
+                                  ncol=1,
+                                  handlelength=1.0,
+                                  borderpad=0.2,
+                                  labelspacing=0.2,
+                                  columnspacing=1.25,
+                                  handletextpad=0.25,
+                                  borderaxespad=0.0,
+                                  frameon=True,
+                                  fontsize=30,
+                                  bbox_to_anchor=(0.04, 0.9)) \
+                    .get_frame().set_fill(not (self.toFile and self.transparent))
+
 
         if not y1max or y1max == 0:
             y1 = self.sfig1.get_ylim()[1]
@@ -4987,8 +5018,10 @@ class ExtraN_cluster_yo(DCVizPlotter):
         self.shfig.set_title(r"$\mathrm{Contact\,\,Height}$")
 
         self.shfig.set_xlabel(r"$F_0/E_bA$")
-        self.shfig.set_ylabel(r"$\langle \Delta h_c \rangle$")
+        self.shfig.set_ylabel(r"$\rho_\mathrm{WV}$")
         self.shfig.set_xlim(0.23, 1.02)
+
+        self.std0.yaxis.set_major_formatter(INTFORMATTER)
 
 
 class FelixParticleH(DCVizPlotter):

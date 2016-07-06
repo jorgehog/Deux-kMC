@@ -277,10 +277,13 @@ def get_cov_std(covs, nbroken, ngained, time):
 
     neq = (3*len(covs))/4
 
+    #pylab.plot(np.array(covs[neq:]))
+    #pylab.show()
+
     cov = covs[neq:].mean()
-    stdcov = np.array(covs).std()
-    stdbroken = np.array(nbroken).std()
-    stdgained = np.array(ngained).std()
+    stdcov = np.array(covs[neq:]).std()
+    stdbroken = np.array(nbroken[neq:]).std()
+    stdgained = np.array(ngained[neq:]).std()
 
     return stdcov, stdbroken, stdgained, cov
 
