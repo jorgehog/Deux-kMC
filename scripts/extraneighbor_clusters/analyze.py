@@ -327,19 +327,56 @@ def main():
             if alpha == s_alpha and F0 == s_F0:
                 time = data["eq_storedEventValues"][1][()]
 
-                covs = np.zeros(len(time))
-                nbroken = np.zeros(len(time) - 1)
-                ngained = np.zeros(len(time) - 1)
+                every1 = 100
+                n = len(time)/every1
+
+                covs = empty(n)
+                n_broken = empty(n - 1)
+                n_gained = empty(n - 1)
 
                 coverage_matrix = data["eq_coverage_matrix"]
+                every = 10
 
-                for i in range(len(time)):
-                    analyze(coverage_matrix, do_cluster_analysis, i, covs, nbroken, ngained)
+                for i in range(n):
+                    analyze(coverage_matrix[::every1], False, i, covs, n_broken, n_gained)
 
-                save("/tmp/extran_cluster_time.npy", time)
+                pylab.plot(time[::every1], covs)
+                pylab.show()
+
+                tmax = float(raw_input("tmax="))
+                
+                n = np.where(time <= tmax)[0][-1]
+
+                covs = empty(n)
+                n_broken = empty(n - 1)
+                n_gained = empty(n - 1)
+                avg_cluster_sizes = empty(n)
+                n_clusters_list = empty(n)
+                avg_circs = empty(n)
+                centeroids = []
+
+                measures = [covs,
+                            n_broken,
+                            n_gained,
+                            avg_cluster_sizes,
+                            n_clusters_list,
+                            avg_circs,
+                            centeroids]
+
+                for i in range(n):
+                    analyze(coverage_matrix[:n], True, i, *measures)
+
+                if do_cluster_analysis:
+                    trace = calculate_cluster_trace(centeroids, L, W)
+                    save("/tmp/extran_cluster_trace.npy", trace)
+
+                save("/tmp/extran_cluster_time.npy", time[:n])
                 save("/tmp/extran_cluster_covs.npy", covs)
-                save("/tmp/extran_cluster_nbroken.npy", nbroken)
-                save("/tmp/extran_cluster_ngained.npy", ngained)
+                save("/tmp/extran_cluster_nbroken.npy", n_broken)
+                save("/tmp/extran_cluster_ngained.npy", n_gained)
+                save("/tmp/extran_cluster_size.npy", avg_cluster_sizes)
+                save("/tmp/extran_cluster_n.npy", n_clusters_list)
+                save("/tmp/extran_cluster_circs.npy", avg_circs)
 
                 return
         N += 1

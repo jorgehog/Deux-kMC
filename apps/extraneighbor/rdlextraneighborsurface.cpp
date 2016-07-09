@@ -149,7 +149,7 @@ double RDLExtraNeighborSurface::getHeightBisection()
 
     const double rdlEquilibrium = getRdlEquilibrium();
 
-    if (rdlEquilibrium > contactHeight + 1)
+    if ((rdlEquilibrium > contactHeight + 1) && (currentForce < 0))
     {
         return rdlEquilibrium;
     }

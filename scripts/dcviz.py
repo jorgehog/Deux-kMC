@@ -4368,7 +4368,7 @@ class Extraneighbor_cluster(DCVizPlotter):
         self.subfigure0.set_title(r"$F_0/E_bA = %s$" % F0)
 
         L, W = [int(x) for x in self.argv[1:3]]
-        A_corr = L*W
+        A_corr = 1
 
         help_lines = []
         if len(self.argv) > 3:
