@@ -179,6 +179,7 @@ int main(int argv, char** argc)
     const double &rbe = getSetting<double>(cfgRoot, "rbe");
 
     rng.initialize((time(nullptr) % 1000000) + getProc(argv, argc));
+//    rng.initialize(123213321);
 
     const double xi = 1-exp(-1/ld);
     const double gamma0 = alpha*F0;

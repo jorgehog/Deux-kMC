@@ -39,6 +39,8 @@ private:
     double m_prevMin;
     bool m_prevMinSet;
 
+    const double m_ldExpFac;
+
     // Observer interface
 public:
     void initializeObserver(const Subjects &subject);

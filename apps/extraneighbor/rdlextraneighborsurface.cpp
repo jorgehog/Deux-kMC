@@ -10,7 +10,8 @@ RDLExtraNeighborSurface::RDLExtraNeighborSurface(SOSSolver &solver,
     m_extraNeighborPotential(extraNeighborPotential),
     m_Pl(Pl),
     m_nFactor(extraNeighborPotential.relBondEnergy()*rdlPotential.lD()*(1 - exp(-1/rdlPotential.lD()))/20),
-    m_prevMinSet(false)
+    m_prevMinSet(false),
+    m_ldExpFac(exp(-1./rdlPotential.lD()))
 {
     registerObserver(&rdlPotential);
     registerObserver(&extraNeighborPotential);
@@ -68,7 +69,14 @@ void RDLExtraNeighborSurface::dumpProfile(const uint n) const
 
 void RDLExtraNeighborSurface::findNewHeight()
 {
-    setHeight(getHeightBisection());
+    const double h = getHeightBisection();
+
+    BADAss(h, >=, solver().heights().max() + 1 - 1E-10, "hmm", [&] {
+        const double hb = getHeightBisection();
+        cout << hb << endl;
+    });
+
+    setHeight(h);
 }
 
 double RDLExtraNeighborSurface::totalForce(const double hl) const
@@ -133,28 +141,86 @@ double RDLExtraNeighborSurface::totalForceDeriv(const double hl) const
 //! based on the current force.
 double RDLExtraNeighborSurface::getHeightBisection()
 {
+    bool shouldRepel = false;
+
     const double &currentHeight = height();
-
-    //if we have a net repulsion, we always choose the far point.
-    const double currentForce = totalForce(currentHeight);
-
-    //we are already in equilibrium
-    if (fabs(currentForce) < 1E-16)
-    {
-        return currentHeight;
-    }
 
     //this is the minimum height the solution can have
     const int contactHeight = solver().heights().max() + 1;
 
     const double rdlEquilibrium = getRdlEquilibrium();
 
-    if ((rdlEquilibrium > contactHeight + 1) && (currentForce < 0))
+    if (fabs(contactHeight - currentHeight) < 1E-10)
     {
-        return rdlEquilibrium;
+        if (rdlEquilibrium < contactHeight + 1)
+        {
+            return contactHeight;
+        }
+
+        double repcurrent = 0;
+        double rep_energy_barrier = 0;
+        double e_bonds = 0;
+
+        for (uint x = 0; x < solver().length(); ++x)
+        {
+            for (uint y = 0; y < solver().width(); ++y)
+            {
+                const int &hi = solver().height(x, y);
+                if (contactHeight - hi == 1)
+                {
+                    rep_energy_barrier += m_rdlPotential.s0();
+                    e_bonds += 1;
+                }
+
+                else
+                {
+                    rep_energy_barrier -= m_rdlPotential.potential(x, y);
+                }
+
+                repcurrent -= m_rdlPotential.potential(x, y);
+            }
+        }
+
+        rep_energy_barrier *= m_ldExpFac;
+        const double xi = 1 - m_ldExpFac;
+
+        const double wF = m_Pl/(m_rdlPotential.lD())*solver().area();
+
+        if (rep_energy_barrier - repcurrent > wF + e_bonds*xi)
+        {
+            shouldRepel = true;
+        }
+
+        else
+        {
+            return currentHeight;
+        }
     }
 
-    const double contactForce = totalForce(contactHeight);
+    else
+    {
+
+        //if we have a net repulsion, we always choose the far point.
+        const double currentForce = totalForce(currentHeight);
+
+        //we are already in equilibrium
+        if (fabs(currentForce) < 1E-10)
+        {
+            return currentHeight;
+        }
+
+        shouldRepel = currentForce < 0;
+
+        if ((rdlEquilibrium > contactHeight + 1) && shouldRepel)
+        {
+            return rdlEquilibrium;
+        }
+
+    }
+
+    //-- Finding a point with negative force (repulsion)
+
+    const double contactForce = totalForce(contactHeight+0.01);
 
     //if the maximum left value is negative there
     //is no need to use bisection to obtain a negative value
@@ -199,6 +265,10 @@ double RDLExtraNeighborSurface::getHeightBisection()
         }
     }
 
+    //--
+
+    //--Finding the far height
+
     double farHeight;
 
     //outside range of interactions
@@ -219,16 +289,19 @@ double RDLExtraNeighborSurface::getHeightBisection()
         farHeight = bisect(hNegative, hPositive, minForce);
     }
 
-    //repulsion always implies we choose the far point
-    if (currentForce < 0)
+    //--
+
+    //repelling to the far height
+    if (shouldRepel)
     {
         return farHeight;
     }
 
+    //if we get here we are guaranteed an attraction
     else
     {
         //in this case we are attracted untill we reach the far point
-        if (currentHeight > farHeight)
+        if ((currentHeight > farHeight) && (farHeight > contactHeight))
         {
             return farHeight;
         }
@@ -345,10 +418,11 @@ void RDLExtraNeighborSurface::notifyObserver(const Subjects &subject)
     }
 
     //we perform checks if the surfaces are not in contact if the forces are indeed balanced.
-    if (height() != solver().heights().max() + 1)
+    if (fabs(height() - (solver().heights().max() + 1) > 1E-10))
     {
         BADAssClose(0, totalForce(height()), 1E-10, "hmm", [&] ()
         {
+            BADAssSimpleDump(solver().heights().max(), height());
             dumpProfile(0);
         });
     }
@@ -356,9 +430,7 @@ void RDLExtraNeighborSurface::notifyObserver(const Subjects &subject)
 
 void RDLExtraNeighborSurface::execute()
 {
-#ifndef NDEBUG
-    dumpProfile(cycle());
-#endif
+
 }
 
 bool RDLExtraNeighborSurface::hasSurface() const
