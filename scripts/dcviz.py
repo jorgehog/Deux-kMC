@@ -4760,7 +4760,7 @@ class NonEqNeigz(DCVizPlotter):
                         self.dissfig_high.plot([x0, x1], [zylims[i], zylims[i]], *args, **kwargs)
 
                         self.dissfig_high.plot([x0, x0], [0, zylims[i]], *args, **kwargs)
-                        self.dissfig_high.plot([x1*0.98, x1*0.98], [0, zylims[i]], *args, **kwargs)
+                        self.dissfig_high.plot([x1*0.995, x1*0.995], [0, zylims[i]], *args, **kwargs)
 
 
                     #low pressure growth
