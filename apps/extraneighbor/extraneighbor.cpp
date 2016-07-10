@@ -1,14 +1,15 @@
 #include "extraneighbor.h"
 
-ExtraNeighbor::ExtraNeighbor(SOSSolver &solver) :
-    LocalCachedPotential(solver)
+ExtraNeighbor::ExtraNeighbor(SOSSolver &solver, const double relBondEnergy) :
+    LocalCachedPotential(solver),
+    m_relBondEnergy(relBondEnergy)
 {
     solver.registerObserver(this);
 }
 
 double ExtraNeighbor::energyFunction(const double dh) const
 {
-    BADAss(dh, >=, 1);
+    BADAss(dh, >=, 1-1E-10);
 
     if (dh > 2)
     {
@@ -20,7 +21,7 @@ double ExtraNeighbor::energyFunction(const double dh) const
         const double dh2 = dh*dh;
         const double dh6 = dh2*dh2*dh2;
 
-        return (3*dh + 64/dh6 - 7)/60.;
+        return m_relBondEnergy*(3*dh + 64/dh6 - 7)/60.;
     }
 }
 

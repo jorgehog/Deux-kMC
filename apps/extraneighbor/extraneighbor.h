@@ -5,9 +5,17 @@
 class ExtraNeighbor : public LocalCachedPotential
 {
 public:
-    ExtraNeighbor(SOSSolver &solver);
+    ExtraNeighbor(SOSSolver &solver, const double relBondEnergy = 1.0);
 
     double energyFunction(const double dh) const;
+
+    const double &relBondEnergy() const
+    {
+        return m_relBondEnergy;
+    }
+
+private:
+    const double m_relBondEnergy;
 
     // Observer interface
 public:

@@ -176,6 +176,8 @@ int main(int argv, char** argc)
 
     const uint nZerosBeforeTermination = 10000;
 
+    const double &rbe = getSetting<double>(cfgRoot, "rbe");
+
     rng.initialize((time(nullptr) % 1000000) + getProc(argv, argc));
 
     const double xi = 1-exp(-1/ld);
@@ -189,7 +191,7 @@ int main(int argv, char** argc)
     solver.addLocalPotential(&rdlpotential);
     solver.registerObserver(&rdlpotential);
 
-    ExtraNeighbor extraNeighbor(solver);
+    ExtraNeighbor extraNeighbor(solver, rbe);
     solver.addLocalPotential(&extraNeighbor);
 
     const double Pl = ld*xi*F0;
@@ -241,7 +243,19 @@ int main(int argv, char** argc)
                                     interval);
 
     initializeSurface(solver, "random");
+
+//    for (uint x = L/2-2; x < L/2+2; ++x)
+//    {
+//        for (uint y = W/2-2; y < W/2+2; ++y)
+//        {
+//            solver.setHeight(x, y, 10, false);
+//        }
+//    }
+
     const double h0 = rdlExtraSurface.getRdlEquilibrium();
+
+//    rdlExtraSurface.setHeight(floor(h0)+1);
+
     const int hm = solver.heights().max();
 
     if (h0 < hm + 1)
