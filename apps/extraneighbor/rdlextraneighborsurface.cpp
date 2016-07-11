@@ -141,6 +141,9 @@ double RDLExtraNeighborSurface::totalForceDeriv(const double hl) const
 //! based on the current force.
 double RDLExtraNeighborSurface::getHeightBisection()
 {
+    double hNegative;
+    double minForce;
+
     bool shouldRepel = false;
 
     const double &currentHeight = height();
@@ -157,9 +160,49 @@ double RDLExtraNeighborSurface::getHeightBisection()
             return contactHeight;
         }
 
+
+        const double contactForcederp = totalForce(contactHeight+0.01);
+
+        if (contactForcederp < 0)
+        {
+            return rdlEquilibrium;
+        }
+
+        bool bisectForMin = true;
+        if (m_prevMinSet)
+        {
+            const double prevForce = totalForce(m_prevMin);
+            if (prevForce < 0)
+            {
+                hNegative = m_prevMin;
+                bisectForMin = false;
+                minForce = prevForce;
+            }
+        }
+
+        if (bisectForMin)
+        {
+            hNegative = bisectMinima(contactHeight+0.01,
+                                     contactHeight + 2,
+                                     totalForceDeriv(contactHeight+0.01),
+                                     1E-3);
+
+            m_prevMinSet = true;
+            m_prevMin = hNegative;
+            minForce = totalForce(hNegative);
+
+            //no equilibriums (roots)
+            if (minForce > 0)
+            {
+                return contactHeight;
+            }
+        }
+
+        const double unstable = bisect(contactHeight + 0.01, hNegative, contactForcederp);
+
         double repcurrent = 0;
-        double rep_energy_barrier = 0;
-        double e_bonds = 0;
+        double rep_barrier = 0;
+        double n_bonds = 0;
 
         for (uint x = 0; x < solver().length(); ++x)
         {
@@ -168,25 +211,28 @@ double RDLExtraNeighborSurface::getHeightBisection()
                 const int &hi = solver().height(x, y);
                 if (contactHeight - hi == 1)
                 {
-                    rep_energy_barrier += m_rdlPotential.s0();
-                    e_bonds += 1;
+                    n_bonds += 1;
                 }
 
                 else
                 {
-                    rep_energy_barrier -= m_rdlPotential.potential(x, y);
+                    repcurrent -= m_rdlPotential.potential(x, y);
+                    rep_barrier -= m_rdlPotential.rdlEnergy(unstable - hi);
                 }
-
-                repcurrent -= m_rdlPotential.potential(x, y);
             }
         }
 
-        rep_energy_barrier *= m_ldExpFac;
-        const double xi = 1 - m_ldExpFac;
+        const double xi = 1 - exp(-1/m_rdlPotential.lD());
+        repcurrent /= xi;
+        rep_barrier /= xi;
 
-        const double wF = m_Pl/(m_rdlPotential.lD())*solver().area();
+        const double F0 = m_Pl/(xi*m_rdlPotential.lD())*solver().area();
 
-        if (rep_energy_barrier - repcurrent > wF + e_bonds*xi)
+//        cout << m_extraNeighborPotential.energyFunction(unstable - solver().heights().max()) << " "
+//             << repcurrent << " " << rep_barrier << " " << F0*(unstable-contactHeight) << endl;
+//        cout << repcurrent - n_bonds  << " " << F0*(unstable-contactHeight) + rep_barrier - n_bonds*m_extraNeighborPotential.energyFunction(unstable - solver().heights().max()) << endl;
+
+        if (repcurrent - n_bonds > 0.5*(F0*(unstable-contactHeight) + rep_barrier - n_bonds*m_extraNeighborPotential.energyFunction(unstable - solver().heights().max())))
         {
             shouldRepel = true;
         }
@@ -224,8 +270,6 @@ double RDLExtraNeighborSurface::getHeightBisection()
 
     //if the maximum left value is negative there
     //is no need to use bisection to obtain a negative value
-    double hNegative;
-    double minForce;
     if (contactForce < 0)
     {
         hNegative = contactHeight;
@@ -248,9 +292,9 @@ double RDLExtraNeighborSurface::getHeightBisection()
 
         if (bisectForMin)
         {
-            hNegative = bisectMinima(contactHeight,
+            hNegative = bisectMinima(contactHeight+0.01,
                                      contactHeight + 2,
-                                     totalForceDeriv(contactHeight),
+                                     totalForceDeriv(contactHeight+0.01),
                                      1E-3);
 
             m_prevMinSet = true;
