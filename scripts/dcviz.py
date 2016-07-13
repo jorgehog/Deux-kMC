@@ -4701,8 +4701,9 @@ class NonEqNeigz(DCVizPlotter):
         tscale = 10**logscale
 
         do_zoom = not self.argv
-        growth_end = 5.773
-        diss_start = 16.75
+        growth_start = 4.0
+        growth_end = 4.5
+        diss_start = 2.25
 
         F0s = self.get_family_member_data(data, "F0s")
         omegas = self.get_family_member_data(data, "omegas")
@@ -4711,9 +4712,9 @@ class NonEqNeigz(DCVizPlotter):
                 [self.dissfig_high, self.growthfig_high]]
 
         ylims = [0.35, 1.0]
-        xlims = [8, 19.75]
+        xlims = [5.1, 5.75]
 
-        zylims = [0.35, 0.1]
+        zylims = [0.35, 0.15]
 
         xzl = r"$10^%d\,\nu t$" % logscale
         args = ['k-']
@@ -4760,27 +4761,30 @@ class NonEqNeigz(DCVizPlotter):
                         self.dissfig_high.plot([x0, x1], [zylims[i], zylims[i]], *args, **kwargs)
 
                         self.dissfig_high.plot([x0, x0], [0, zylims[i]], *args, **kwargs)
-                        self.dissfig_high.plot([x1*0.995, x1*0.995], [0, zylims[i]], *args, **kwargs)
+                        self.dissfig_high.plot([x1, x1], [0, zylims[i]], *args, **kwargs)
 
 
                     #low pressure growth
                     elif i == 0 and j == 1:
+                        ks = np.where(neqtime > growth_start)[0][0]
                         k = np.where(neqtime < growth_end)[0][-1]
-                        self.zoom_growth.plot(neqtime[:k], neqcov[:k], 'r-')
-                        self.zoom_growth.set_xlim(neqtime[0], neqtime[k])
+                        self.zoom_growth.plot(neqtime[ks:k], neqcov[ks:k], 'r-')
+                        self.zoom_growth.set_xlim(neqtime[ks], neqtime[k])
                         self.zoom_growth.set_ylim(0, zylims[i])
                         self.zoom_growth.yaxis.set_label_position("right")
                         self.zoom_growth.set_ylabel(r"$F_0/E_bA = %g$" % F0, labelpad=10)
                         self.zoom_growth.set_yticklabels([])
                         self.zoom_growth.set_title(r"$\mathrm{Zoom}$")
 
-
-                        x0 = neqtime[0]
+                        x0 = neqtime[ks-1]
                         x1 = neqtime[k-1]
 
                         self.growthfig_low.plot([x0, x1], [0.001, 0.001], *args, **kwargs)
-                        self.growthfig_low.plot([x0, x1], [zylims[i]*0.99, zylims[i]*0.99], *args, **kwargs)
+                        self.growthfig_low.plot([x0, x1], [zylims[i]*0.985, zylims[i]*0.985], *args, **kwargs)
+
+                        self.growthfig_low.plot([x0, x0], [0, zylims[i]], *args, **kwargs)
                         self.growthfig_low.plot([x1, x1], [0, zylims[i]], *args, **kwargs)
+
 
                 fig.plot(eqtime, eqcov, "k-")
                 fig.plot(neqtime, neqcov, "r-")
