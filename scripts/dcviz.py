@@ -5184,11 +5184,30 @@ class FelixSeqC(DCVizPlotter):
                       "subfigurev"],
               "logfig": ["lsubfigure",
                       "lsubfigurev"],
-              "xvfig": "subfigurexv",
-              "cfig": "subfigureC"}
+              "xvfig": ["subfigureC",
+                        "subfigurexv"]}
 
     specific_fig_size = {"fig": [6, 10],
-                         "logfig": [6, 10]}
+                         "xvfig": [6, 10],
+                         "logfig": [6, 6]}
+
+
+    def adjust(self):
+
+        for fig in self.figure_names:
+
+            if fig == "logfig":
+                self.adjust_maps[fig]['top'] = 0.95
+                self.adjust_maps[fig]['bottom'] = 0.16
+                self.adjust_maps[fig]['left'] = 0.22
+                self.adjust_maps[fig]['right'] = 0.96
+                self.adjust_maps[fig]['hspace'] = 0.3
+            else:
+                self.adjust_maps[fig]['top'] = 0.97
+                self.adjust_maps[fig]['bottom'] = 0.1
+                self.adjust_maps[fig]['left'] = 0.2
+                self.adjust_maps[fig]['right'] = 0.95
+                self.adjust_maps[fig]['hspace'] = 0.3
 
     @staticmethod
     def get_vs(t, ys):
@@ -5256,18 +5275,30 @@ class FelixSeqC(DCVizPlotter):
         self.lsubfigurev.set_ylabel(r'$|v_yt_\mathrm{end}/L_y|$')
         self.lsubfigurev.set_xbound(t.min())
 
+        shift = 0.01
         self.subfigurexv.plot(ys/ys_eq, vs, "r--", **my_props['fmt'])
         self.subfigurexv.plot(ys/ys_eq, vs, "ks", **my_props['fmt'])
         self.subfigurexv.set_xlabel(r'$y_s/\langle y_s\rangle$')
         self.subfigurexv.set_ylabel(r'$v_yt_\mathrm{end}/L_y$')
-        self.subfigurexv.set_xlim(self.subfigurexv.get_xlim()[0], 1)
+        self.subfigurexv.set_xlim(min(ys/ys_eq)-shift, 1)
         self.subfigurexv.set_ybound(0)
 
         self.subfigureC.plot(np.arange(len(C))/float(len(C)-1), C*100, "r--", **my_props['fmt'])
         self.subfigureC.plot(np.arange(len(C))/float(len(C)-1), C*100, "ks", **my_props['fmt'])
         self.subfigureC.set_xlabel(r'$y/L_y$')
-        self.subfigureC.set_ylabel(r'$10^2\langle C(y/L_y)\rangle$')
-        self.subfigureC.set_xlim(0, 1)
+        self.subfigureC.set_ylabel(r'$10^2\langle c(y/L_y)\rangle$')
+        self.subfigureC.set_xlim(-shift, 1)
+
+        # mxv = self.subfigurexv.get_ylim()[1]
+        # self.subfigurexv.plot([ys_eq, ys_eq], [0, mxv], "k:")
+        # self.subfigurexv.set_ylim([0, mxv])
+        #
+        # cmin, cmax = self.subfigureC.get_ylim()
+        # self.subfigureC.plot([ys_eq, ys_eq], [cmin, cmax], "k:")
+        # self.subfigureC.set_ylim([cmin, cmax])
+
+
+
 
 class ss_front(DCVizPlotter):
     nametag = "ss_edges\.npy"
