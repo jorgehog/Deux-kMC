@@ -161,47 +161,47 @@ double RDLExtraNeighborSurface::getHeightBisection()
         }
 
 
-        const double contactForcederp = totalForce(contactHeight+0.01);
+        //        const double contactForcederp = totalForce(contactHeight+0.01);
 
-        if (contactForcederp < 0)
-        {
-            return rdlEquilibrium;
-        }
+        //        if (contactForcederp < 0)
+        //        {
+        //            return rdlEquilibrium;
+        //        }
 
-        bool bisectForMin = true;
-        if (m_prevMinSet)
-        {
-            const double prevForce = totalForce(m_prevMin);
-            if (prevForce < 0)
-            {
-                hNegative = m_prevMin;
-                bisectForMin = false;
-                minForce = prevForce;
-            }
-        }
+        //        bool bisectForMin = true;
+        //        if (m_prevMinSet)
+        //        {
+        //            const double prevForce = totalForce(m_prevMin);
+        //            if (prevForce < 0)
+        //            {
+        //                hNegative = m_prevMin;
+        //                bisectForMin = false;
+        //                minForce = prevForce;
+        //            }
+        //        }
 
-        if (bisectForMin)
-        {
-            hNegative = bisectMinima(contactHeight+0.01,
-                                     contactHeight + 2,
-                                     totalForceDeriv(contactHeight+0.01),
-                                     1E-3);
+        //        if (bisectForMin)
+        //        {
+        //            hNegative = bisectMinima(contactHeight+0.01,
+        //                                     contactHeight + 2,
+        //                                     totalForceDeriv(contactHeight+0.01),
+        //                                     1E-3);
 
-            m_prevMinSet = true;
-            m_prevMin = hNegative;
-            minForce = totalForce(hNegative);
+        //            m_prevMinSet = true;
+        //            m_prevMin = hNegative;
+        //            minForce = totalForce(hNegative);
 
-            //no equilibriums (roots)
-            if (minForce > 0)
-            {
-                return contactHeight;
-            }
-        }
+        //            //no equilibriums (roots)
+        //            if (minForce > 0)
+        //            {
+        //                return contactHeight;
+        //            }
+        //        }
 
-        const double unstable = bisect(contactHeight + 0.01, hNegative, contactForcederp);
+        //        const double unstable = bisect(contactHeight + 0.01, hNegative, contactForcederp);
 
         double repcurrent = 0;
-        double rep_barrier = 0;
+        double rep_eq = 0;
         double n_bonds = 0;
 
         for (uint x = 0; x < solver().length(); ++x)
@@ -217,22 +217,28 @@ double RDLExtraNeighborSurface::getHeightBisection()
                 else
                 {
                     repcurrent -= m_rdlPotential.potential(x, y);
-                    rep_barrier -= m_rdlPotential.rdlEnergy(unstable - hi);
+                    rep_eq -= m_rdlPotential.rdlEnergy(rdlEquilibrium - hi);
                 }
             }
         }
 
         const double xi = 1 - exp(-1/m_rdlPotential.lD());
         repcurrent /= xi;
-        rep_barrier /= xi;
+        rep_eq /= xi;
 
         const double F0 = m_Pl/(xi*m_rdlPotential.lD())*solver().area();
+//        rep_eq = m_rdlPotential.lD()*F0;
 
-//        cout << m_extraNeighborPotential.energyFunction(unstable - solver().heights().max()) << " "
-//             << repcurrent << " " << rep_barrier << " " << F0*(unstable-contactHeight) << endl;
-//        cout << repcurrent - n_bonds  << " " << F0*(unstable-contactHeight) + rep_barrier - n_bonds*m_extraNeighborPotential.energyFunction(unstable - solver().heights().max()) << endl;
+        //cout << repcurrent << " " << rep_eq << " " << F0*(rdlEquilibrium-contactHeight) << " " << n_bonds << endl;
+        const double dG = (rdlEquilibrium-contactHeight)*F0 + n_bonds + rep_eq - repcurrent;
+        const double wG = exp(-solver().alpha()*dG/solver().area());
+        const double pG = wG/(1 + wG)/solver().area();
+        //cout << setprecision(16) << fixed << pG << " " << dG << endl;
+        //sleep(1.0);
 
-        if (repcurrent - n_bonds > 0.5*(F0*(unstable-contactHeight) + rep_barrier - n_bonds*m_extraNeighborPotential.energyFunction(unstable - solver().heights().max())))
+        bool shouldBreak = rng.uniform() < pG;
+
+        if (shouldBreak)
         {
             shouldRepel = true;
         }
