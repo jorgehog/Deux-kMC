@@ -5305,92 +5305,102 @@ class FelixSeqC(DCVizPlotter):
 
 
 class ss_front(DCVizPlotter):
-    nametag = "ss_edges\.npy"
+    nametag = "ss_(.*)\.npy"
     hugifyFonts = True
     labelSize = 35
     ticklabelSize = 25
 
+    isFamilyMember = True
+
+    figMap = {'fig': 'subfigure',
+              'allfig': 'subfigure_all',
+              "xfig": "subfigure_x",
+              "vfig": "subfigure_v"}
+
+    specific_fig_size = {'fig' : [7, 6],
+                         'xfig': [7, 6],
+                         'vfig': [7, 6],
+                         'allfig': [13, 6]}
+
+    def adjust(self):
+
+        l = 0.165
+        r = 0.98
+        for f in self.figure_names:
+            self.adjust_maps[f]['bottom'] = 0.16
+            self.adjust_maps[f]['top'] = 0.96
+
+            if f == "allfig":
+                self.adjust_maps[f]['left'] = 0.09
+                self.adjust_maps[f]['right'] = 0.99
+            elif f == "xfig":
+                self.adjust_maps[f]['left'] = l + l/2
+                self.adjust_maps[f]['right'] = r
+            else:    
+                self.adjust_maps[f]['left'] = l
+                self.adjust_maps[f]['right'] = r - l/2
+            
+
+
     def plot(self, data):
 
-        try:
-            #103.5 0 16.5
-            x = float(self.argv[0])
-            y = float(self.argv[1])
-            r = float(self.argv[2])
+        t = self.get_family_member_data(data, "felix_t")
+        x = self.get_family_member_data(data, "felix_x")
+        tslice = self.get_family_member_data(data, "felix_tslice")
+        xslice = self.get_family_member_data(data, "felix_fit")
+        v = self.get_family_member_data(data, "felix_v")
+        vslice = self.get_family_member_data(data, "felix_vfit")
 
-            theta = np.linspace(0, 2*np.pi, 1000)
-            xs = x + r*np.cos(theta)
-            ys = y + r*np.sin(theta)
-            self.subfigure.plot(xs, ys, "r-")
-        except:
-            pass
+        ss_edges = self.get_family_member_data(data, "edges")
+        all_edges = self.get_family_member_data(data, "all_edges")
 
-        L, W = data.shape
+        W, L = all_edges.shape
 
-        ys = []
-        xs = []
-        end = 0
-        endc = 0
-        for y in range(W):
-            m = 0
-            c = 0
-            for x in range(L):
-                if data[x, y] != 0:
-                    m += data[x, y]*x
-                    c += data[x, y]
-            if c == 0:
-                break
+        self.subfigure_all.pcolor(all_edges, cmap='gist_earth_r')
+        self.subfigure_all.set_xlabel(r"$x/L_x$")
+        self.subfigure_all.set_ylabel(r"$y/L_y$")
+        
+        self.subfigure.pcolor(ss_edges, cmap='gist_earth_r', vmin=all_edges.min(), vmax=all_edges.max())
+        self.subfigure.set_xlabel(r"$(x - n\Delta T v_s)/L_x$")
+        self.subfigure.set_ylabel(r"$y/L_y$")
 
-            ys.append(m/c)
-            xs.append(y)
+        for subfigure in [self.subfigure, self.subfigure_all]:
+            subfigure.xaxis.set_major_formatter(FuncFormatter(lambda f, _: r'$%g$' % (f/float(L))))
+            subfigure.yaxis.set_major_formatter(FuncFormatter(lambda f, _: r'$%g$' % (f/float(W))))
 
-            if data[0, y] != 0:
-                end += data[0, y]*y
-                endc += data[0, y]
-        #
-        # ys.append(0)
-        # xs.append(end/endc)
-        # print xs[-2:], ys[-2:]
+        Ry = 0.6*W
+        Rx = 0.6*L     
+        
+        theta = np.linspace(0, np.pi/2, 1000)
+        xc = Rx*np.cos(theta)
+        yc = Ry*np.sin(theta)
 
-        self.subfigure.pcolor(data, cmap='gist_earth_r')
-
-        # self.subfigure.plot(xs, ys, "k--", linewidth=3)
-
-        self.subfigure.set_xlabel(r"$(x_s - \Delta T_s v_s)/L_x$")
-        self.subfigure.set_ylabel(r"$y_s/L_y$")
-        self.subfigure.xaxis.set_major_formatter(FuncFormatter(lambda v, _: r'$%g$' % (v/float(W))))
-        self.subfigure.yaxis.set_major_formatter(FuncFormatter(lambda v, _: r'$%g$' % (v/float(L))))
+        #self.subfigure.plot(xc, yc, "k--", linewidth=2)
+        
+        xv = np.linspace(0, Rx, 1000)
+        
+        def G(x, x1, y1):
+            return y1*np.log((x1 + 1) - x)/np.log(x1 + 1)
+        self.subfigure.plot(xv, G(xv, Rx, Ry), 'k--', linewidth=4, label=r"$\sim \log (x + 1) \,\,\mathrm{mirror}$")
 
         self.subfigure.set_xlim(0, 125)
         self.subfigure.set_ylim(0, 35)
 
+        #-- xvfigs
 
-class ss_felix(DCVizPlotter):
-    nametag = "ss_felix_(.*)\.npy"
-    isFamilyMember = True
-    hugifyFonts = True
-
-    figMap = {"fig": ["subfigure_x", "subfigure_v"]}
-
-    fig_size = [6, 10]
-    labelSize = 35
-    ticklabelSize = 25
-
-    def plot(self, data):
-
-        L = 200
-
-        t = self.get_family_member_data(data, "t")
-        x = self.get_family_member_data(data, "x")
-        tslice = self.get_family_member_data(data, "tslice")
-        xslice = self.get_family_member_data(data, "fit")
-        v = self.get_family_member_data(data, "v")
-        vslice = self.get_family_member_data(data, "vfit")
-
+        rs = 0.02
+        rsd = 0.05
         self.subfigure_x.plot(t, x/float(L), '--ks')
-        self.subfigure_x.plot(tslice, xslice/L, "r-", linewidth=2)
+        self.subfigure_x.plot(tslice-rs, xslice/L+rs, "r-", linewidth=2)
+        self.subfigure_x.set_xlabel(r'$t/t_\mathrm{end}$')
         self.subfigure_x.set_ylabel(r'$x_s/L_x$')
-        self.subfigure_x.set_xticklabels([])
+        self.subfigure_x.text(tslice.mean()-rsd, xslice.mean()/L+rsd,
+                              r"$\sim v_s t$",
+                              verticalalignment='center',
+                              horizontalalignment='center',
+                              fontsize=30,
+                              rotation=37.5)
+
 
         self.subfigure_v.plot(t, v/L, '--ks')
         self.subfigure_v.plot(tslice, vslice/L, 'r-', linewidth=2)
@@ -5402,5 +5412,9 @@ class ss_felix(DCVizPlotter):
                               horizontalalignment='left',
                               fontsize=30)
 
-        self.subfigure_x.set_ylim(0, 1)
+        for subfigure in [self.subfigure_v, self.subfigure_x]:
+            subfigure.xaxis.set_major_formatter(FuncFormatter(lambda f, _: r'$%g$' % f))
+            subfigure.yaxis.set_major_formatter(FuncFormatter(lambda f, _: r'$%g$' % f))
+
+        self.subfigure_x.set_ylim(0, 1.05)
 
