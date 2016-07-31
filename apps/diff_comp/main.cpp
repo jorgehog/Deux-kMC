@@ -23,7 +23,8 @@ int main(int argv, char** argc)
 
     const double &flux = getSetting<double>(cfgRoot, "flux");
 
-    const bool reflecting = getSetting<uint>(cfgRoot, "reflecting") == 1;
+    const uint &reflectingInt = getSetting<uint>(cfgRoot, "reflecting");
+    const bool reflecting = reflectingInt == 1;
 
     const uint &nCycles = getSetting<uint>(cfgRoot, "nCycles");
     const uint &interval = getSetting<uint>(cfgRoot, "interval");
@@ -103,7 +104,7 @@ int main(int argv, char** argc)
 
     simRoot["alpha"] = alpha;
     simRoot["flux"] = flux;
-    simRoot["reflecting"] = reflecting;
+    simRoot["reflecting"] = reflectingInt;
     simRoot["height"] = height;
     simRoot["time"] = colvec(lattice.storedEventValues().col(0));
 
