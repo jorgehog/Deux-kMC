@@ -7,7 +7,8 @@ SUBDIRS += spiralgrowth \
     extraneighbor \
     cconv2 \
     felixexp \
-    felixexp_cavity
+    felixexp_cavity \
+    diff_comp
     #cconv \
 #    cconvergence \
 #    cconvergence2 \
