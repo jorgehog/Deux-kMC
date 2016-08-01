@@ -15,7 +15,12 @@ my_props = {
 
 }
 def g_format_func(v, _):
-    return r"$%g$" % v
+    if v == 0:
+        return r"$0$"
+    elif int(v) == v:
+        return r"$%.1f$" % v
+    else:
+        return r"$%g$" % v
 
 GFORMATTER = FuncFormatter(g_format_func)
 
@@ -30,13 +35,15 @@ class FelixParticleHDynCav(DCVizPlotter):
                          "subfigure_xb",
                          "subfigure_y"],
               "allfigure": "planefigure",
-              "c_refl_figure": ['c00', 'c01', 'c02'],
-              "c_open_figure": ['c10', 'c11', 'c12'],
+              "c_open_figure": ['c00', 'c01', 'c02'],
+              "c_refl_figure": ['c10', 'c11', 'c12'],
               "h_refl_figure": 'h_refl',
               "h_open_figure": 'h_open'}
 
+    plotOnly = ["c_open_figure", "c_refl_figure", "h_refl_figure", "h_open_figure"]
+
     col_fig_size = [5, 7]
-    col_fig_size2 = [6, 5]
+    col_fig_size2 = [5, 4]
 
     specific_fig_size = {
          "c_refl_figure": col_fig_size,
@@ -54,22 +61,22 @@ class FelixParticleHDynCav(DCVizPlotter):
             self.adjust_maps[figure]["top"] = 0.94
             self.adjust_maps[figure]["hspace"] = 0.13
 
-        self.adjust_maps["c_open_figure"]["right"] = 0.87
-        self.adjust_maps["c_open_figure"]["left"] = 0.14
+        self.adjust_maps["c_refl_figure"]["right"] = 1-0.24
+        self.adjust_maps["c_refl_figure"]["left"] = 1-0.97
 
-        self.adjust_maps["c_refl_figure"]["right"] = 0.93
-        self.adjust_maps["c_refl_figure"]["left"] = 0.20
+        self.adjust_maps["c_open_figure"]["right"] = 0.97
+        self.adjust_maps["c_open_figure"]["left"] = 0.24
 
 
         for figure in ["h_refl_figure", "h_open_figure"]:
-            self.adjust_maps[figure]["bottom"] = 0.15
-            self.adjust_maps[figure]["top"] = 0.92
+            self.adjust_maps[figure]["bottom"] = 0.19
+            self.adjust_maps[figure]["top"] = 0.9
 
-        self.adjust_maps["h_open_figure"]["left"] = 0.16
-        self.adjust_maps["h_open_figure"]["right"] = 0.96
+        self.adjust_maps["h_open_figure"]["left"] = 0.19
+        self.adjust_maps["h_open_figure"]["right"] = 0.95
 
-        self.adjust_maps["h_refl_figure"]["right"] = 1-0.16
-        self.adjust_maps["h_refl_figure"]["left"] = 1-0.96
+        self.adjust_maps["h_refl_figure"]["right"] = 1-0.19
+        self.adjust_maps["h_refl_figure"]["left"] = 1-0.95
 
 
     def plot(self, data):
@@ -111,7 +118,6 @@ class FelixParticleHDynCav(DCVizPlotter):
             hfigs = [self.h_open, self.h_refl]
 
             self.h_open.set_ylabel("$h(x/L_x)$")
-            self.h_open.yaxis.set_major_formatter(GFORMATTER)
 
             ymaxes = [0,0,0]
             for ir in range(2):
@@ -163,20 +169,20 @@ class FelixParticleHDynCav(DCVizPlotter):
                     else:
                         cfig.set_ylabel("$c(x/L_x)\,\,[\%]$")
 
-                    l = hfigs[ir].axes.legend(loc="center",
-                               numpoints=1,
-                               ncol=1,
-                               handlelength=1.0,
-                               borderpad=0.2,
-                               labelspacing=0.2,
-                               columnspacing=0.3,
-                               handletextpad=0.25,
-                               borderaxespad=0.0,
-                               frameon=False,
-                               fontsize=25,
-                               bbox_to_anchor=(0.8, 0.8))
+            l = self.h_refl.axes.legend(loc="center",
+                       numpoints=1,
+                       ncol=1,
+                       handlelength=1.0,
+                       borderpad=0.2,
+                       labelspacing=0.2,
+                       columnspacing=0.3,
+                       handletextpad=0.25,
+                       borderaxespad=0.0,
+                       frameon=False,
+                       fontsize=25,
+                       bbox_to_anchor=(0.7, 0.7))
 
-                    l.get_frame().set_fill(not (self.toFile and self.transparent))
+            l.get_frame().set_fill(not (self.toFile and self.transparent))
 
             self.h_refl.set_yticklabels([])
 
