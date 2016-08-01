@@ -14,12 +14,16 @@ def main():
 
     parser = ParseKMCHDF5(input_file)
 
-    nbins = 20
+    nbins = 10
+    L = 30
+    W = 60
 
-    H = 0
-    W = 0
+    conf_heights = [5, 10, 20]
+    H = np.zeros(shape=(2, 3, nbins, nbins))
+    Ws = np.zeros(shape=(2, 3))
+    cH = np.zeros(shape=(2, 3, L, W))
 
-    therm = 0.5
+    therm = 0.75
 
     for data, L, W, run_id in parser:
 
@@ -31,14 +35,15 @@ def main():
         time = data["time"]
 
         conf_height = data.attrs["height"]
+        refl = data.attrs["reflecting"]
 
-        if conf_height != 5:
-            continue
+        ih = conf_heights.index(conf_height)
 
         t_prev = 0
         T = time[-1]
         t0 = None
         hmat = np.zeros(shape=(nbins, nbins))
+        heightmat = np.zeros(shape=(L, W))
 
 
         for hi, heights_id in enumerate(sorted(stored_heights, key=lambda x: int(x))):
@@ -58,24 +63,36 @@ def main():
 
             heights = stored_heights[heights_id][()].transpose()
 
+            heightmat += heights*dt
+
             if particles is not None:
                 for x, y, _ in particles:
                     xl = round(x)
                     yl = round(y)
                     dh = conf_height - heights[xl, yl] - 1
 
-                    hmat[int((x+0.5)/dx), int((y+0.5)/dy)] += dt/dh
+                    hmat[int((x+0.5)/dx), int((y+0.5)/dy)] += dt/(dh*dx*dy)
+
+            if hi % 100 == 0:
+                sys.stdout.flush()
+                print "\r%d/%d" % (hi, len(stored_heights)),
 
         del stored_heights
 
-        H += hmat/(T - t0)
-        W += 1
+        H[refl, ih] += hmat/(T - t0)
+        cH[refl, ih] += heightmat/(T - t0)
+        Ws[refl, ih] += 1
 
         print "fin", run_id
 
-    H /= W
+    for refl in [0, 1]:
+        for ih in range(len(conf_heights)):
+            H[refl, ih, :, :] /= Ws[refl, ih]
+            cH[refl, ih, :, :] /= Ws[refl, ih]
 
-    np.save("/tmp/diff_comp_h.npy", H)
+    np.save("/tmp/diff_comp_C.npy", H)
+    np.save("/tmp/diff_comp_H.npy", cH)
+    np.save("/tmp/diff_comp_heights.npy", conf_heights)
 
     print "fin"
 

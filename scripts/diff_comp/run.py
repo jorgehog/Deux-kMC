@@ -1,6 +1,5 @@
 import sys
 import os
-import numpy as np
 
 sys.path.append(os.path.join(os.getcwd(), ".."))
 
@@ -11,7 +10,7 @@ def main():
 
     controller, path, app, cfg, n_procs = parse_input(sys.argv)
 
-    refl = ParameterSet(cfg, "reflcting\s*=\s*(.*)\;")
+    refl = ParameterSet(cfg, "reflecting\s*=\s*(.*)\;")
     refl.initialize_set([0, 1])
 
     heights = ParameterSet(cfg, "height\s*=\s*(.*)\;")
