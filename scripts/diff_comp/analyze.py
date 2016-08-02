@@ -8,6 +8,36 @@ sys.path.append(join(os.getcwd(), ".."))
 
 from parse_h5_output import ParseKMCHDF5
 
+
+def store_xyz(heights, conf_height, n_file, dir, particles=None):
+    xyz = ""
+    n = 0
+
+    if particles is not None:
+        for x, y, z in particles:
+            xyz += "2 %.3f %.3f %.3f\n" % (x, y, z)
+            n += 1
+
+    L, W = heights.shape
+    bottom = heights.min()
+
+    for x in range(L):
+        for y in range(W):
+            h = heights[x, y]
+
+            for z in range(bottom, h+1):
+                xyz += "0 %d %d %d\n" % (x, y, z)
+                n += 1
+
+            xyz += "1 %d %d %g\n" % (x, y, conf_height)
+
+            n += 1
+
+    xyz_file = "%d\n---\n%s" % (n, xyz)
+
+    with open("%s/surfaces%d.xyz" % (dir, n_file), 'w') as f:
+        f.write(xyz_file)
+
 def main():
 
     input_file = sys.argv[1]
@@ -23,7 +53,7 @@ def main():
     Ws = np.zeros(shape=(2, 3))
     cH = np.zeros(shape=(2, 3, L, W))
 
-    therm = 0.75
+    therm = 0.1
 
     for data, L, W, run_id in parser:
 
@@ -45,33 +75,44 @@ def main():
         hmat = np.zeros(shape=(nbins, nbins))
         heightmat = np.zeros(shape=(L, W))
 
-
+        Wdt = 0
         for hi, heights_id in enumerate(sorted(stored_heights, key=lambda x: int(x))):
 
             t_new = time[hi]
 
-            if (hi > therm*len(stored_heights)) and (t0 is None):
-                t0 = t_new
-
-            dt = t_new - t_prev
-            t_prev = t_new
+            heights = stored_heights[heights_id][()].transpose()
 
             if heights_id in stored_particles:
                 particles = stored_particles[heights_id][()]
             else:
                 particles = None
 
-            heights = stored_heights[heights_id][()].transpose()
+            #store_xyz(heights, conf_height, hi, "/tmp", particles)
+
+            if hi >= therm*len(stored_heights):
+                if t0 is None:
+                    t0 = t_new
+            else:
+                t_prev = t_new
+                continue
+
+            dt = t_new - t_prev
+            t_prev = t_new
 
             heightmat += heights*dt
 
             if particles is not None:
-                for x, y, _ in particles:
+                for x, y, z in particles:
                     xl = round(x)
                     yl = round(y)
                     dh = conf_height - heights[xl, yl] - 1
+                    # if dh < 0:
+                    #     continue
+                    # if z - heights[xl, yl] < 1:
+                    #     continue
 
                     hmat[int((x+0.5)/dx), int((y+0.5)/dy)] += dt/(dh*dx*dy)
+            Wdt += dt
 
             if hi % 100 == 0:
                 sys.stdout.flush()
@@ -79,11 +120,13 @@ def main():
 
         del stored_heights
 
-        H[refl, ih] += hmat/(T - t0)
-        cH[refl, ih] += heightmat/(T - t0)
+        print (T - t0), Wdt
+        H[refl, ih] += hmat/Wdt
+        cH[refl, ih] += heightmat/Wdt
         Ws[refl, ih] += 1
 
-        print "fin", run_id
+        print "fin", refl, conf_height
+        #raw_input()
 
     for refl in [0, 1]:
         for ih in range(len(conf_heights)):

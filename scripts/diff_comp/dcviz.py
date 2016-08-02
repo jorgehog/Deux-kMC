@@ -3,6 +3,7 @@
 from DCViz_sup import DCVizPlotter
 
 from matplotlib.ticker import FuncFormatter
+import numpy as np
 
 my_props = {
 
@@ -31,16 +32,14 @@ class FelixParticleHDynCav(DCVizPlotter):
 
     hugifyFonts = True
 
-    figMap = {"figure": ["subfigure_x",
-                         "subfigure_xb",
-                         "subfigure_y"],
-              "allfigure": "planefigure",
-              "c_open_figure": ['c00', 'c01', 'c02'],
+    figMap = {"c_open_figure": ['c00', 'c01', 'c02'],
               "c_refl_figure": ['c10', 'c11', 'c12'],
               "h_refl_figure": 'h_refl',
-              "h_open_figure": 'h_open'}
+              "h_open_figure": 'h_open',
+              "Ca_refl_figure": 'C_refl',
+              "Ca_open_figure": 'C_open'}
 
-    plotOnly = ["c_open_figure", "c_refl_figure", "h_refl_figure", "h_open_figure"]
+    #plotOnly = ["c_open_figure", "c_refl_figure", "h_refl_figure", "h_open_figure"]
 
     col_fig_size = [5, 7]
     col_fig_size2 = [5, 4]
@@ -49,11 +48,14 @@ class FelixParticleHDynCav(DCVizPlotter):
          "c_refl_figure": col_fig_size,
          "c_open_figure": col_fig_size,
          "h_refl_figure": col_fig_size2,
-         "h_open_figure": col_fig_size2
+         "h_open_figure": col_fig_size2,
+         "Ca_refl_figure": col_fig_size2,
+         "Ca_open_figure": col_fig_size2
     }
 
     styles = ["-.", "-", "--"]
     colors = ["k", "b", "r"]
+    mstyles =["s", "^", "o"]
 
     def adjust(self):
         for figure in ["c_refl_figure", "c_open_figure"]:
@@ -67,17 +69,23 @@ class FelixParticleHDynCav(DCVizPlotter):
         self.adjust_maps["c_open_figure"]["right"] = 0.97
         self.adjust_maps["c_open_figure"]["left"] = 0.24
 
-
         for figure in ["h_refl_figure", "h_open_figure"]:
             self.adjust_maps[figure]["bottom"] = 0.19
+            self.adjust_maps[figure]["top"] = 0.96
+
+        for figure in ["Ca_refl_figure", "Ca_open_figure"]:
+            self.adjust_maps[figure]["bottom"] = 0.13
             self.adjust_maps[figure]["top"] = 0.9
 
         self.adjust_maps["h_open_figure"]["left"] = 0.19
         self.adjust_maps["h_open_figure"]["right"] = 0.95
+        self.adjust_maps["Ca_open_figure"]["left"] = 0.19
+        self.adjust_maps["Ca_open_figure"]["right"] = 0.95
 
         self.adjust_maps["h_refl_figure"]["right"] = 1-0.19
         self.adjust_maps["h_refl_figure"]["left"] = 1-0.95
-
+        self.adjust_maps["Ca_refl_figure"]["right"] = 1-0.19
+        self.adjust_maps["Ca_refl_figure"]["left"] = 1-0.95
 
     def plot(self, data):
 
@@ -85,108 +93,118 @@ class FelixParticleHDynCav(DCVizPlotter):
         H = self.get_family_member_data(data, "H")
         heights = self.get_family_member_data(data, "heights")
 
-        if self.argv:
-            ir = int(self.argv[0])
-            ih = int(self.argv[1])
+        _, _, n, _ = C.shape
+        _, _, W, L = H.shape
+        X = np.arange(n, dtype=float)/(n-1)
+        Xh = np.arange(L, dtype=float)/(L-1)
+        titles = [r"$\mathrm{Open}$", r"$\mathrm{Reflecting}$"]
 
-            h = C[ir, ih]
-            print heights[ih]
-            self.planefigure.pcolor(h)
-            self.planefigure.set_xlabel(r"$x/L_x$")
-            self.planefigure.set_ylabel(r"$y/L_y$")
+        hfigs = [self.h_open, self.h_refl]
+        cfigs = [self.C_open, self.C_refl]
 
-            self.subfigure_x.plot(h.mean(axis=0), "k-s")
-            self.subfigure_x.set_ylabel(r"$P(x/L_x)$")
-            self.subfigure_x.set_ybound(0)
+        self.h_open.set_ylabel("$h(x/L_x)$")
+        self.C_open.set_ylabel("$10^4c(x/L_x)$")
 
-            self.subfigure_xb.plot(h.mean(axis=0), "k-s")
-            self.subfigure_xb.set_ylabel(r"$P(x/L_x)$")
-            self.subfigure_xb.set_xlabel(r"$x/L_x$")
+        ymaxes = [0,0,0]
+        for ir in range(2):
+            #hfigs[ir].set_title(titles[ir])
+            hfigs[ir].set_xlabel("$x/L_x$")
+            hfigs[ir].set_ylim(-2, 4)
+            hfigs[ir].xaxis.set_major_formatter(GFORMATTER)
 
-            self.subfigure_y.plot(h.mean(axis=1), "k-s")
-            self.subfigure_y.set_ylabel(r"$P(y/L_y)$")
-            self.subfigure_y.set_xlabel(r"$y/L_y$")
-            self.subfigure_y.set_ybound(0)
-
-        else:
-            _, _, n, _ = C.shape
-            _, _, W, L = H.shape
-            X = np.arange(n, dtype=float)/(n-1)
-            Xh = np.arange(L, dtype=float)/(L-1)
-            titles = [r"$\mathrm{Open}$", r"$\mathrm{Reflecting}$"]
-
-            hfigs = [self.h_open, self.h_refl]
-
-            self.h_open.set_ylabel("$h(x/L_x)$")
-
-            ymaxes = [0,0,0]
-            for ir in range(2):
-                hfigs[ir].set_title(titles[ir])
-                hfigs[ir].set_xlabel("$x/L_x$")
-                hfigs[ir].set_ylim(-5, 15)
-                hfigs[ir].xaxis.set_major_formatter(GFORMATTER)
-
-                for ih in range(len(heights)):
-                    hlabel = r"$\Delta h=%d$" % heights[2-ih]
-
-                    hfigs[ir].plot(Xh, H[ir, 2-ih].mean(axis=0),
-                                   self.colors[ih] + self.styles[ih],
-                                   label=hlabel,
-                                   linewidth=2)
-
-                    Y = C[ir, 2-ih].mean(axis=0)*100
-
-                    ym = Y.max()
-                    if ym > ymaxes[ih]:
-                        ymaxes[ih] = ym
-
-                    cfig = eval("self.c%d%d" % (ir, ih))
-
-                    cfig.plot(X, Y, "r--", linewidth=2)
-                    cfig.plot(X, Y, "ks", **my_props["fmt"])
-
-                    cfig.set_xlim(-0.02, 1.02)
+            cfigs[ir].set_title(titles[ir])
+            #cfigs[ir].set_xlabel("$x/L_x$")
+            cfigs[ir].xaxis.set_major_formatter(GFORMATTER)
 
 
-                    if ih == 0:
-                        cfig.set_title(titles[ir])
+            for ih in range(len(heights)):
+                hlabel = r"$\Delta h=%d$" % heights[2-ih]
 
-                    if ih != 2:
-                        cfig.set_xticklabels([])
-                    else:
-                        cfig.set_xlabel("$x/L_x$")
+                hfigs[ir].plot(Xh, H[ir, 2-ih].mean(axis=0),
+                               self.colors[ih] + self.styles[ih],
+                               label=hlabel,
+                               linewidth=2)
 
-                        cfig.xaxis.set_major_formatter(GFORMATTER)
-                    cfig.yaxis.set_major_formatter(GFORMATTER)
+                Y = C[ir, 2-ih].mean(axis=0)*10**4
+
+                cfigs[ir].plot(X, Y, self.colors[ih]+self.mstyles[ih]+"--", label=hlabel, **my_props["fmt"])
+
+                ym = Y.max()
+                if ym > ymaxes[ih]:
+                    ymaxes[ih] = ym
+
+                cfig = eval("self.c%d%d" % (ir, ih))
+
+                cfig.plot(X, Y, "r--", linewidth=2)
+                cfig.plot(X, Y, "ks", **my_props["fmt"])
+
+                cfig.set_xlim(-0.02, 1.02)
 
 
-                    if ir == 1:
-                        ax = cfig.axes.twinx()
-                        ax.set_ylabel(hlabel, labelpad=15)
-                        ax.yaxis.set_ticks([])
-                        ax.yaxis.set_ticklabels([])
-                        cfig.set_yticklabels([])
-                    else:
-                        cfig.set_ylabel("$c(x/L_x)\,\,[\%]$")
+                if ih == 0:
+                    cfig.set_title(titles[ir])
 
-            l = self.h_refl.axes.legend(loc="center",
-                       numpoints=1,
-                       ncol=1,
-                       handlelength=1.0,
-                       borderpad=0.2,
-                       labelspacing=0.2,
-                       columnspacing=0.3,
-                       handletextpad=0.25,
-                       borderaxespad=0.0,
-                       frameon=False,
-                       fontsize=25,
-                       bbox_to_anchor=(0.7, 0.7))
+                if ih != 2:
+                    cfig.set_xticklabels([])
+                else:
+                    cfig.set_xlabel("$x/L_x$")
 
-            l.get_frame().set_fill(not (self.toFile and self.transparent))
+                    cfig.xaxis.set_major_formatter(GFORMATTER)
+                cfig.yaxis.set_major_formatter(GFORMATTER)
 
-            self.h_refl.set_yticklabels([])
+                if ir == 1:
+                    ax = cfig.axes.twinx()
+                    ax.set_ylabel(hlabel, labelpad=15)
+                    ax.yaxis.set_ticks([])
+                    ax.yaxis.set_ticklabels([])
+                    cfig.set_yticklabels([])
+                else:
+                    cfig.set_ylabel("$10^4c(x/L_x)$")
 
-            for ir in range(2):
-                for ih in range(3):
-                    cfig = eval("self.c%d%d" % (ir, ih))
-                    cfig.set_ylim(0, ymaxes[ih]*1.1)
+        l = self.h_refl.axes.legend(loc="center",
+                   numpoints=1,
+                   ncol=1,
+                   handlelength=1.5,
+                   borderpad=0.2,
+                   labelspacing=0.2,
+                   columnspacing=0.3,
+                   handletextpad=0.25,
+                   borderaxespad=0.0,
+                   frameon=False,
+                   fontsize=25,
+                   bbox_to_anchor=(0.7, 0.7))
+
+        l.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        self.h_refl.set_yticklabels([])
+
+
+        l = self.C_refl.axes.legend(loc="center",
+                   numpoints=1,
+                   ncol=1,
+                   handlelength=1.5,
+                   borderpad=0.2,
+                   labelspacing=0.2,
+                   columnspacing=0.3,
+                   handletextpad=0.25,
+                   borderaxespad=0.0,
+                   frameon=False,
+                   fontsize=25,
+                   bbox_to_anchor=(0.3, 0.25))
+
+        l.get_frame().set_fill(not (self.toFile and self.transparent))
+        #
+        # c0 = np.exp(-6)*100
+        # for cfig in cfigs:
+        #     cfig.plot([0, 1], [c0, c0], "k:")
+
+        cfigs[0].set_ylim(0, max(ymaxes)*1.1)
+        cfigs[1].set_ylim(0, max(ymaxes)*1.1)
+        cfigs[1].set_yticklabels([])
+        cfigs[0].set_xticklabels([])
+        cfigs[1].set_xticklabels([])
+
+        for ir in range(2):
+            for ih in range(3):
+                cfig = eval("self.c%d%d" % (ir, ih))
+                cfig.set_ylim(0, ymaxes[ih]*1.1)
