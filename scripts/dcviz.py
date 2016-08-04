@@ -2351,7 +2351,7 @@ class LatticediffSpeeds(DCVizPlotter):
         self.adjust_maps["f0"]["hspace"] = 0.15
         self.adjust_maps["f0"]["left"] = 0.185
 
-        self.adjust_maps["f2"]["top"] = 0.96
+        self.adjust_maps["f2"]["top"] = 0.9
         self.adjust_maps["f2"]["bottom"] = 0.13
         self.adjust_maps["f2"]["right"] = 0.95
         self.adjust_maps["f2"]["hspace"] = 0.16
@@ -2364,7 +2364,8 @@ class LatticediffSpeeds(DCVizPlotter):
 
 
     fig_size = [6, 6]
-    specific_fig_size = {"f0": [6, 9]}
+    specific_fig_size = {"f0": [6, 9],
+                         "f2": [6, 7]}
 
     ceq_override = None
 
@@ -2512,6 +2513,8 @@ class LatticediffSpeeds(DCVizPlotter):
 
             self.h0c = self.h0 - 2
 
+        nolabels = "-nolabels" in self.argv
+
         if "ls" in self.argv:
             idx = self.argv.index("ls")
             lsfac = float(self.argv[idx+1])
@@ -2523,6 +2526,16 @@ class LatticediffSpeeds(DCVizPlotter):
             tmax = float(self.argv[idx])
         else:
             tmax = None
+
+        if "title" in self.argv:
+            idx = self.argv.index("title") + 1
+            self.subfigure3.set_title(r"$\mathrm{%s}$" % self.argv[idx], y=1.1, fontsize=30)
+
+        if "spans" in self.argv:
+            idx = self.argv.index("spans") + 1
+            spans = eval(self.argv[idx]) #e.g. [[1,2],[3,4],[5,6],[7,8],[9,10]]
+        else:
+            spans = None
 
         all_supersaturations = all_conc/self.ceq() - 1
 
@@ -2644,41 +2657,49 @@ class LatticediffSpeeds(DCVizPlotter):
         self.errfigH.plot(mean_Ts[:len(mean_errh)], 1000*mean_errh/len(all_supersaturations), 'r-', label=r"$h(t)/l_0$")
         self.errfigH.plot(mean_Ts[:len(mean_errss)], 1000*mean_errss/len(all_supersaturations), color="0.75",
                           linestyle='-', label=r"$\Omega(t)$")
-        self.errfigH.set_xlabel(time_label)
-        self.errfigH.set_ylabel(r"$10^3\epsilon$")
+
         y0, y1 = self.errfigH.get_ylim()
         self.errfigH.set_ybound(y0-0.25*(y1 - y0))
 
-        leg = self.errfigH.legend(loc="center",
-                                  numpoints=1,
-                                  ncol=2,
-                                  handlelength=1.0,
-                                  markerscale=20.0,
-                                  borderpad=0.2,
-                                  labelspacing=0.2,
-                                  columnspacing=1.0,
-                                  handletextpad=0.5,
-                                  borderaxespad=0.0,
-                                  frameon=False,
-                                  fontsize=20,
-                                  bbox_to_anchor=(0.7, 0.10))
+        if not nolabels:
+            leg = self.errfigH.legend(loc="center",
+                                      numpoints=1,
+                                      ncol=2,
+                                      handlelength=1.0,
+                                      markerscale=20.0,
+                                      borderpad=0.2,
+                                      labelspacing=0.2,
+                                      columnspacing=1.0,
+                                      handletextpad=0.5,
+                                      borderaxespad=0.0,
+                                      frameon=False,
+                                      fontsize=20,
+                                      bbox_to_anchor=(0.7, 0.10))
 
-        leg.get_frame().set_fill(not (self.toFile and self.transparent))
-        for legobj in leg.legendHandles:
-            legobj.set_linewidth(4.0)
+            leg.get_frame().set_fill(not (self.toFile and self.transparent))
+            for legobj in leg.legendHandles:
+                legobj.set_linewidth(4.0)
 
         self.subfigure7.plot(all_ss, all_ceq, 'k^')
         self.subfigure7.set_xlabel(r"$\Omega(0)$")
-        self.subfigure7.set_ylabel(r"$\epsilon_\mathrm{eq} [\%]$")
+        if not nolabels:
+            self.subfigure7.set_ylabel(r"$\epsilon_\mathrm{eq} [\%]$")
+        else:
+            self.subfigure7.set_yticklabels([])
+
         self.subfigure4.legend()
 
         self.subfigure.set_xlim(0, t_min)
         #self.subfigure.set_ylim(self.subfigure.get_ylim()[0]*1.1, self.subfigure.get_ylim()[1]*1.1)
         #self.subfigure.set_xlabel(time_label)
-        self.subfigure.set_ylabel(r"$h(t)/l_0$")
+        if not nolabels:
+            self.subfigure.set_ylabel(r"$h(t)/l_0$")
+        else:
+            self.subfigure.set_yticklabels([])
+
         self.subfigure.xaxis.set_ticks([])
 
-        if self.legend:
+        if self.legend and not nolabels:
             lg = self.subfigure2.axes.legend(loc="upper center",
                                              numpoints=1,
                                              ncol=1,
@@ -2697,18 +2718,33 @@ class LatticediffSpeeds(DCVizPlotter):
 
         self.subfigure2.set_xlim(0, t_min)
         # self.subfigure2.set_xlabel(time_label)
-        self.subfigure2.set_ylabel(r"$\Omega(t)$")
+        if not nolabels:
+            self.subfigure2.set_ylabel(r"$\Omega(t)$")
+        else:
+            self.subfigure2.set_yticklabels([])
+
         self.subfigure2.xaxis.set_ticks([])
 
-        s1ylim = max([abs(x) for x in self.subfigure.get_ylim()])
-        self.subfigure.set_ylim([-s1ylim, s1ylim])
+        if spans is None:
+            s1ylim = max([abs(x) for x in self.subfigure.get_ylim()])
+            self.subfigure.set_ylim([-s1ylim, s1ylim])
 
-        lowSS = round(min(all_supersaturations[:, 0]), 1)
-        highSS = round(max(all_supersaturations[:, 0]), 1)
+            lowSS = round(min(all_supersaturations[:, 0]), 1)
+            highSS = round(max(all_supersaturations[:, 0]), 1)
+            lim2 = max(abs(lowSS), abs(highSS))
+            self.subfigure2.set_ylim(-lim2, lim2)
+        else:
+            self.subfigure.set_ylim(spans[2])
+            self.subfigure2.set_ylim(spans[3])
+            self.errfigH.set_ylim(spans[4])
 
-        lim2 = max(abs(lowSS), abs(highSS))
+        self.errfigH.yaxis.set_major_formatter(FuncFormatter(lambda v, _: "" if v < 0 else r"$%g$" % v))
 
-        self.subfigure2.set_ylim(-lim2, lim2)
+        self.errfigH.set_xlabel(time_label)
+        if not nolabels:
+            self.errfigH.set_ylabel(r"$10^3\epsilon$")
+        else:
+            self.errfigH.set_yticklabels([])
 
         if not self.plot_analytical:
             return
@@ -2722,21 +2758,25 @@ class LatticediffSpeeds(DCVizPlotter):
         self.subfigure3.xaxis.set_ticks([-1, -0.5, 0, 0.5, 1])
         self.subfigure3.set_xbound(-1)
         self.subfigure3.xaxis.set_ticklabels([])
-        self.subfigure3.set_ylabel(r"$10^2h(t\to\infty)/h_l$")
+        if not nolabels:
+            self.subfigure3.set_ylabel(r"$\mathrm{Eq.~(11)\,\,sides\,\,[\%]}$")
+        else:
+            self.subfigure3.set_yticklabels([])
 
-        lg = self.subfigure3.axes.legend(loc="center",
-                                             numpoints=1,
-                                             ncol=1,
-                                             handlelength=1.0,
-                                             borderpad=0.2,
-                                             labelspacing=0.2,
-                                             columnspacing=1.25,
-                                             handletextpad=0.25,
-                                             borderaxespad=0.0,
-                                             frameon=False,
-                                             fontsize=20,
-                                             bbox_to_anchor=(0.35, 0.75))
-        lg.get_frame().set_fill(not (self.toFile and self.transparent))
+        if not nolabels:
+            lg = self.subfigure3.axes.legend(loc="center",
+                                                 numpoints=1,
+                                                 ncol=1,
+                                                 handlelength=1.0,
+                                                 borderpad=0.2,
+                                                 labelspacing=0.2,
+                                                 columnspacing=1.25,
+                                                 handletextpad=0.25,
+                                                 borderaxespad=0.0,
+                                                 frameon=False,
+                                                 fontsize=20,
+                                                 bbox_to_anchor=(0.35, 0.75))
+            lg.get_frame().set_fill(not (self.toFile and self.transparent))
 
 
         m = sum(all_k)/len(all_k)
@@ -2744,8 +2784,17 @@ class LatticediffSpeeds(DCVizPlotter):
 
         self.subfigure6.plot(all_kss, kscaled, "ks", **my_props["fmt"])
         self.subfigure6.set_xlabel(r"$\Omega(0)$")
-        self.subfigure6.set_ylabel(r"$k/\langle k\rangle$")
-        self.subfigure6.set_ylim(0, max(kscaled)*1.1)
+        if not nolabels:
+            self.subfigure6.set_ylabel(r"$k/\langle k\rangle$")
+        else:
+            self.subfigure6.set_yticklabels([])
+
+        if spans is None:
+            self.subfigure6.set_ylim(0, max(kscaled)*1.1)
+        else:
+            self.subfigure3.set_ylim(spans[0])
+            self.subfigure6.set_ylim(spans[1])
+
         self.subfigure6.set_xbound(-1)
         self.subfigure6.xaxis.set_ticks([-1, -0.5, 0, 0.5, 1])
 
