@@ -109,7 +109,7 @@ class FelixParticleHDynCav(DCVizPlotter):
         for ir in range(2):
             #hfigs[ir].set_title(titles[ir])
             hfigs[ir].set_xlabel("$x/L_x$")
-            hfigs[ir].set_ylim(-2, 4)
+            hfigs[ir].set_ylim(-2, 6.5)
             hfigs[ir].xaxis.set_major_formatter(GFORMATTER)
 
             cfigs[ir].set_title(titles[ir])

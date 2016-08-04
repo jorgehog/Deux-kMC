@@ -10,13 +10,17 @@ from parse_h5_output import ParseKMCHDF5
 
 
 def store_xyz(heights, conf_height, n_file, dir, particles=None):
-    xyz = ""
-    n = 0
+    xyz_s = ""
+    n_s = 0
+
+    xyz_p = ""
+    n_p = 0
+
 
     if particles is not None:
         for x, y, z in particles:
-            xyz += "2 %.3f %.3f %.3f\n" % (x, y, z)
-            n += 1
+            xyz_p += "2 %.3f %.3f %.3f\n" % (x, y, z)
+            n_p += 1
 
     L, W = heights.shape
     bottom = heights.min()
@@ -26,17 +30,23 @@ def store_xyz(heights, conf_height, n_file, dir, particles=None):
             h = heights[x, y]
 
             for z in range(bottom, h+1):
-                xyz += "0 %d %d %d\n" % (x, y, z)
-                n += 1
+                xyz_s += "0 %d %d %d\n" % (x, y, z)
+                n_s += 1
 
-            xyz += "1 %d %d %g\n" % (x, y, conf_height)
+            xyz_s += "1 %d %d %g\n" % (x, y, conf_height)
 
-            n += 1
+            n_s += 1
 
-    xyz_file = "%d\n---\n%s" % (n, xyz)
+    xyz_file_s = "%d\n---\n%s" % (n_s, xyz_s)
 
     with open("%s/surfaces%d.xyz" % (dir, n_file), 'w') as f:
-        f.write(xyz_file)
+        f.write(xyz_file_s)
+
+    xyz_file_p = "%d\n---\n%s" % (n_p, xyz_p)
+
+    with open("%s/sol_particles%d.xyz" % (dir, n_file), 'w') as f:
+        f.write(xyz_file_p)
+
 
 def main():
 
@@ -55,6 +65,8 @@ def main():
 
     therm = 0.1
 
+    storexyz = len(sys.argv) > 2
+
     for data, L, W, run_id in parser:
 
         dx = L/float(nbins)
@@ -67,6 +79,11 @@ def main():
         conf_height = data.attrs["height"]
         refl = data.attrs["reflecting"]
 
+        if storexyz:
+            dirname = "/tmp/xyz_diffs_h%d_r%d" % (conf_height, refl)
+            if not os.path.exists(dirname):
+                os.mkdir(dirname)
+
         ih = conf_heights.index(conf_height)
 
         t_prev = 0
@@ -76,6 +93,7 @@ def main():
         heightmat = np.zeros(shape=(L, W))
 
         Wdt = 0
+        NS = 0
         for hi, heights_id in enumerate(sorted(stored_heights, key=lambda x: int(x))):
 
             t_new = time[hi]
@@ -87,7 +105,8 @@ def main():
             else:
                 particles = None
 
-            #store_xyz(heights, conf_height, hi, "/tmp", particles)
+            if storexyz:
+                store_xyz(heights, conf_height, hi, dirname, particles)
 
             if hi >= therm*len(stored_heights):
                 if t0 is None:
@@ -99,7 +118,10 @@ def main():
             dt = t_new - t_prev
             t_prev = t_new
 
-            heightmat += heights*dt
+            if len(stored_heights) - hi <= 1:
+                print len(stored_heights) - hi
+                heightmat += heights
+                NS += 1
 
             if particles is not None:
                 for x, y, z in particles:
@@ -122,11 +144,10 @@ def main():
 
         print (T - t0), Wdt
         H[refl, ih] += hmat/Wdt
-        cH[refl, ih] += heightmat/Wdt
+        cH[refl, ih] += heightmat/NS
         Ws[refl, ih] += 1
 
         print "fin", refl, conf_height
-        #raw_input()
 
     for refl in [0, 1]:
         for ih in range(len(conf_heights)):
