@@ -102,8 +102,8 @@ class FelixParticleHDynCav(DCVizPlotter):
         hfigs = [self.h_open, self.h_refl]
         cfigs = [self.C_open, self.C_refl]
 
-        self.h_open.set_ylabel("$h(x/L_x)$")
-        self.C_open.set_ylabel("$10^4c(x/L_x)$")
+        self.h_open.set_ylabel("$h(x/L_x)/l_0$")
+        self.C_open.set_ylabel("$10^4c(x/L_x)l_0^{3}$")
 
         ymaxes = [0,0,0]
         for ir in range(2):
@@ -118,7 +118,7 @@ class FelixParticleHDynCav(DCVizPlotter):
 
 
             for ih in range(len(heights)):
-                hlabel = r"$\Delta h=%d$" % heights[2-ih]
+                hlabel = r"$\Delta h/l_0=%d$" % heights[2-ih]
 
                 hfigs[ir].plot(Xh, H[ir, 2-ih].mean(axis=0),
                                self.colors[ih] + self.styles[ih],
@@ -159,7 +159,7 @@ class FelixParticleHDynCav(DCVizPlotter):
                     ax.yaxis.set_ticklabels([])
                     cfig.set_yticklabels([])
                 else:
-                    cfig.set_ylabel("$10^4c(x/L_x)$")
+                    cfig.set_ylabel("$10^4c(x/L_x)l_0^{3}$")
 
         l = self.h_refl.axes.legend(loc="center",
                    numpoints=1,
@@ -172,7 +172,7 @@ class FelixParticleHDynCav(DCVizPlotter):
                    borderaxespad=0.0,
                    frameon=False,
                    fontsize=25,
-                   bbox_to_anchor=(0.7, 0.7))
+                   bbox_to_anchor=(0.6, 0.75))
 
         l.get_frame().set_fill(not (self.toFile and self.transparent))
 
@@ -190,7 +190,7 @@ class FelixParticleHDynCav(DCVizPlotter):
                    borderaxespad=0.0,
                    frameon=False,
                    fontsize=25,
-                   bbox_to_anchor=(0.3, 0.25))
+                   bbox_to_anchor=(0.4, 0.225))
 
         l.get_frame().set_fill(not (self.toFile and self.transparent))
         #

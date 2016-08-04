@@ -3214,7 +3214,7 @@ class AutoCorrWoot(DCVizPlotter):
             rf = Rfs[ih]
             cf = Cfs[ih]
 
-            rf.set_ylabel(r"$\sigma(\mathbf{h})$")
+            rf.set_ylabel(r"$\sigma(\mathbf{h})/l_0$")
             rf.xaxis.set_ticks([0.5, 1, 1.5, 2])
             rf.set_xlim(0.4, 2.1)
             rf.set_ylim(0, 3)
@@ -3225,7 +3225,7 @@ class AutoCorrWoot(DCVizPlotter):
             # ax.yaxis.set_ticks([])
             # ax.yaxis.set_ticklabels([])
 
-            cf.set_ylabel(r"$\xi$")
+            cf.set_ylabel(r"$\xi/l_0$")
             cf.yaxis.set_ticks([0, 1, 2, 3])
             cf.xaxis.set_ticks([0.5, 1, 1.5, 2])
             cf.set_xlim(0.4, 2.1)
@@ -3233,7 +3233,7 @@ class AutoCorrWoot(DCVizPlotter):
             cf.axes.yaxis.set_major_formatter(int_formatter)
 
             ax = cf.axes.twinx()
-            ax.set_ylabel(r"$%s=%d$" % (label, h), labelpad=15)
+            ax.set_ylabel(r"$%s/l_0=%d$" % (label, h), labelpad=15)
             ax.yaxis.set_ticks([])
             ax.yaxis.set_ticklabels([])
 
