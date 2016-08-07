@@ -116,7 +116,6 @@ class FelixParticleHDynCav(DCVizPlotter):
             #cfigs[ir].set_xlabel("$x/L_x$")
             cfigs[ir].xaxis.set_major_formatter(GFORMATTER)
 
-
             for ih in range(len(heights)):
                 hlabel = r"$\Delta h/l_0=%d$" % heights[2-ih]
 

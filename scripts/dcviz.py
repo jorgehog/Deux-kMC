@@ -4997,7 +4997,7 @@ class ExtraN_cluster_yo(DCVizPlotter):
             if ias == 0:
                 stdfig.set_ylabel(stdlabel, labelpad=22)
                 rhofig.set_ylabel(r"$\rho_\mathrm{WV}$")
-                hfig.set_ylabel(r"$\langle \Delta h_c \rangle$", labelpad=16)
+                hfig.set_ylabel(r"$\langle H_c \rangle/l_0$", labelpad=16)
             else:
                 stdfig.yaxis.set_ticklabels([])
                 rhofig.yaxis.set_ticklabels([])
