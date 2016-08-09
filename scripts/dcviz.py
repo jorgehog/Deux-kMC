@@ -1866,7 +1866,7 @@ class Quasi2D_slopes_and_stuff(DCVizPlotter):
                                   rotation=rotation)
 
         self.gammaslopes.set_xlabel(r"$\alpha = E_b/kT$")
-        self.gammaslopes.set_ylabel(r"$\gamma_\mathrm{eq} = \log c_\mathrm{eq}/c_0$")
+        self.gammaslopes.set_ylabel(r"$\gamma_\mathrm{eq} = \ln c_\mathrm{eq}/c_0$")
 
         self.E0slopes.errorbar(E0s, slopes,
                                yerr=errors,
