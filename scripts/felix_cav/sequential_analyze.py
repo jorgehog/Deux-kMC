@@ -2,7 +2,6 @@ import sys
 import os
 import numpy as np
 from os.path import join
-from __builtin__ import enumerate
 from matplotlib.pylab import *
 
 
