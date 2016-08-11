@@ -46,55 +46,53 @@ def main():
     if len(sys.argv) > 2:
         NXYZ = int(sys.argv[2])
     else:
-        NXYZ = 1000
-
-    whichDir = None
-    whichFlux = None
-    if len(sys.argv) > 3:
-        whichFlux = float(sys.argv[3])
-        whichDir = sys.argv[4]
+        NXYZ = 100
 
     parser = ParseKMCHDF5(input_file)
 
-    if "cavity" in input_file:
-        masterdir = "/tmp/cavity"
-    else:
-        masterdir = "/tmp/front"
+    masterdir = "/tmp/bunch"
 
     if not os.path.exists(masterdir):
         os.mkdir(masterdir)
 
-    nbins = 20
+    # nbins = 20
 
-    fluxes = []
+    repeats = 0
+    nc = None
+    conf_height = None
     for data, L, W, run_id in parser:
 
-        flux = data.attrs["flux"]
+        # flux = data.attrs["flux"]
 
-        if flux not in fluxes:
-            fluxes.append(flux)
+        repeats+=1
 
-    fluxes = sorted(fluxes)
+        if nc is None:
+            nc = len(data["stored_heights"])
+        if conf_height is None:
+            conf_height = data.attrs["height"]
 
-    hmat = np.zeros(shape=(len(fluxes), nbins, nbins))
-    dx = L/float(nbins)
-    dy = W/float(nbins)
+    # hmat = np.zeros(shape=(len(fluxes), nbins, nbins))
+    # dx = L/float(nbins)
+    # dy = W/float(nbins)
 
-    descs = ""
+    # descs = ""
     these_flux = []
+
+    frontposes = np.zeros(shape=(repeats, int(conf_height), nc))
+    times = np.zeros(shape=(repeats, nc))
+
+    repeater_count = 0
 
     for data, L, W, run_id in parser:
 
         flux = data.attrs["flux"]
         stored_heights = data["stored_heights"]
-        stored_particles = data["stored_particles"]
+        # stored_particles = data["stored_particles"]
         conf_height = data.attrs["height"]
 
-        frontposes = np.zeros(shape=(int(conf_height), len(stored_heights)))
         every = max([1, len(stored_heights)/NXYZ])
-        n_file = 0
 
-        io = fluxes.index(flux)
+        # io = fluxes.index(flux)
 
         if flux in these_flux:
             store=False
@@ -104,35 +102,38 @@ def main():
 
 
         time = data["time"]
+        times[repeater_count, :] = time
         t_prev = 0
-        T = time[-1]
+        # T = time[-1]
+
+        n_file = 0
 
         for hi, heights_id in enumerate(sorted(stored_heights, key=lambda x: int(x))):
 
-            t_new = time[hi]
-            dt = t_new - t_prev
-            t_prev = t_new
+            # t_new = time[hi]
+            # dt = t_new - t_prev
+            # t_prev = t_new
 
-            if heights_id in stored_particles:
-                particles = stored_particles[heights_id][()]
-            else:
-                particles = None
+            # if heights_id in stored_particles:
+            #     particles = stored_particles[heights_id][()]
+            # else:
+            #     particles = None
 
             heights = stored_heights[heights_id][()].transpose()
 
-            if particles is not None:
-                for x, y, _ in particles:
-                    xl = round(x)
-                    yl = round(y)
-                    dh = conf_height - heights[xl, yl] - 1
-
-                    hmat[io, int((x+0.5)/dx), int((y+0.5)/dy)] += dt/dh
-
+            # if particles is not None:
+            #     for x, y, _ in particles:
+            #         xl = round(x)
+            #         yl = round(y)
+            #         dh = conf_height - heights[xl, yl] - 1
+            #
+            #         hmat[io, int((x+0.5)/dx), int((y+0.5)/dy)] += dt/dh
+            #
 
             for hlevel in range(int(conf_height)):
                 I = np.where(heights >= hlevel)
 
-                frontposes[hlevel, hi] = I[0].size/float(L*W)
+                frontposes[repeater_count, hlevel, hi] = I[0].size/float(L*W)
 
             if hi % every != 0 or not store:
                 continue
@@ -147,39 +148,44 @@ def main():
             if not os.path.exists(hdir):
                 os.mkdir(hdir)
 
-            if hi != 0:
-                np.save("%s/fcav_evo_%d.npy" % (hdir, int(hi/every) - 1), hmat[io]/time[hi])
+            # if hi != 0:
+            #     np.save("%s/fcav_evo_%d.npy" % (hdir, int(hi/every) - 1), hmat[io]/time[hi])
 
+            particles = None
             store_xyz(heights, conf_height, n_file, dir, particles)
             n_file += 1
 
             sys.stdout.flush()
             print "\rStored %s xyz %5d / %5d" % (dir, hi/every, len(stored_heights)/every)
+        repeater_count += 1
 
         del stored_heights
 
-        hmat[io] /= T
+        # hmat[io] /= T
 
-        print "fin", dir
+        print "fin", run_id
 
-        descs += "%s : %s %s\n" % (dir, parser.filename, run_id)
+        # descs += "%s : %s %s\n" % (dir, parser.filename, run_id)
 
-        for hlevel in range(frontposes.shape[0]):
-            plab.plot(time, frontposes[hlevel], label=str(hlevel))
-        plab.legend()
-        plab.show()
-        np.save("/tmp/flx_bunch_time.npy", time)
-        np.save("/tmp/flx_bunch_fpos.npy", frontposes)
+        # for hlevel in range(frontposes.shape[0]):
+        #     plab.plot(time, frontposes[hlevel], label=str(hlevel))
+        # plab.legend()
+        # plab.show()
+        # np.save("/tmp/flx_bunch_time.npy", time)
+        # np.save("/tmp/flx_bunch_fpos.npy", frontposes)
 
-    desc_f = os.path.join(masterdir, "desc.txt")
-
-    with open(desc_f, 'w') as f:
-        f.write(descs)
+    # desc_f = os.path.join(masterdir, "desc.txt")
+    #
+    # with open(desc_f, 'w') as f:
+    #     f.write(descs)
 
 
     # np.save("/tmp/felix_cav_phist_omegas.npy", omegas)
     # np.save("/tmp/felix_cav_phist_X.npy", X)
     # np.save("/tmp/felix_cav_phist_H.npy", H)
+
+    np.save("/tmp/flx_bunch_time.npy", times)
+    np.save("/tmp/flx_bunch_fpos.npy", frontposes)
 
     print "fin"
 
