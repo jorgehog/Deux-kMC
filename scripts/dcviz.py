@@ -11,6 +11,7 @@ from scipy.stats import linregress
 from scipy.optimize import curve_fit
 from scipy.special import lambertw
 from matplotlib.ticker import FormatStrFormatter, FuncFormatter
+from matplotlib import rcParams
 
 from mpl_toolkits.mplot3d import Axes3D, proj3d
 
@@ -4593,32 +4594,50 @@ class ExtraneighborResonance(DCVizPlotter):
     labelSize= 50
     ticklabelSize=40
     fontSize = 40  # Only invoked by hugifyFonts = True
-    tickSize = 4
+    tickSize = 10
 
     figMap = {
         "fig": ["sfig0",
-                "sfig1"]
+                "sfig1"],
+        "rfig": ["rfig0",
+                 "rfig1"]
     }
 
     stack = "H"
 
-    fig_size = [16, 6]
+    specific_fig_size = {"fig": [16, 6],
+                         "rfig": [16, 5.5]}
 
     def adjust(self):
-        self.adjust_maps["fig"]["left"] = 0.09
-        self.adjust_maps["fig"]["right"] = 0.98
-        self.adjust_maps["fig"]["top"] = 0.87
+        for fig in ["fig", "rfig"]:
+            self.adjust_maps[fig]["left"] = 0.11
+            self.adjust_maps[fig]["right"] = 0.975
+            self.adjust_maps[fig]["wspace"] = 0.1
+
+        self.adjust_maps["fig"]["top"] = 0.95
         self.adjust_maps["fig"]["bottom"] = 0.22
-        self.adjust_maps["fig"]["wspace"] = 0.05
+
+        self.adjust_maps["rfig"]["top"] = 0.87
+        self.adjust_maps["rfig"]["bottom"] = 0.08
+
+        rcParams['ytick.major.size'] = 8
+        rcParams['ytick.major.width'] = 1
+
+        rcParams['xtick.major.size'] = 8
+        rcParams['xtick.major.width'] = 1
 
     def plot(self, data):
 
         s0s = self.get_family_member_data(data, "s0s")
 
         xmax1 = float(self.argv[0])
+        xmaxes = [xmax1, 1000]
+
+        ld = 5.
 
         for i in [0, 1]:
             subfigure = eval("self.sfig%d" % i)
+            rsubfigure = eval("self.rfig%d" % i)
 
             F0s = self.get_family_member_data(data, "F0s%d" % i)
             cvec = self.get_family_member_data(data, "cvec%d" % i)
@@ -4627,6 +4646,47 @@ class ExtraneighborResonance(DCVizPlotter):
 
             F0s = F0s[start:]
             cvec = cvec[start:]
+
+            F0EbA = np.linspace(F0s[0], F0s[-1], 1000)
+
+            rhs = RHS(ld, s0s[i], F0EbA)
+
+            n0 = int(floor(rhs[0]))
+            n1 = int(ceil(rhs[-1]))
+
+            idx = find_integer_crossings(rhs)
+
+            txtshift = 0.01
+            for j, n in enumerate(range(n1, n0 + 1)):
+                p = F0EbA[idx[j]]
+
+                if p > xmaxes[i]:
+                    continue
+
+                rsubfigure.plot([F0EbA[0], p], [n, n], "k--")
+                rsubfigure.plot([p, p], [1, n], "k--", linewidth=3)
+
+                textx = p+txtshift
+                texty = n
+
+                if i == 1:
+                    texty += 0.1
+
+                rsubfigure.text(textx, texty, r"$%.2f$" % p)
+
+            rsubfigure.plot(F0EbA, rhs, "r-", linewidth=3)
+
+
+            rsubfigure.set_xlim(F0s[0], F0s[-1])
+            rsubfigure.set_ylim(1, 6)
+
+            def intformatter(v, i):
+                if int(v) == v:
+                    return r"$%d$" % v
+                else:
+                    return ""
+
+            rsubfigure.yaxis.set_major_formatter(FuncFormatter(intformatter))
 
             subfigure.plot(F0s, cvec, "r-", linewidth=3)
 
@@ -4648,15 +4708,20 @@ class ExtraneighborResonance(DCVizPlotter):
                                            f0max + 0.001,
                                            0.1))
 
-            subfigure.set_title(r"$\sigma_0 = %.2f$" % s0s[i])
+            rsubfigure.set_title(r"$\sigma_0 = %.2f$" % s0s[i])
 
             if i == 0:
                 subfigure.set_ylabel(r"$\rho_\mathrm{WV}$")
+                rsubfigure.set_ylabel(r"$\lambda_D \ln \left(\frac{\sigma_0/\lambda_D\xi }{F_0/E_bA}\right)$")
             else:
                 subfigure.set_yticklabels([])
+                rsubfigure.set_yticklabels([])
 
+            rsubfigure.set_xticklabels([])
 
         self.sfig0.set_xlim(self.sfig0.get_xlim()[0], xmax1)
+        self.rfig0.set_xlim(self.sfig0.get_xlim()[0], xmax1)
+
 
 
 
