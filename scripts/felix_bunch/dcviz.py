@@ -8,6 +8,8 @@ from intercombinatorzor import ICZ
 
 import numpy as np
 
+from scipy.optimize import curve_fit
+
 def g_format_func(v, _):
     if int(v) == v:
         return r"$%d$" % v
@@ -30,28 +32,28 @@ class flx_bunch(DCVizPlotter):
 
     specific_fig_size = {"figure": [6, 6],
                          "vfigure": [6, 4],
-                         "twostepfig": [6, 4]}
+                         "twostepfig": [6, 6],
+                         "twosteplogfig": [6, 4]}
 
     figMap = {"figure": ["subfigure", "subfigure_combo"],
               "vfigure": "vfig",
               "speedfig": "sfig",
               "allfig": "afig",
               "allfig2": "afig2",
-              "twostepfig": "afig3"}
+              "twostepfig": ["afig3", "lafig3"]}
 
     def adjust(self):
-        l = 0.16
+        l = 0.18
         for fig in ["figure", "twostepfig", "vfigure"]:
             self.adjust_maps[fig]['left'] = l
             self.adjust_maps[fig]['right'] = 1-l
-            self.adjust_maps[fig]['hspace'] = 0.05
+            self.adjust_maps[fig]['hspace'] = 0.125
 
         self.adjust_maps["figure"]['top'] = 0.97
         self.adjust_maps["figure"]['bottom'] = 0.13
 
-        self.adjust_maps["twostepfig"]['top'] = 0.95
-        self.adjust_maps["twostepfig"]['bottom'] = 0.2
-
+        self.adjust_maps["twostepfig"]['top'] = 0.97
+        self.adjust_maps["twostepfig"]['bottom'] = 0.13
 
     #plotOnly = "twostepfig"
 
@@ -138,11 +140,37 @@ class flx_bunch(DCVizPlotter):
             t1, h1 = combinator.intercombine("Time", "h1")
             _, h2 = combinator.intercombine("Time", "h2")
 
+            h2eq = 0.57
+            h1eq = 0.7
             xmax = 12
+
             self.afig3.plot(t1, h1, "r-", label=r"$y_s^{(1)}(t')$")
             scale = h1[self.find_half(t1)]/h2[self.find_half(t1-1)]
             self.afig3.plot(t1-1, h2*scale, "k--", label=r"$%.2fy_s^{(2)}(t'-1)$" % scale)
             self.afig3.plot(t1, h2, "b-", linewidth=2, label=r"$y_s^{(2)}(t')$")
+
+            def g(t, k, ys):
+                return ys*(1-np.exp(-k*t))
+
+            I = np.where(t1 > 1.5)
+            J = np.where(t1[I] < xmax)
+            t2 = t1[I][J]
+            h2p = h2[I][J]
+
+            p0 = (1,1)
+            p, _ = curve_fit(g, t2, h2p, p0)
+            print p
+            #self.afig3.plot(t2, g(t2, *p), "k--", linewidth=2)
+
+            self.lafig3.semilogy(t1, abs(1-h1/h1eq), "k-")
+            self.lafig3.semilogy(t1, abs(1-h2/h2eq), "r-")
+            self.lafig3.set_xlim(0, 9)
+            self.lafig3.set_ylim(5E-3, 1.1)
+            self.lafig3.set_xlabel(r"$y_s^{(1)}$")
+            self.lafig3.set_ylabel(r"$y_s^{(2)}$")
+
+            # self.lafig3.set_ylim(0, 0.8)
+            # self.lafig3.set_xlim(0.4, 0.8)
 
             l = self.afig3.legend(loc="center",
                    numpoints=1,
@@ -155,14 +183,19 @@ class flx_bunch(DCVizPlotter):
                    borderaxespad=0.0,
                    frameon=False,
                    fontsize=20,
-                   bbox_to_anchor=(0.625, 0.2))
+                   bbox_to_anchor=(0.625, 0.25))
 
             l.get_frame().set_fill(not (self.toFile and self.transparent))
 
             self.afig3.set_xlim(-0.5, xmax)
-            self.afig3.set_xlabel(r"$t'=(t-t_1)/(t_2-t_1)$")
+            self.lafig3.set_xlim(-0.5, xmax)
+            #self.afig3.set_xlabel(r"$t'=(t-t_1)/(t_2-t_1)$")
+            self.afig3.set_xticklabels([])
+            self.lafig3.set_xlabel(r"$t'=(t-t_1)/(t_2-t_1)$")
             self.afig3.set_xticks(range(xmax+1))
-            self.afig3.set_ylabel(r"$y_s/L_y$")
+            self.lafig3.set_xticks(range(xmax+1))
+            self.afig3.set_ylabel(r"$y_s/L_y$",labelpad=20)
+            self.lafig3.set_ylabel(r"$|1-y_s/\langle y_s\rangle|$")
             self.afig3.set_ylim(0, 0.8)
 
             # def haxxorformatter(v, _):
