@@ -33,7 +33,10 @@ class flx_bunch(DCVizPlotter):
 
     figMap = {"figure": ["subfigure", "subfigure_combo"],
               "vfigure": "vfig",
-              "speedfig": "sfig"}
+              "speedfig": "sfig",
+              "allfig": "afig",
+              "allfig2": "afig2",
+              "allfig3": "afig3"}
 
     def adjust(self):
         fig = "figure"
@@ -43,6 +46,16 @@ class flx_bunch(DCVizPlotter):
         self.adjust_maps[fig]['left'] = l
         self.adjust_maps[fig]['right'] = 1-l
         self.adjust_maps[fig]['hspace'] = 0.05
+
+    plotOnly = "allfig3"
+
+    def find_half(self, t):
+
+        i = 0
+        while t[i] < 0.5:
+            i+=1
+
+        return i
 
     def plot(self, data):
 
@@ -92,6 +105,39 @@ class flx_bunch(DCVizPlotter):
 
             T += t
 
+        assume_twos = True
+        lim = 0.03
+        back = 5
+        get_s = lambda xvals: np.where(xvals < lim)[0][-1] - back
+        if assume_twos:
+            combinator = ICZ("Time", "h1")
+            combinator2 = ICZ("Time", "h2")
+
+            for i in range(nr):
+
+                t = all_t[i]
+
+                x1 = all_x[i][1]
+                x2 = all_x[i][2]
+
+                s1 = get_s(x1)
+                s2 = get_s(x2)
+
+                t_trans = (t - t[s1])
+                t_trans2 = (t - t[s2])
+
+                self.afig.plot(t_trans, x1)
+                self.afig2.plot(t_trans2, x2)
+
+                combinator.feed(t_trans/t[s2], x1)
+                combinator2.feed(t_trans2/t[s2], x2)
+            t1, h1 = combinator.intercombine("Time", "h1")
+            t2, h2 = combinator2.intercombine("Time", "h2")
+
+            self.afig3.plot(t1, h1)
+            self.afig3.plot(t2+1, h2)
+            self.afig3.plot(t2, h2*h1[self.find_half(t1)]/h2[self.find_half(t2)])
+
         seq_levels = []
         for hlevel in range(1, nl):
             if hlevel in skip:
@@ -106,7 +152,6 @@ class flx_bunch(DCVizPlotter):
             print hlevel
             seq_levels.append(xl)
             self.subfigure_combo.plot(tf/tf[-1], xl, "r-")
-
 
         #for xf in np.linspace(min(xfs), max(xfs), len(xfs)):
         # for i, xf in enumerate(xfs):
