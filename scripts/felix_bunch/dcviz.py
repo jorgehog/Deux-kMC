@@ -10,6 +10,18 @@ import numpy as np
 
 from scipy.optimize import curve_fit
 
+
+my_props = {
+
+    "fmt" : {
+            "markersize" : 7,
+            "markeredgewidth" : 1.5,
+            "linewidth" : 1,
+            "fillstyle" : "none"
+    }
+
+}
+
 def g_format_func(v, _):
     if int(v) == v:
         return r"$%d$" % v
@@ -33,7 +45,8 @@ class flx_bunch(DCVizPlotter):
     specific_fig_size = {"figure": [6, 6],
                          "vfigure": [6, 4],
                          "twostepfig": [6, 6],
-                         "twosteplogfig": [6, 4]}
+                         "twosteplogfig": [6, 4],
+                         "speedfig": [6, 3]}
 
     figMap = {"figure": ["subfigure", "subfigure_combo"],
               "vfigure": "vfig",
@@ -44,7 +57,7 @@ class flx_bunch(DCVizPlotter):
 
     def adjust(self):
         l = 0.18
-        for fig in ["figure", "twostepfig", "vfigure"]:
+        for fig in ["figure", "twostepfig", "vfigure", "speedfig"]:
             self.adjust_maps[fig]['left'] = l
             self.adjust_maps[fig]['right'] = 1-l
             self.adjust_maps[fig]['hspace'] = 0.125
@@ -54,6 +67,9 @@ class flx_bunch(DCVizPlotter):
 
         self.adjust_maps["twostepfig"]['top'] = 0.97
         self.adjust_maps["twostepfig"]['bottom'] = 0.13
+
+        self.adjust_maps["speedfig"]['top'] = 0.97
+        self.adjust_maps["speedfig"]['bottom'] = 0.24
 
     #plotOnly = "twostepfig"
 
@@ -147,7 +163,7 @@ class flx_bunch(DCVizPlotter):
             self.afig3.plot(t1, h1, "r-", label=r"$y_s^{(1)}(t')$")
             scale = h1[self.find_half(t1)]/h2[self.find_half(t1-1)]
             self.afig3.plot(t1-1, h2*scale, "k--", label=r"$%.2fy_s^{(2)}(t'-1)$" % scale)
-            self.afig3.plot(t1, h2, "b-", linewidth=2, label=r"$y_s^{(2)}(t')$")
+            self.afig3.plot(t1, h2, "k-", linewidth=2, label=r"$y_s^{(2)}(t')$")
 
             def g(t, k, ys):
                 return ys*(1-np.exp(-k*t))
@@ -162,12 +178,10 @@ class flx_bunch(DCVizPlotter):
             print p
             #self.afig3.plot(t2, g(t2, *p), "k--", linewidth=2)
 
-            self.lafig3.semilogy(t1, abs(1-h1/h1eq), "k-")
-            self.lafig3.semilogy(t1, abs(1-h2/h2eq), "r-")
+            self.lafig3.semilogy(t1, abs(1-h1/h1eq), "r-")
+            self.lafig3.semilogy(t1, abs(1-h2/h2eq), "k-")
             self.lafig3.set_xlim(0, 9)
             self.lafig3.set_ylim(5E-3, 1.1)
-            self.lafig3.set_xlabel(r"$y_s^{(1)}$")
-            self.lafig3.set_ylabel(r"$y_s^{(2)}$")
 
             # self.lafig3.set_ylim(0, 0.8)
             # self.lafig3.set_xlim(0.4, 0.8)
@@ -255,22 +269,21 @@ class flx_bunch(DCVizPlotter):
 
         self.subfigure.set_xticklabels([])
 
+        vs = []
         for i in range(len(seq_levels)-1):
-            diff = seq_levels[i+1]-seq_levels[i]
+            diff = seq_levels[i]-seq_levels[i+1]
             self.vfig.plot(tf/tf[-1], diff)
+            vs.append(100*diff[len(diff)/2:].mean())
+        self.sfig.plot(range(1, len(vs)+1), vs, "r--", **my_props['fmt'])
+        self.sfig.plot(range(1, len(vs)+1), vs, "ks", **my_props['fmt'])
+        self.sfig.set_xlabel(r"$n$")
+        self.sfig.set_ylabel(r"$\langle y_s^{(n)}-y_s^{(n+1)}\rangle\,\,[l_0]$")
+        self.sfig.set_xlim(0.9, len(vs)+0.1)
+        self.sfig.set_ylim(np.floor(min(vs)), max(vs)+0.1)
 
-        every = 100
-        seq_levels[0] = seq_levels[0][::every]
-        diff = np.zeros(len(seq_levels[0])-2)
-        for i in range(1, len(seq_levels[0])-1):
-            n = i+1
-            p = i
-            prev = seq_levels[0][p]
-            next = seq_levels[0][n]
 
-            tprev = tf[p]
-            tnext = tf[n]
+        # def magicomg(v, _):
+        #     return r"$\Delta \langle x\rangle_{%d,%d}$" % (v, v+1)
+        #
+        # self.sfig.xaxis.set_major_formatter(FuncFormatter(magicomg))
 
-            diff[i-1] = tf[-1]*(next - prev)/(tnext-tprev)
-
-        self.sfig.plot(tf[::every][1:-1]/tf[-1], diff)

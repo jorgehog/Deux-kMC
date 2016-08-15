@@ -5305,8 +5305,8 @@ class FelixSeqC(DCVizPlotter):
               "xvfig": ["subfigureC",
                         "subfigurexv"]}
 
-    specific_fig_size = {"fig": [6, 10],
-                         "xvfig": [6, 10],
+    specific_fig_size = {"fig": [6, 7],
+                         "xvfig": [6, 7],
                          "logfig": [6, 6]}
 
 
@@ -5322,10 +5322,14 @@ class FelixSeqC(DCVizPlotter):
                 self.adjust_maps[fig]['hspace'] = 0.3
             else:
                 self.adjust_maps[fig]['top'] = 0.97
-                self.adjust_maps[fig]['bottom'] = 0.1
+                self.adjust_maps[fig]['bottom'] = 0.16
                 self.adjust_maps[fig]['left'] = 0.2
                 self.adjust_maps[fig]['right'] = 0.95
-                self.adjust_maps[fig]['hspace'] = 0.3
+
+                if fig == "fig":
+                    self.adjust_maps[fig]['hspace'] = 0.2
+                else:
+                    self.adjust_maps[fig]['hspace'] = 0.5
 
     @staticmethod
     def get_vs(t, ys):
@@ -5375,7 +5379,7 @@ class FelixSeqC(DCVizPlotter):
         self.subfigure.set_xticklabels([])
         self.subfigure.set_ylabel(r'$y_s/L_y$')
         self.subfigure.set_ybound(0)
-        self.subfigure.text(0.65, ys_eq - 0.075, r"$\langle y_s\rangle/L_y$", fontsize=30)
+        self.subfigure.text(0.65, ys_eq - 0.1, r"$\langle y_s\rangle/L_y$", fontsize=30)
 
         self.subfigurev.plot(t, vs, "r-", **my_props['fmt'])
         self.subfigurev.set_xlabel(r'$t/t_\mathrm{end}$')
