@@ -46,18 +46,21 @@ class flx_bunch(DCVizPlotter):
                          "vfigure": [6, 4],
                          "twostepfig": [6, 6],
                          "twosteplogfig": [6, 4],
-                         "speedfig": [6, 3]}
+                         "speedfig": [6, 3],
+                         "nucfig": [6, 3]}
 
     figMap = {"figure": ["subfigure", "subfigure_combo"],
               "vfigure": "vfig",
               "speedfig": "sfig",
               "allfig": "afig",
               "allfig2": "afig2",
+              "nucfig": "tnucfig",
+              "nucall": "nucsfig",
               "twostepfig": ["afig3", "lafig3"]}
 
     def adjust(self):
         l = 0.18
-        for fig in ["figure", "twostepfig", "vfigure", "speedfig"]:
+        for fig in ["figure", "twostepfig", "vfigure", "speedfig", "nucfig"]:
             self.adjust_maps[fig]['left'] = l
             self.adjust_maps[fig]['right'] = 1-l
             self.adjust_maps[fig]['hspace'] = 0.125
@@ -71,7 +74,10 @@ class flx_bunch(DCVizPlotter):
         self.adjust_maps["speedfig"]['top'] = 0.97
         self.adjust_maps["speedfig"]['bottom'] = 0.24
 
-    #plotOnly = "twostepfig"
+        self.adjust_maps["nucfig"]['top'] = 0.97
+        self.adjust_maps["nucfig"]['bottom'] = 0.24
+
+    #plotOnly = ["figure"]
 
     def find_half(self, t):
 
@@ -83,19 +89,19 @@ class flx_bunch(DCVizPlotter):
 
     def plot(self, data):
 
+        lim = 0.025
+        get_nuc_idx = lambda xvals: np.where(xvals < lim)[0][-1]
+
         if self.argv:
             j = int(self.argv[0])
         else:
             j = 0
 
 
-        combo = len(self.argv) > 1
-        if combo:
-            every = int(self.argv[1])
+        meanify = "mean" in self.argv
 
         all_t = self.get_family_member_data(data, "time")
         all_x = self.get_family_member_data(data, "fpos")
-
 
         nr, nl, nc = all_x.shape
 
@@ -107,12 +113,14 @@ class flx_bunch(DCVizPlotter):
 
         skip = set()
 
+        single_combs = [ICZ("Time", "step") for _ in range(nl)]
+
+        dt_nuc = np.zeros(nl-1)
         for i in range(nr):
             t = all_t[i]
             x = all_x[i]
 
-            if combo:
-                combinator.feed(t[::every], *x[1:, ::every])
+            t_nuc_local = np.zeros(nl-1)
 
             for hlevel in range(1, nl):
                 xf = x[hlevel]
@@ -121,18 +129,67 @@ class flx_bunch(DCVizPlotter):
                     skip.add(hlevel)
                     continue
 
+                if hlevel != 1:
+                    nuc_idx = get_nuc_idx(xf)
+                    t_nuc_local[hlevel-1] = t[nuc_idx]
+
+                    single_combs[hlevel-1].feed(t-t[nuc_idx], xf)
+                else:
+                    single_combs[0].feed(t-t[0], xf)
+
                 if i == j:
                     self.subfigure.plot(t/t[-1], xf, "r-")
 
                 X[hlevel] += xf
                 nx[hlevel] += 1
 
+            for idx, t_nuc in enumerate(t_nuc_local):
+                next = idx + 1
+                if next > len(t_nuc_local):
+                    break
+                if t_nuc_local[next] == 0:
+                    break
+
+                dt = t_nuc_local[next] - t_nuc
+                dt_nuc[idx] += dt
+
             T += t
 
+        dt_nuc /= nr
+
+        xmaxtnf = min(skip)-2
+
+        xnf = range(1, xmaxtnf+1)
+        dt_nuc = dt_nuc[:xmaxtnf]
+
+        y = np.cumsum(dt_nuc)/dt_nuc.mean()
+
+        self.tnucfig.plot(xnf, y, "r--", **my_props["fmt"])
+        self.tnucfig.plot(xnf, y, "ks", **my_props["fmt"])
+        self.tnucfig.set_xlim(0.9, xmaxtnf + 0.1)
+        self.tnucfig.set_ylim(0.8, xmaxtnf + 0.2)
+        self.tnucfig.set_xlabel(r"$n$")
+        self.tnucfig.set_ylabel(r"$\langle \Delta t_0^{(n)}\rangle/\langle \Delta t_0 \rangle$")
+
+        tcum = 0
+        for hlevel in range(1, nl):
+            if hlevel in skip:
+                continue
+
+            if meanify:
+                ttrans, xfcomb = single_combs[hlevel-1].mean("Time", "step")
+            else:
+                ttrans, xfcomb = single_combs[hlevel-1].intercombine("Time", "step")
+
+            self.subfigure_combo.plot((ttrans + tcum)/(ttrans[-1] + tcum), xfcomb,  "r-")
+
+            if hlevel + 1 not in skip:
+                tcum += dt_nuc[hlevel-1]
+
+
+
+
         assume_twos = 3 in skip
-        lim = 0.025
-        back = 0
-        get_s = lambda xvals: np.where(xvals < lim)[0][-1] - back
         if assume_twos:
             combinator = ICZ("Time", "h1", "h2")
 
@@ -143,8 +200,8 @@ class flx_bunch(DCVizPlotter):
                 x1 = all_x[i][1]
                 x2 = all_x[i][2]
 
-                s1 = get_s(x1)
-                s2 = get_s(x2)
+                s1 = get_nuc_idx(x1)
+                s2 = get_nuc_idx(x2)
 
                 t_trans = (t - t[s1])
                 t_trans2 = (t - t[s2])
@@ -228,15 +285,12 @@ class flx_bunch(DCVizPlotter):
             if hlevel in skip:
                 continue
 
-            if combo:
-                tf, xl = combinator.intercombine("Time", hlevel)
-            else:
-                xl = X[hlevel]/nx[hlevel]
-                tf = T
+            xl = X[hlevel]/nx[hlevel]
+            tf = T
 
             print hlevel
             seq_levels.append(xl)
-            self.subfigure_combo.plot(tf/tf[-1], xl, "r-")
+            #self.subfigure_combo.plot(tf/tf[-1], xl, "r-")
 
         #for xf in np.linspace(min(xfs), max(xfs), len(xfs)):
         # for i, xf in enumerate(xfs):
@@ -274,8 +328,10 @@ class flx_bunch(DCVizPlotter):
             diff = seq_levels[i]-seq_levels[i+1]
             self.vfig.plot(tf/tf[-1], diff)
             vs.append(100*diff[len(diff)/2:].mean())
-        self.sfig.plot(range(1, len(vs)+1), vs, "r--", **my_props['fmt'])
-        self.sfig.plot(range(1, len(vs)+1), vs, "ks", **my_props['fmt'])
+
+        xs = [x for x in range(1, len(vs)+1)]
+        self.sfig.plot(xs, vs, "r--", **my_props['fmt'])
+        self.sfig.plot(xs, vs, "ks", **my_props['fmt'])
         self.sfig.set_xlabel(r"$n$")
         self.sfig.set_ylabel(r"$\langle y_s^{(n)}-y_s^{(n+1)}\rangle\,\,[l_0]$")
         self.sfig.set_xlim(0.9, len(vs)+0.1)
