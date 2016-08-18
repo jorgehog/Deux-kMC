@@ -5305,7 +5305,7 @@ class FelixSeqC(DCVizPlotter):
               "xvfig": ["subfigureC",
                         "subfigurexv"]}
 
-    specific_fig_size = {"fig": [6, 7],
+    specific_fig_size = {"fig": [6, 6],
                          "xvfig": [6, 7],
                          "logfig": [6, 6]}
 
@@ -5314,7 +5314,7 @@ class FelixSeqC(DCVizPlotter):
 
         for fig in self.figure_names:
 
-            if fig == "logfig":
+            if fig == "logfig" or fig == "fig":
                 self.adjust_maps[fig]['top'] = 0.95
                 self.adjust_maps[fig]['bottom'] = 0.16
                 self.adjust_maps[fig]['left'] = 0.22
@@ -5325,11 +5325,7 @@ class FelixSeqC(DCVizPlotter):
                 self.adjust_maps[fig]['bottom'] = 0.16
                 self.adjust_maps[fig]['left'] = 0.2
                 self.adjust_maps[fig]['right'] = 0.95
-
-                if fig == "fig":
-                    self.adjust_maps[fig]['hspace'] = 0.2
-                else:
-                    self.adjust_maps[fig]['hspace'] = 0.5
+                self.adjust_maps[fig]['hspace'] = 0.5
 
     @staticmethod
     def get_vs(t, ys):
@@ -5378,8 +5374,7 @@ class FelixSeqC(DCVizPlotter):
         self.subfigure.plot(t, ys, "r-", **my_props['fmt'])
         self.subfigure.set_xticklabels([])
         self.subfigure.set_ylabel(r'$y_s/L_y$')
-        self.subfigure.set_ybound(0)
-        self.subfigure.text(0.65, ys_eq - 0.1, r"$\langle y_s\rangle/L_y$", fontsize=30)
+        self.subfigure.text(0.65, ys_eq - 0.15, r"$\langle y_s\rangle/L_y$", fontsize=30)
 
         self.subfigurev.plot(t, vs, "r-", **my_props['fmt'])
         self.subfigurev.set_xlabel(r'$t/t_\mathrm{end}$')
@@ -5410,6 +5405,8 @@ class FelixSeqC(DCVizPlotter):
         self.subfigureC.set_xlabel(r'$y/L_y$')
         self.subfigureC.set_ylabel(r'$10^2\langle c(y/L_y)\rangle$')
         self.subfigureC.set_xlim(-shift, 1)
+
+        self.subfigure.set_ylim(0, 0.55)
 
         # mxv = self.subfigurexv.get_ylim()[1]
         # self.subfigurexv.plot([ys_eq, ys_eq], [0, mxv], "k:")

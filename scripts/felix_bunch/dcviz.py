@@ -163,13 +163,14 @@ class flx_bunch(DCVizPlotter):
         dt_nuc = dt_nuc[:xmaxtnf]
 
         y = np.cumsum(dt_nuc)/dt_nuc.mean()
+        print y[-1]
 
         self.tnucfig.plot(xnf, y, "r--", **my_props["fmt"])
         self.tnucfig.plot(xnf, y, "ks", **my_props["fmt"])
         self.tnucfig.set_xlim(0.9, xmaxtnf + 0.1)
         self.tnucfig.set_ylim(0.8, xmaxtnf + 0.2)
         self.tnucfig.set_xlabel(r"$n$")
-        self.tnucfig.set_ylabel(r"$\langle \Delta t_0^{(n)}\rangle/\langle \Delta t_0 \rangle$")
+        self.tnucfig.set_ylabel(r"$\langle t_0^{(n)}\rangle /\langle \Delta t_0 \rangle$")
 
         tcum = 0
         for hlevel in range(1, nl):
