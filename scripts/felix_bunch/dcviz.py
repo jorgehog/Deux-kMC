@@ -77,7 +77,7 @@ class flx_bunch(DCVizPlotter):
         self.adjust_maps["nucfig"]['top'] = 0.97
         self.adjust_maps["nucfig"]['bottom'] = 0.24
 
-    #plotOnly = ["figure"]
+    # plotOnly = ["figure"]
 
     def find_half(self, t):
 
@@ -86,6 +86,16 @@ class flx_bunch(DCVizPlotter):
             i+=1
 
         return i
+
+    def line_fromto(self, fig, r0, r1):
+        x0, y0 = r0
+        x1, y1 = r1
+
+        dx = x1 - x0
+        dy = y1 - y0
+
+        x = np.linspace(x0, x1)
+        fig.plot(x, y0 + dy/dx*(x - x0), "k-", linewidth=1.5)
 
     def plot(self, data):
 
@@ -188,7 +198,21 @@ class flx_bunch(DCVizPlotter):
                 tcum += dt_nuc[hlevel-1]
 
 
+        if "hola_seneor" in self.argv:
+            x1 = 0.1
+            y1 = 0.525
 
+            x2 = 0.6
+            y2 = 0.225
+
+            d1 = [0.175, 0.45]
+            d2 = [0.5, 0.295]
+
+            self.subfigure_combo.text(x1, y1, r"$\Delta_1$", horizontalalignment="center")
+            self.subfigure_combo.text(x2, y2, r"$\Delta_6$", horizontalalignment="center", verticalalignment="top")
+
+            self.line_fromto(self.subfigure_combo, [x1, y1], d1)
+            self.line_fromto(self.subfigure_combo, [x2-0.03, y2], d2)
 
         assume_twos = 3 in skip
         if assume_twos:
@@ -334,7 +358,7 @@ class flx_bunch(DCVizPlotter):
         self.sfig.plot(xs, vs, "r--", **my_props['fmt'])
         self.sfig.plot(xs, vs, "ks", **my_props['fmt'])
         self.sfig.set_xlabel(r"$n$")
-        self.sfig.set_ylabel(r"$\langle y_s^{(n)}-y_s^{(n+1)}\rangle\,\,[l_0]$")
+        self.sfig.set_ylabel(r"$\Delta_n/l_0$") #\langle y_s^{(n)}-y_s^{(n+1)}\rangle\,\,[l_0]
         self.sfig.set_xlim(0.9, len(vs)+0.1)
         self.sfig.set_ylim(np.floor(min(vs)), max(vs)+0.1)
 

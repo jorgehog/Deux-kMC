@@ -5454,8 +5454,8 @@ class ss_front(DCVizPlotter):
             else:    
                 self.adjust_maps[f]['left'] = l
                 self.adjust_maps[f]['right'] = r - l/2
-            
 
+    #plotOnly = "fig"
 
     def plot(self, data):
 
@@ -5483,42 +5483,58 @@ class ss_front(DCVizPlotter):
             subfigure.xaxis.set_major_formatter(FuncFormatter(lambda f, _: r'$%g$' % (f/float(L))))
             subfigure.yaxis.set_major_formatter(FuncFormatter(lambda f, _: r'$%g$' % (f/float(W))))
 
-        Ry = 0.74*W
-        Rx = 0.75*L
-        dy = 0.17*W
-        dx = 0
 
-        theta = np.linspace(0, np.pi/2)
+        if False:
+            Ry = 0.74*W
+            Rx = 0.75*L
+            dy = 0.17*W
+            dx = 0
 
-        xv = Rx*np.cos(theta) - dx
-        yv = Ry*np.sin(theta) - dy
+            theta = np.linspace(0, np.pi/2)
 
-        self.subfigure.plot(xv, yv, 'k--', linewidth=4, label=r"$\mathrm{Ellipse}$")
-        Ry = 0.6*W
-        Rx = 0.6*L
-        xv = np.linspace(0, Rx, 1000)
-        yv = Ry*np.log((Rx + 1) - xv)/np.log(Rx + 1)
+            xv = Rx*np.cos(theta) - dx
+            yv = Ry*np.sin(theta) - dy
 
-        self.subfigure.plot(xv, yv, 'r-', linewidth=4, label=r"$\mathrm{Exponential}$")
+            self.subfigure.plot(xv, yv, 'k--', linewidth=4, label=r"$\mathrm{Ellipse}$")
+            Ry = 0.6*W
+            Rx = 0.6*L
+            xv = np.linspace(0, Rx, 1000)
+            yv = Ry*np.log((Rx + 1) - xv)/np.log(Rx + 1)
 
-        self.subfigure.set_xlim(0, 0.75*L)
-        self.subfigure.set_ylim(0, 0.75*W)
+            self.subfigure.plot(xv, yv, 'r-', linewidth=4, label=r"$\mathrm{Exponential}$")
 
-        leg = self.subfigure.legend(loc="center",
-                                  numpoints=1,
-                                  ncol=1,
-                                  handlelength=1.0,
-                                  markerscale=20.0,
-                                  borderpad=0.2,
-                                  labelspacing=0.2,
-                                  columnspacing=1.0,
-                                  handletextpad=0.5,
-                                  borderaxespad=0.0,
-                                  frameon=False,
-                                  fontsize=20,
-                                  bbox_to_anchor=(0.75, 0.875))
 
-        leg.get_frame().set_fill(not (self.toFile and self.transparent))
+            leg = self.subfigure.legend(loc="center",
+                                      numpoints=1,
+                                      ncol=1,
+                                      handlelength=1.0,
+                                      markerscale=20.0,
+                                      borderpad=0.2,
+                                      labelspacing=0.2,
+                                      columnspacing=1.0,
+                                      handletextpad=0.5,
+                                      borderaxespad=0.0,
+                                      frameon=False,
+                                      fontsize=20,
+                                      bbox_to_anchor=(0.75, 0.875))
+
+            leg.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        else:
+            ly = 0.58
+            a = 1
+
+            u = np.linspace(0.01, 1, 1000)
+
+            fac = np.sqrt(a**2-u**2)
+            x1 =  a*np.log((a-fac)/u)
+            xfuck = fac + x1
+
+            xshift = 1.05
+            self.subfigure.plot((xshift+xfuck/4)*ly*L, (1-u)*ly*W,'k--', linewidth=4, label=r"$\mathrm{Ellipse}$")
+
+        self.subfigure.set_xlim(0, 0.7*L)
+        self.subfigure.set_ylim(0, 0.7*W)
 
         #-- xvfigs
 
