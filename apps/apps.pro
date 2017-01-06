@@ -8,7 +8,8 @@ SUBDIRS += spiralgrowth \
     cconv2 \
     felixexp \
     felixexp_cavity \
-    diff_comp
+    diff_comp \
+    diff_model_times
     #cconv \
 #    cconvergence \
 #    cconvergence2 \
