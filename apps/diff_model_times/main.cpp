@@ -96,6 +96,8 @@ int main(int argv, char** argc)
     simRoot["height"] = height;
     simRoot["diffusionType"] = diffusionType;
     simRoot["cpuTime"] = cpuTime;
+    simRoot["nSurfaceEvents"] = nSurfaceEvents;
+    simRoot["nCycles"] = counter.loopCycle();
 
     return 0;
 }

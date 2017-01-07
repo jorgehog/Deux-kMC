@@ -5568,3 +5568,21 @@ class ss_front(DCVizPlotter):
 
         self.subfigure_x.set_ylim(0, 1.05)
 
+
+class diff_model_times(DCVizPlotter):
+    nametag = "diff_model_times_(.*)\.npy"
+
+    isFamilyMember = True
+    hugifyFonts = True
+
+    figMap = {"fig": ["s0", "s1", "s2", "s3"]}
+
+    def plot(self, data):
+        alphas = self.get_family_member_data(data, "alphas")
+        heights = self.get_family_member_data(data, "heights")
+        results = self.get_family_member_data(data, "results")
+
+        for i, height in enumerate(heights):
+            f = eval("self.s%d" % i)
+            for j in range(4):
+                f.semilogy(alphas, results[j, :, i, 0], label="h=%g" % height)
