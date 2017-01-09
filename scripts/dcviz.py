@@ -5590,8 +5590,8 @@ class diff_model_times(DCVizPlotter):
 
     names = {"uniform"  : "Uniform",
              "lattice"  : "Lattice",
-             "radial"   : "Radial MFPT",
-             "pathfind" : "Pathfind MFPT"}
+             "radial"   : "Radial",
+             "pathfind" : "Pathfinding"}
 
     styles = {"uniform"  : "s",
              "lattice"  : "o",
@@ -5604,8 +5604,10 @@ class diff_model_times(DCVizPlotter):
               "pathfind" : "g"}
 
     def adjust(self):
-        self.adjust_maps["fig"]["left"] = 0.11
-        self.adjust_maps["fig"]["right"] = 0.98
+        left = 0.11
+
+        self.adjust_maps["fig"]["left"] = left
+        self.adjust_maps["fig"]["right"] = 1-left
         self.adjust_maps["fig"]["top"] = 0.92
         self.adjust_maps["fig"]["bottom"] = 0.15
         self.adjust_maps["fig"]["wspace"] = 0.14
@@ -5631,7 +5633,6 @@ class diff_model_times(DCVizPlotter):
                 f.semilogy(alphas, r0, label="h=%g" % height)
                 t.semilogy(alphas, r1, label="h=%g" % height)
 
-        markers = ["s", "o", "^", "v"]
         titles = [r"$\mathrm{Per\,\,cycle}$", r"$\mathrm{Per\,\,surface\,\,event}$"]
 
         index_list = [[1, 2], [3, 4], [1, 1], [5, 4], [3, 2], [7, 4], [2, 1]]
@@ -5647,7 +5648,7 @@ class diff_model_times(DCVizPlotter):
             else:
                 return r"\Large{$%d/%d$}" % (a, b)
 
-        bbox = [(0.8, 0.85), (0.715, 0.85)]
+        bbox = [(0.75, 0.87), (0.75, 0.87)]
 
         I = 1
         for k in range(2):
