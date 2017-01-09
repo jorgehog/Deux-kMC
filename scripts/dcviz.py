@@ -5575,7 +5575,40 @@ class diff_model_times(DCVizPlotter):
     isFamilyMember = True
     hugifyFonts = True
 
-    figMap = {"fig": ["s0", "s1", "s2", "s3"]}
+    figMap = {
+        "fig1":["s0", "s1", "s2", "s3"],
+        "fig2": ["t0", "t1", "t2", "t3"],
+        "fig": ["f0", "f1"]
+    }
+
+    stack = "H"
+    specific_fig_size = {"fig": [10, 5]}
+
+    plotOnly = ["fig"]
+
+    ids = ["uniform", "lattice", "radial", "pathfind"]
+
+    names = {"uniform"  : "Uniform",
+             "lattice"  : "Lattice",
+             "radial"   : "Radial MFPT",
+             "pathfind" : "Pathfind MFPT"}
+
+    styles = {"uniform"  : "s",
+             "lattice"  : "o",
+             "radial"   : "^",
+             "pathfind" : "d"}
+
+    colors = {"uniform"  : "k",
+              "lattice"  : "r",
+              "radial"   : "b",
+              "pathfind" : "g"}
+
+    def adjust(self):
+        self.adjust_maps["fig"]["left"] = 0.11
+        self.adjust_maps["fig"]["right"] = 0.98
+        self.adjust_maps["fig"]["top"] = 0.92
+        self.adjust_maps["fig"]["bottom"] = 0.15
+        self.adjust_maps["fig"]["wspace"] = 0.14
 
     def plot(self, data):
         alphas = self.get_family_member_data(data, "alphas")
@@ -5584,5 +5617,84 @@ class diff_model_times(DCVizPlotter):
 
         for i, height in enumerate(heights):
             f = eval("self.s%d" % i)
+            t = eval("self.t%d" % i)
+
+            r = None
             for j in range(4):
-                f.semilogy(alphas, results[j, :, i, 0], label="h=%g" % height)
+
+                if not r:
+                    r = [results[j, :, i, 0], results[j, :, i, 1]]
+
+                r0 = results[j, :, i, 0]/r[0]
+                r1 = results[j, :, i, 1]/r[1]
+
+                f.semilogy(alphas, r0, label="h=%g" % height)
+                t.semilogy(alphas, r1, label="h=%g" % height)
+
+        markers = ["s", "o", "^", "v"]
+        titles = [r"$\mathrm{Per\,\,cycle}$", r"$\mathrm{Per\,\,surface\,\,event}$"]
+
+        index_list = [[1, 2], [3, 4], [1, 1], [5, 4], [3, 2], [7, 4], [2, 1]]
+        def fff(v, i):
+
+            if not i:
+                print "wtf", v
+
+            a, b = index_list[i]
+
+            if b == 1:
+                return r"$%d$" % a
+            else:
+                return r"\Large{$%d/%d$}" % (a, b)
+
+        bbox = [(0.8, 0.85), (0.715, 0.85)]
+
+        I = 1
+        for k in range(2):
+            f = eval("self.f%d" % k)
+            f.axes.xaxis.set_major_formatter(FuncFormatter(fff))
+            f.set_title(titles[k])
+            f.set_xlabel(r"$\alpha\equiv E_b/kT$")
+            f.set_xticks(alphas)
+            f.set_xlim(0.45, 2.05)
+            f.set_ylim(0.1, 15000)
+            for j in range(4):
+                id = self.ids[j]
+
+                if k == 0 and j < 2:
+                    label = r"$\mathrm{%s}$" % self.names[id]
+                elif k == 1 and j >= 2:
+                    label = r"$\mathrm{%s}$" % self.names[id]
+                else:
+                    label = None
+
+                f.semilogy(alphas,
+                           results[j, :, I, 1-k]/results[0, 0, I, 1-k],
+                           label = label,
+                           marker=self.styles[id],
+                           markeredgecolor=self.colors[id],
+                           linestyle="--",
+                           color=self.colors[id],
+                           linewidth=1,
+                           fillstyle='none',
+                           markersize=7,
+                           markeredgewidth=1.5)
+
+
+            l = f.axes.legend(loc="center",
+                               numpoints=1,
+                               ncol=1,
+                               handlelength=1.0,
+                               borderpad=0.2,
+                               labelspacing=0.2,
+                               columnspacing=0.3,
+                               handletextpad=0.25,
+                               borderaxespad=0.0,
+                               frameon=False,
+                               fontsize=20,
+                               bbox_to_anchor=bbox[k])
+
+            l.get_frame().set_fill(not (self.toFile and self.transparent))
+
+        self.f0.set_ylabel(r"$t_\mathrm{CPU}/t_\mathrm{CPU}^\ast$")
+        self.f1.set_yticklabels([])
